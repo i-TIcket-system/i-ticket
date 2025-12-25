@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { PhoneInput } from "@/components/ui/phone-input"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -131,19 +132,13 @@ export default function RegisterPage() {
 
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  placeholder="09XXXXXXXX"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <PhoneInput
+                id="phone"
+                value={formData.phone}
+                onChange={(value) => setFormData(prev => ({ ...prev, phone: value }))}
+                required
+                disabled={isLoading}
+              />
               <p className="text-xs text-muted-foreground">
                 This will be your login username
               </p>

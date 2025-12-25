@@ -289,6 +289,19 @@ function SearchContent() {
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         {/* Route & Time */}
                         <div className="flex-1">
+                          {/* Departure Date - Prominent Display */}
+                          <div className="mb-3 flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-primary" />
+                            <span className="text-sm font-medium text-primary">
+                              {new Date(trip.departureTime).toLocaleDateString("en-ET", {
+                                weekday: "short",
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric"
+                              })}
+                            </span>
+                          </div>
+
                           <div className="flex items-center gap-4 mb-4">
                             <div className="text-center">
                               <div className="text-2xl font-bold">
