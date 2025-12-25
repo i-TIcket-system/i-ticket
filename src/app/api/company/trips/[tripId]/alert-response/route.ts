@@ -1,0 +1,65 @@
+import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
+import prisma from "@/lib/db"
+import { authOptions } from "@/lib/auth"
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { tripId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      )
+    }
+
+    if (session.user.role !== "COMPANY_ADMIN" && session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "Access denied" },
+        { status: 403 }
+      )
+    }
+
+    const body = await request.json()
+    const { allowContinue } = body
+
+    // Update trip
+    const trip = await prisma.trip.update({
+      where: { id: params.tripId },
+      data: {
+        bookingHalted: !allowContinue,
+      },
+    })
+
+    // Log the admin decision
+    await prisma.adminLog.create({
+      data: {
+        userId: session.user.id,
+        action: allowContinue ? "ALLOW_BOOKING_CONTINUE" : "STOP_BOOKING",
+        tripId: params.tripId,
+        details: `Admin ${session.user.name} (${session.user.phone}) ${
+          allowContinue ? "allowed" : "stopped"
+        } online booking for trip ${trip.origin} to ${trip.destination}.`,
+      },
+    })
+
+    // In production, send SMS notification here
+    console.log(
+      `[ADMIN LOG] ${session.user.name} ${
+        allowContinue ? "CONTINUED" : "STOPPED"
+      } booking for trip ${params.tripId}`
+    )
+
+    return NextResponse.json({ success: true, trip })
+  } catch (error) {
+    console.error("Alert response error:", error)
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
+  }
+}

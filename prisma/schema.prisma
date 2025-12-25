@@ -1,0 +1,125 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  phone          String    @unique
+  email          String?
+  password       String
+  nationalId     String?
+  role           String    @default("CUSTOMER") // CUSTOMER, COMPANY_ADMIN, SUPER_ADMIN
+  companyId      String?
+  company        Company?  @relation(fields: [companyId], references: [id])
+  nextOfKinName  String?
+  nextOfKinPhone String?
+  bookings       Booking[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  logo      String?
+  phones    String   @default("[]") // JSON array stored as string
+  email     String
+  isActive  Boolean  @default(true)
+  users     User[]
+  trips     Trip[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Trip {
+  id                String    @id @default(cuid())
+  companyId         String
+  company           Company   @relation(fields: [companyId], references: [id])
+  origin            String
+  destination       String
+  route             String?
+  departureTime     DateTime
+  estimatedDuration Int
+  price             Float
+  busType           String
+  totalSlots        Int
+  availableSlots    Int
+  hasWater          Boolean   @default(false)
+  hasFood           Boolean   @default(false)
+  isActive          Boolean   @default(true)
+  lowSlotAlertSent  Boolean   @default(false)
+  bookingHalted     Boolean   @default(false)
+  bookings          Booking[]
+  tickets           Ticket[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Booking {
+  id          String      @id @default(cuid())
+  tripId      String
+  trip        Trip        @relation(fields: [tripId], references: [id])
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  passengers  Passenger[]
+  totalAmount Float
+  commission  Float
+  status      String      @default("PENDING") // PENDING, PAID, CANCELLED, COMPLETED
+  payment     Payment?
+  tickets     Ticket[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Passenger {
+  id           String  @id @default(cuid())
+  bookingId    String
+  booking      Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  name         String
+  nationalId   String
+  phone        String
+  seatNumber   Int?
+  specialNeeds String?
+}
+
+model Ticket {
+  id            String    @id @default(cuid())
+  bookingId     String
+  booking       Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  tripId        String
+  trip          Trip      @relation(fields: [tripId], references: [id])
+  passengerName String
+  seatNumber    Int?
+  qrCode        String
+  shortCode     String    @unique
+  isUsed        Boolean   @default(false)
+  usedAt        DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  bookingId     String   @unique
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  amount        Float
+  method        String   // TELEBIRR, DEMO
+  transactionId String?
+  status        String   @default("PENDING") // PENDING, SUCCESS, FAILED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AdminLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   String?
+  tripId    String?
+  createdAt DateTime @default(now())
+}

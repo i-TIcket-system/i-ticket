@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 96%; /* #F4F4F4 */
+    --foreground: 190 100% 19%; /* #005461 */
+    --card: 0 0% 100%;
+    --card-foreground: 190 100% 19%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 190 100% 19%;
+    --primary: 182 99% 28%; /* #018790 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 179 100% 36%; /* #00B7B5 */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 92%;
+    --muted-foreground: 190 30% 40%;
+    --accent: 190 100% 19%; /* #005461 */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 190 20% 85%;
+    --input: 190 20% 85%;
+    --ring: 182 99% 28%;
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 190 100% 10%;
+    --foreground: 0 0% 96%;
+    --card: 190 100% 15%;
+    --card-foreground: 0 0% 96%;
+    --popover: 190 100% 15%;
+    --popover-foreground: 0 0% 96%;
+    --primary: 179 100% 36%;
+    --primary-foreground: 190 100% 10%;
+    --secondary: 182 99% 28%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 190 50% 20%;
+    --muted-foreground: 190 20% 65%;
+    --accent: 179 100% 36%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 190 50% 25%;
+    --input: 190 50% 25%;
+    --ring: 179 100% 36%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted rounded-full;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 rounded-full hover:bg-primary/50 transition-colors;
+}
+
+/* Smooth animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card hover effect */
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+}
+
+/* Ethiopian flag gradient */
+.ethiopian-gradient {
+  background: linear-gradient(135deg, #10B981 0%, #FBBF24 50%, #EF4444 100%);
+}
+
+/* Glass effect */
+.glass {
+  @apply bg-white/80 backdrop-blur-md border border-white/20;
+}
+
+.dark .glass {
+  @apply bg-slate-900/80 border-slate-700/20;
+}
