@@ -77,3 +77,59 @@ export const BUS_TYPES = [
   { value: 'vip', label: 'VIP', description: 'Extra legroom, reclining seats' },
   { value: 'luxury', label: 'Luxury', description: 'Premium seats, refreshments included' },
 ]
+
+/**
+ * Get next available seat numbers for a trip
+ * @param tripId - ID of the trip
+ * @param count - Number of seats needed
+ * @param totalSlots - Total slots in the trip
+ * @param tx - Prisma transaction client
+ * @returns Array of available seat numbers
+ */
+export async function getAvailableSeatNumbers(
+  tripId: string,
+  count: number,
+  totalSlots: number,
+  tx: any
+): Promise<number[]> {
+  // Get all occupied seats for this trip
+  const occupiedPassengers = await tx.passenger.findMany({
+    where: {
+      booking: {
+        tripId,
+        status: {
+          not: "CANCELLED"
+        }
+      },
+      seatNumber: {
+        not: null
+      }
+    },
+    select: {
+      seatNumber: true
+    }
+  })
+
+  const occupiedSeats = new Set(
+    occupiedPassengers
+      .map((p: any) => p.seatNumber)
+      .filter((seat: number | null): seat is number => seat !== null)
+  )
+
+  // Find available seats
+  const availableSeats: number[] = []
+  for (let seat = 1; seat <= totalSlots; seat++) {
+    if (!occupiedSeats.has(seat)) {
+      availableSeats.push(seat)
+      if (availableSeats.length === count) {
+        break
+      }
+    }
+  }
+
+  if (availableSeats.length < count) {
+    throw new Error("Not enough seats available")
+  }
+
+  return availableSeats
+}

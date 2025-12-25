@@ -70,16 +70,64 @@ export async function PATCH(
       )
     }
 
+    // SECURITY: Verify ownership before allowing update
+    const existingBooking = await prisma.booking.findUnique({
+      where: { id: params.bookingId },
+      select: { userId: true, status: true }
+    })
+
+    if (!existingBooking) {
+      return NextResponse.json({ error: "Booking not found" }, { status: 404 })
+    }
+
+    // Only booking owner or super admin can update
+    if (existingBooking.userId !== session.user.id && session.user.role !== "SUPER_ADMIN") {
+      return NextResponse.json(
+        { error: "You can only update your own bookings" },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
+
+    // Only allow updating specific fields (prevent malicious updates)
+    const allowedUpdates: any = {}
+
+    // Only allow status updates to CANCELLED by user
+    if (body.status === "CANCELLED" && existingBooking.status === "PENDING") {
+      allowedUpdates.status = "CANCELLED"
+    }
+
+    // If no valid updates, return error
+    if (Object.keys(allowedUpdates).length === 0) {
+      return NextResponse.json(
+        { error: "No valid updates provided or booking cannot be modified" },
+        { status: 400 }
+      )
+    }
 
     const booking = await prisma.booking.update({
       where: { id: params.bookingId },
-      data: body,
+      data: allowedUpdates,
       include: {
         trip: true,
         passengers: true,
       },
     })
+
+    // If cancelled, restore available slots
+    if (allowedUpdates.status === "CANCELLED") {
+      const passengerCount = await prisma.passenger.count({
+        where: { bookingId: params.bookingId }
+      })
+
+      await prisma.trip.update({
+        where: { id: booking.tripId },
+        data: {
+          availableSlots: { increment: passengerCount }
+        }
+      })
+    }
 
     return NextResponse.json({ booking })
   } catch (error) {

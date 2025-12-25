@@ -59,6 +59,10 @@ model Trip {
   tickets           Ticket[]
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+
+  @@index([origin, destination, departureTime])
+  @@index([departureTime])
+  @@index([companyId])
 }
 
 model Booking {
@@ -75,6 +79,9 @@ model Booking {
   tickets     Ticket[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+
+  @@index([userId, status])
+  @@index([tripId])
 }
 
 model Passenger {
@@ -86,6 +93,8 @@ model Passenger {
   phone        String
   seatNumber   Int?
   specialNeeds String?
+
+  @@index([bookingId])
 }
 
 model Ticket {
@@ -101,6 +110,9 @@ model Ticket {
   isUsed        Boolean   @default(false)
   usedAt        DateTime?
   createdAt     DateTime  @default(now())
+
+  @@index([tripId])
+  @@index([shortCode])
 }
 
 model Payment {

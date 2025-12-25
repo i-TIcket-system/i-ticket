@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
+import { searchTripsSchema, validateQueryParams } from "@/lib/validations"
 
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const origin = searchParams.get("origin")
-    const destination = searchParams.get("destination")
-    const date = searchParams.get("date")
+
+    // Validate query parameters
+    const validation = validateQueryParams(searchParams, searchTripsSchema)
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
+    }
+
+    const { origin, destination, date, page = 1, limit = 20 } = validation.data
     const busType = searchParams.get("busType")
     const sortBy = searchParams.get("sortBy") || "departureTime"
 
@@ -18,11 +24,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (origin) {
-      where.origin = { contains: origin }
+      where.origin = { contains: origin, mode: 'insensitive' }
     }
 
     if (destination) {
-      where.destination = { contains: destination }
+      where.destination = { contains: destination, mode: 'insensitive' }
     }
 
     if (date) {
@@ -58,6 +64,10 @@ export async function GET(request: NextRequest) {
         break
     }
 
+    // Get total count for pagination
+    const total = await prisma.trip.count({ where })
+
+    // Get trips with pagination
     const trips = await prisma.trip.findMany({
       where,
       orderBy,
@@ -69,10 +79,19 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-      take: 50,
+      take: limit,
+      skip: (page - 1) * limit,
     })
 
-    return NextResponse.json({ trips })
+    return NextResponse.json({
+      trips,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      }
+    })
   } catch (error) {
     console.error("Trips fetch error:", error)
     return NextResponse.json(
@@ -85,22 +104,42 @@ export async function GET(request: NextRequest) {
 // Create a new trip (Company Admin only)
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    // Import auth helpers dynamically to avoid circular dependencies
+    const { requireCompanyAdmin, handleAuthError } = await import("@/lib/auth-helpers")
+    const { createTripSchema, validateRequest } = await import("@/lib/validations")
 
+    // Require company admin authentication
+    let companyId: string
+    try {
+      const auth = await requireCompanyAdmin()
+      companyId = auth.companyId
+    } catch (error) {
+      return handleAuthError(error)
+    }
+
+    // Validate request body
+    const validation = await validateRequest(request, createTripSchema)
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 })
+    }
+
+    const data = validation.data
+
+    // Create trip for authenticated company only
     const trip = await prisma.trip.create({
       data: {
-        companyId: body.companyId,
-        origin: body.origin,
-        destination: body.destination,
-        route: body.route,
-        departureTime: new Date(body.departureTime),
-        estimatedDuration: body.estimatedDuration,
-        price: body.price,
-        busType: body.busType,
-        totalSlots: body.totalSlots,
-        availableSlots: body.totalSlots,
-        hasWater: body.hasWater || false,
-        hasFood: body.hasFood || false,
+        companyId, // Use authenticated user's companyId
+        origin: data.origin,
+        destination: data.destination,
+        route: data.route,
+        departureTime: new Date(data.departureTime),
+        estimatedDuration: data.estimatedDuration,
+        price: data.price,
+        busType: data.busType,
+        totalSlots: data.totalSlots,
+        availableSlots: data.totalSlots,
+        hasWater: data.hasWater,
+        hasFood: data.hasFood,
       },
       include: {
         company: true,

@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Customer pays: ticket price + 5% commission
     const totalAmount = Number(booking.totalAmount) + Number(booking.commission)
 
     // In demo mode, simulate successful payment

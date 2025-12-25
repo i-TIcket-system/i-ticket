@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import prisma from "@/lib/db"
 import { authOptions } from "@/lib/auth"
+import { getAvailableSeatNumbers } from "@/lib/utils"
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,7 +52,15 @@ export async function POST(request: NextRequest) {
         throw new Error("Not enough seats available")
       }
 
-      // Create booking
+      // Get available seat numbers
+      const seatNumbers = await getAvailableSeatNumbers(
+        tripId,
+        passengers.length,
+        trip.totalSlots,
+        tx
+      )
+
+      // Create booking with seat assignments
       const newBooking = await tx.booking.create({
         data: {
           tripId,
@@ -60,10 +69,11 @@ export async function POST(request: NextRequest) {
           commission,
           status: "PENDING",
           passengers: {
-            create: passengers.map((p: any) => ({
+            create: passengers.map((p: any, index: number) => ({
               name: p.name,
               nationalId: p.nationalId,
               phone: p.phone,
+              seatNumber: seatNumbers[index], // Assign seat number
               specialNeeds: p.specialNeeds || null,
             })),
           },
