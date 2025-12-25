@@ -35,6 +35,8 @@ interface Trip {
   id: string
   origin: string
   destination: string
+  route: string | null
+  intermediateStops: string | null
   departureTime: string
   estimatedDuration: number
   price: number
@@ -306,6 +308,37 @@ function SearchContent() {
                                 <span className="text-xs text-muted-foreground">
                                   {formatDuration(trip.estimatedDuration)}
                                 </span>
+                                {(() => {
+                                  try {
+                                    // Try intermediateStops JSON first
+                                    if (trip.intermediateStops) {
+                                      const stops = JSON.parse(trip.intermediateStops);
+                                      if (Array.isArray(stops) && stops.length > 0) {
+                                        return (
+                                          <span className="text-xs text-primary font-medium mt-1">
+                                            via {stops.join(', ')}
+                                          </span>
+                                        );
+                                      }
+                                    }
+                                    // Fallback: parse route string if it contains arrows
+                                    if (trip.route && trip.route.includes('→')) {
+                                      const parts = trip.route.split('→').map(p => p.trim());
+                                      // Get intermediate stops (exclude first and last)
+                                      if (parts.length > 2) {
+                                        const intermediates = parts.slice(1, -1);
+                                        return (
+                                          <span className="text-xs text-primary font-medium mt-1">
+                                            via {intermediates.join(', ')}
+                                          </span>
+                                        );
+                                      }
+                                    }
+                                  } catch (e) {
+                                    console.error('Error parsing intermediate stops:', e);
+                                  }
+                                  return null;
+                                })()}
                               </div>
                               <div className="flex-1 border-t-2 border-dashed border-muted-foreground/30" />
                               <div className="h-2 w-2 rounded-full bg-accent" />

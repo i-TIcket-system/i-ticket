@@ -252,6 +252,17 @@ Custom Ethiopian-inspired teal palette:
 
 ## Recent Updates
 
+### v1.2.0 - Intermediate Stops & Route Display
+
+**New Features:**
+- **Intermediate Stops Display**: Trips with intermediate stops now show the full route information
+  - Visible in search results (e.g., "via Gohatsion, Dejen")
+  - Displayed below duration in trip timeline for easy visibility
+  - Shows in booking page and company trip details
+- **Smart Route Parsing**: Supports both JSON intermediate stops and route string formats
+- **Enhanced Trip Creation**: Companies can add multiple intermediate stops when creating trips
+- **Dynamic City Database**: Cities automatically added to database when used in trip routes
+
 ### v1.1.0 - Security & Feature Enhancements
 
 **Security Fixes:**

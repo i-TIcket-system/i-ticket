@@ -43,6 +43,8 @@ interface Trip {
   id: string
   origin: string
   destination: string
+  route: string | null
+  intermediateStops: string | null
   departureTime: string
   estimatedDuration: number
   price: number
@@ -303,8 +305,18 @@ export default function BookingPage() {
                   </div>
                 </div>
 
+                {trip.route && (
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Route:</span>
+                      <span className="text-sm font-medium">{trip.route}</span>
+                    </div>
+                  </div>
+                )}
+
                 {(trip.hasWater || trip.hasFood) && (
-                  <div className="flex items-center gap-4 mt-4 pt-4 border-t">
+                  <div className={`flex items-center gap-4 mt-4 pt-4 ${!trip.route ? 'border-t' : ''}`}>
                     <span className="text-sm text-muted-foreground">Amenities:</span>
                     {trip.hasWater && (
                       <span className="flex items-center gap-1 text-sm">

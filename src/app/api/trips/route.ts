@@ -71,7 +71,20 @@ export async function GET(request: NextRequest) {
     const trips = await prisma.trip.findMany({
       where,
       orderBy,
-      include: {
+      select: {
+        id: true,
+        origin: true,
+        destination: true,
+        route: true,
+        intermediateStops: true,
+        departureTime: true,
+        estimatedDuration: true,
+        price: true,
+        busType: true,
+        totalSlots: true,
+        availableSlots: true,
+        hasWater: true,
+        hasFood: true,
         company: {
           select: {
             id: true,
