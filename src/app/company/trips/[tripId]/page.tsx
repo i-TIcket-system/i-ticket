@@ -35,6 +35,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { formatCurrency, formatDate, formatDuration, getSlotsPercentage, isLowSlots, BUS_TYPES } from "@/lib/utils"
+import { ManualTicketingCard } from "@/components/company/ManualTicketingCard"
 
 interface Passenger {
   id: string
@@ -373,6 +374,16 @@ export default function TripDetailPage() {
             )}
           </div>
         </div>
+
+        {/* Manual Ticketing Floating Card */}
+        {new Date(trip.departureTime) > new Date() && (
+          <ManualTicketingCard
+            tripId={trip.id}
+            availableSlots={trip.availableSlots}
+            totalSlots={trip.totalSlots}
+            onUpdate={fetchTrip}
+          />
+        )}
       </div>
     </div>
   )
