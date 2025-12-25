@@ -1,0 +1,178 @@
+import ExcelJS from "exceljs"
+import prisma from "./db"
+import { formatCurrency, formatDate } from "./utils"
+
+/**
+ * Generate passenger manifest Excel file when bus is full
+ * Includes I-Ticket bookings and summary of manual sales
+ */
+export async function generatePassengerManifest(tripId: string): Promise<Buffer> {
+  // Fetch all trip data with paid bookings
+  const trip = await prisma.trip.findUnique({
+    where: { id: tripId },
+    include: {
+      company: true,
+      bookings: {
+        where: { status: "PAID" },
+        include: {
+          passengers: true,
+          user: {
+            select: { name: true, phone: true }
+          },
+          tickets: {
+            select: { shortCode: true }
+          }
+        },
+        orderBy: { createdAt: "asc" }
+      }
+    }
+  })
+
+  if (!trip) {
+    throw new Error("Trip not found")
+  }
+
+  // Create workbook
+  const workbook = new ExcelJS.Workbook()
+  workbook.creator = "i-Ticket Platform"
+  workbook.created = new Date()
+
+  const sheet = workbook.addWorksheet("Passenger Manifest")
+
+  // Styling
+  const headerStyle = {
+    font: { bold: true, size: 14 },
+    fill: { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FF018790" } },
+    font: { bold: true, color: { argb: "FFFFFFFF" } }
+  }
+
+  // Header Information
+  sheet.mergeCells("A1:H1")
+  sheet.getCell("A1").value = "i-TICKET PASSENGER MANIFEST"
+  sheet.getCell("A1").font = { bold: true, size: 16 }
+  sheet.getCell("A1").alignment = { horizontal: "center" }
+
+  sheet.addRow([])
+  sheet.addRow([`Company:`, trip.company.name])
+  sheet.addRow([`Route:`, `${trip.origin} → ${trip.destination}`])
+  if (trip.intermediateStops) {
+    sheet.addRow([`Stops:`, trip.intermediateStops])
+  }
+  sheet.addRow([`Departure:`, formatDate(trip.departureTime)])
+  sheet.addRow([`Bus Type:`, trip.busType.toUpperCase()])
+  sheet.addRow([`Total Capacity:`, trip.totalSlots])
+  sheet.addRow([])
+
+  // SECTION 1: I-TICKET BOOKINGS
+  sheet.addRow(["SECTION 1: I-TICKET PLATFORM BOOKINGS"])
+  const headerRow = sheet.addRow([
+    "Seat",
+    "Passenger Name",
+    "National ID",
+    "Phone",
+    "Pickup Location",
+    "Dropoff Location",
+    "Booking ID",
+    "Ticket Code"
+  ])
+
+  // Style header row
+  headerRow.eachCell((cell) => {
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF018790" } }
+    cell.font = { bold: true, color: { argb: "FFFFFFFF" } }
+    cell.border = {
+      top: { style: "thin" },
+      bottom: { style: "thin" },
+      left: { style: "thin" },
+      right: { style: "thin" }
+    }
+  })
+
+  // Collect all passengers and sort by seat number
+  const allPassengers: any[] = []
+  for (const booking of trip.bookings) {
+    for (const passenger of booking.passengers) {
+      allPassengers.push({
+        ...passenger,
+        bookingId: booking.id,
+        bookedBy: booking.user.name,
+        ticketCode: booking.tickets.find((t) => t.shortCode)?.shortCode || "N/A"
+      })
+    }
+  }
+
+  allPassengers.sort((a, b) => (a.seatNumber || 999) - (b.seatNumber || 999))
+
+  // Add passenger rows
+  for (const p of allPassengers) {
+    const row = sheet.addRow([
+      p.seatNumber || "N/A",
+      p.name,
+      p.nationalId,
+      p.phone,
+      p.pickupLocation || "Default",
+      p.dropoffLocation || "Default",
+      p.bookingId.slice(0, 8).toUpperCase(),
+      p.ticketCode
+    ])
+
+    row.eachCell((cell) => {
+      cell.border = {
+        top: { style: "thin" },
+        bottom: { style: "thin" },
+        left: { style: "thin" },
+        right: { style: "thin" }
+      }
+    })
+  }
+
+  sheet.addRow([])
+
+  // SECTION 2: MANUAL SALES SUMMARY
+  const iTicketPassengers = allPassengers.length
+  const totalBooked = trip.totalSlots - trip.availableSlots
+  const manualSales = totalBooked - iTicketPassengers
+
+  sheet.addRow(["SECTION 2: MANUAL/OFFICE TICKET SALES"])
+  sheet.addRow([`Total Manual Sales:`, `${manualSales} tickets`])
+  sheet.addRow(["Note:", "(Passenger details not available for office sales)"])
+  sheet.addRow([])
+
+  // SUMMARY
+  const summaryStartRow = sheet.lastRow!.number + 1
+  sheet.addRow(["REVENUE SUMMARY"])
+  sheet.getCell(`A${summaryStartRow}`).font = { bold: true, size: 12 }
+
+  const totalRevenue = trip.bookings.reduce((sum, b) => sum + Number(b.totalAmount), 0)
+  const totalCommission = trip.bookings.reduce((sum, b) => sum + Number(b.commission), 0)
+
+  sheet.addRow([`Total Capacity:`, trip.totalSlots])
+  sheet.addRow([`I-Ticket Bookings:`, `${iTicketPassengers} passengers`])
+  sheet.addRow([`Manual Sales:`, `${manualSales} tickets`])
+  sheet.addRow([`Total Booked:`, `${totalBooked}/${trip.totalSlots}` ])
+  sheet.addRow([`Available:`, trip.availableSlots])
+  sheet.addRow([])
+  sheet.addRow([`I-Ticket Revenue:`, formatCurrency(totalRevenue)])
+  sheet.addRow([`Commission Due to Platform:`, formatCurrency(totalCommission)])
+  sheet.addRow([])
+
+  // Footer
+  sheet.addRow([`Generated:`, new Date().toLocaleString("en-ET")])
+  sheet.addRow([`Generated by:`, "i-Ticket Platform - https://i-ticket.et"])
+
+  // Auto-fit columns
+  sheet.columns.forEach((column) => {
+    let maxLength = 0
+    column.eachCell!({ includeEmpty: true }, (cell) => {
+      const length = cell.value ? cell.value.toString().length : 10
+      if (length > maxLength) {
+        maxLength = length
+      }
+    })
+    column.width = Math.min(maxLength + 2, 50)
+  })
+
+  // Generate buffer
+  const buffer = await workbook.xlsx.writeBuffer()
+  return Buffer.from(buffer)
+}

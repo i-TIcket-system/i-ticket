@@ -62,6 +62,8 @@ interface Passenger {
   nationalId: string
   phone: string
   specialNeeds: string
+  pickupLocation?: string
+  dropoffLocation?: string
 }
 
 const emptyPassenger: Passenger = {
@@ -69,6 +71,8 @@ const emptyPassenger: Passenger = {
   nationalId: "",
   phone: "",
   specialNeeds: "",
+  pickupLocation: "",
+  dropoffLocation: "",
 }
 
 export default function BookingPage() {
@@ -403,6 +407,38 @@ export default function BookingPage() {
                             required
                           />
                         </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Pickup Location (Optional)</Label>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="e.g., Meskel Square, Bole Airport"
+                            value={passenger.pickupLocation || ""}
+                            onChange={(e) => updatePassenger(index, "pickupLocation", e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Where should the bus pick you up along the route?
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Dropoff Location (Optional)</Label>
+                        <div className="relative">
+                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <Input
+                            placeholder="e.g., City Center, Bus Station"
+                            value={passenger.dropoffLocation || ""}
+                            onChange={(e) => updatePassenger(index, "dropoffLocation", e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Where should the bus drop you off?
+                        </p>
                       </div>
 
                       <div className="space-y-2">

@@ -36,20 +36,22 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error)
       } else {
+        // Small delay to ensure session is fully propagated
+        await new Promise(resolve => setTimeout(resolve, 300))
+
         // Get the session to check user role
         const session = await getSession()
 
-        // Redirect based on role
+        // Redirect based on role using replace (prevents back button issues)
         if (callbackUrl !== "/") {
-          router.push(callbackUrl)
+          router.replace(callbackUrl)
         } else if (session?.user?.role === "COMPANY_ADMIN") {
-          router.push("/company/dashboard")
+          router.replace("/company/dashboard")
         } else if (session?.user?.role === "SUPER_ADMIN") {
-          router.push("/admin/dashboard")
+          router.replace("/admin/dashboard")
         } else {
-          router.push("/")
+          router.replace("/")
         }
-        router.refresh()
       }
     } catch (err) {
       setError("An unexpected error occurred")

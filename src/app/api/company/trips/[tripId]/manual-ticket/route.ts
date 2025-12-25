@@ -108,6 +108,29 @@ export async function POST(
         console.log(`[ALERT] Trip ${params.tripId} auto-halted: Only ${updatedTrip.availableSlots} slots remaining`)
       }
 
+      // BUS FULL: Mark manifest ready if all seats sold
+      if (updatedTrip.availableSlots === 0 && !trip.reportGenerated) {
+        await tx.trip.update({
+          where: { id: params.tripId },
+          data: { reportGenerated: true }
+        })
+
+        await tx.adminLog.create({
+          data: {
+            userId: "SYSTEM",
+            action: "BUS_FULL_MANIFEST_READY",
+            tripId: params.tripId,
+            details: JSON.stringify({
+              totalSlots: updatedTrip.totalSlots,
+              triggeredBy: "manual_ticket_sale",
+              generatedAt: new Date().toISOString(),
+            }),
+          },
+        })
+
+        console.log(`[MANIFEST] Bus FULL for trip ${params.tripId}! Download manifest from trip details.`)
+      }
+
       return updatedTrip
     })
 

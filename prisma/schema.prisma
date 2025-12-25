@@ -44,6 +44,7 @@ model Trip {
   origin            String
   destination       String
   route             String?
+  intermediateStops String?
   departureTime     DateTime
   estimatedDuration Int
   price             Float
@@ -55,6 +56,7 @@ model Trip {
   isActive          Boolean   @default(true)
   lowSlotAlertSent  Boolean   @default(false)
   bookingHalted     Boolean   @default(false)
+  reportGenerated   Boolean   @default(false)
   bookings          Booking[]
   tickets           Ticket[]
   createdAt         DateTime  @default(now())
@@ -66,33 +68,36 @@ model Trip {
 }
 
 model Booking {
-  id          String      @id @default(cuid())
-  tripId      String
-  trip        Trip        @relation(fields: [tripId], references: [id])
-  userId      String
-  user        User        @relation(fields: [userId], references: [id])
-  passengers  Passenger[]
-  totalAmount Float
-  commission  Float
-  status      String      @default("PENDING") // PENDING, PAID, CANCELLED, COMPLETED
-  payment     Payment?
-  tickets     Ticket[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id            String      @id @default(cuid())
+  tripId        String
+  trip          Trip        @relation(fields: [tripId], references: [id])
+  userId        String
+  user          User        @relation(fields: [userId], references: [id])
+  passengers    Passenger[]
+  totalAmount   Float
+  commission    Float
+  status        String      @default("PENDING") // PENDING, PAID, CANCELLED, COMPLETED
+  isQuickTicket Boolean     @default(false)
+  payment       Payment?
+  tickets       Ticket[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([userId, status])
   @@index([tripId])
 }
 
 model Passenger {
-  id           String  @id @default(cuid())
-  bookingId    String
-  booking      Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  name         String
-  nationalId   String
-  phone        String
-  seatNumber   Int?
-  specialNeeds String?
+  id              String  @id @default(cuid())
+  bookingId       String
+  booking         Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  name            String
+  nationalId      String
+  phone           String
+  seatNumber      Int?
+  specialNeeds    String?
+  pickupLocation  String?
+  dropoffLocation String?
 
   @@index([bookingId])
 }

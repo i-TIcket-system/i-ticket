@@ -75,6 +75,8 @@ export async function POST(request: NextRequest) {
               phone: p.phone,
               seatNumber: seatNumbers[index], // Assign seat number
               specialNeeds: p.specialNeeds || null,
+              pickupLocation: p.pickupLocation || null,
+              dropoffLocation: p.dropoffLocation || null,
             })),
           },
         },
@@ -131,6 +133,31 @@ export async function POST(request: NextRequest) {
 
         // In production, send SMS notification to company admin
         console.log(`[ALERT] Trip ${tripId} auto-halted: Only ${updatedTrip.availableSlots} slots remaining`)
+      }
+
+      // BUS FULL: Generate manifest if all seats are sold
+      if (updatedTrip && updatedTrip.availableSlots === 0 && !updatedTrip.reportGenerated) {
+        await tx.trip.update({
+          where: { id: tripId },
+          data: { reportGenerated: true }
+        })
+
+        await tx.adminLog.create({
+          data: {
+            userId: "SYSTEM",
+            action: "BUS_FULL_MANIFEST_READY",
+            tripId,
+            details: JSON.stringify({
+              totalSlots: updatedTrip.totalSlots,
+              iTicketBookings: await tx.passenger.count({
+                where: { booking: { tripId, status: "PAID" } }
+              }),
+              generatedAt: new Date().toISOString(),
+            }),
+          },
+        })
+
+        console.log(`[MANIFEST] Bus FULL for trip ${tripId}! Passenger manifest ready for download.`)
       }
 
       return newBooking

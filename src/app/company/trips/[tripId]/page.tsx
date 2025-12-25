@@ -356,6 +356,21 @@ export default function TripDetailPage() {
                   <span className="text-muted-foreground">Revenue</span>
                   <span className="font-bold text-primary">{formatCurrency(totalRevenue)}</span>
                 </div>
+
+                {trip.availableSlots === 0 && (
+                  <>
+                    <Separator />
+                    <a href={`/api/company/trips/${trip.id}/manifest`} download>
+                      <Button className="w-full" variant="default">
+                        <Ticket className="h-4 w-4 mr-2" />
+                        Download Passenger Manifest
+                      </Button>
+                    </a>
+                    <p className="text-xs text-center text-muted-foreground">
+                      Bus is full! Download Excel report with all passenger details.
+                    </p>
+                  </>
+                )}
               </CardContent>
             </Card>
 
