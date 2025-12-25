@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/table"
 import { formatCurrency, formatDate, formatDuration, getSlotsPercentage, isLowSlots, BUS_TYPES } from "@/lib/utils"
 import { ManualTicketingCard } from "@/components/company/ManualTicketingCard"
+import { BookingControlCard } from "@/components/company/BookingControlCard"
 
 interface Passenger {
   id: string
@@ -358,6 +359,14 @@ export default function TripDetailPage() {
               </CardContent>
             </Card>
 
+            {/* Booking Control */}
+            <BookingControlCard
+              tripId={trip.id}
+              bookingHalted={trip.bookingHalted}
+              availableSlots={trip.availableSlots}
+              onUpdate={fetchTrip}
+            />
+
             {lowSlots && !trip.bookingHalted && (
               <Card className="border-yellow-500 bg-yellow-50">
                 <CardContent className="pt-6">
@@ -366,8 +375,7 @@ export default function TripDetailPage() {
                     <span className="font-medium">Low Seats Warning</span>
                   </div>
                   <p className="text-sm text-yellow-700">
-                    Only {trip.availableSlots} seats remaining. Consider halting online booking
-                    if manual bookings are expected.
+                    Only {trip.availableSlots} seats remaining. System will auto-halt at 10 slots.
                   </p>
                 </CardContent>
               </Card>

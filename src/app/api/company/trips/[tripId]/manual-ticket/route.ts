@@ -80,10 +80,8 @@ export async function POST(
         },
       })
 
-      // Check if low slot alert needed
-      const slotsPercentage = (updatedTrip.availableSlots / updatedTrip.totalSlots) * 100
-
-      if (slotsPercentage <= 10 && !trip.bookingHalted) {
+      // CRITICAL: Auto-halt if slots drop to 10 or below
+      if (updatedTrip.availableSlots <= 10 && !trip.bookingHalted) {
         await tx.trip.update({
           where: { id: params.tripId },
           data: {
@@ -95,11 +93,19 @@ export async function POST(
         await tx.adminLog.create({
           data: {
             userId: "SYSTEM",
-            action: "LOW_SLOT_ALERT",
+            action: "AUTO_HALT_LOW_SLOTS",
             tripId: params.tripId,
-            details: `Trip reached ${slotsPercentage.toFixed(1)}% availability after manual sale.`,
+            details: JSON.stringify({
+              reason: "Slots dropped to 10 or below",
+              availableSlots: updatedTrip.availableSlots,
+              totalSlots: updatedTrip.totalSlots,
+              triggeredBy: "manual_ticket_sale",
+              timestamp: new Date().toISOString(),
+            }),
           },
         })
+
+        console.log(`[ALERT] Trip ${params.tripId} auto-halted: Only ${updatedTrip.availableSlots} slots remaining`)
       }
 
       return updatedTrip

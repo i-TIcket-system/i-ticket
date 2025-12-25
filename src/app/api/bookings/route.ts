@@ -98,37 +98,39 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // Check if low slot alert needed
+      // CRITICAL: Auto-halt if slots drop to 10 or below
       const updatedTrip = await tx.trip.findUnique({
         where: { id: tripId },
       })
 
-      if (updatedTrip) {
-        const slotsPercentage = (updatedTrip.availableSlots / updatedTrip.totalSlots) * 100
+      if (updatedTrip && updatedTrip.availableSlots <= 10 && !updatedTrip.bookingHalted) {
+        // Halt booking automatically
+        await tx.trip.update({
+          where: { id: tripId },
+          data: {
+            lowSlotAlertSent: true,
+            bookingHalted: true,
+          },
+        })
 
-        if (slotsPercentage <= 10 && !updatedTrip.lowSlotAlertSent) {
-          // Mark alert as sent and halt booking
-          await tx.trip.update({
-            where: { id: tripId },
-            data: {
-              lowSlotAlertSent: true,
-              bookingHalted: true,
-            },
-          })
+        // Log the auto-halt event
+        await tx.adminLog.create({
+          data: {
+            userId: "SYSTEM",
+            action: "AUTO_HALT_LOW_SLOTS",
+            tripId,
+            details: JSON.stringify({
+              reason: "Slots dropped to 10 or below",
+              availableSlots: updatedTrip.availableSlots,
+              totalSlots: updatedTrip.totalSlots,
+              triggeredBy: "online_booking",
+              timestamp: new Date().toISOString(),
+            }),
+          },
+        })
 
-          // Log the event
-          await tx.adminLog.create({
-            data: {
-              userId: "SYSTEM",
-              action: "LOW_SLOT_ALERT",
-              tripId,
-              details: `Trip reached ${slotsPercentage.toFixed(1)}% availability. Online booking halted automatically.`,
-            },
-          })
-
-          // In production, send SMS notification to company admin here
-          console.log(`[SMS] Low slot alert for trip ${tripId}: ${slotsPercentage.toFixed(1)}% remaining`)
-        }
+        // In production, send SMS notification to company admin
+        console.log(`[ALERT] Trip ${tripId} auto-halted: Only ${updatedTrip.availableSlots} slots remaining`)
       }
 
       return newBooking
