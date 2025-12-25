@@ -4,6 +4,7 @@ import "./globals.css"
 import { SessionProvider } from "@/components/providers/SessionProvider"
 import { Navbar } from "@/components/shared/Navbar"
 import { Footer } from "@/components/shared/Footer"
+import { Toaster } from "sonner"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -36,6 +37,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
             <Footer />
           </div>
+          <Toaster position="top-center" richColors closeButton />
         </SessionProvider>
       </body>
     </html>

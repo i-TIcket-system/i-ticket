@@ -26,6 +26,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { formatDate, formatDuration, formatCurrency } from "@/lib/utils"
+import { generateICSFile, downloadICSFile, getICSFilename } from "@/lib/calendar"
+import { toast } from "sonner"
 
 interface Ticket {
   id: string
@@ -126,6 +128,39 @@ export default function TicketsPage() {
       alert("Failed to download ticket. Please try again.")
     } finally {
       setIsDownloading(false)
+    }
+  }
+
+  const addToCalendar = () => {
+    if (!booking) return
+
+    try {
+      const icsContent = generateICSFile({
+        tripId: booking.trip.id,
+        origin: booking.trip.origin,
+        destination: booking.trip.destination,
+        departureTime: new Date(booking.trip.departureTime),
+        estimatedDuration: booking.trip.estimatedDuration,
+        companyName: booking.trip.company.name,
+        passengerNames: booking.passengers.map((p: any) => p.name),
+        seatNumbers: booking.passengers.map((p: any) => p.seatNumber),
+        bookingId: booking.id,
+      })
+
+      const filename = getICSFilename(
+        booking.trip.origin,
+        booking.trip.destination,
+        new Date(booking.trip.departureTime)
+      )
+
+      downloadICSFile(icsContent, filename)
+
+      toast.success("Calendar event downloaded!", {
+        description: "Open the .ics file to add to your calendar",
+      })
+    } catch (error) {
+      console.error("Calendar export failed:", error)
+      toast.error("Failed to create calendar event")
     }
   }
 
@@ -318,6 +353,15 @@ export default function TicketsPage() {
                       </div>
 
                       <Separator />
+
+                      <Button
+                        variant="default"
+                        className="w-full mb-2"
+                        onClick={addToCalendar}
+                      >
+                        <Calendar className="h-4 w-4 mr-2" />
+                        Add to Calendar
+                      </Button>
 
                       <div className="flex gap-2">
                         <Button

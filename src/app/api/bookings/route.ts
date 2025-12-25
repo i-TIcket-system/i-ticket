@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     // Use transaction to ensure atomic booking
     const booking = await prisma.$transaction(async (tx) => {
-      // Get trip with lock
+      // Get trip info
       const trip = await tx.trip.findUnique({
         where: { id: tripId },
       })
@@ -90,15 +90,27 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // Update available slots
-      await tx.trip.update({
-        where: { id: tripId },
+      // ATOMIC UPDATE: Only decrement if enough slots still available
+      // This prevents race conditions by using a WHERE clause
+      const updateResult = await tx.trip.updateMany({
+        where: {
+          id: tripId,
+          availableSlots: {
+            gte: passengers.length,
+          },
+          bookingHalted: false,
+        },
         data: {
           availableSlots: {
             decrement: passengers.length,
           },
         },
       })
+
+      // If no rows were updated, another booking took the seats
+      if (updateResult.count === 0) {
+        throw new Error("Seats no longer available. Please search again.")
+      }
 
       // CRITICAL: Auto-halt if slots drop to 10 or below
       const updatedTrip = await tx.trip.findUnique({
