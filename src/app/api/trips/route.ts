@@ -24,11 +24,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (origin) {
-      where.origin = { contains: origin, mode: 'insensitive' }
+      where.origin = { contains: origin }
     }
 
     if (destination) {
-      where.destination = { contains: destination, mode: 'insensitive' }
+      where.destination = { contains: destination }
     }
 
     if (date) {
