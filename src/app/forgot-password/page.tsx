@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { toast } from "sonner"
+import { PhoneInput } from "@/components/ui/phone-input"
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
@@ -124,23 +125,13 @@ export default function ForgotPasswordPage() {
             <form onSubmit={handleRequestOTP} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
-                <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="0911234567"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="pl-10"
-                    required
-                    disabled={isLoading}
-                    maxLength={10}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Ethiopian phone number format: 09XXXXXXXX
-                </p>
+                <PhoneInput
+                  id="phone"
+                  value={phone}
+                  onChange={setPhone}
+                  required
+                  disabled={isLoading}
+                />
               </div>
 
               <Button type="submit" className="w-full" disabled={isLoading}>

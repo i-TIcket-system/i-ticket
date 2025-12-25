@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { PhoneInput } from "@/components/ui/phone-input"
+import { toast } from "sonner"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -35,7 +37,13 @@ export default function LoginPage() {
 
       if (result?.error) {
         setError(result.error)
+        toast.error("Login failed", {
+          description: result.error
+        })
       } else {
+        toast.success("Login successful!", {
+          description: "Redirecting..."
+        })
         // Small delay to ensure session is fully propagated
         await new Promise(resolve => setTimeout(resolve, 300))
 
@@ -101,18 +109,13 @@ export default function LoginPage() {
 
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="09XXXXXXXX"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <PhoneInput
+                id="phone"
+                value={phone}
+                onChange={setPhone}
+                required
+                disabled={isLoading}
+              />
             </div>
 
             <div className="space-y-2">
