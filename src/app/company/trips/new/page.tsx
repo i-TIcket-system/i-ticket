@@ -47,6 +47,9 @@ export default function NewTripPage() {
     hasWater: false,
     hasFood: false,
   })
+  const [customOrigin, setCustomOrigin] = useState("")
+  const [customDestination, setCustomDestination] = useState("")
+  const [intermediateStops, setIntermediateStops] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
 
@@ -84,13 +87,24 @@ export default function NewTripPage() {
       // Combine date and time
       const departureTime = new Date(`${formData.departureDate}T${formData.departureTime}`)
 
+      // Use custom inputs if "Other" is selected
+      const finalOrigin = formData.origin === "__custom__" ? customOrigin : formData.origin
+      const finalDestination = formData.destination === "__custom__" ? customDestination : formData.destination
+
+      // Build route string with intermediate stops
+      const route = intermediateStops.length > 0
+        ? `${finalOrigin} → ${intermediateStops.join(" → ")} → ${finalDestination}`
+        : null
+
       const response = await fetch("/api/trips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           companyId: session?.user?.companyId,
-          origin: formData.origin,
-          destination: formData.destination,
+          origin: finalOrigin,
+          destination: finalDestination,
+          route,
+          intermediateStops: intermediateStops.length > 0 ? JSON.stringify(intermediateStops) : null,
           departureTime: departureTime.toISOString(),
           estimatedDuration: parseInt(formData.estimatedDuration),
           price: parseFloat(formData.price),
@@ -177,8 +191,17 @@ export default function NewTripPage() {
                           {city}
                         </SelectItem>
                       ))}
+                      <SelectItem value="__custom__">Other (type manually)</SelectItem>
                     </SelectContent>
                   </Select>
+                  {formData.origin === "__custom__" && (
+                    <Input
+                      placeholder="Enter custom origin city"
+                      value={customOrigin}
+                      onChange={(e) => setCustomOrigin(e.target.value)}
+                      required
+                    />
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -197,9 +220,64 @@ export default function NewTripPage() {
                           {city}
                         </SelectItem>
                       ))}
+                      <SelectItem value="__custom__">Other (type manually)</SelectItem>
                     </SelectContent>
                   </Select>
+                  {formData.destination === "__custom__" && (
+                    <Input
+                      placeholder="Enter custom destination city"
+                      value={customDestination}
+                      onChange={(e) => setCustomDestination(e.target.value)}
+                      required
+                    />
+                  )}
                 </div>
+              </div>
+
+              {/* Intermediate Stops */}
+              <div className="space-y-2">
+                <Label>Intermediate Stops (Optional)</Label>
+                <p className="text-sm text-muted-foreground">
+                  Add cities where the bus stops along the route
+                </p>
+                {intermediateStops.map((stop, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      placeholder={`Stop ${index + 1}`}
+                      value={stop}
+                      onChange={(e) => {
+                        const newStops = [...intermediateStops]
+                        newStops[index] = e.target.value
+                        setIntermediateStops(newStops)
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setIntermediateStops(intermediateStops.filter((_, i) => i !== index))
+                      }}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIntermediateStops([...intermediateStops, ""])}
+                  className="w-full"
+                >
+                  + Add Stop
+                </Button>
+                {intermediateStops.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Route: {formData.origin === "__custom__" ? customOrigin : formData.origin}
+                    {intermediateStops.map((s, i) => s && ` → ${s}`)}
+                    → {formData.destination === "__custom__" ? customDestination : formData.destination}
+                  </p>
+                )}
               </div>
 
               {/* Date & Time */}

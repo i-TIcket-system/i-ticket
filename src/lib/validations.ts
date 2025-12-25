@@ -7,7 +7,8 @@ const ethiopianPhone = z.string().regex(/^09\d{8}$/, "Invalid Ethiopian phone nu
 export const createTripSchema = z.object({
   origin: z.string().min(2, "Origin must be at least 2 characters"),
   destination: z.string().min(2, "Destination must be at least 2 characters"),
-  route: z.string().optional(),
+  route: z.string().optional().nullable(),
+  intermediateStops: z.string().optional().nullable(),
   departureTime: z.string().datetime().refine((date) => new Date(date) > new Date(), {
     message: "Departure time must be in the future",
   }),
