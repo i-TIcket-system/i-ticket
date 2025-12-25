@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useParams } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
 import Image from "next/image"
+import html2canvas from "html2canvas"
 import {
   Bus,
   Calendar,
@@ -24,7 +25,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { formatDate, formatDuration } from "@/lib/utils"
+import { formatDate, formatDuration, formatCurrency } from "@/lib/utils"
 
 interface Ticket {
   id: string
@@ -38,18 +39,23 @@ interface Ticket {
 interface Booking {
   id: string
   status: string
+  totalAmount: number
+  commission: number
+  createdAt: string
   trip: {
     origin: string
     destination: string
     departureTime: string
     estimatedDuration: number
     busType: string
+    price: number
     company: {
       name: string
       phones: string[]
     }
   }
   tickets: Ticket[]
+  passengers: { name: string; phone: string; nationalId: string }[]
 }
 
 export default function TicketsPage() {
@@ -59,8 +65,10 @@ export default function TicketsPage() {
 
   const [booking, setBooking] = useState<Booking | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isDownloading, setIsDownloading] = useState(false)
   const [error, setError] = useState("")
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null)
+  const ticketCardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     fetchBooking()
@@ -86,14 +94,39 @@ export default function TicketsPage() {
     }
   }
 
-  const downloadTicket = (ticket: Ticket) => {
-    // Create a link element to download the QR code
-    const link = document.createElement("a")
-    link.href = ticket.qrCode
-    link.download = `ticket-${ticket.shortCode}.png`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+  const downloadTicket = async (ticket: Ticket) => {
+    if (!ticketCardRef.current || !booking) return
+
+    setIsDownloading(true)
+
+    try {
+      // Generate canvas from the ticket card
+      const canvas = await html2canvas(ticketCardRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2, // Higher quality
+        logging: false,
+        useCORS: true,
+      })
+
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement("a")
+          link.href = url
+          link.download = `i-Ticket-${ticket.shortCode}-${booking.trip.origin}-${booking.trip.destination}.png`
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(url)
+        }
+      })
+    } catch (error) {
+      console.error("Download failed:", error)
+      alert("Failed to download ticket. Please try again.")
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   const shareTicket = async (ticket: Ticket) => {
@@ -164,7 +197,7 @@ export default function TicketsPage() {
           {/* Main Ticket Display */}
           <div className="lg:col-span-2 space-y-6">
             {selectedTicket && (
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden" ref={ticketCardRef}>
                 <div className="bg-gradient-to-r from-primary to-primary/80 text-white p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
@@ -261,14 +294,49 @@ export default function TicketsPage() {
 
                       <Separator />
 
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Ticket Price</span>
+                          <span className="font-medium">{formatCurrency(booking.trip.price)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Service Fee</span>
+                          <span className="font-medium">{formatCurrency(Number(booking.commission) / booking.passengers.length)}</span>
+                        </div>
+                        <Separator />
+                        <div className="flex justify-between font-bold">
+                          <span>Total Paid</span>
+                          <span className="text-primary">{formatCurrency(booking.trip.price + (Number(booking.commission) / booking.passengers.length))}</span>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="text-xs text-muted-foreground">
+                        <p>Booking ID: {booking.id.slice(0, 8).toUpperCase()}</p>
+                        <p>Booked: {new Date(booking.createdAt).toLocaleDateString()}</p>
+                      </div>
+
+                      <Separator />
+
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
                           className="flex-1"
                           onClick={() => downloadTicket(selectedTicket)}
+                          disabled={isDownloading}
                         >
-                          <Download className="h-4 w-4 mr-2" />
-                          Download
+                          {isDownloading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Preparing...
+                            </>
+                          ) : (
+                            <>
+                              <Download className="h-4 w-4 mr-2" />
+                              Download
+                            </>
+                          )}
                         </Button>
                         <Button
                           variant="outline"
