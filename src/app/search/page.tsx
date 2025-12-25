@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { formatCurrency, formatDuration, ETHIOPIAN_CITIES, BUS_TYPES } from "@/lib/utils"
+import { formatCurrency, formatDuration, BUS_TYPES } from "@/lib/utils"
 
 interface Trip {
   id: string
@@ -56,6 +56,7 @@ function SearchContent() {
   const [trips, setTrips] = useState<Trip[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [cities, setCities] = useState<string[]>([])
 
   // Search filters
   const [origin, setOrigin] = useState(searchParams.get("from") || "")
@@ -65,6 +66,23 @@ function SearchContent() {
   const [sortBy, setSortBy] = useState("departureTime")
 
   const today = new Date().toISOString().split("T")[0]
+
+  // Fetch cities from API
+  useEffect(() => {
+    async function fetchCities() {
+      try {
+        const response = await fetch("/api/cities")
+        const data = await response.json()
+        if (data.cities) {
+          setCities(data.cities.map((c: any) => c.name))
+        }
+      } catch (error) {
+        console.error("Failed to fetch cities:", error)
+        setCities([])
+      }
+    }
+    fetchCities()
+  }, [])
 
   useEffect(() => {
     if (origin || destination || date) {
@@ -125,7 +143,7 @@ function SearchContent() {
                   <SelectValue placeholder="From" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ETHIOPIAN_CITIES.map((city) => (
+                  {cities.map((city) => (
                     <SelectItem key={city} value={city}>
                       {city}
                     </SelectItem>
@@ -139,7 +157,7 @@ function SearchContent() {
                   <SelectValue placeholder="To" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ETHIOPIAN_CITIES.filter((c) => c !== origin).map((city) => (
+                  {cities.filter((c) => c !== origin).map((city) => (
                     <SelectItem key={city} value={city}>
                       {city}
                     </SelectItem>

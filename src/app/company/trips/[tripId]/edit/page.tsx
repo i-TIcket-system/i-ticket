@@ -43,7 +43,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { ETHIOPIAN_CITIES, BUS_TYPES } from "@/lib/utils"
+import { BUS_TYPES } from "@/lib/utils"
 
 interface Trip {
   id: string
@@ -72,6 +72,7 @@ export default function EditTripPage() {
 
   const [trip, setTrip] = useState<Trip | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [cities, setCities] = useState<string[]>([])
   const [formData, setFormData] = useState({
     origin: "",
     destination: "",
@@ -89,6 +90,23 @@ export default function EditTripPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState("")
+
+  // Fetch cities from API
+  useEffect(() => {
+    async function fetchCities() {
+      try {
+        const response = await fetch("/api/cities")
+        const data = await response.json()
+        if (data.cities) {
+          setCities(data.cities.map((c: any) => c.name))
+        }
+      } catch (error) {
+        console.error("Failed to fetch cities:", error)
+        setCities([])
+      }
+    }
+    fetchCities()
+  }, [])
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -352,7 +370,7 @@ export default function EditTripPage() {
                       <SelectValue placeholder="Select origin" />
                     </SelectTrigger>
                     <SelectContent>
-                      {ETHIOPIAN_CITIES.map((city) => (
+                      {cities.map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}
                         </SelectItem>
@@ -372,7 +390,7 @@ export default function EditTripPage() {
                       <SelectValue placeholder="Select destination" />
                     </SelectTrigger>
                     <SelectContent>
-                      {ETHIOPIAN_CITIES.filter((c) => c !== formData.origin).map((city) => (
+                      {cities.filter((c) => c !== formData.origin).map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}
                         </SelectItem>

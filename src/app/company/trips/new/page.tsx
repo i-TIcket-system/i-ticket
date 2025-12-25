@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -29,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ETHIOPIAN_CITIES, BUS_TYPES } from "@/lib/utils"
+import { BUS_TYPES } from "@/lib/utils"
 
 export default function NewTripPage() {
   const { data: session, status } = useSession()
@@ -52,6 +52,24 @@ export default function NewTripPage() {
   const [intermediateStops, setIntermediateStops] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [cities, setCities] = useState<string[]>([])
+
+  // Fetch cities from API
+  useEffect(() => {
+    async function fetchCities() {
+      try {
+        const response = await fetch("/api/cities")
+        const data = await response.json()
+        if (data.cities) {
+          setCities(data.cities.map((c: any) => c.name))
+        }
+      } catch (error) {
+        console.error("Failed to fetch cities:", error)
+        setCities([])
+      }
+    }
+    fetchCities()
+  }, [])
 
   // Redirect if not company admin
   if (status === "authenticated" && session?.user?.role !== "COMPANY_ADMIN") {
@@ -186,7 +204,7 @@ export default function NewTripPage() {
                       <SelectValue placeholder="Select origin" />
                     </SelectTrigger>
                     <SelectContent>
-                      {ETHIOPIAN_CITIES.map((city) => (
+                      {cities.map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}
                         </SelectItem>
@@ -215,7 +233,7 @@ export default function NewTripPage() {
                       <SelectValue placeholder="Select destination" />
                     </SelectTrigger>
                     <SelectContent>
-                      {ETHIOPIAN_CITIES.filter((c) => c !== formData.origin).map((city) => (
+                      {cities.filter((c) => c !== formData.origin).map((city) => (
                         <SelectItem key={city} value={city}>
                           {city}
                         </SelectItem>

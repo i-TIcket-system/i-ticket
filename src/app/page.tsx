@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
@@ -26,7 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ETHIOPIAN_CITIES } from "@/lib/utils"
 
 const busCompanies = [
   { name: "Selam Bus", logo: "S", color: "bg-blue-500" },
@@ -66,6 +65,28 @@ export default function HomePage() {
   const [origin, setOrigin] = useState("")
   const [destination, setDestination] = useState("")
   const [date, setDate] = useState("")
+  const [cities, setCities] = useState<string[]>([])
+  const [citiesLoading, setCitiesLoading] = useState(true)
+
+  // Fetch cities from API on mount
+  useEffect(() => {
+    async function fetchCities() {
+      try {
+        const response = await fetch("/api/cities")
+        const data = await response.json()
+        if (data.cities) {
+          setCities(data.cities.map((c: any) => c.name))
+        }
+      } catch (error) {
+        console.error("Failed to fetch cities:", error)
+        // Fallback to empty array - cities will grow as companies add trips
+        setCities([])
+      } finally {
+        setCitiesLoading(false)
+      }
+    }
+    fetchCities()
+  }, [])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -115,13 +136,13 @@ export default function HomePage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white/80">From</label>
-                    <Select value={origin} onValueChange={setOrigin}>
+                    <Select value={origin} onValueChange={setOrigin} disabled={citiesLoading}>
                       <SelectTrigger className="bg-white/10 border-white/20 text-white">
                         <MapPin className="h-4 w-4 mr-2 text-primary" />
-                        <SelectValue placeholder="Origin city" />
+                        <SelectValue placeholder={citiesLoading ? "Loading cities..." : "Origin city"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {ETHIOPIAN_CITIES.map((city) => (
+                        {cities.map((city) => (
                           <SelectItem key={city} value={city}>
                             {city}
                           </SelectItem>
@@ -132,13 +153,13 @@ export default function HomePage() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white/80">To</label>
-                    <Select value={destination} onValueChange={setDestination}>
+                    <Select value={destination} onValueChange={setDestination} disabled={citiesLoading}>
                       <SelectTrigger className="bg-white/10 border-white/20 text-white">
                         <MapPin className="h-4 w-4 mr-2 text-accent" />
-                        <SelectValue placeholder="Destination" />
+                        <SelectValue placeholder={citiesLoading ? "Loading cities..." : "Destination"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {ETHIOPIAN_CITIES.filter((city) => city !== origin).map((city) => (
+                        {cities.filter((city) => city !== origin).map((city) => (
                           <SelectItem key={city} value={city}>
                             {city}
                           </SelectItem>

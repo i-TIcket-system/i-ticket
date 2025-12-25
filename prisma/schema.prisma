@@ -132,6 +132,17 @@ model Payment {
   updatedAt     DateTime @updatedAt
 }
 
+model City {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  region    String?
+  isActive  Boolean  @default(true)
+  tripCount Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([name])
+}
+
 model AdminLog {
   id        String   @id @default(cuid())
   userId    String

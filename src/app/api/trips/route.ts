@@ -107,6 +107,7 @@ export async function POST(request: NextRequest) {
     // Import auth helpers dynamically to avoid circular dependencies
     const { requireCompanyAdmin, handleAuthError } = await import("@/lib/auth-helpers")
     const { createTripSchema, validateRequest } = await import("@/lib/validations")
+    const { ensureCityExists } = await import("@/app/api/cities/route")
 
     // Require company admin authentication
     let companyId: string
@@ -124,6 +125,12 @@ export async function POST(request: NextRequest) {
     }
 
     const data = validation.data
+
+    // Track cities in database for auto-population
+    await Promise.all([
+      ensureCityExists(data.origin),
+      ensureCityExists(data.destination)
+    ])
 
     // Create trip for authenticated company only
     const trip = await prisma.trip.create({
