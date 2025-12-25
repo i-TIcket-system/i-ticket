@@ -90,20 +90,13 @@ export async function POST(request: NextRequest) {
         booking.passengers.map(async (passenger) => {
           const shortCode = generateShortCode()
 
-          // Generate QR code data
-          const qrData = JSON.stringify({
-            ticketId: shortCode,
-            bookingId,
-            tripId: booking.tripId,
-            passenger: passenger.name,
-            origin: booking.trip.origin,
-            destination: booking.trip.destination,
-            departure: booking.trip.departureTime,
-            company: booking.trip.company.name,
-          })
+          // Generate QR code with URL that anyone can scan
+          // When scanned, opens a public page showing ticket details
+          const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+          const verificationUrl = `${baseUrl}/verify/${shortCode}`
 
           // Generate QR code as data URL
-          const qrCode = await QRCode.toDataURL(qrData, {
+          const qrCode = await QRCode.toDataURL(verificationUrl, {
             width: 300,
             margin: 2,
             color: {
