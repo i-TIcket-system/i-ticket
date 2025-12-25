@@ -33,6 +33,7 @@ export async function POST(
         origin: true,
         destination: true,
         bookingHalted: true,
+        reportGenerated: true,
       }
     })
 
