@@ -213,6 +213,54 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Track Booking Section */}
+      <section className="py-8 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-2xl mx-auto border-primary/20 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                    <Ticket className="h-5 w-5 text-primary" />
+                    Already have a booking?
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Enter your booking ID or ticket code to track your trip
+                  </p>
+                </div>
+                <div className="flex gap-2 md:w-auto w-full">
+                  <Input
+                    placeholder="Enter booking ID or ticket code"
+                    className="md:w-64"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const value = e.currentTarget.value.trim()
+                        if (value) {
+                          router.push(`/track/${value}`)
+                        }
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={(e) => {
+                      const input = e.currentTarget.previousElementSibling as HTMLInputElement
+                      const value = input?.value.trim()
+                      if (value) {
+                        router.push(`/track/${value}`)
+                      }
+                    }}
+                    className="shrink-0"
+                  >
+                    <Search className="h-4 w-4 md:mr-2" />
+                    <span className="hidden md:inline">Track</span>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* Stats Section */}
       <section className="py-12 bg-primary">
         <div className="container mx-auto px-4">
@@ -339,7 +387,7 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link href="/register">
-              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-primary">
+              <Button size="lg" variant="secondary" className="text-primary">
                 <UserPlus className="h-5 w-5 mr-2" />
                 Create Account
               </Button>
