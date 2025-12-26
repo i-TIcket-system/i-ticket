@@ -177,6 +177,25 @@ export async function PUT(
       },
     })
 
+    // Log trip update for dispute management (track what changed)
+    const changes: string[] = []
+    if (price && price !== existingTrip.price) changes.push(`Price: ${existingTrip.price} → ${price} ETB`)
+    if (totalSlots && totalSlots !== existingTrip.totalSlots) changes.push(`Capacity: ${existingTrip.totalSlots} → ${totalSlots} seats`)
+    if (departureTime) changes.push(`Departure: ${existingTrip.departureTime.toISOString()} → ${new Date(departureTime).toISOString()}`)
+    if (bookingHalted !== undefined && bookingHalted !== existingTrip.bookingHalted) changes.push(`Booking ${bookingHalted ? 'halted' : 'resumed'}`)
+    if (isActive !== undefined && isActive !== existingTrip.isActive) changes.push(`Trip ${isActive ? 'activated' : 'deactivated'}`)
+
+    await prisma.adminLog.create({
+      data: {
+        userId: session.user.id,
+        action: "TRIP_UPDATED",
+        tripId,
+        details: `Trip updated: ${session.user.name} (${updatedTrip.company.name}) updated trip ${existingTrip.origin} to ${existingTrip.destination}. Changes: ${changes.length > 0 ? changes.join(', ') : 'Minor updates'}.`,
+      },
+    })
+
+    console.log(`[TRIP UPDATE] ${session.user.name} updated trip ${tripId}: ${changes.join(', ')}`)
+
     return NextResponse.json({ trip: updatedTrip })
   } catch (error) {
     console.error("Trip update error:", error)
@@ -241,9 +260,32 @@ export async function DELETE(
       )
     }
 
+    // Get trip details before deletion for logging
+    const tripDetails = await prisma.trip.findUnique({
+      where: { id: tripId },
+      include: {
+        company: {
+          select: { name: true }
+        }
+      }
+    })
+
     await prisma.trip.delete({
       where: { id: tripId },
     })
+
+    // Log trip deletion for dispute management (critical for refund disputes)
+    if (tripDetails) {
+      await prisma.adminLog.create({
+        data: {
+          userId: session.user.id,
+          action: "TRIP_DELETED",
+          details: `Trip deleted: ${session.user.name} (${tripDetails.company.name}) deleted trip from ${tripDetails.origin} to ${tripDetails.destination}. Departure was: ${tripDetails.departureTime.toISOString()}, Price: ${tripDetails.price} ETB, Capacity: ${tripDetails.totalSlots} seats. Available slots at deletion: ${tripDetails.availableSlots}.`,
+        },
+      })
+
+      console.log(`[TRIP DELETE] ${session.user.name} deleted trip ${tripId}: ${tripDetails.origin} to ${tripDetails.destination}`)
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

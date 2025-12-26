@@ -145,6 +145,11 @@ export async function POST(request: NextRequest) {
       ensureCityExists(data.destination)
     ])
 
+    // Get session for logging
+    const { getServerSession } = await import("next-auth")
+    const { authOptions } = await import("@/lib/auth")
+    const session = await getServerSession(authOptions)
+
     // Create trip for authenticated company only
     const trip = await prisma.trip.create({
       data: {
@@ -165,6 +170,20 @@ export async function POST(request: NextRequest) {
         company: true,
       },
     })
+
+    // Log trip creation for dispute management
+    if (session?.user) {
+      await prisma.adminLog.create({
+        data: {
+          userId: session.user.id,
+          action: "TRIP_CREATED",
+          tripId: trip.id,
+          details: `Trip created: ${session.user.name} (${trip.company.name}) created trip from ${trip.origin} to ${trip.destination}. Departure: ${trip.departureTime.toISOString()}, Price: ${trip.price} ETB, Capacity: ${trip.totalSlots} seats, Bus Type: ${trip.busType}.`,
+        },
+      })
+
+      console.log(`[TRIP CREATE] ${session.user.name} created trip ${trip.id}: ${trip.origin} to ${trip.destination}`)
+    }
 
     return NextResponse.json({ trip }, { status: 201 })
   } catch (error) {

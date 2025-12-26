@@ -131,6 +131,18 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Log successful verification for dispute management
+    await prisma.adminLog.create({
+      data: {
+        userId: session.user.id,
+        action: "TICKET_VERIFIED",
+        tripId: ticket.tripId,
+        details: `Ticket verified: ${session.user.name} (${session.user.companyId ? 'Company Admin' : 'Super Admin'}) verified ticket ${ticket.shortCode} for passenger ${ticket.passengerName}, seat ${ticket.seatNumber}. Trip: ${ticket.trip.origin} to ${ticket.trip.destination}.`,
+      },
+    })
+
+    console.log(`[TICKET VERIFY] ${session.user.name} verified ticket ${ticket.shortCode} for ${ticket.passengerName}`)
+
     // Ticket is valid - return full details
     return NextResponse.json({
       valid: true,
@@ -233,7 +245,27 @@ export async function PATCH(request: NextRequest) {
         isUsed: true,
         usedAt: new Date(),
       },
+      include: {
+        trip: {
+          select: {
+            origin: true,
+            destination: true,
+          }
+        }
+      }
     })
+
+    // Log ticket usage for dispute management (critical for double-use fraud detection)
+    await prisma.adminLog.create({
+      data: {
+        userId: session.user.id,
+        action: "TICKET_USED",
+        tripId: ticket.tripId,
+        details: `Ticket marked as used: ${session.user.name} (${session.user.companyId ? 'Company Admin' : 'Super Admin'}) marked ticket ${updatedTicket.shortCode} as used for passenger ${updatedTicket.passengerName}, seat ${updatedTicket.seatNumber}. Trip: ${updatedTicket.trip.origin} to ${updatedTicket.trip.destination}. Used at: ${updatedTicket.usedAt?.toISOString()}.`,
+      },
+    })
+
+    console.log(`[TICKET USED] ${session.user.name} marked ticket ${updatedTicket.shortCode} as used`)
 
     return NextResponse.json({
       success: true,

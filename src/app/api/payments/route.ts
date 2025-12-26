@@ -118,11 +118,22 @@ export async function POST(request: NextRequest) {
         })
       )
 
+      // Log payment for dispute management
+      await tx.adminLog.create({
+        data: {
+          userId: session.user.id,
+          action: "PAYMENT_SUCCESS",
+          tripId: booking.tripId,
+          details: `Payment successful: ${session.user.name} (${session.user.phone}) paid ${totalAmount} ETB for booking ${bookingId}. Method: ${payment.method}, Transaction ID: ${payment.transactionId}. ${booking.passengers.length} tickets generated.`,
+        },
+      })
+
       // Log SMS notification (in production, actually send SMS)
       console.log(`[SMS] Tickets sent to ${session.user.phone}:`)
       tickets.forEach((ticket) => {
         console.log(`  - ${ticket.passengerName}: ${ticket.shortCode}`)
       })
+      console.log(`[PAYMENT LOG] ${session.user.name} paid ${totalAmount} ETB for booking ${bookingId}`)
 
       return { payment, tickets }
     })
@@ -134,6 +145,24 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Payment error:", error)
+
+    // Log payment failure for dispute management
+    try {
+      const session = await getServerSession(authOptions)
+      if (session?.user?.id) {
+        const body = await request.json()
+        await prisma.adminLog.create({
+          data: {
+            userId: session.user.id,
+            action: "PAYMENT_FAILED",
+            details: `Payment failed for user ${session.user.name} (${session.user.phone}). Booking ID: ${body.bookingId}. Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          },
+        })
+      }
+    } catch (logError) {
+      console.error("Failed to log payment error:", logError)
+    }
+
     return NextResponse.json(
       { error: "Payment processing failed" },
       { status: 500 }

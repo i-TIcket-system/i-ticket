@@ -24,6 +24,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner"
 import {
   Table,
   TableBody,
@@ -74,6 +75,7 @@ export default function CompanyDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [alertTrip, setAlertTrip] = useState<Trip | null>(null)
   const [isProcessingAlert, setIsProcessingAlert] = useState(false)
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -115,11 +117,28 @@ export default function CompanyDashboard() {
       })
 
       if (response.ok) {
+        // Add to dismissed alerts
+        setDismissedAlerts(prev => new Set([...prev, tripId]))
+
+        // Show success toast
+        if (allowContinue) {
+          toast.success("Booking resumed successfully", {
+            description: "Customers can now book this trip online."
+          })
+        } else {
+          toast.success("Booking stopped", {
+            description: "Online booking is now halted for this trip."
+          })
+        }
+
         fetchDashboardData()
         setAlertTrip(null)
+      } else {
+        toast.error("Failed to update booking status")
       }
     } catch (error) {
       console.error("Failed to process alert response:", error)
+      toast.error("An error occurred while processing your request")
     } finally {
       setIsProcessingAlert(false)
     }
@@ -134,7 +153,7 @@ export default function CompanyDashboard() {
   }
 
   const lowSlotTrips = trips.filter(
-    (t) => isLowSlots(t.availableSlots, t.totalSlots) && t.bookingHalted
+    (t) => isLowSlots(t.availableSlots, t.totalSlots) && t.bookingHalted && !dismissedAlerts.has(t.id)
   )
 
   return (
