@@ -75,7 +75,14 @@ export default function CompanyDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [alertTrip, setAlertTrip] = useState<Trip | null>(null)
   const [isProcessingAlert, setIsProcessingAlert] = useState(false)
-  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(new Set())
+  const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => {
+    // Load dismissed alerts from localStorage on mount
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('dismissedAlerts')
+      return stored ? new Set(JSON.parse(stored)) : new Set()
+    }
+    return new Set()
+  })
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -87,6 +94,13 @@ export default function CompanyDashboard() {
     }
     // Layout handles unauthenticated redirect
   }, [status, session])
+
+  // Persist dismissed alerts to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('dismissedAlerts', JSON.stringify([...dismissedAlerts]))
+    }
+  }, [dismissedAlerts])
 
   const fetchDashboardData = async () => {
     try {
