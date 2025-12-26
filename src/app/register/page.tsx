@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { PhoneInput } from "@/components/ui/phone-input"
+import { toast } from "sonner"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -21,7 +22,6 @@ export default function RegisterPage() {
     password: "",
     confirmPassword: "",
   })
-  const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -33,21 +33,20 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
 
     // Validation
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
+      toast.error("Passwords do not match")
       return
     }
 
     if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters")
+      toast.error("Password must be at least 6 characters")
       return
     }
 
     if (!/^09\d{8}$/.test(formData.phone)) {
-      setError("Please enter a valid Ethiopian phone number (09XXXXXXXX)")
+      toast.error("Please enter a valid Ethiopian phone number (09XXXXXXXX)")
       return
     }
 
@@ -71,10 +70,13 @@ export default function RegisterPage() {
         throw new Error(data.error || "Registration failed")
       }
 
+      toast.success("Account created successfully! Redirecting to login...")
       // Redirect to login
-      router.push("/login?registered=true")
+      setTimeout(() => {
+        router.push("/login?registered=true")
+      }, 1000)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred")
+      toast.error(err instanceof Error ? err.message : "An unexpected error occurred")
     } finally {
       setIsLoading(false)
     }
@@ -106,13 +108,6 @@ export default function RegisterPage() {
 
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-                <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                {error}
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <div className="relative">

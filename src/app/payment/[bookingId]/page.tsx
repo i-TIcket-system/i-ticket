@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
+import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/utils"
 
 interface Booking {
@@ -42,7 +43,6 @@ export default function PaymentPage() {
   const [booking, setBooking] = useState<Booking | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [error, setError] = useState("")
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "processing" | "success" | "failed">("pending")
 
   useEffect(() => {
@@ -60,10 +60,10 @@ export default function PaymentPage() {
           router.push(`/tickets/${bookingId}`)
         }
       } else {
-        setError(data.error || "Booking not found")
+        toast.error(data.error || "Booking not found")
       }
     } catch (err) {
-      setError("Failed to load booking details")
+      toast.error("Failed to load booking details")
     } finally {
       setIsLoading(false)
     }
@@ -72,7 +72,6 @@ export default function PaymentPage() {
   const processPayment = async () => {
     setIsProcessing(true)
     setPaymentStatus("processing")
-    setError("")
 
     try {
       const response = await fetch("/api/payments", {
@@ -88,17 +87,18 @@ export default function PaymentPage() {
 
       if (response.ok) {
         setPaymentStatus("success")
+        toast.success("Payment successful! Generating your tickets...")
         // Wait a moment then redirect to tickets
         setTimeout(() => {
           router.push(`/tickets/${bookingId}`)
         }, 2000)
       } else {
         setPaymentStatus("failed")
-        setError(data.error || "Payment failed")
+        toast.error(data.error || "Payment failed")
       }
     } catch (err) {
       setPaymentStatus("failed")
-      setError("An unexpected error occurred")
+      toast.error("An unexpected error occurred")
     } finally {
       setIsProcessing(false)
     }
@@ -118,7 +118,7 @@ export default function PaymentPage() {
         <Card className="max-w-md p-6 text-center">
           <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-semibold mb-2">Booking Not Found</h2>
-          <p className="text-muted-foreground mb-4">{error}</p>
+          <p className="text-muted-foreground mb-4">The booking you're looking for doesn't exist or has been cancelled.</p>
           <Link href="/search">
             <Button>Back to Search</Button>
           </Link>
@@ -208,13 +208,6 @@ export default function PaymentPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {error && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-                    <AlertCircle className="h-4 w-4" />
-                    {error}
-                  </div>
-                )}
-
                 {/* TeleBirr Option */}
                 <div className="p-4 border-2 border-primary rounded-lg bg-primary/5">
                   <div className="flex items-center gap-3 mb-3">

@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { PhoneInput } from "@/components/ui/phone-input"
 import {
   Select,
   SelectContent,
@@ -37,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { toast } from "sonner"
 import { formatCurrency, formatDuration, formatDate, calculateCommission, BUS_TYPES } from "@/lib/utils"
 
 interface Trip {
@@ -86,7 +88,6 @@ export default function BookingPage() {
   const [trip, setTrip] = useState<Trip | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState("")
   const [step, setStep] = useState(1) // 1: passengers, 2: review, 3: payment
 
   const [passengers, setPassengers] = useState<Passenger[]>([{ ...emptyPassenger }])
@@ -117,10 +118,10 @@ export default function BookingPage() {
       if (response.ok) {
         setTrip(data.trip)
       } else {
-        setError(data.error || "Trip not found")
+        toast.error(data.error || "Trip not found")
       }
     } catch (err) {
-      setError("Failed to load trip details")
+      toast.error("Failed to load trip details")
     } finally {
       setIsLoading(false)
     }
@@ -171,12 +172,11 @@ export default function BookingPage() {
     }
 
     if (!validatePassengers()) {
-      setError("Please fill in all required passenger details")
+      toast.error("Please fill in all required passenger details")
       return
     }
 
     setIsSubmitting(true)
-    setError("")
 
     try {
       const { subtotal, commission, total } = calculateTotal()
@@ -195,13 +195,14 @@ export default function BookingPage() {
       const data = await response.json()
 
       if (response.ok) {
+        toast.success("Booking created! Redirecting to payment...")
         // Redirect to payment page
         router.push(`/payment/${data.booking.id}`)
       } else {
-        setError(data.error || "Booking failed")
+        toast.error(data.error || "Booking failed")
       }
     } catch (err) {
-      setError("An unexpected error occurred")
+      toast.error("An unexpected error occurred")
     } finally {
       setIsSubmitting(false)
     }
@@ -221,7 +222,7 @@ export default function BookingPage() {
         <Card className="max-w-md p-6 text-center">
           <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-semibold mb-2">Trip Not Found</h2>
-          <p className="text-muted-foreground mb-4">{error}</p>
+          <p className="text-muted-foreground mb-4">The trip you're looking for doesn't exist or has been removed.</p>
           <Link href="/search">
             <Button>Back to Search</Button>
           </Link>
@@ -355,13 +356,6 @@ export default function BookingPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {error && (
-                  <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-                    <AlertCircle className="h-4 w-4" />
-                    {error}
-                  </div>
-                )}
-
                 {passengers.map((passenger, index) => (
                   <div key={index} className="p-4 border rounded-lg space-y-4">
                     <div className="flex items-center justify-between">
@@ -409,16 +403,11 @@ export default function BookingPage() {
 
                       <div className="space-y-2">
                         <Label>Phone Number *</Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="09XXXXXXXX"
-                            value={passenger.phone}
-                            onChange={(e) => updatePassenger(index, "phone", e.target.value)}
-                            className="pl-10"
-                            required
-                          />
-                        </div>
+                        <PhoneInput
+                          value={passenger.phone}
+                          onChange={(value) => updatePassenger(index, "phone", value)}
+                          required
+                        />
                       </div>
 
                       <div className="space-y-2">

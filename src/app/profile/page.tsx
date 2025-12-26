@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import { PhoneInput } from "@/components/ui/phone-input"
+import { toast } from "sonner"
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -48,7 +49,6 @@ export default function ProfilePage() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setMessage(null)
 
     try {
       const response = await fetch("/api/user/profile", {
@@ -63,11 +63,11 @@ export default function ProfilePage() {
         throw new Error(data.error || "Failed to update profile")
       }
 
-      setMessage({ type: "success", text: "Profile updated successfully!" })
+      toast.success("Profile updated successfully!")
       // Update session
       await update()
     } catch (error: any) {
-      setMessage({ type: "error", text: error.message })
+      toast.error(error.message || "Failed to update profile")
     } finally {
       setIsLoading(false)
     }
@@ -76,16 +76,15 @@ export default function ProfilePage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setMessage(null)
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setMessage({ type: "error", text: "New passwords do not match" })
+      toast.error("New passwords do not match")
       setIsLoading(false)
       return
     }
 
     if (passwordData.newPassword.length < 6) {
-      setMessage({ type: "error", text: "Password must be at least 6 characters" })
+      toast.error("Password must be at least 6 characters")
       setIsLoading(false)
       return
     }
@@ -106,10 +105,10 @@ export default function ProfilePage() {
         throw new Error(data.error || "Failed to change password")
       }
 
-      setMessage({ type: "success", text: "Password changed successfully!" })
+      toast.success("Password changed successfully!")
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" })
     } catch (error: any) {
-      setMessage({ type: "error", text: error.message })
+      toast.error(error.message || "Failed to change password")
     } finally {
       setIsLoading(false)
     }
@@ -133,18 +132,6 @@ export default function ProfilePage() {
         <h1 className="text-3xl font-bold">Profile Settings</h1>
         <p className="text-muted-foreground">Manage your account information</p>
       </div>
-
-      {message && (
-        <div
-          className={`mb-6 p-4 rounded-lg ${
-            message.type === "success"
-              ? "bg-green-50 text-green-800 border border-green-200"
-              : "bg-red-50 text-red-800 border border-red-200"
-          }`}
-        >
-          {message.text}
-        </div>
-      )}
 
       {/* Account Information */}
       <Card className="mb-6">
@@ -217,11 +204,10 @@ export default function ProfilePage() {
 
             <div>
               <Label htmlFor="nextOfKinPhone">Next of Kin Phone (Optional)</Label>
-              <Input
+              <PhoneInput
                 id="nextOfKinPhone"
                 value={formData.nextOfKinPhone}
-                onChange={(e) => setFormData({ ...formData, nextOfKinPhone: e.target.value })}
-                placeholder="09XXXXXXXX"
+                onChange={(value) => setFormData({ ...formData, nextOfKinPhone: value })}
               />
             </div>
 

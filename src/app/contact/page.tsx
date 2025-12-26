@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { PhoneInput } from "@/components/ui/phone-input"
 import Link from "next/link"
 import { ArrowLeft, Mail, Phone, MapPin, Loader2 } from "lucide-react"
 import { toast } from "sonner"
@@ -100,12 +101,10 @@ export default function ContactPage() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone</Label>
-                      <Input
+                      <PhoneInput
                         id="phone"
-                        type="tel"
-                        placeholder="0911234567"
                         value={formData.phone}
-                        onChange={handleChange}
+                        onChange={(value) => setFormData((prev) => ({ ...prev, phone: value }))}
                         disabled={isSubmitting}
                       />
                     </div>
