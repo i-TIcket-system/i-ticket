@@ -26,6 +26,7 @@ interface Booking {
   commission: number
   status: string
   trip: {
+    id: string
     origin: string
     destination: string
     departureTime: string
@@ -133,7 +134,7 @@ export default function PaymentPage() {
     <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8">
       <div className="container mx-auto px-4 max-w-2xl">
         <Link
-          href={`/booking/${booking.trip ? booking.id : ""}`}
+          href={`/booking/${booking.trip.id}`}
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
