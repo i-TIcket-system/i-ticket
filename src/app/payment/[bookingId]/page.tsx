@@ -121,7 +121,7 @@ export default function PaymentPage() {
           <h2 className="text-xl font-semibold mb-2">Booking Not Found</h2>
           <p className="text-muted-foreground mb-4">The booking you're looking for doesn't exist or has been cancelled.</p>
           <Link href="/search">
-            <Button>Back to Search</Button>
+            <Button variant="outline">Back to Search</Button>
           </Link>
         </Card>
       </div>

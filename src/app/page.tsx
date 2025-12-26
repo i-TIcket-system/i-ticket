@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { CityCombobox } from "@/components/ui/city-combobox"
 import { getAllCities } from "@/lib/ethiopian-cities"
+import { toast } from "sonner"
 
 const busCompanies = [
   { name: "Selam Bus", logo: "S", color: "bg-blue-500" },
@@ -63,6 +64,7 @@ export default function HomePage() {
   const [date, setDate] = useState("")
   const [cities, setCities] = useState<string[]>([])
   const [citiesLoading, setCitiesLoading] = useState(true)
+  const [trackingCode, setTrackingCode] = useState("")
 
   // Fetch cities from API on mount
   useEffect(() => {
@@ -99,6 +101,22 @@ export default function HomePage() {
     if (destination) params.set("to", destination)
     if (date) params.set("date", date)
     router.push(`/search?${params.toString()}`)
+  }
+
+  const handleTrackBooking = () => {
+    const code = trackingCode.trim()
+
+    if (!code) {
+      toast.error("Please enter a booking ID or ticket code")
+      return
+    }
+
+    if (code.length < 4) {
+      toast.error("Invalid code. Booking IDs and ticket codes are at least 4 characters")
+      return
+    }
+
+    router.push(`/track/${code}`)
   }
 
   const today = new Date().toISOString().split("T")[0]
@@ -232,23 +250,16 @@ export default function HomePage() {
                   <Input
                     placeholder="Enter booking ID or ticket code"
                     className="md:w-64"
+                    value={trackingCode}
+                    onChange={(e) => setTrackingCode(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        const value = e.currentTarget.value.trim()
-                        if (value) {
-                          router.push(`/track/${value}`)
-                        }
+                        handleTrackBooking()
                       }
                     }}
                   />
                   <Button
-                    onClick={(e) => {
-                      const input = e.currentTarget.previousElementSibling as HTMLInputElement
-                      const value = input?.value.trim()
-                      if (value) {
-                        router.push(`/track/${value}`)
-                      }
-                    }}
+                    onClick={handleTrackBooking}
                     className="shrink-0"
                   >
                     <Search className="h-4 w-4 md:mr-2" />

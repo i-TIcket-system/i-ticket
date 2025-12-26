@@ -38,6 +38,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { formatCurrency, formatDuration, formatDate, calculateCommission, BUS_TYPES } from "@/lib/utils"
 
@@ -91,6 +101,7 @@ export default function BookingPage() {
   const [step, setStep] = useState(1) // 1: passengers, 2: review, 3: payment
 
   const [passengers, setPassengers] = useState<Passenger[]>([{ ...emptyPassenger }])
+  const [passengerToRemove, setPassengerToRemove] = useState<number | null>(null)
 
   useEffect(() => {
     fetchTrip()
@@ -133,9 +144,11 @@ export default function BookingPage() {
     }
   }
 
-  const removePassenger = (index: number) => {
-    if (passengers.length > 1) {
-      setPassengers(passengers.filter((_, i) => i !== index))
+  const confirmRemovePassenger = () => {
+    if (passengerToRemove !== null && passengers.length > 1) {
+      setPassengers(passengers.filter((_, i) => i !== passengerToRemove))
+      toast.success("Passenger removed")
+      setPassengerToRemove(null)
     }
   }
 
@@ -224,7 +237,7 @@ export default function BookingPage() {
           <h2 className="text-xl font-semibold mb-2">Trip Not Found</h2>
           <p className="text-muted-foreground mb-4">The trip you're looking for doesn't exist or has been removed.</p>
           <Link href="/search">
-            <Button>Back to Search</Button>
+            <Button variant="outline">Back to Search</Button>
           </Link>
         </Card>
       </div>
@@ -364,7 +377,7 @@ export default function BookingPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => removePassenger(index)}
+                          onClick={() => setPassengerToRemove(index)}
                         >
                           <Minus className="h-4 w-4 mr-1" />
                           Remove
@@ -533,6 +546,25 @@ export default function BookingPage() {
           </div>
         </div>
       </div>
+
+      {/* Passenger Removal Confirmation Dialog */}
+      <AlertDialog open={passengerToRemove !== null} onOpenChange={() => setPassengerToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Passenger?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove Passenger {passengerToRemove !== null ? passengerToRemove + 1 : ''}?
+              This will also remove any information you&apos;ve entered for this passenger.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmRemovePassenger} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

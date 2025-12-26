@@ -31,7 +31,14 @@
       "Bash(for:*)",
       "Bash(do netstat -ano)",
       "Bash(xargs:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(start \"\" \"C:\\\\Program Files\\\\Docker\\\\Docker\\\\Docker Desktop.exe\")",
+      "Bash(\"C:\\\\Program Files\\\\Docker\\\\Docker\\\\resources\\\\bin\\\\docker.exe\" start iticket-postgres)",
+      "Bash(git push)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(git reset:*)",
+      "Bash(npx shadcn@latest add accordion)"
     ]
   }
 }

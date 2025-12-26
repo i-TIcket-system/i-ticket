@@ -137,7 +137,7 @@ export default function TripDetailPage() {
           <h2 className="text-xl font-semibold mb-2">Trip Not Found</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
           <Link href="/company/dashboard">
-            <Button>Back to Dashboard</Button>
+            <Button variant="outline">Back to Dashboard</Button>
           </Link>
         </Card>
       </div>
