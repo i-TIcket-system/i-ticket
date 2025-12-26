@@ -29,6 +29,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
+import { CityCombobox } from "@/components/ui/city-combobox"
+import { getAllCities } from "@/lib/ethiopian-cities"
 import { formatCurrency, formatDuration, BUS_TYPES } from "@/lib/utils"
 
 interface Trip {
@@ -69,18 +71,27 @@ function SearchContent() {
 
   const today = new Date().toISOString().split("T")[0]
 
-  // Fetch cities from API
+  // Fetch cities from API and merge with static Ethiopian cities
   useEffect(() => {
     async function fetchCities() {
       try {
         const response = await fetch("/api/cities")
         const data = await response.json()
         if (data.cities) {
-          setCities(data.cities.map((c: any) => c.name))
+          const dbCities = data.cities.map((c: any) => c.name)
+          // Merge database cities with comprehensive Ethiopian cities list
+          const allCities = getAllCities(dbCities)
+          setCities(allCities)
+        } else {
+          // Fallback to static list if API response is empty
+          const allCities = getAllCities([])
+          setCities(allCities)
         }
       } catch (error) {
         console.error("Failed to fetch cities:", error)
-        setCities([])
+        // Fallback to static list on error
+        const allCities = getAllCities([])
+        setCities(allCities)
       }
     }
     fetchCities()
@@ -139,33 +150,24 @@ function SearchContent() {
         <div className="container mx-auto px-4">
           <form onSubmit={handleSearch}>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <Select value={origin} onValueChange={setOrigin}>
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <MapPin className="h-4 w-4 mr-2 text-primary" />
-                  <SelectValue placeholder="From" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cities.map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CityCombobox
+                value={origin}
+                onChange={setOrigin}
+                suggestions={cities}
+                placeholder="Type or select origin city"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary pointer-events-none z-10" />}
+              />
 
-              <Select value={destination} onValueChange={setDestination}>
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <MapPin className="h-4 w-4 mr-2 text-accent" />
-                  <SelectValue placeholder="To" />
-                </SelectTrigger>
-                <SelectContent>
-                  {cities.filter((c) => c !== origin).map((city) => (
-                    <SelectItem key={city} value={city}>
-                      {city}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <CityCombobox
+                value={destination}
+                onChange={setDestination}
+                suggestions={cities}
+                excludeCity={origin}
+                placeholder="Type or select destination"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-accent pointer-events-none z-10" />}
+              />
 
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />

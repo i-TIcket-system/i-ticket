@@ -14,18 +14,14 @@ import {
   ChevronRight,
   Star,
   Users,
-  Ticket
+  Ticket,
+  UserPlus
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { CityCombobox } from "@/components/ui/city-combobox"
+import { getAllCities } from "@/lib/ethiopian-cities"
 
 const busCompanies = [
   { name: "Selam Bus", logo: "S", color: "bg-blue-500" },
@@ -75,12 +71,20 @@ export default function HomePage() {
         const response = await fetch("/api/cities")
         const data = await response.json()
         if (data.cities) {
-          setCities(data.cities.map((c: any) => c.name))
+          const dbCities = data.cities.map((c: any) => c.name)
+          // Merge database cities with comprehensive Ethiopian cities list
+          const allCities = getAllCities(dbCities)
+          setCities(allCities)
+        } else {
+          // Fallback to static list if API fails
+          const allCities = getAllCities([])
+          setCities(allCities)
         }
       } catch (error) {
         console.error("Failed to fetch cities:", error)
-        // Fallback to empty array - cities will grow as companies add trips
-        setCities([])
+        // Fallback to static list on error
+        const allCities = getAllCities([])
+        setCities(allCities)
       } finally {
         setCitiesLoading(false)
       }
@@ -136,36 +140,29 @@ export default function HomePage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white/80">From</label>
-                    <Select value={origin} onValueChange={setOrigin} disabled={citiesLoading}>
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <MapPin className="h-4 w-4 mr-2 text-primary" />
-                        <SelectValue placeholder={citiesLoading ? "Loading cities..." : "Origin city"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cities.map((city) => (
-                          <SelectItem key={city} value={city}>
-                            {city}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <CityCombobox
+                      value={origin}
+                      onChange={setOrigin}
+                      suggestions={cities}
+                      placeholder={citiesLoading ? "Loading cities..." : "Type or select origin city"}
+                      disabled={citiesLoading}
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary pointer-events-none z-10" />}
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white/80">To</label>
-                    <Select value={destination} onValueChange={setDestination} disabled={citiesLoading}>
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <MapPin className="h-4 w-4 mr-2 text-accent" />
-                        <SelectValue placeholder={citiesLoading ? "Loading cities..." : "Destination"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {cities.filter((city) => city !== origin).map((city) => (
-                          <SelectItem key={city} value={city}>
-                            {city}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <CityCombobox
+                      value={destination}
+                      onChange={setDestination}
+                      suggestions={cities}
+                      excludeCity={origin}
+                      placeholder={citiesLoading ? "Loading cities..." : "Type or select destination"}
+                      disabled={citiesLoading}
+                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                      icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-accent pointer-events-none z-10" />}
+                    />
                   </div>
 
                   <div className="space-y-2">
@@ -342,7 +339,8 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link href="/register">
-              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white/10">
+              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-primary">
+                <UserPlus className="h-5 w-5 mr-2" />
                 Create Account
               </Button>
             </Link>

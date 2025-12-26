@@ -505,7 +505,29 @@ Phase 1 UX improvements are complete! The app now has consistent, modern user fe
 - **Files Modified:** 2 files
   - `src/app/company/dashboard/page.tsx` - localStorage persistence
   - `src/lib/report-generator.ts` - Professional Excel formatting
+- **Commit:** ecbac2e
 - **Status:** COMPLETE
+
+### Session 4 (December 26, 2025) - Part 4:
+- ✅ Fixed FAQ page build error (missing accordion component)
+- ✅ Fixed homepage Create Account button icon visibility
+- ✅ **Critical: Smart City Search with Manual Input**
+  - Created CityCombobox component (autocomplete + manual input)
+  - Added 90+ Ethiopian cities across all regions
+  - Smart filtering as you type (a→Addis, ad→Addis/Adama, ada→Adama)
+  - Users can select from suggestions OR type custom cities
+  - Excludes origin from destination suggestions
+  - Shows top 8 filtered matches for clean UI
+  - Fallback to static list if API fails
+- **Files Created:** 3 new files
+  - `src/components/ui/accordion.tsx` - FAQ accordion component
+  - `src/components/ui/city-combobox.tsx` - Smart city input
+  - `src/lib/ethiopian-cities.ts` - 90+ Ethiopian cities database
+- **Files Modified:** 2 files
+  - `src/app/page.tsx` - CityCombobox on homepage + icon fix
+  - `src/app/search/page.tsx` - CityCombobox on search page
+- **Dependencies:** @radix-ui/react-accordion
+- **Status:** COMPLETE - Users can now search for ANY Ethiopian city
 
 **Resume Point:** Next session should focus on confirmation dialogs, skeleton loaders, or Phase 2 security hardening.
 
