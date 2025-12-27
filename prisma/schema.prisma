@@ -9,16 +9,17 @@ datasource db {
 
 model User {
   id             String    @id @default(cuid())
-  name           String
+  name           String?   // Nullable for guest users (SMS)
   phone          String    @unique
   email          String?
-  password       String
+  password       String?   // Nullable for guest users (SMS)
   nationalId     String?
   role           String    @default("CUSTOMER") // CUSTOMER, COMPANY_ADMIN, SUPER_ADMIN
   companyId      String?
   company        Company?  @relation(fields: [companyId], references: [id])
   nextOfKinName  String?
   nextOfKinPhone String?
+  isGuestUser    Boolean   @default(false) // True for SMS users without full registration
   bookings       Booking[]
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
@@ -127,7 +128,8 @@ model Payment {
   amount        Float
   method        String   // TELEBIRR, DEMO
   transactionId String?
-  status        String   @default("PENDING") // PENDING, SUCCESS, FAILED
+  status        String   @default("PENDING") // PENDING, SUCCESS, FAILED, TIMEOUT
+  initiatedVia  String   @default("WEB") // WEB or SMS (for analytics)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
@@ -150,4 +152,34 @@ model AdminLog {
   details   String?
   tripId    String?
   createdAt DateTime @default(now())
+}
+
+model SmsSession {
+  id              String   @id @default(cuid())
+  phone           String   // User identifier (09XXXXXXXX)
+  sessionId       String   @unique // Unique session ID
+  state           String   // IDLE, SEARCH, SELECT_TRIP, ASK_PASSENGER_COUNT, etc.
+  language        String   @default("EN") // EN or AM
+
+  // Journey data (accumulated during conversation)
+  origin          String?
+  destination     String?
+  date            String?
+  selectedTripId  String?
+  passengerCount  Int      @default(1) // Number of passengers (1-5)
+  passengerData   String?  // JSON array: [{name, id}, {name, id}, ...]
+  currentPassengerIndex Int @default(0) // Track which passenger we're collecting info for
+  bookingId       String?
+
+  // Session management
+  lastMessageAt   DateTime @default(now())
+  expiresAt       DateTime // Auto-expire after 15 min inactivity
+  messageCount    Int      @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([phone])
+  @@index([sessionId])
+  @@index([expiresAt])
 }

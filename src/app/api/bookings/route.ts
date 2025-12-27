@@ -7,16 +7,57 @@ import { getAvailableSeatNumbers } from "@/lib/utils"
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+    const body = await request.json()
+    const { tripId, passengers, totalAmount, commission, smsSessionId } = body
 
-    if (!session?.user?.id) {
+    // Determine userId based on authentication method
+    let userId: string;
+    let smsSession = null; // Store SMS session for later use
+    let user = null; // Store user for later use
+
+    if (session?.user?.id) {
+      // Web user with NextAuth session
+      userId = session.user.id;
+    } else if (smsSessionId) {
+      // SMS user - get or create guest user by phone
+      smsSession = await prisma.smsSession.findUnique({
+        where: { sessionId: smsSessionId }
+      });
+
+      if (!smsSession) {
+        return NextResponse.json(
+          { error: "Invalid SMS session" },
+          { status: 401 }
+        );
+      }
+
+      // Get or create user by phone
+      user = await prisma.user.findUnique({
+        where: { phone: smsSession.phone }
+      });
+
+      if (!user) {
+        // Create guest user
+        user = await prisma.user.create({
+          data: {
+            phone: smsSession.phone,
+            name: null, // Will be updated with first passenger's name
+            password: null,
+            isGuestUser: true,
+            role: "CUSTOMER"
+          }
+        });
+
+        console.log(`[SMS Booking] Created guest user for ${smsSession.phone}`);
+      }
+
+      userId = user.id;
+    } else {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
-      )
+      );
     }
-
-    const body = await request.json()
-    const { tripId, passengers, totalAmount, commission } = body
 
     // Validate input
     if (!tripId || !passengers || passengers.length === 0) {
@@ -64,7 +105,7 @@ export async function POST(request: NextRequest) {
       const newBooking = await tx.booking.create({
         data: {
           tripId,
-          userId: session.user.id,
+          userId, // Use determined userId (web or SMS guest)
           totalAmount,
           commission,
           status: "PENDING",
@@ -72,7 +113,7 @@ export async function POST(request: NextRequest) {
             create: passengers.map((p: any, index: number) => ({
               name: p.name,
               nationalId: p.nationalId,
-              phone: p.phone,
+              phone: p.phone || smsSession?.phone || session?.user?.phone, // Use SMS phone if not provided
               seatNumber: seatNumbers[index], // Assign seat number
               specialNeeds: p.specialNeeds || null,
               pickupLocation: p.pickupLocation || null,
@@ -89,6 +130,17 @@ export async function POST(request: NextRequest) {
           },
         },
       })
+
+      // Update guest user with first passenger's name if not set
+      if (smsSessionId && !user?.name && passengers.length > 0) {
+        await tx.user.update({
+          where: { id: userId },
+          data: {
+            name: passengers[0].name,
+            nationalId: passengers[0].nationalId
+          }
+        });
+      }
 
       // ATOMIC UPDATE: Only decrement if enough slots still available
       // This prevents race conditions by using a WHERE clause

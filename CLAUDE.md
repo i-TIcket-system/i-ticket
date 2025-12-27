@@ -26,6 +26,149 @@ This document tracks all major features, improvements, and development progress 
 
 ## Recent Development Sessions
 
+### Session: December 27, 2025 - SMS Bot Integration for Feature Phone Users
+
+**Problem Statement:**
+60%+ of Ethiopians use feature phones, not smartphones. The web-only i-Ticket platform excluded a massive market segment - rural travelers, older users, and those without internet access couldn't book tickets online.
+
+**Solution Implemented:**
+Built a complete SMS booking bot with bilingual support (English + Amharic) that enables users to search, book, pay, and receive tickets entirely via SMS - no smartphone or internet required.
+
+**Key Features:**
+
+1. **Conversational SMS Bot** (`src/lib/sms/bot.ts`)
+   - State machine with 8 conversation states
+   - Natural language command parsing
+   - Bilingual support (English + Amharic)
+   - Auto-language detection
+   - Session management with 15-minute auto-expiry
+
+2. **SMS Gateway Integration** (`src/lib/sms/gateway.ts`)
+   - Support for Negarit SMS and GeezSMS (Ethiopian providers)
+   - Send/receive SMS with retry logic
+   - Message splitting for long texts (>160 chars)
+   - Webhook signature verification
+   - Rate limiting (10 msgs/min per phone)
+
+3. **Guest User System** (Modified `src/app/api/bookings/route.ts`)
+   - Auto-create users from phone numbers only
+   - No password or account creation required
+   - Profile auto-populated from first booking
+   - Full backward compatibility with web users
+
+4. **TeleBirr Merchant-Initiated Payment** (`src/lib/payments/telebirr.ts`)
+   - Push payments to user's phone (MMI popup)
+   - User enters TeleBirr password only (no *127# dialing)
+   - Centralized i-Ticket platform account (not per-company)
+   - Payment callback webhook for auto-confirmation
+   - 5-minute timeout with automatic booking cancellation
+
+5. **Automatic Ticket Delivery** (`src/app/api/payments/telebirr/callback/route.ts`)
+   - Tickets sent immediately after successful payment
+   - 6-character short codes (no QR needed)
+   - Multi-passenger support (separate SMS for each)
+   - Full trip and seat information
+
+6. **Database Schema** (`prisma/schema.prisma`)
+   - `SmsSession` model for conversation state tracking
+   - `User.isGuestUser` field for SMS users
+   - `Payment.initiatedVia` field for analytics
+   - Optimized indexes for phone number lookups
+
+7. **Session & Cleanup Management**
+   - 15-minute session expiry (extendable on activity)
+   - Automated cleanup cron job (`src/app/api/cron/cleanup/route.ts`)
+   - Payment timeout handling (5-minute window)
+   - Automatic seat release on cancellation
+
+**Commands Supported:**
+
+| Command | English | Amharic | Purpose |
+|---------|---------|---------|---------|
+| Book | `BOOK ADDIS HAWASSA JAN15` | `መጽሐፍ አዲስ ሀዋሳ ጃን15` | Search & book trips |
+| Check | `CHECK ABC123` | `ማረጋገጫ ABC123` | Verify ticket |
+| Help | `HELP` | `እርዳታ` | Show commands |
+| Status | `STATUS` | `ሁኔታ` | View bookings |
+| Cancel | `CANCEL` | `ሰርዝ` | Exit session |
+
+**Conversation Flow:**
+```
+IDLE → SEARCH → SELECT_TRIP → ASK_PASSENGER_COUNT
+     → ASK_PASSENGER_NAME → ASK_PASSENGER_ID
+     → CONFIRM_BOOKING → INITIATE_PAYMENT
+     → WAIT_PAYMENT → PAYMENT_SUCCESS
+```
+
+**Technical Architecture:**
+
+```
+User Phone (Feature Phone)
+    ↓ SMS
+SMS Gateway (Negarit/GeezSMS)
+    ↓ Webhook
+/api/sms/incoming
+    ↓
+SMS Bot State Machine
+    ↓
+Existing APIs (trips, bookings, payments)
+    ↓
+TeleBirr Merchant Payment (MMI popup)
+    ↓ Callback
+Ticket Generation & SMS Delivery
+```
+
+**Security Features:**
+- Rate limiting (10 msgs/min per phone)
+- Input sanitization (prevent injection)
+- Session hijacking prevention
+- Payment signature verification (HMAC-SHA256)
+- Webhook IP whitelisting
+- Guest user isolation
+
+**Testing Results:**
+- ✅ Complete end-to-end flow tested
+- ✅ Multi-passenger booking (tested with 2 passengers)
+- ✅ Payment initiation and callback
+- ✅ Ticket generation (2 tickets: KTP64Z, DJNN6X)
+- ✅ Ticket verification via CHECK command
+- ✅ Bilingual message templates
+- ✅ Session management and timeout
+
+**Cost Analysis (1,000 bookings/month):**
+- SMS Gateway: ~9,000 ETB ($65)
+- TeleBirr Fees: ~5,000 ETB ($38)
+- Total Operating Cost: ~14,000 ETB ($105)
+- Revenue (5% commission): ~17,500 ETB ($130)
+- **Net Profit: ~3,500 ETB/month (~$25, 20% margin)**
+
+**Impact:**
+- ✅ Expands market to 60%+ of Ethiopian population (feature phone users)
+- ✅ Enables rural travelers without internet access
+- ✅ Provides accessible booking for elderly users
+- ✅ No smartphone, app, or internet required
+- ✅ Works on every phone with SMS capability
+- ✅ Bilingual support increases adoption
+- ✅ TeleBirr integration leverages existing payment habits
+
+**Files Created:**
+- `src/lib/sms/gateway.ts` - SMS provider client (250 lines)
+- `src/lib/sms/bot.ts` - State machine & conversation logic (650 lines)
+- `src/lib/sms/messages.ts` - Bilingual message templates (200 lines)
+- `src/lib/sms/session.ts` - Session management helpers (150 lines)
+- `src/lib/payments/telebirr.ts` - TeleBirr payment integration (200 lines)
+- `src/app/api/sms/incoming/route.ts` - SMS webhook endpoint
+- `src/app/api/sms/outgoing/route.ts` - SMS sending helper
+- `src/app/api/payments/telebirr/callback/route.ts` - Payment callback
+- `src/app/api/cron/cleanup/route.ts` - Cleanup cron job
+- `SMS-DEPLOYMENT-GUIDE.md` - Complete deployment documentation
+- `SMS-USER-GUIDE.md` - Bilingual user guide
+
+**Files Modified:**
+- `prisma/schema.prisma` - Added SmsSession model, modified User/Payment models
+- `src/app/api/bookings/route.ts` - Added SMS authentication support (~40 lines)
+
+---
+
 ### Session: December 25, 2025 - Intermediate Stops Display Feature
 
 **Problem Statement:**
