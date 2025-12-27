@@ -93,12 +93,6 @@ export default function NewTripPage() {
     e.preventDefault()
     setError("")
 
-    // Validation
-    if (formData.origin === formData.destination) {
-      setError("Origin and destination cannot be the same")
-      return
-    }
-
     setIsSubmitting(true)
 
     try {
@@ -106,8 +100,21 @@ export default function NewTripPage() {
       const departureTime = new Date(`${formData.departureDate}T${formData.departureTime}`)
 
       // Use custom inputs if "Other" is selected
-      const finalOrigin = formData.origin === "__custom__" ? customOrigin : formData.origin
-      const finalDestination = formData.destination === "__custom__" ? customDestination : formData.destination
+      const finalOrigin = formData.origin === "__custom__" ? customOrigin.trim() : formData.origin
+      const finalDestination = formData.destination === "__custom__" ? customDestination.trim() : formData.destination
+
+      // Validation - check AFTER substituting custom values
+      if (!finalOrigin || !finalDestination) {
+        setError("Please enter both origin and destination")
+        setIsSubmitting(false)
+        return
+      }
+
+      if (finalOrigin.toLowerCase() === finalDestination.toLowerCase()) {
+        setError("Origin and destination cannot be the same")
+        setIsSubmitting(false)
+        return
+      }
 
       // Build route string with intermediate stops
       const route = intermediateStops.length > 0

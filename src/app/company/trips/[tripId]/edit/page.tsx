@@ -167,7 +167,8 @@ export default function EditTripPage() {
     e.preventDefault()
     setError("")
 
-    if (formData.origin === formData.destination) {
+    // Validation - case-insensitive and trimmed
+    if (formData.origin.trim().toLowerCase() === formData.destination.trim().toLowerCase()) {
       setError("Origin and destination cannot be the same")
       return
     }
