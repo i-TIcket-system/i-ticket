@@ -499,16 +499,16 @@ export default function NewTripPage() {
                       Driver
                     </Label>
                     <Select
-                      value={formData.driverId || ""}
+                      value={formData.driverId || "__none__"}
                       onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, driverId: value || null }))
+                        setFormData((prev) => ({ ...prev, driverId: value === "__none__" ? null : value }))
                       }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select driver" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None assigned</SelectItem>
+                        <SelectItem value="__none__">None assigned</SelectItem>
                         {staff.drivers.map((driver) => (
                           <SelectItem key={driver.id} value={driver.id}>
                             {driver.name}
@@ -534,16 +534,16 @@ export default function NewTripPage() {
                       Conductor
                     </Label>
                     <Select
-                      value={formData.conductorId || ""}
+                      value={formData.conductorId || "__none__"}
                       onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, conductorId: value || null }))
+                        setFormData((prev) => ({ ...prev, conductorId: value === "__none__" ? null : value }))
                       }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select conductor" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None assigned</SelectItem>
+                        <SelectItem value="__none__">None assigned</SelectItem>
                         {staff.conductors.map((conductor) => (
                           <SelectItem key={conductor.id} value={conductor.id}>
                             {conductor.name}
@@ -568,16 +568,16 @@ export default function NewTripPage() {
                       Manual Ticketer
                     </Label>
                     <Select
-                      value={formData.manualTicketerId || ""}
+                      value={formData.manualTicketerId || "__none__"}
                       onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, manualTicketerId: value || null }))
+                        setFormData((prev) => ({ ...prev, manualTicketerId: value === "__none__" ? null : value }))
                       }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select ticketer" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">None assigned</SelectItem>
+                        <SelectItem value="__none__">None assigned</SelectItem>
                         {staff.ticketers.map((ticketer) => (
                           <SelectItem key={ticketer.id} value={ticketer.id}>
                             {ticketer.name}

@@ -18,6 +18,9 @@ export const createTripSchema = z.object({
   totalSlots: z.number().int().positive("Total slots must be positive").max(100, "Too many slots"),
   hasWater: z.boolean().optional().default(false),
   hasFood: z.boolean().optional().default(false),
+  driverId: z.string().optional().nullable(),
+  conductorId: z.string().optional().nullable(),
+  manualTicketerId: z.string().optional().nullable(),
 });
 
 export const updateTripSchema = createTripSchema.partial();
