@@ -84,7 +84,19 @@ export async function POST(request: NextRequest) {
             passengers: true,
             trip: {
               include: {
-                company: true
+                company: true,
+                driver: {
+                  select: {
+                    name: true,
+                    phone: true,
+                  },
+                },
+                conductor: {
+                  select: {
+                    name: true,
+                    phone: true,
+                  },
+                },
               }
             }
           }
@@ -273,6 +285,19 @@ async function sendTicketsSms(booking: any, tickets: any[]) {
     hour12: true
   });
 
+  // Build staff contact info
+  let staffInfo = '';
+  if (trip.driver || trip.conductor) {
+    staffInfo = '\n\nTRIP STAFF:';
+    if (trip.driver) {
+      staffInfo += `\nDriver: ${trip.driver.name}\n📞 ${trip.driver.phone}`;
+    }
+    if (trip.conductor) {
+      staffInfo += `\nConductor: ${trip.conductor.name}\n📞 ${trip.conductor.phone}`;
+    }
+    staffInfo += '\n(Call for pickup location)';
+  }
+
   // If single passenger, send single SMS with all details
   if (tickets.length === 1) {
     const ticket = tickets[0];
@@ -287,7 +312,7 @@ Name: ${ticket.passengerName}
 Trip: ${trip.origin} → ${trip.destination}
 Date: ${dateStr}
 Time: ${timeStr}
-Bus: ${trip.company.name}
+Bus: ${trip.company.name}${staffInfo}
 
 Show code ${ticket.shortCode} to conductor.
 
@@ -302,7 +327,7 @@ PAYMENT RECEIVED!
 
 ${tickets.length} TICKETS for ${trip.origin} → ${trip.destination}
 Date: ${dateStr}, ${timeStr}
-Bus: ${trip.company.name}
+Bus: ${trip.company.name}${staffInfo}
 
 Ticket codes:
 ${tickets.map((t, i) => `${i + 1}. ${t.passengerName}: ${t.shortCode} (Seat ${t.seatNumber})`).join('\n')}

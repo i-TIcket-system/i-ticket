@@ -17,6 +17,21 @@ export async function GET(
         trip: {
           include: {
             company: true,
+            driver: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+                licenseNumber: true,
+              },
+            },
+            conductor: {
+              select: {
+                id: true,
+                name: true,
+                phone: true,
+              },
+            },
           },
         },
         passengers: true,

@@ -13,7 +13,8 @@ import {
   LogOut,
   Loader2,
   Menu,
-  X
+  X,
+  BarChart3
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
@@ -30,6 +31,11 @@ const sidebarItems = [
     title: "Add Trip",
     href: "/company/trips/new",
     icon: PlusCircle,
+  },
+  {
+    title: "Reports",
+    href: "/company/reports",
+    icon: BarChart3,
   },
   {
     title: "Staff",

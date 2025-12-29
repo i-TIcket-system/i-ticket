@@ -19,7 +19,9 @@ import {
   AlertCircle,
   ArrowLeft,
   Phone,
-  QrCode
+  QrCode,
+  Car,
+  UserCheck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -55,6 +57,17 @@ interface Booking {
     company: {
       name: string
       phones: string[]
+    }
+    driver?: {
+      id: string
+      name: string
+      phone: string
+      licenseNumber?: string
+    }
+    conductor?: {
+      id: string
+      name: string
+      phone: string
     }
   }
   tickets: Ticket[]
@@ -477,14 +490,74 @@ export default function TicketsPage() {
               </CardContent>
             </Card>
 
+            {/* Trip Staff Contact */}
+            {(booking.trip.driver || booking.trip.conductor) && (
+              <Card className="border-primary/20">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Phone className="h-5 w-5 text-primary" />
+                    Trip Staff Contact
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Contact staff for pickup location and boarding details
+                  </p>
+
+                  {booking.trip.driver && (
+                    <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Car className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-semibold text-blue-900">Driver</span>
+                      </div>
+                      <p className="font-medium text-blue-900">{booking.trip.driver.name}</p>
+                      {booking.trip.driver.licenseNumber && (
+                        <p className="text-xs text-blue-700 mb-1">
+                          License: {booking.trip.driver.licenseNumber}
+                        </p>
+                      )}
+                      <a
+                        href={`tel:${booking.trip.driver.phone}`}
+                        className="flex items-center gap-2 text-blue-700 hover:text-blue-900 hover:underline text-sm font-medium mt-1"
+                      >
+                        <Phone className="h-3 w-3" />
+                        {booking.trip.driver.phone}
+                      </a>
+                    </div>
+                  )}
+
+                  {booking.trip.conductor && (
+                    <div className="p-3 rounded-lg bg-green-50 border border-green-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <UserCheck className="h-4 w-4 text-green-600" />
+                        <span className="text-sm font-semibold text-green-900">Conductor</span>
+                      </div>
+                      <p className="font-medium text-green-900">{booking.trip.conductor.name}</p>
+                      <a
+                        href={`tel:${booking.trip.conductor.phone}`}
+                        className="flex items-center gap-2 text-green-700 hover:text-green-900 hover:underline text-sm font-medium mt-1"
+                      >
+                        <Phone className="h-3 w-3" />
+                        {booking.trip.conductor.phone}
+                      </a>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-muted-foreground italic">
+                    💡 Call ahead if boarding from a different location
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Contact Info */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Need Help?</CardTitle>
+                <CardTitle className="text-lg">Company Support</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  Contact {booking.trip.company.name} for trip-related queries.
+                  Contact {booking.trip.company.name} for general inquiries.
                 </p>
                 {(typeof booking.trip.company.phones === 'string'
                   ? JSON.parse(booking.trip.company.phones)
