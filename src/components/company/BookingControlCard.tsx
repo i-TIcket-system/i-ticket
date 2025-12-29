@@ -65,7 +65,7 @@ export function BookingControlCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {availableSlots <= 10 && (
+        {availableSlots > 0 && availableSlots <= 10 && (
           <div className="flex items-start gap-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs">
             <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
             <p className="text-yellow-800">

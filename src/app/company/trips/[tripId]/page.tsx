@@ -461,7 +461,7 @@ export default function TripDetailPage() {
               onUpdate={fetchTrip}
             />
 
-            {lowSlots && !trip.bookingHalted && (
+            {trip.availableSlots > 0 && lowSlots && !trip.bookingHalted && (
               <Card className="border-yellow-500 bg-yellow-50">
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-2 text-yellow-800 mb-2">

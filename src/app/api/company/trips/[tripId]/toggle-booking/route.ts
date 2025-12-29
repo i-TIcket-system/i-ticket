@@ -54,9 +54,17 @@ export async function POST(
       where: { id: params.tripId },
       data: {
         bookingHalted: shouldHalt,
-        // Only reset alert flag when HALTING (not when resuming)
-        // This prevents auto-halt from triggering again after admin resumes
-        ...(shouldHalt && { lowSlotAlertSent: false }),
+
+        // When HALTING manually: Reset both flags to allow auto-halt to work again
+        ...(shouldHalt && {
+          lowSlotAlertSent: false,
+          adminResumedFromAutoHalt: false,
+        }),
+
+        // When RESUMING: Set override flag to prevent auto-halt re-trigger
+        ...(!shouldHalt && {
+          adminResumedFromAutoHalt: true,
+        }),
       },
     })
 

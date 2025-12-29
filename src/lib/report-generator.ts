@@ -12,6 +12,19 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
     where: { id: tripId },
     include: {
       company: true,
+      driver: {
+        select: {
+          name: true,
+          phone: true,
+          licenseNumber: true
+        }
+      },
+      conductor: {
+        select: {
+          name: true,
+          phone: true
+        }
+      },
       bookings: {
         where: { status: "PAID" },
         include: {
@@ -420,17 +433,50 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
 
   // Signature section
   currentRow += 2
-  sheet.getCell(`A${currentRow}`).value = "___________________________"
-  sheet.getCell(`A${currentRow + 1}`).value = "Company Representative"
-  sheet.getCell(`A${currentRow + 1}`).font = { size: 9, italic: true }
 
-  sheet.getCell(`E${currentRow}`).value = "___________________________"
-  sheet.getCell(`E${currentRow + 1}`).value = "Driver Signature"
-  sheet.getCell(`E${currentRow + 1}`).font = { size: 9, italic: true }
+  // Company Representative
+  const companyRepCell = sheet.getCell(`A${currentRow}`)
+  companyRepCell.value = "___________________________"
+  companyRepCell.alignment = { horizontal: "center" }
 
-  sheet.getCell(`I${currentRow}`).value = "___________________________"
-  sheet.getCell(`I${currentRow + 1}`).value = "Date & Time"
-  sheet.getCell(`I${currentRow + 1}`).font = { size: 9, italic: true }
+  const companyRepLabelCell = sheet.getCell(`A${currentRow + 1}`)
+  companyRepLabelCell.value = "Company Representative"
+  companyRepLabelCell.font = { size: 9, italic: true }
+  companyRepLabelCell.alignment = { horizontal: "center" }
+
+  // Driver signature (with actual name if available)
+  const driverCell = sheet.getCell(`E${currentRow}`)
+  driverCell.value = "___________________________"
+  driverCell.alignment = { horizontal: "center" }
+
+  const driverLabelCell = sheet.getCell(`E${currentRow + 1}`)
+  if (trip.driver) {
+    driverLabelCell.value = `Driver: ${trip.driver.name}`
+    if (trip.driver.licenseNumber) {
+      const driverLicenseCell = sheet.getCell(`E${currentRow + 2}`)
+      driverLicenseCell.value = `License: ${trip.driver.licenseNumber}`
+      driverLicenseCell.font = { size: 8, color: { argb: "FF666666" } }
+      driverLicenseCell.alignment = { horizontal: "center" }
+    }
+  } else {
+    driverLabelCell.value = "Driver Signature"
+  }
+  driverLabelCell.font = { size: 9, italic: true }
+  driverLabelCell.alignment = { horizontal: "center" }
+
+  // Conductor signature (with actual name if available) - REPLACES "Date & Time"
+  const conductorCell = sheet.getCell(`I${currentRow}`)
+  conductorCell.value = "___________________________"
+  conductorCell.alignment = { horizontal: "center" }
+
+  const conductorLabelCell = sheet.getCell(`I${currentRow + 1}`)
+  if (trip.conductor) {
+    conductorLabelCell.value = `Conductor: ${trip.conductor.name}`
+  } else {
+    conductorLabelCell.value = "Conductor Signature"
+  }
+  conductorLabelCell.font = { size: 9, italic: true }
+  conductorLabelCell.alignment = { horizontal: "center" }
 
   // ============================================
   // COLUMN WIDTHS (Optimized for Landscape)

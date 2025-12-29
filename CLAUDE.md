@@ -26,7 +26,73 @@ This document tracks all major features, improvements, and development progress 
 
 ## Recent Development Sessions
 
-### Session: December 29, 2025 - Comprehensive Legal Documentation & UX Fixes
+### Session: December 29, 2025 - Part 2: Auto-Halt Logic Fix & Manifest Improvements
+
+**Problem Statement:**
+Three UX/logic issues needed addressing: (1) Low seat alerts displayed even when bus was sold out (0 slots), creating visual confusion; (2) Passenger manifest Excel had poor alignment and didn't show actual driver/conductor names despite database support; (3) Auto-halt system would immediately re-trigger after admin manually resumed booking, defeating the purpose of admin override.
+
+**Solution Implemented:**
+Fixed all three issues with conditional logic updates, Excel formatting improvements with staff name display, and a sophisticated flag system to respect admin decisions.
+
+**Key Deliverables:**
+
+1. **Low Seat Alert Conditional Fix**
+   - Changed alert condition from `availableSlots <= 10` to `availableSlots > 0 && availableSlots <= 10`
+   - Alerts now show only when 1-10 seats remain, NOT when bus is sold out (0 slots)
+   - Files modified: `src/components/company/BookingControlCard.tsx`, `src/app/company/trips/[tripId]/page.tsx`
+
+2. **Passenger Manifest Excel Enhancement**
+   - Added driver and conductor relation fetching to manifest query
+   - Displays actual driver name with license number in signature section
+   - Displays actual conductor name (replaced "Date & Time" label)
+   - Applied proper center alignment to all signature cells
+   - Handles edge cases: shows generic "Driver Signature" / "Conductor Signature" if staff not assigned
+   - Files modified: `src/lib/report-generator.ts` (data fetch + signature section)
+
+3. **Auto-Halt Admin Override System**
+   - Added new database field: `adminResumedFromAutoHalt` (Boolean) to Trip model
+   - Auto-halt logic now checks this flag before halting
+   - When admin resumes: flag set to `true` (prevents re-trigger)
+   - When admin manually halts: flag reset to `false` (allows auto-halt to work again)
+   - When bus sells out: flag reset to `false` (reset for next cycle)
+   - Files modified:
+     - `prisma/schema.prisma` - Added new field
+     - `src/app/api/bookings/route.ts` - Updated auto-halt check, added sold-out reset
+     - `src/app/api/company/trips/[tripId]/toggle-booking/route.ts` - Flag set/reset on halt/resume
+
+**Technical Details:**
+
+**Auto-Halt Behavior Matrix:**
+| Scenario | Slots | bookingHalted | adminResumed | Auto-Halt? |
+|----------|-------|---------------|--------------|------------|
+| Initial drop to ≤10 | 10 | false | false | ✅ YES |
+| Admin resumes | 10 | false | true | ❌ NO |
+| Next booking | 9 | false | true | ❌ NO |
+| Continues booking | 5 | false | true | ❌ NO |
+| Admin manually halts | 5 | true | false (reset) | N/A |
+| Bus sells out | 0 | true | false (reset) | N/A |
+
+**Impact:**
+- ✅ Cleaner UI when bus is sold out (no redundant alerts)
+- ✅ Professional manifests with actual staff accountability
+- ✅ Admin decisions respected - no auto-halt re-triggering loop
+- ✅ Proper Excel alignment for better readability
+- ✅ Edge cases handled (no staff assigned, cancellations, manual control)
+
+**Files Modified:**
+- `src/components/company/BookingControlCard.tsx` - Alert condition
+- `src/app/company/trips/[tripId]/page.tsx` - Alert condition
+- `src/lib/report-generator.ts` - Data fetch + signature formatting
+- `prisma/schema.prisma` - New `adminResumedFromAutoHalt` field
+- `src/app/api/bookings/route.ts` - Auto-halt logic + sold-out reset
+- `src/app/api/company/trips/[tripId]/toggle-booking/route.ts` - Flag management
+
+**Database Changes:**
+- Added `adminResumedFromAutoHalt` Boolean field to Trip model (default: false)
+
+---
+
+### Session: December 29, 2025 - Part 1: Comprehensive Legal Documentation & UX Fixes
 
 **Problem Statement:**
 The platform lacked professional legal documentation (Terms & Conditions, Privacy Policy) and comprehensive user guidance (FAQ). Existing pages had minimal content (10-15 basic sections). Additionally, two UX issues needed fixing: customers being redirected to homepage instead of search page after login, and non-functional Quick Action buttons in the admin dashboard.
@@ -494,9 +560,28 @@ if (trip.intermediateStops) {
 
 #### Admin Features
 - **Super Admin Dashboard**: System-wide statistics and analytics
-- **Company Management**: Activate/deactivate companies
-- **Revenue Tracking**: Platform commission reporting
-- **Audit Logs**: Track administrative actions
+  - Today's activity metrics (bookings, revenue, commission)
+  - User segmentation (Customers, Admins, Guests)
+  - Company breakdown (Active/Inactive)
+  - Channel performance (Web vs SMS)
+  - 30-day revenue trend charts (recharts)
+  - Top 5 routes and companies leaderboards
+  - Real-time auto-refresh (30 seconds)
+- **Company Management**: Activate/deactivate companies with audit logging
+- **Revenue Tracking**: Platform commission reporting with Excel invoice download
+- **Audit Logs**: Comprehensive audit trail system
+  - Paginated results with customizable navigation
+  - Action type filtering (company, staff, trip operations)
+  - Company-level filtering
+  - Date range filtering
+  - Detailed JSON view for each log entry
+  - Color-coded action badges
+- **Support Ticket Management**: Full admin dashboard for customer support
+  - Status filtering (Open, In Progress, Resolved, Closed)
+  - Priority-based sorting
+  - Search by ticket number, name, email, subject
+  - Edit tickets with resolution notes and internal notes
+  - Auto-generated ticket numbers (SUP-XXXXXX)
 
 #### Reports & Analytics
 - **Passenger Manifest**: Excel download when bus is full
@@ -509,7 +594,7 @@ if (trip.intermediateStops) {
 - **Password Change**: Secure password updates
 - **Profile Updates**: Name, phone, email editing
 
-### Phase 3: Route Enhancement (Current)
+### Phase 3: Route Enhancement (Completed)
 
 #### Intermediate Stops Display
 - **Search Results**: Visible in trip cards before booking
@@ -518,6 +603,86 @@ if (trip.intermediateStops) {
 - **Company Dashboard**: Route visibility for trip management
 - **Booking Page**: Full route display for confirmation
 
+### Phase 4: Enterprise Features & Staff Management (Completed)
+
+#### Staff Management System
+- **Complete Staff CRUD**: Add, edit, delete staff members with full validation
+- **Four Staff Roles**: Admin, Driver, Conductor, Manual Ticketer
+- **Role-Specific Fields**: License numbers for drivers, employee IDs for all staff
+- **Security**: Password hashing, rate limiting (10 additions/hour), ownership verification
+- **Staff Assignment**: Assign drivers, conductors, ticketers to specific trips
+- **Crew Visibility**: Trip detail pages show assigned staff with contact info and licenses
+
+#### Staff Portal & "My Trips"
+- **Dedicated Staff Interface**: Separate portal for drivers, conductors, and ticketers
+- **My Trips Page**: Staff members view only their assigned trips
+- **Trip Categorization**: Today's Trips (highlighted), Upcoming Trips, Completed Trips (last 5)
+- **Trip Details**: Shows passenger count, revenue, and other crew members
+- **Role-Specific Styling**: Different UI indicators based on staff role
+
+#### Staff Reporting & Analytics
+- **Performance Reports**: Generate comprehensive staff reports by role and date range
+- **Metrics Tracked**: Trips completed, passengers handled, revenue generated per staff member
+- **Top Routes**: Shows most frequent routes per staff member with trip counts
+- **Performance Overview**: Leaderboard showing top drivers, conductors, and ticketers
+- **Date Range Filtering**: Defaults to last 30 days, customizable start/end dates
+- **Recent Trips Table**: Sortable table with dates and amounts
+
+#### Manual Ticket Sales & Quick Ticketing
+- **Offline Sales Tracking**: Record tickets sold at bus terminals/offices
+- **Instant Slot Updates**: Auto-decrements available slots in real-time
+- **Bulk Sales**: Sell 1-10 tickets at once
+- **Auto-Halt Integration**: Triggers automatic booking halt when slots ≤ 10
+- **Floating UI Card**: Professional card interface on trip detail page
+- **Visual Indicators**: Slot percentage indicator, transaction logging
+
+#### Enhanced Booking Control
+- **Manual Halt/Resume**: Company admins can manually stop/start online bookings
+- **Admin Override System**: Prevents auto-halt re-triggering after manual resume
+- **Flag Management**: Sophisticated flag system (`bookingHalted`, `lowSlotAlertSent`, `adminResumedFromAutoHalt`)
+- **Action Logging**: All halt/resume actions logged with detailed reasoning
+- **Visual Feedback**: Red/green badges, status indicators, alert messages
+
+#### Support Ticket System
+- **Customer Contact Form**: Auto-categorization and priority detection
+- **6 Ticket Categories**: General, Technical, Booking, Payment, Account, Feedback
+- **4 Priority Levels**: Low, Normal, High, Urgent (auto-detected from keywords)
+- **Status Workflow**: Open → In Progress → Resolved → Closed
+- **Admin Dashboard**: Complete ticket management with search, filtering, and editing
+- **Auto-Generated IDs**: Unique ticket numbers (SUP-XXXXXX format)
+- **Rate Limiting**: 5 tickets per hour per IP to prevent spam
+- **Resolution Tracking**: Internal notes and customer-facing resolutions
+
+#### Audit Logs & Compliance
+- **Comprehensive Logging**: All administrative actions tracked with timestamps
+- **Filterable Logs**: Filter by action type, company, date range
+- **Paginated Results**: Customizable page navigation for large datasets
+- **Detailed View**: JSON details dialog for each log entry
+- **Color-Coded Badges**: Visual indicators for different action types
+- **Tracked Actions**: Company activation/deactivation, staff changes, trip operations, manual ticket sales, auto-halt triggers
+
+#### Public Booking Tracking
+- **Track by Code**: Customers can track bookings via booking ID or ticket short code
+- **No Authentication Required**: Public endpoint for easy access
+- **Comprehensive Details**: Shows trip info, passenger list, seat assignments, payment summary
+- **Payment Status**: Real-time payment status (pending/paid/cancelled)
+- **Quick Actions**: Links to view tickets or complete payment
+- **Professional Timeline**: Visual status indicators and progress tracking
+
+#### Company Profile Management
+- **Profile Editing**: Update company information and contact details
+- **Report Signatures**: Manage signature fields for invoices and manifests
+- **Three Signature Fields**: Prepared By, Reviewed By, Approved By
+- **Professional Reports**: Signatures appear on Excel manifests and revenue invoices
+- **Authorization Trail**: Proper documentation for financial reports
+
+#### Enhanced Security & Validation
+- **Rate Limiting System**: Prevents abuse across multiple endpoints (staff creation: 10/hour, tickets: 5/hour, SMS: per-phone)
+- **Comprehensive Input Validation**: Zod schemas for all user inputs
+- **Password Change Endpoint**: Secure password updates with current password verification
+- **Public Ticket Verification**: Conductors can verify tickets without authentication
+- **Input Sanitization**: SQL injection and XSS prevention across all forms
+
 ---
 
 ## Technical Architecture
@@ -525,14 +690,26 @@ if (trip.intermediateStops) {
 ### Database Schema
 
 **Key Models:**
-- **User**: Authentication, profile, role
+- **User**: Authentication, profile, role (Customer, Company Admin, Super Admin, Driver, Conductor, Manual Ticketer)
+  - Additional fields: `staffRole`, `licenseNumber`, `employeeId`, `isGuestUser` (for SMS users)
 - **Company**: Bus company details, contact info, status
+  - Additional fields: `preparedBy`, `reviewedBy`, `approvedBy` (for report signatures)
 - **Trip**: Route, schedule, pricing, slots, amenities
+  - Staff assignment: `driverId`, `conductorId`, `manualTicketerId` (relations to User)
+  - Control flags: `bookingHalted`, `lowSlotAlertSent`, `adminResumedFromAutoHalt`, `reportGenerated`
 - **Booking**: User bookings, status, payment tracking
+  - Additional fields: `isQuickTicket` (for manual terminal sales)
 - **Passenger**: Passenger details, seat assignment, pickup/dropoff
 - **Ticket**: QR codes, short codes, verification status
 - **Payment**: Transaction records, commission tracking
+  - Additional fields: `initiatedVia` (web/SMS analytics)
 - **City**: Dynamic city database for autocomplete
+- **AdminLog**: Comprehensive audit trail for all administrative actions
+  - Tracks: user, action type, trip/company association, detailed JSON, timestamps
+- **SupportTicket**: Customer support ticket management
+  - Fields: ticket number, category, priority, status, resolution notes, IP tracking, user agent
+- **SmsSession**: SMS bot conversation state tracking
+  - Fields: phone number, state, session data, language preference, expiry tracking
 
 **Optimizations:**
 - Composite indexes on frequently queried fields
@@ -547,13 +724,58 @@ if (trip.intermediateStops) {
 - `GET /api/trips/[id]` - Trip details
 - `POST /api/auth/register` - User registration
 - `POST /api/auth/forgot-password` - Password reset request
+- `GET /api/track/[code]` - Track booking by ID or ticket code (no auth required)
+- `POST /api/tickets/verify/public` - Verify tickets publicly (conductors/ticketers)
+- `GET /api/cities` - Get cities for autocomplete
+- `POST /api/support/tickets` - Create support ticket (rate limited: 5/hour per IP)
 
-**Protected Endpoints:**
-- `POST /api/trips` - Create trip (Company Admin)
-- `POST /api/bookings` - Create booking (Customer)
-- `POST /api/payments` - Process payment (Customer)
-- `POST /api/tickets/verify` - Verify tickets (Company Admin)
-- `GET /api/admin/stats` - System stats (Super Admin)
+**Customer Endpoints:**
+- `POST /api/bookings` - Create booking
+- `POST /api/payments` - Process payment
+- `GET /api/user/bookings` - Get user's bookings
+- `GET /api/user/tickets` - Get user's tickets
+- `POST /api/user/change-password` - Change password
+- `PATCH /api/user/profile` - Update profile
+
+**Company Admin Endpoints:**
+- `GET /api/company/trips` - List company's trips
+- `POST /api/company/trips` - Create new trip
+- `PATCH /api/company/trips/[id]` - Update trip
+- `DELETE /api/company/trips/[id]` - Delete trip
+- `POST /api/company/trips/[id]/toggle-booking` - Manual halt/resume booking
+- `POST /api/company/trips/[id]/manual-ticket` - Record manual ticket sale
+- `POST /api/company/trips/[id]/alert-response` - Respond to auto-halt alert
+- `GET /api/company/trips/[id]/manifest` - Download passenger manifest (Excel)
+- `GET /api/company/staff` - List all staff members
+- `POST /api/company/staff` - Add staff member (rate limited: 10/hour)
+- `PATCH /api/company/staff/[id]` - Update staff member
+- `DELETE /api/company/staff/[id]` - Delete staff member
+- `GET /api/company/reports/staff-trips` - Staff performance reports
+- `GET /api/company/stats` - Company dashboard statistics
+- `PATCH /api/company/profile` - Update company profile
+
+**Staff Member Endpoints:**
+- `GET /api/staff/my-trips` - Get assigned trips for logged-in staff member
+
+**Super Admin Endpoints:**
+- `GET /api/admin/stats` - System-wide statistics with enhanced metrics
+- `GET /api/admin/companies` - List all companies
+- `PATCH /api/admin/companies/[id]` - Activate/deactivate company
+- `GET /api/admin/audit-logs` - Get audit logs with filtering and pagination
+- `GET /api/admin/analytics/revenue` - 30-day revenue time series
+- `GET /api/admin/analytics/top-routes` - Top 5 routes by bookings
+- `GET /api/admin/analytics/top-companies` - Company leaderboard
+- `GET /api/admin/reports/platform-revenue` - Download platform revenue invoice (Excel)
+- `GET /api/admin/support/tickets` - List all support tickets
+- `PATCH /api/admin/support/tickets/[id]` - Update ticket status/resolution
+
+**SMS Bot Endpoints:**
+- `POST /api/sms/incoming` - Handle incoming SMS messages (webhook)
+- `POST /api/sms/outgoing` - Send outgoing SMS
+- `POST /api/payments/telebirr/callback` - TeleBirr payment callback
+
+**Background Jobs:**
+- `POST /api/cron/cleanup` - Clean up expired SMS sessions (15-min expiry)
 
 **Security Features:**
 - Zod validation on all inputs
@@ -564,23 +786,44 @@ if (trip.intermediateStops) {
 ### Frontend Architecture
 
 **Route Structure:**
-- `/(auth)` - Login, Register, Reset Password
-- `/(customer)` - Search, Booking, Tickets, Profile
-- `/(company)` - Dashboard, Trips, Verification
-- `/(admin)` - Super Admin Dashboard, Company Management
+- `/(auth)` - Login, Register, Reset Password, Forgot Password
+- `/(customer)` - Search, Booking, Tickets, Profile, Track Booking
+- `/(company)` - Dashboard, Trips (List/Detail/Create/Edit), Staff Management, Reports, Profile, Verification
+- `/(staff)` - My Trips (for drivers, conductors, ticketers)
+- `/(admin)` - Super Admin Dashboard, Company Management, Audit Logs, Support Tickets
+- `/contact` - Public contact form / support ticket creation
+- `/track/[code]` - Public booking tracking page
+- `/terms` - Terms & Conditions (690+ lines)
+- `/privacy` - Privacy Policy (700+ lines)
+- `/faq` - Comprehensive FAQ (1,100+ lines, 45+ questions)
 
 **Component Organization:**
-- `components/ui` - Reusable shadcn/ui components
+- `components/ui` - Reusable shadcn/ui components (shadcn/ui library)
 - `components/search` - Trip search functionality
-- `components/booking` - Booking flow
+- `components/booking` - Booking flow components
 - `components/company` - Company admin features
+  - `BookingControlCard.tsx` - Manual halt/resume UI
+  - `ManualTicketingCard.tsx` - Offline ticket sales UI (floating card)
 - `components/shared` - Navigation, Footer
+- `components/staff` - Staff member portal components
 
 **State Management:**
 - React hooks for local state
 - URL parameters for search filters
 - Session state via NextAuth
 - Optimistic updates for better UX
+
+**Libraries & Utilities:**
+- `src/lib/report-generator.ts` - Passenger manifest Excel generation with i-Ticket branding
+- `src/lib/platform-revenue-report.ts` - Platform revenue invoice Excel generation
+- `src/lib/sms/bot.ts` - SMS chatbot state machine (650+ lines)
+- `src/lib/sms/gateway.ts` - SMS provider integration (Negarit/GeezSMS)
+- `src/lib/sms/messages.ts` - Bilingual message templates (English + Amharic)
+- `src/lib/payments/telebirr.ts` - TeleBirr payment integration (merchant-initiated)
+- `src/lib/rate-limit.ts` - Request rate limiting across endpoints
+- `src/lib/validations.ts` - Zod schemas for input validation
+- `src/lib/auth-helpers.ts` - Role-based access control helpers
+- `src/lib/utils.ts` - Currency formatting, date formatting, slot calculations
 
 ---
 
@@ -610,18 +853,20 @@ if (trip.intermediateStops) {
 - [ ] Automated testing suite
 
 #### Payment & Billing
-- [ ] Multiple payment gateways
-- [ ] Partial refunds
+- [ ] Multiple payment gateways (currently only TeleBirr)
+- [ ] Partial refunds (currently all-or-nothing)
 - [ ] Payment installments
-- [ ] Invoice generation
-- [ ] Accounting integration
+- [x] ~~Invoice generation~~ (✅ Implemented: Platform revenue invoices + passenger manifests)
+- [ ] Accounting integration (QuickBooks, etc.)
 
 #### Operations
-- [ ] Driver app for manifest checking
-- [ ] GPS tracking integration
+- [x] ~~Driver app for manifest checking~~ (✅ Implemented: Staff "My Trips" portal)
+- [ ] GPS tracking integration (real-time bus location)
 - [ ] Maintenance scheduling
 - [ ] Fuel cost tracking
-- [ ] Route optimization
+- [ ] Route optimization algorithms
+- [ ] Automated booking confirmation emails/SMS
+- [ ] WhatsApp Business integration (alternative to SMS bot)
 
 ---
 

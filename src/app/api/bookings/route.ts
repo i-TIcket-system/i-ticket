@@ -227,7 +227,12 @@ export async function POST(request: NextRequest) {
         where: { id: tripId },
       })
 
-      if (updatedTrip && updatedTrip.availableSlots <= 10 && !updatedTrip.bookingHalted) {
+      if (
+        updatedTrip &&
+        updatedTrip.availableSlots <= 10 &&
+        !updatedTrip.bookingHalted &&
+        !updatedTrip.adminResumedFromAutoHalt
+      ) {
         // Halt booking automatically
         await tx.trip.update({
           where: { id: tripId },
@@ -261,7 +266,10 @@ export async function POST(request: NextRequest) {
       if (updatedTrip && updatedTrip.availableSlots === 0 && !updatedTrip.reportGenerated) {
         await tx.trip.update({
           where: { id: tripId },
-          data: { reportGenerated: true }
+          data: {
+            reportGenerated: true,
+            adminResumedFromAutoHalt: false, // Reset override flag when sold out
+          }
         })
 
         await tx.adminLog.create({

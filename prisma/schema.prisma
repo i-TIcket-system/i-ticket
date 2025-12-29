@@ -87,9 +87,10 @@ model Trip {
   hasWater          Boolean   @default(false)
   hasFood           Boolean   @default(false)
   isActive          Boolean   @default(true)
-  lowSlotAlertSent  Boolean   @default(false)
-  bookingHalted     Boolean   @default(false)
-  reportGenerated   Boolean   @default(false)
+  lowSlotAlertSent         Boolean   @default(false)
+  bookingHalted            Boolean   @default(false)
+  adminResumedFromAutoHalt Boolean   @default(false)
+  reportGenerated          Boolean   @default(false)
   bookings          Booking[]
   tickets           Ticket[]
   createdAt         DateTime  @default(now())
