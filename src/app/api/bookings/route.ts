@@ -69,6 +69,14 @@ export async function POST(request: NextRequest) {
         where: { phone: firstPassenger.phone }
       });
 
+      // SECURITY: If user exists but is NOT a guest, require authentication
+      if (user && !user.isGuestUser) {
+        return NextResponse.json(
+          { error: "This phone number is registered. Please login to book." },
+          { status: 401 }
+        );
+      }
+
       if (!user) {
         // Create new guest user
         user = await prisma.user.create({

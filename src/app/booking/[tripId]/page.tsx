@@ -108,14 +108,23 @@ export default function BookingPage() {
   }, [tripId])
 
   useEffect(() => {
-    // Restore passenger data from localStorage (if user was redirected to login)
+    // Restore passenger data from localStorage
     const savedPassengers = localStorage.getItem(`booking-${tripId}-passengers`)
-    if (savedPassengers && session?.user) {
+
+    if (savedPassengers) {
       try {
         const parsedPassengers = JSON.parse(savedPassengers)
-        setPassengers(parsedPassengers)
-        localStorage.removeItem(`booking-${tripId}-passengers`) // Clean up
-        toast.success("Your passenger information has been restored")
+
+        // Only restore if passengers array is currently empty/default
+        if (passengers.length === 1 && passengers[0].name === "") {
+          setPassengers(parsedPassengers)
+
+          // Clean up localStorage only for logged-in users (guests need it for back navigation)
+          if (session?.user) {
+            localStorage.removeItem(`booking-${tripId}-passengers`)
+            toast.success("Your passenger information has been restored")
+          }
+        }
       } catch (error) {
         console.error("Error restoring passenger data:", error)
       }

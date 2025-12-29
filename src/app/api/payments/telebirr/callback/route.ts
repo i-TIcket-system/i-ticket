@@ -25,18 +25,53 @@ import QRCode from "qrcode";
 export async function POST(request: NextRequest) {
   try {
     const body: TelebirrCallbackPayload = await request.json();
-    const { transactionId, outTradeNo, status, amount, signature } = body;
+    const { transactionId, outTradeNo, status, amount, signature, timestamp } = body;
 
     console.log(`[TeleBirr Callback] Received: ${transactionId}, Status: ${status}`);
 
-    // Verify signature (skip in demo mode)
     const isDemoMode = process.env.DEMO_MODE === 'true';
-    if (!isDemoMode && !verifyTelebirrSignature(body)) {
-      console.error('[TeleBirr Callback] Invalid signature');
-      return NextResponse.json(
-        { error: "Invalid signature" },
-        { status: 401 }
-      );
+
+    if (!isDemoMode) {
+      // Security Check 1: Verify signature
+      if (!verifyTelebirrSignature(body)) {
+        console.error('[TeleBirr Callback] Invalid signature');
+        return NextResponse.json(
+          { error: "Invalid signature" },
+          { status: 401 }
+        );
+      }
+
+      // Security Check 2: Validate timestamp (prevent replay attacks)
+      if (timestamp) {
+        const callbackTime = new Date(timestamp).getTime();
+        const now = Date.now();
+        const fiveMinutes = 5 * 60 * 1000;
+
+        // Reject callbacks older than 5 minutes
+        if (Math.abs(now - callbackTime) > fiveMinutes) {
+          console.error('[TeleBirr Callback] Timestamp too old or in future');
+          return NextResponse.json(
+            { error: "Request expired" },
+            { status: 401 }
+          );
+        }
+      }
+
+      // Security Check 3: IP Whitelisting (if configured)
+      const allowedIPs = process.env.TELEBIRR_WEBHOOK_IPS?.split(',') || [];
+      if (allowedIPs.length > 0) {
+        const clientIP = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+                        request.headers.get('x-real-ip') ||
+                        'unknown';
+
+        if (!allowedIPs.includes(clientIP)) {
+          console.error(`[TeleBirr Callback] Unauthorized IP: ${clientIP}`);
+          return NextResponse.json(
+            { error: "Unauthorized IP address" },
+            { status: 403 }
+          );
+        }
+      }
     }
 
     // Find payment by transaction ID

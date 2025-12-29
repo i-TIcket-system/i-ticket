@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getServerSession } from "next-auth"
 import { prisma } from "@/lib/db"
+import { authOptions } from "@/lib/auth"
 import { z } from "zod"
 
 // Generate unique ticket number
@@ -99,6 +101,15 @@ export async function POST(req: NextRequest) {
 // GET /api/support/tickets - Get all tickets (admin only)
 export async function GET(req: NextRequest) {
   try {
+    // Require authentication - admin/company admin only
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.role === "CUSTOMER") {
+      return NextResponse.json(
+        { error: "Unauthorized - Admin access required" },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(req.url)
     const status = searchParams.get("status")
     const priority = searchParams.get("priority")

@@ -76,6 +76,33 @@ export async function POST(request: NextRequest) {
     const body: InboundSmsPayload = await request.json();
     const { from, message, messageId, timestamp } = body;
 
+    // Security Check 1: Verify webhook signature
+    const signature = request.headers.get('X-SMS-Signature') || request.headers.get('Authorization');
+    const gateway = getSmsGateway();
+
+    if (!gateway.verifyWebhookSignature(body, signature || '')) {
+      console.error('[SMS Webhook] Invalid signature');
+      return NextResponse.json(
+        { error: "Invalid signature" },
+        { status: 401 }
+      );
+    }
+
+    // Security Check 2: Validate timestamp (prevent replay attacks)
+    if (timestamp) {
+      const smsTime = new Date(timestamp).getTime();
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000;
+
+      if (Math.abs(now - smsTime) > fiveMinutes) {
+        console.error('[SMS Webhook] Message timestamp too old');
+        return NextResponse.json(
+          { error: "Message expired" },
+          { status: 401 }
+        );
+      }
+    }
+
     // Validate phone number
     if (!from || !validateEthiopianPhone(from)) {
       console.error('[SMS Webhook] Invalid phone number:', from);

@@ -15,12 +15,21 @@ const updateTicketSchema = z.object({
   satisfactionScore: z.number().min(1).max(5).optional(),
 })
 
-// GET /api/support/tickets/[ticketId] - Get single ticket
+// GET /api/support/tickets/[ticketId] - Get single ticket (admin only)
 export async function GET(
   req: NextRequest,
   { params }: { params: { ticketId: string } }
 ) {
   try {
+    // Require authentication - admin/company admin only
+    const session = await getServerSession(authOptions)
+    if (!session?.user || session.user.role === "CUSTOMER") {
+      return NextResponse.json(
+        { error: "Unauthorized - Admin access required" },
+        { status: 401 }
+      )
+    }
+
     const ticket = await prisma.supportTicket.findUnique({
       where: { id: params.ticketId }
     })
