@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { hash } from "bcryptjs"
 import prisma from "@/lib/db"
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - 3 registration attempts per hour per IP
+    const clientId = getClientIdentifier(request)
+    if (!checkRateLimit(clientId, RATE_LIMITS.REGISTER)) {
+      return rateLimitExceeded(3600) // Retry after 1 hour
+    }
+
     const body = await request.json()
     const { name, phone, email, password } = body
 

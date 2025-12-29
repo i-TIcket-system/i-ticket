@@ -23,6 +23,10 @@ model User {
   bookings       Booking[]
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
+
+  @@index([role])
+  @@index([companyId])
+  @@index([isGuestUser, createdAt])
 }
 
 model Company {
@@ -86,6 +90,9 @@ model Booking {
 
   @@index([userId, status])
   @@index([tripId])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([tripId, status])
 }
 
 model Passenger {
@@ -132,6 +139,10 @@ model Payment {
   initiatedVia  String   @default("WEB") // WEB or SMS (for analytics)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([status])
+  @@index([initiatedVia, status])
+  @@index([createdAt])
 }
 
 model City {
@@ -152,6 +163,10 @@ model AdminLog {
   details   String?
   tripId    String?
   createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([action])
+  @@index([createdAt])
 }
 
 model SmsSession {

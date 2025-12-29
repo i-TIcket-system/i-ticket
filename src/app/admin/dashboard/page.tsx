@@ -228,10 +228,10 @@ export default function AdminDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-4xl font-bold text-teal-700">
+              <div className="text-4xl font-bold text-teal-900">
                 {stats?.stats?.bookings?.today || 0}
               </div>
-              <p className="text-xs text-teal-600/80 mt-1">
+              <p className="text-xs text-teal-800 mt-1">
                 Active users: {stats?.stats?.users?.newToday || 0}
               </p>
             </CardContent>
@@ -301,10 +301,10 @@ export default function AdminDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-teal-700">
+              <div className="text-3xl font-bold text-teal-900">
                 {stats?.stats?.users?.total || 0}
               </div>
-              <div className="text-xs text-teal-600/70 space-y-1 mt-2">
+              <div className="text-xs text-teal-800 space-y-1 mt-2">
                 <div>Customers: {stats?.stats?.users?.customers || 0}</div>
                 <div>Admins: {stats?.stats?.users?.companyAdmins || 0}</div>
                 <div>Guests (SMS): {stats?.stats?.users?.guests || 0}</div>
@@ -320,12 +320,12 @@ export default function AdminDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-teal-700">
+              <div className="text-3xl font-bold text-teal-900">
                 {stats?.stats?.companies?.total || 0}
               </div>
-              <div className="text-xs text-teal-600/70 space-y-1 mt-2">
-                <div className="text-green-600 font-medium">Active: {stats?.stats?.companies?.active || 0}</div>
-                <div className="text-gray-600">Inactive: {stats?.stats?.companies?.inactive || 0}</div>
+              <div className="text-xs text-teal-800 space-y-1 mt-2">
+                <div className="text-green-700 font-medium">Active: {stats?.stats?.companies?.active || 0}</div>
+                <div className="text-gray-700">Inactive: {stats?.stats?.companies?.inactive || 0}</div>
               </div>
             </CardContent>
           </Card>
@@ -338,10 +338,10 @@ export default function AdminDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-teal-700">
+              <div className="text-3xl font-bold text-teal-900">
                 {stats?.stats?.trips?.active || 0}
               </div>
-              <p className="text-xs text-teal-600/70 mt-2">
+              <p className="text-xs text-teal-800 mt-2">
                 of {stats?.stats?.trips?.total || 0} total trips
               </p>
             </CardContent>
@@ -355,11 +355,11 @@ export default function AdminDashboard() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-teal-700">
+              <div className="text-3xl font-bold text-teal-900">
                 {formatCurrency(stats?.stats?.revenue?.total || 0)}
               </div>
-              <div className="text-xs text-teal-600/70 space-y-1 mt-2">
-                <div className="text-teal-700 font-medium">
+              <div className="text-xs text-teal-800 space-y-1 mt-2">
+                <div className="text-teal-900 font-medium">
                   Commission: {formatCurrency(stats?.stats?.revenue?.commission || 0)}
                 </div>
                 <div>This week: {formatCurrency(stats?.stats?.revenue?.thisWeek || 0)}</div>

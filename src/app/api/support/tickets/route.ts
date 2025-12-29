@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { prisma } from "@/lib/db"
 import { authOptions } from "@/lib/auth"
 import { z } from "zod"
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
 
 // Generate unique ticket number
 function generateTicketNumber(): string {
@@ -27,6 +28,12 @@ const createTicketSchema = z.object({
 // POST /api/support/tickets - Create new support ticket
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting - 5 tickets per hour per IP
+    const clientId = getClientIdentifier(req)
+    if (!checkRateLimit(clientId, RATE_LIMITS.CREATE_TICKET)) {
+      return rateLimitExceeded(3600) // Retry after 1 hour
+    }
+
     const body = await req.json()
 
     // Validate input

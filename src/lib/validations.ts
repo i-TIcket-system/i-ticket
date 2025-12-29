@@ -55,7 +55,12 @@ export const registerUserSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   phone: ethiopianPhone,
   email: z.string().email("Invalid email").optional().or(z.literal("")),
-  password: z.string().min(6, "Password must be at least 6 characters").max(72, "Password too long"),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .max(72, "Password too long")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
   nationalId: z.string().optional(),
   nextOfKinName: z.string().optional(),
   nextOfKinPhone: ethiopianPhone.optional().or(z.literal("")),
@@ -78,7 +83,12 @@ export const requestPasswordResetSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(1, "Reset token is required"),
-  newPassword: z.string().min(6, "Password must be at least 6 characters").max(72, "Password too long"),
+  newPassword: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .max(72, "Password too long")
+    .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+    .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+    .regex(/[0-9]/, "Password must contain at least one number"),
 });
 
 // Company validations

@@ -3,9 +3,16 @@ import { getServerSession } from "next-auth"
 import prisma from "@/lib/db"
 import { authOptions } from "@/lib/auth"
 import { getAvailableSeatNumbers } from "@/lib/utils"
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - 10 bookings per minute per IP
+    const clientId = getClientIdentifier(request)
+    if (!checkRateLimit(clientId, RATE_LIMITS.CREATE_BOOKING)) {
+      return rateLimitExceeded(60) // Retry after 1 minute
+    }
+
     const session = await getServerSession(authOptions)
     const body = await request.json()
     const { tripId, passengers, totalAmount, commission, smsSessionId } = body
