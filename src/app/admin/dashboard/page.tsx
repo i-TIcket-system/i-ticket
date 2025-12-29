@@ -155,7 +155,14 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="container mx-auto py-12 px-4">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated Background Gradient */}
+      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-primary/5 via-purple-50/50 to-blue-50/50">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent"></div>
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-transparent"></div>
+      </div>
+
+      <div className="container mx-auto py-12 px-4">
       <div className="mb-8">
         <div className="flex justify-between items-start mb-2">
           <div>
@@ -213,26 +220,32 @@ export default function AdminDashboard() {
           Today's Activity
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="border-l-4 border-l-primary">
+          <Card className="backdrop-blur-xl bg-white/60 border-white/40 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 border-l-4 border-l-primary">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Today's Bookings</CardTitle>
-              <Bus className="h-4 w-4 text-primary" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Bus className="h-5 w-5 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary">{stats?.stats?.bookings?.today || 0}</div>
+              <div className="text-4xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                {stats?.stats?.bookings?.today || 0}
+              </div>
               <p className="text-xs text-muted-foreground mt-1">
                 Active users: {stats?.stats?.users?.newToday || 0}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-green-500">
+          <Card className="backdrop-blur-xl bg-white/60 border-white/40 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 border-l-4 border-l-green-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Today's Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-600" />
+              <div className="p-2 rounded-lg bg-green-100">
+                <DollarSign className="h-5 w-5 text-green-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-green-600">
+              <div className="text-4xl font-bold bg-gradient-to-br from-green-600 to-green-400 bg-clip-text text-transparent">
                 {formatCurrency(stats?.stats?.revenue?.today || 0)}
               </div>
               <p className="text-xs flex items-center gap-1 mt-1">
@@ -257,13 +270,15 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-blue-500">
+          <Card className="backdrop-blur-xl bg-white/60 border-white/40 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 border-l-4 border-l-blue-500">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Today's Commission</CardTitle>
-              <TrendingUp className="h-4 w-4 text-blue-600" />
+              <div className="p-2 rounded-lg bg-blue-100">
+                <TrendingUp className="h-5 w-5 text-blue-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-600">
+              <div className="text-4xl font-bold bg-gradient-to-br from-blue-600 to-blue-400 bg-clip-text text-transparent">
                 {formatCurrency(stats?.stats?.revenue?.todayCommission || 0)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -278,13 +293,17 @@ export default function AdminDashboard() {
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-4">Key Metrics</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="backdrop-blur-lg bg-white/50 border-white/40 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <div className="p-2 rounded-lg bg-purple-100">
+                <Users className="h-4 w-4 text-purple-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.stats?.users?.total || 0}</div>
+              <div className="text-3xl font-bold bg-gradient-to-br from-purple-600 to-purple-400 bg-clip-text text-transparent">
+                {stats?.stats?.users?.total || 0}
+              </div>
               <div className="text-xs text-muted-foreground space-y-1 mt-2">
                 <div>Customers: {stats?.stats?.users?.customers || 0}</div>
                 <div>Admins: {stats?.stats?.users?.companyAdmins || 0}</div>
@@ -293,13 +312,17 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="backdrop-blur-lg bg-white/50 border-white/40 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Companies</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
+              <div className="p-2 rounded-lg bg-orange-100">
+                <Building2 className="h-4 w-4 text-orange-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.stats?.companies?.total || 0}</div>
+              <div className="text-3xl font-bold bg-gradient-to-br from-orange-600 to-orange-400 bg-clip-text text-transparent">
+                {stats?.stats?.companies?.total || 0}
+              </div>
               <div className="text-xs text-muted-foreground space-y-1 mt-2">
                 <div className="text-green-600">Active: {stats?.stats?.companies?.active || 0}</div>
                 <div className="text-gray-500">Inactive: {stats?.stats?.companies?.inactive || 0}</div>
@@ -307,26 +330,32 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="backdrop-blur-lg bg-white/50 border-white/40 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Trips</CardTitle>
-              <Bus className="h-4 w-4 text-muted-foreground" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Bus className="h-4 w-4 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats?.stats?.trips?.active || 0}</div>
+              <div className="text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                {stats?.stats?.trips?.active || 0}
+              </div>
               <p className="text-xs text-muted-foreground mt-2">
                 of {stats?.stats?.trips?.total || 0} total trips
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="backdrop-blur-lg bg-white/50 border-white/40 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <div className="p-2 rounded-lg bg-green-100">
+                <DollarSign className="h-4 w-4 text-green-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold bg-gradient-to-br from-green-600 to-green-400 bg-clip-text text-transparent">
                 {formatCurrency(stats?.stats?.revenue?.total || 0)}
               </div>
               <div className="text-xs text-muted-foreground space-y-1 mt-2">
@@ -342,7 +371,7 @@ export default function AdminDashboard() {
 
       {/* Channel Performance */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card>
+        <Card className="backdrop-blur-lg bg-white/50 border-white/40 shadow-lg">
           <CardHeader>
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <MessageSquare className="h-4 w-4 text-primary" />
@@ -385,7 +414,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="backdrop-blur-lg bg-white/50 border-white/40 shadow-lg">
           <CardHeader>
             <CardTitle className="text-sm font-medium">Booking Status</CardTitle>
           </CardHeader>
@@ -419,63 +448,85 @@ export default function AdminDashboard() {
       </div>
 
       {/* Revenue Trend Chart */}
-      <Card className="mb-8">
+      <Card className="mb-8 backdrop-blur-lg bg-white/50 border-white/40 shadow-xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Revenue Trend (Last 30 Days)
+            <div className="p-2 rounded-lg bg-primary/10">
+              <TrendingUp className="h-5 w-5 text-primary" />
+            </div>
+            <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Revenue Trend (Last 30 Days)
+            </span>
           </CardTitle>
           <CardDescription>Daily revenue and commission breakdown</CardDescription>
         </CardHeader>
         <CardContent>
           {revenueData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis
-                  dataKey="date"
-                  stroke="#6b7280"
-                  fontSize={12}
-                  tickLine={false}
-                />
-                <YAxis
-                  stroke="#6b7280"
-                  fontSize={12}
-                  tickLine={false}
-                  tickFormatter={(value) => `${value.toLocaleString()} ETB`}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px',
-                    padding: '12px'
-                  }}
-                  formatter={(value: any) => [`${value.toLocaleString()} ETB`, '']}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#22c55e"
-                  strokeWidth={2}
-                  name="Revenue"
-                  dot={{ fill: '#22c55e', r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="commission"
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  name="Commission"
-                  dot={{ fill: '#3b82f6', r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="p-4 rounded-xl backdrop-blur-sm bg-white/40">
+              <ResponsiveContainer width="100%" height={350}>
+                <LineChart data={revenueData}>
+                  <defs>
+                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorCommission" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" opacity={0.3} />
+                  <XAxis
+                    dataKey="date"
+                    stroke="#6b7280"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis
+                    stroke="#6b7280"
+                    fontSize={12}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                    tickFormatter={(value) => `${value.toLocaleString()} ETB`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255, 255, 255, 0.4)',
+                      borderRadius: '12px',
+                      padding: '12px',
+                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+                    }}
+                    formatter={(value: any) => [`${value.toLocaleString()} ETB`, '']}
+                  />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="revenue"
+                    stroke="#22c55e"
+                    strokeWidth={3}
+                    name="Revenue"
+                    dot={{ fill: '#22c55e', r: 5, strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 7 }}
+                    fill="url(#colorRevenue)"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="commission"
+                    stroke="#3b82f6"
+                    strokeWidth={3}
+                    name="Commission"
+                    dot={{ fill: '#3b82f6', r: 5, strokeWidth: 2, stroke: '#fff' }}
+                    activeDot={{ r: 7 }}
+                    fill="url(#colorCommission)"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           ) : (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+            <div className="h-[350px] flex items-center justify-center text-muted-foreground">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           )}
@@ -485,10 +536,12 @@ export default function AdminDashboard() {
       {/* Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Top Routes */}
-        <Card>
+        <Card className="backdrop-blur-lg bg-white/50 border-white/40 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <MapPin className="h-4 w-4 text-primary" />
+              <div className="p-2 rounded-lg bg-primary/10">
+                <MapPin className="h-4 w-4 text-primary" />
+              </div>
               Top Routes (Last 30 Days)
             </CardTitle>
           </CardHeader>
@@ -529,10 +582,12 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Top Companies */}
-        <Card>
+        <Card className="backdrop-blur-lg bg-white/50 border-white/40 shadow-lg">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Award className="h-4 w-4 text-primary" />
+              <div className="p-2 rounded-lg bg-yellow-100">
+                <Award className="h-4 w-4 text-yellow-600" />
+              </div>
               Top Companies (All Time)
             </CardTitle>
           </CardHeader>
@@ -572,9 +627,14 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Bookings */}
-      <Card className="mb-8">
+      <Card className="mb-8 backdrop-blur-lg bg-white/50 border-white/40 shadow-lg">
         <CardHeader>
-          <CardTitle>Recent Bookings</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Bus className="h-5 w-5 text-primary" />
+            </div>
+            Recent Bookings
+          </CardTitle>
           <CardDescription>Latest bookings across all companies</CardDescription>
         </CardHeader>
         <CardContent>
@@ -633,9 +693,14 @@ export default function AdminDashboard() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+        <Card className="backdrop-blur-lg bg-white/50 border-white/40 shadow-lg">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              Quick Actions
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <Button
@@ -678,9 +743,14 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="backdrop-blur-lg bg-white/50 border-white/40 shadow-lg">
           <CardHeader>
-            <CardTitle>System Status</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-blue-100">
+                <Badge className="h-5 w-5" />
+              </div>
+              System Status
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -695,6 +765,7 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   )

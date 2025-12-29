@@ -28,6 +28,7 @@ import { Separator } from "@/components/ui/separator"
 import { formatDate, formatDuration, formatCurrency } from "@/lib/utils"
 import { generateICSFile, downloadICSFile, getICSFilename } from "@/lib/calendar"
 import { toast } from "sonner"
+import { TripCountdown } from "@/components/ui/trip-countdown"
 
 interface Ticket {
   id: string
@@ -226,6 +227,11 @@ export default function TicketsPage() {
               Show the QR code when boarding. Have a safe trip!
             </p>
           </div>
+        </div>
+
+        {/* Countdown Timer */}
+        <div className="mb-6">
+          <TripCountdown departureTime={booking.trip.departureTime} variant="glass" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

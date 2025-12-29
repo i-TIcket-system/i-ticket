@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/utils"
+import { TripCountdown } from "@/components/ui/trip-countdown"
 
 interface Booking {
   id: string
@@ -196,6 +197,9 @@ export default function PaymentPage() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Countdown Timer */}
+            <TripCountdown departureTime={booking.trip.departureTime} variant="default" />
 
             {/* Payment Method */}
             <Card>
