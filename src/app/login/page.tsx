@@ -58,7 +58,8 @@ export default function LoginPage() {
         } else if (session?.user?.role === "SUPER_ADMIN") {
           router.replace("/admin/dashboard")
         } else {
-          router.replace("/")
+          // Redirect customers to search page to start booking
+          router.replace("/search")
         }
       }
     } catch (err) {

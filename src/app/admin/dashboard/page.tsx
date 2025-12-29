@@ -638,24 +638,43 @@ export default function AdminDashboard() {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <button
-              onClick={() => router.push("/admin/companies")}
-              className="w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
+            <Button
+              variant="outline"
+              onClick={() => router.push("/search")}
+              className="w-full justify-start"
             >
-              Manage Companies
-            </button>
-            <button
-              onClick={() => router.push("/admin/users")}
-              className="w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
+              <Bus className="mr-2 h-4 w-4" />
+              View Search Page
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                fetchStats()
+                fetchAnalytics()
+              }}
+              className="w-full justify-start"
+              disabled={loading}
             >
-              Manage Users
-            </button>
-            <button
-              onClick={() => router.push("/admin/logs")}
-              className="w-full text-left px-4 py-2 rounded-md hover:bg-gray-100 transition-colors"
+              {loading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <TrendingUp className="mr-2 h-4 w-4" />
+              )}
+              Refresh All Data
+            </Button>
+            <Button
+              variant="outline"
+              onClick={downloadRevenueReport}
+              disabled={isDownloading}
+              className="w-full justify-start"
             >
-              View System Logs
-            </button>
+              {isDownloading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              Download Today's Report
+            </Button>
           </CardContent>
         </Card>
 
