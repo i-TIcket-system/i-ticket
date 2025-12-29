@@ -74,13 +74,13 @@ export async function GET(request: NextRequest) {
       results.notificationsSent++;
     }
 
-    // 3. Cleanup old pending bookings without payments (> 30 minutes old)
-    const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+    // 3. Cleanup old pending bookings without payments (> 15 minutes old)
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
     const stalePendingBookings = await prisma.booking.findMany({
       where: {
         status: 'PENDING',
-        createdAt: { lt: thirtyMinutesAgo },
+        createdAt: { lt: fifteenMinutesAgo },
         payment: null // No payment record at all
       },
       include: {
@@ -194,7 +194,7 @@ async function cancelStaleBooking(booking: any) {
         tripId: booking.tripId,
         details: JSON.stringify({
           bookingId: booking.id,
-          reason: 'No payment initiated within 30 minutes'
+          reason: 'No payment initiated within 15 minutes'
         })
       }
     });

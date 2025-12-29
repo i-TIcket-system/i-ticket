@@ -47,13 +47,14 @@ export async function POST(
       )
     }
 
-    // Update booking status
+    // Update booking status and reset low seat alert flag
     const shouldHalt = action === "HALT"
 
     const updatedTrip = await prisma.trip.update({
       where: { id: params.tripId },
       data: {
         bookingHalted: shouldHalt,
+        lowSlotAlertSent: false, // Reset alert flag when admin takes action
       },
     })
 
