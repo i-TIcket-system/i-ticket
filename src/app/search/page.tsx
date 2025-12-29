@@ -61,8 +61,10 @@ function SearchContent() {
 
   const [trips, setTrips] = useState<Trip[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
   const [cities, setCities] = useState<string[]>([])
+  const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 })
 
   // Search filters
   const [origin, setOrigin] = useState(searchParams.get("from") || "")
@@ -108,8 +110,13 @@ function SearchContent() {
     }
   }, [])
 
-  const searchTrips = async () => {
-    setIsLoading(true)
+  const searchTrips = async (pageNum = 1, append = false) => {
+    if (append) {
+      setIsLoadingMore(true)
+    } else {
+      setIsLoading(true)
+    }
+
     try {
       const params = new URLSearchParams()
       if (origin) params.set("origin", origin)
@@ -117,18 +124,30 @@ function SearchContent() {
       if (date) params.set("date", date)
       if (busType) params.set("busType", busType)
       params.set("sortBy", sortBy)
+      params.set("page", pageNum.toString())
+      params.set("limit", "20")
 
       const response = await fetch(`/api/trips?${params.toString()}`)
       const data = await response.json()
 
       if (response.ok) {
-        setTrips(data.trips)
+        if (append) {
+          setTrips(prev => [...prev, ...data.trips])
+        } else {
+          setTrips(data.trips)
+        }
+        setPagination(data.pagination)
       }
     } catch (error) {
       console.error("Search error:", error)
     } finally {
       setIsLoading(false)
+      setIsLoadingMore(false)
     }
+  }
+
+  const loadMore = () => {
+    searchTrips(pagination.page + 1, true)
   }
 
   const handleSearch = (e: React.FormEvent) => {
@@ -138,7 +157,7 @@ function SearchContent() {
     if (destination) params.set("to", destination)
     if (date) params.set("date", date)
     router.push(`/search?${params.toString()}`)
-    searchTrips()
+    searchTrips(1, false) // Reset to page 1
   }
 
   const getSlotsColor = (available: number, total: number) => {
@@ -430,6 +449,29 @@ function SearchContent() {
                 </CardContent>
               </Card>
             ))}
+
+            {/* Load More Button */}
+            {pagination.page < pagination.pages && (
+              <div className="flex justify-center mt-8">
+                <Button
+                  onClick={loadMore}
+                  disabled={isLoadingMore}
+                  variant="outline"
+                  size="lg"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Loading more trips...
+                    </>
+                  ) : (
+                    <>
+                      Load More ({pagination.total - trips.length} remaining)
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
