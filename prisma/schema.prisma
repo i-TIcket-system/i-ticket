@@ -183,3 +183,42 @@ model SmsSession {
   @@index([sessionId])
   @@index([expiresAt])
 }
+
+model SupportTicket {
+  id            String   @id @default(cuid())
+  ticketNumber  String   @unique // Format: SUP-XXXXXX (6 chars)
+
+  // Contact details
+  name          String
+  email         String
+  phone         String?
+
+  // Ticket details
+  subject       String
+  message       String   @db.Text
+  category      String   @default("GENERAL") // GENERAL, TECHNICAL, BOOKING, PAYMENT, ACCOUNT, FEEDBACK
+  priority      Int      @default(2) // 1=Low, 2=Medium, 3=High, 4=Urgent
+  status        String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+
+  // Assignment & Resolution
+  assignedToId  String?  // Admin user ID
+  resolvedBy    String?  // Admin user ID who resolved it
+  resolution    String?  @db.Text
+  resolvedAt    DateTime?
+
+  // Scoring/Evaluation
+  satisfactionScore Int?  // 1-5 rating from user
+  internalNotes String?  @db.Text // Admin notes
+
+  // Metadata
+  userAgent     String?
+  ipAddress     String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([ticketNumber])
+  @@index([status, priority])
+  @@index([email])
+  @@index([createdAt])
+}

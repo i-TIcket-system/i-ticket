@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
-import { Menu, X, User, LogOut, LayoutDashboard, Ticket } from "lucide-react"
+import { Menu, X, User, LogOut, LayoutDashboard, Ticket, Building2, HeadphonesIcon, Bus, Users } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -51,15 +51,45 @@ export function Navbar() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/search" className="text-sm font-medium hover:text-primary transition-colors">
-              Find Trips
-            </Link>
-            <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors">
-              About
-            </Link>
-            <Link href="/contact" className="text-sm font-medium hover:text-primary transition-colors">
-              Contact
-            </Link>
+            {session?.user?.role === "SUPER_ADMIN" ? (
+              <>
+                <Link href="/admin/dashboard" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Link>
+                <Link href="/admin/support" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                  <HeadphonesIcon className="h-4 w-4" />
+                  Support
+                </Link>
+                <Link href="/admin/companies" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                  <Building2 className="h-4 w-4" />
+                  Companies
+                </Link>
+              </>
+            ) : session?.user?.role === "COMPANY_ADMIN" ? (
+              <>
+                <Link href="/company/dashboard" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Link>
+                <Link href="/company/trips" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                  <Bus className="h-4 w-4" />
+                  Trips
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/search" className="text-sm font-medium hover:text-primary transition-colors">
+                  Find Trips
+                </Link>
+                <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors">
+                  About
+                </Link>
+                <Link href="/contact" className="text-sm font-medium hover:text-primary transition-colors">
+                  Contact
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Auth Buttons */}
@@ -135,27 +165,72 @@ export function Navbar() {
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t animate-fade-in">
             <div className="flex flex-col gap-4">
-              <Link
-                href="/search"
-                className="text-sm font-medium hover:text-primary transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Find Trips
-              </Link>
-              <Link
-                href="/about"
-                className="text-sm font-medium hover:text-primary transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                About
-              </Link>
-              <Link
-                href="/contact"
-                className="text-sm font-medium hover:text-primary transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                Contact
-              </Link>
+              {session?.user?.role === "SUPER_ADMIN" ? (
+                <>
+                  <Link
+                    href="/admin/dashboard"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/admin/support"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Support
+                  </Link>
+                  <Link
+                    href="/admin/companies"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Companies
+                  </Link>
+                </>
+              ) : session?.user?.role === "COMPANY_ADMIN" ? (
+                <>
+                  <Link
+                    href="/company/dashboard"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/company/trips"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Trips
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/search"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Find Trips
+                  </Link>
+                  <Link
+                    href="/about"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    About
+                  </Link>
+                  <Link
+                    href="/contact"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Contact
+                  </Link>
+                </>
+              )}
               {session ? (
                 <>
                   <Link

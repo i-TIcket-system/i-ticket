@@ -52,9 +52,43 @@ export async function POST(request: NextRequest) {
       }
 
       userId = user.id;
+    } else if (passengers && passengers.length > 0 && passengers[0].phone) {
+      // Guest checkout - create guest user from first passenger's phone
+      const firstPassenger = passengers[0];
+
+      // Validate first passenger has required fields
+      if (!firstPassenger.name || !firstPassenger.nationalId || !firstPassenger.phone) {
+        return NextResponse.json(
+          { error: "First passenger must have name, ID, and phone number" },
+          { status: 400 }
+        );
+      }
+
+      // Get or create guest user
+      user = await prisma.user.findUnique({
+        where: { phone: firstPassenger.phone }
+      });
+
+      if (!user) {
+        // Create new guest user
+        user = await prisma.user.create({
+          data: {
+            phone: firstPassenger.phone,
+            name: firstPassenger.name,
+            nationalId: firstPassenger.nationalId,
+            password: null,
+            isGuestUser: true,
+            role: "CUSTOMER"
+          }
+        });
+
+        console.log(`[Guest Checkout] Created guest user for ${firstPassenger.phone}`);
+      }
+
+      userId = user.id;
     } else {
       return NextResponse.json(
-        { error: "Authentication required" },
+        { error: "Authentication required or provide complete passenger details" },
         { status: 401 }
       );
     }

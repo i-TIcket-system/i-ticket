@@ -108,8 +108,19 @@ export default function BookingPage() {
   }, [tripId])
 
   useEffect(() => {
-    // Auto-fill first passenger with logged-in user data
-    if (session?.user && passengers[0].name === "") {
+    // Restore passenger data from localStorage (if user was redirected to login)
+    const savedPassengers = localStorage.getItem(`booking-${tripId}-passengers`)
+    if (savedPassengers && session?.user) {
+      try {
+        const parsedPassengers = JSON.parse(savedPassengers)
+        setPassengers(parsedPassengers)
+        localStorage.removeItem(`booking-${tripId}-passengers`) // Clean up
+        toast.success("Your passenger information has been restored")
+      } catch (error) {
+        console.error("Error restoring passenger data:", error)
+      }
+    } else if (session?.user && passengers[0].name === "") {
+      // Auto-fill first passenger with logged-in user data
       setPassengers((prev) => [
         {
           ...prev[0],
@@ -119,7 +130,7 @@ export default function BookingPage() {
         ...prev.slice(1),
       ])
     }
-  }, [session])
+  }, [session, tripId])
 
   const fetchTrip = async () => {
     try {
@@ -179,15 +190,14 @@ export default function BookingPage() {
   }
 
   const handleBooking = async () => {
-    if (!session) {
-      router.push(`/login?callbackUrl=/booking/${tripId}`)
-      return
-    }
-
+    // Validate passengers first (works for both logged-in and guest users)
     if (!validatePassengers()) {
       toast.error("Please fill in all required passenger details")
       return
     }
+
+    // Guest checkout is allowed - no login required!
+    // The API will create a guest user account automatically
 
     setIsSubmitting(true)
 
@@ -509,32 +519,38 @@ export default function BookingPage() {
 
                 <div className="text-xs text-muted-foreground">
                   Price includes all taxes and fees. Payment via TeleBirr.
+                  {status === "unauthenticated" && (
+                    <span className="block mt-2 text-primary font-medium">
+                      No account needed - book as guest!
+                    </span>
+                  )}
                 </div>
 
-                {status === "unauthenticated" ? (
-                  <Link href={`/login?callbackUrl=/booking/${tripId}`}>
-                    <Button className="w-full">
-                      Login to Continue
-                    </Button>
-                  </Link>
-                ) : (
-                  <Button
-                    className="w-full"
-                    onClick={handleBooking}
-                    disabled={isSubmitting || !validatePassengers()}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      <>
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        Continue to Payment
-                      </>
-                    )}
-                  </Button>
+                <Button
+                  className="w-full"
+                  onClick={handleBooking}
+                  disabled={isSubmitting || !validatePassengers()}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Continue to Payment
+                    </>
+                  )}
+                </Button>
+
+                {status === "unauthenticated" && (
+                  <p className="text-xs text-center text-muted-foreground">
+                    Have an account?{" "}
+                    <Link href={`/login?callbackUrl=/booking/${tripId}`} className="text-primary hover:underline">
+                      Login here
+                    </Link>
+                  </p>
                 )}
 
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">

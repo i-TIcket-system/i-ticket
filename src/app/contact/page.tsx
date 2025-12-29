@@ -25,22 +25,49 @@ export default function ContactPage() {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate API call (replace with actual implementation)
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    try {
+      const response = await fetch("/api/support/tickets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
 
-    toast.success("Message sent successfully!", {
-      description: "We'll get back to you within 24 hours.",
-    })
+      const data = await response.json()
 
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      subject: "",
-      message: "",
-    })
+      if (!response.ok) {
+        toast.error(data.error || "Failed to submit your request")
+        setIsSubmitting(false)
+        return
+      }
 
-    setIsSubmitting(false)
+      // Show persistent toast with ticket number
+      toast.success(`Support Ticket Created: ${data.ticket.ticketNumber}`, {
+        description: `We've received your request and will respond within 24 hours. Save your ticket number for reference.`,
+        duration: Infinity, // Never auto-dismiss
+        action: {
+          label: "Copy Ticket #",
+          onClick: () => {
+            navigator.clipboard.writeText(data.ticket.ticketNumber)
+            toast.success("Ticket number copied!")
+          }
+        },
+      })
+
+      // Reset form
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: "",
+      })
+
+    } catch (error) {
+      console.error("Error submitting contact form:", error)
+      toast.error("An unexpected error occurred")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
