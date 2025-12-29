@@ -82,7 +82,8 @@ export async function POST(
       })
 
       // CRITICAL: Auto-halt if slots drop to 10 or below
-      if (updatedTrip.availableSlots <= 10 && !trip.bookingHalted) {
+      // Skip if: sold out (0), already halted, or admin already handled (lowSlotAlertSent)
+      if (updatedTrip.availableSlots > 0 && updatedTrip.availableSlots <= 10 && !trip.bookingHalted && !trip.lowSlotAlertSent) {
         await tx.trip.update({
           where: { id: params.tripId },
           data: {
