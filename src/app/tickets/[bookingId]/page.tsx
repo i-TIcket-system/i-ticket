@@ -375,27 +375,23 @@ export default function TicketsPage() {
                       {(booking.trip.driver || booking.trip.conductor) && (
                         <>
                           <Separator />
-                          <div className="space-y-2">
-                            <p className="text-xs font-semibold text-muted-foreground">Trip Staff Contact:</p>
-                            {booking.trip.driver && (
-                              <div className="text-xs">
-                                <p className="font-medium flex items-center gap-1">
+                          <div className="space-y-1">
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">Staff:</p>
+                            <div className="flex items-center gap-2 text-xs flex-wrap">
+                              {booking.trip.driver && (
+                                <span className="flex items-center gap-1">
                                   <Car className="h-3 w-3" />
-                                  Driver: {booking.trip.driver.name}
-                                </p>
-                                <p className="text-muted-foreground pl-4">📞 {booking.trip.driver.phone}</p>
-                              </div>
-                            )}
-                            {booking.trip.conductor && (
-                              <div className="text-xs">
-                                <p className="font-medium flex items-center gap-1">
+                                  {booking.trip.driver.name} ({booking.trip.driver.phone})
+                                </span>
+                              )}
+                              {booking.trip.driver && booking.trip.conductor && <span>•</span>}
+                              {booking.trip.conductor && (
+                                <span className="flex items-center gap-1">
                                   <UserCheck className="h-3 w-3" />
-                                  Conductor: {booking.trip.conductor.name}
-                                </p>
-                                <p className="text-muted-foreground pl-4">📞 {booking.trip.conductor.phone}</p>
-                              </div>
-                            )}
-                            <p className="text-xs text-muted-foreground italic">Call for pickup location</p>
+                                  {booking.trip.conductor.name} ({booking.trip.conductor.phone})
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </>
                       )}

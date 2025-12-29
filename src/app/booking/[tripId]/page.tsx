@@ -222,7 +222,7 @@ export default function BookingPage() {
     if (!session && passengers.length > 1) {
       toast.info("TeleBirr payment will be sent to the FIRST passenger", {
         description: `Payment request → ${passengers[0].phone}. Make sure TeleBirr is enabled.`,
-        duration: 6000,
+        duration: 12000, // 12 seconds - important payment info
       })
     }
 
