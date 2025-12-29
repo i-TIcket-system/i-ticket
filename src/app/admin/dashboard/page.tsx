@@ -293,18 +293,18 @@ export default function AdminDashboard() {
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-4">Key Metrics</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="backdrop-blur-lg bg-gradient-to-br from-purple-50 to-purple-100/70 border-purple-200 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="backdrop-blur-lg bg-gradient-to-br from-teal-50 to-teal-100/70 border-teal-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <div className="p-2 rounded-lg bg-purple-500/20">
-                <Users className="h-4 w-4 text-purple-700" />
+              <div className="p-2 rounded-lg bg-teal-500/20">
+                <Users className="h-4 w-4 text-teal-700" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-purple-700">
+              <div className="text-3xl font-bold text-teal-700">
                 {stats?.stats?.users?.total || 0}
               </div>
-              <div className="text-xs text-purple-600/70 space-y-1 mt-2">
+              <div className="text-xs text-teal-600/70 space-y-1 mt-2">
                 <div>Customers: {stats?.stats?.users?.customers || 0}</div>
                 <div>Admins: {stats?.stats?.users?.companyAdmins || 0}</div>
                 <div>Guests (SMS): {stats?.stats?.users?.guests || 0}</div>
@@ -312,18 +312,18 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="backdrop-blur-lg bg-gradient-to-br from-orange-50 to-orange-100/70 border-orange-200 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="backdrop-blur-lg bg-gradient-to-br from-teal-50 to-teal-100/70 border-teal-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Companies</CardTitle>
-              <div className="p-2 rounded-lg bg-orange-500/20">
-                <Building2 className="h-4 w-4 text-orange-700" />
+              <div className="p-2 rounded-lg bg-teal-500/20">
+                <Building2 className="h-4 w-4 text-teal-700" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-orange-700">
+              <div className="text-3xl font-bold text-teal-700">
                 {stats?.stats?.companies?.total || 0}
               </div>
-              <div className="text-xs text-orange-600/70 space-y-1 mt-2">
+              <div className="text-xs text-teal-600/70 space-y-1 mt-2">
                 <div className="text-green-600 font-medium">Active: {stats?.stats?.companies?.active || 0}</div>
                 <div className="text-gray-600">Inactive: {stats?.stats?.companies?.inactive || 0}</div>
               </div>
@@ -347,19 +347,19 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="backdrop-blur-lg bg-gradient-to-br from-emerald-50 to-emerald-100/70 border-emerald-200 shadow-lg hover:shadow-xl transition-all duration-300">
+          <Card className="backdrop-blur-lg bg-gradient-to-br from-teal-50 to-teal-100/70 border-teal-200 shadow-lg hover:shadow-xl transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-              <div className="p-2 rounded-lg bg-emerald-500/20">
-                <DollarSign className="h-4 w-4 text-emerald-700" />
+              <div className="p-2 rounded-lg bg-teal-500/20">
+                <DollarSign className="h-4 w-4 text-teal-700" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-emerald-700">
+              <div className="text-3xl font-bold text-teal-700">
                 {formatCurrency(stats?.stats?.revenue?.total || 0)}
               </div>
-              <div className="text-xs text-emerald-600/70 space-y-1 mt-2">
-                <div className="text-emerald-700 font-medium">
+              <div className="text-xs text-teal-600/70 space-y-1 mt-2">
+                <div className="text-teal-700 font-medium">
                   Commission: {formatCurrency(stats?.stats?.revenue?.commission || 0)}
                 </div>
                 <div>This week: {formatCurrency(stats?.stats?.revenue?.thisWeek || 0)}</div>
