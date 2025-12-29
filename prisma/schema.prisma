@@ -17,6 +17,12 @@ model User {
   role           String    @default("CUSTOMER") // CUSTOMER, COMPANY_ADMIN, SUPER_ADMIN
   companyId      String?
   company        Company?  @relation(fields: [companyId], references: [id])
+
+  // Staff-specific fields (for company employees)
+  staffRole      String?   // ADMIN, DRIVER, CONDUCTOR, MANUAL_TICKETER (only for COMPANY_ADMIN role)
+  licenseNumber  String?   // For drivers
+  employeeId     String?   // Company employee ID
+
   nextOfKinName  String?
   nextOfKinPhone String?
   isGuestUser    Boolean   @default(false) // True for SMS users without full registration
@@ -27,6 +33,7 @@ model User {
   @@index([role])
   @@index([companyId])
   @@index([isGuestUser, createdAt])
+  @@index([companyId, staffRole])
 }
 
 model Company {
@@ -36,6 +43,12 @@ model Company {
   phones    String   @default("[]") // JSON array stored as string
   email     String
   isActive  Boolean  @default(true)
+
+  // Report signatures (for accounting/financial reports)
+  preparedBy  String?  // Name of person who prepares reports
+  reviewedBy  String?  // Name of person who reviews reports
+  approvedBy  String?  // Name of person who approves reports
+
   users     User[]
   trips     Trip[]
   createdAt DateTime @default(now())

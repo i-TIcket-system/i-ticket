@@ -45,7 +45,13 @@ export async function generatePlatformRevenueReport(options: ReportOptions): Pro
           busType: true,
           price: true,
           company: {
-            select: { id: true, name: true }
+            select: {
+              id: true,
+              name: true,
+              preparedBy: true,
+              reviewedBy: true,
+              approvedBy: true
+            }
           }
         }
       },
@@ -403,6 +409,49 @@ export async function generatePlatformRevenueReport(options: ReportOptions): Pro
     })
 
     currentRow++
+
+    // ============================================
+    // COMPANY-SPECIFIC APPROVAL SIGNATURES
+    // ============================================
+
+    currentRow++ // Extra spacing before signatures
+
+    sheet.mergeCells(`A${currentRow}:L${currentRow}`)
+    const companySignatureHeader = sheet.getCell(`A${currentRow}`)
+    companySignatureHeader.value = `${companyName.toUpperCase()} - APPROVAL SIGNATURES`
+    companySignatureHeader.font = { bold: true, size: 11, color: { argb: colors.white } }
+    companySignatureHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.primary } }
+    companySignatureHeader.alignment = { horizontal: "center", vertical: "middle" }
+    sheet.getRow(currentRow).height = 22
+    currentRow += 2
+
+    // Get company from first booking to access signature fields
+    const company = companyBookings[0]?.trip?.company
+
+    // Signature lines for this specific company
+    const companySignatures = [
+      { label: "Prepared By", name: company?.preparedBy || "_".repeat(30), role: "Finance Officer" },
+      { label: "Reviewed By", name: company?.reviewedBy || "_".repeat(30), role: "Finance Manager" },
+      { label: "Approved By", name: company?.approvedBy || "_".repeat(30), role: "CEO / Director" }
+    ]
+
+    companySignatures.forEach((sig, idx) => {
+      const col = idx * 4 + 1 // Columns A, E, I
+
+      sheet.getCell(currentRow, col).value = sig.name
+      sheet.getCell(currentRow, col).font = { size: 10, bold: sig.name !== "_".repeat(30) }
+
+      sheet.getCell(currentRow + 1, col).value = sig.label
+      sheet.getCell(currentRow + 1, col).font = { bold: true, size: 10 }
+
+      sheet.getCell(currentRow + 2, col).value = sig.role
+      sheet.getCell(currentRow + 2, col).font = { italic: true, size: 9, color: { argb: "FF666666" } }
+
+      sheet.getCell(currentRow + 4, col).value = "Date: ________________"
+      sheet.getCell(currentRow + 4, col).font = { size: 9 }
+    })
+
+    currentRow += 6
     sheet.addRow([]) // Spacing between companies
     currentRow++
   })
