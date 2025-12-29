@@ -131,22 +131,28 @@ export async function POST(request: NextRequest) {
         })
       )
 
+      // Get user details for logging (works for both logged-in and guest users)
+      const userForLogging = await tx.user.findUnique({
+        where: { id: booking.userId },
+        select: { id: true, name: true, phone: true, isGuestUser: true }
+      })
+
       // Log payment for dispute management
       await tx.adminLog.create({
         data: {
-          userId: session.user.id,
+          userId: booking.userId,
           action: "PAYMENT_SUCCESS",
           tripId: booking.tripId,
-          details: `Payment successful: ${session.user.name} (${session.user.phone}) paid ${totalAmount} ETB for booking ${bookingId}. Method: ${payment.method}, Transaction ID: ${payment.transactionId}. ${booking.passengers.length} tickets generated.`,
+          details: `Payment successful: ${userForLogging?.name || 'Guest'} (${userForLogging?.phone}) paid ${totalAmount} ETB for booking ${bookingId}. Method: ${payment.method}, Transaction ID: ${payment.transactionId}. ${booking.passengers.length} tickets generated. ${userForLogging?.isGuestUser ? '[GUEST CHECKOUT]' : ''}`,
         },
       })
 
       // Log SMS notification (in production, actually send SMS)
-      console.log(`[SMS] Tickets sent to ${session.user.phone}:`)
+      console.log(`[SMS] Tickets sent to ${userForLogging?.phone}:`)
       tickets.forEach((ticket) => {
         console.log(`  - ${ticket.passengerName}: ${ticket.shortCode}`)
       })
-      console.log(`[PAYMENT LOG] ${session.user.name} paid ${totalAmount} ETB for booking ${bookingId}`)
+      console.log(`[PAYMENT LOG] ${userForLogging?.name || 'Guest'} paid ${totalAmount} ETB for booking ${bookingId}${userForLogging?.isGuestUser ? ' [GUEST CHECKOUT]' : ''}`)
 
       return { payment, tickets }
     })
