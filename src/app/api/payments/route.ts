@@ -9,17 +9,10 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      )
-    }
-
     const body = await request.json()
     const { bookingId, method } = body
 
-    // Get booking
+    // Get booking with user details
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
       include: {
@@ -30,6 +23,12 @@ export async function POST(request: NextRequest) {
           },
         },
         payment: true,
+        user: {
+          select: {
+            id: true,
+            isGuestUser: true,
+          }
+        }
       },
     })
 
@@ -40,11 +39,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (booking.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
-      )
+    // Allow payment if:
+    // 1. User is logged in and owns the booking
+    // 2. Booking belongs to a guest user (no authentication required)
+    if (session?.user?.id) {
+      // Logged in user - verify ownership
+      if (booking.userId !== session.user.id) {
+        return NextResponse.json(
+          { error: "Access denied" },
+          { status: 403 }
+        )
+      }
+    } else {
+      // Not logged in - only allow if this is a guest booking
+      if (!booking.user.isGuestUser) {
+        return NextResponse.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        )
+      }
     }
 
     if (booking.status === "PAID") {

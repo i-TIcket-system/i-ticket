@@ -10,13 +10,7 @@ export async function GET(
   try {
     const session = await getServerSession(authOptions)
 
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      )
-    }
-
+    // Fetch booking with user details
     const booking = await prisma.booking.findUnique({
       where: { id: params.bookingId },
       include: {
@@ -28,6 +22,12 @@ export async function GET(
         passengers: true,
         payment: true,
         tickets: true,
+        user: {
+          select: {
+            id: true,
+            isGuestUser: true,
+          }
+        }
       },
     })
 
@@ -38,12 +38,26 @@ export async function GET(
       )
     }
 
-    // Check ownership (unless admin)
-    if (booking.userId !== session.user.id && session.user.role !== "SUPER_ADMIN") {
-      return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
-      )
+    // Allow access if:
+    // 1. User is logged in and owns the booking
+    // 2. User is admin
+    // 3. Booking belongs to a guest user (no authentication required for guest bookings)
+    if (session?.user?.id) {
+      // Logged in user - check ownership
+      if (booking.userId !== session.user.id && session.user.role !== "SUPER_ADMIN") {
+        return NextResponse.json(
+          { error: "Access denied" },
+          { status: 403 }
+        )
+      }
+    } else {
+      // Not logged in - only allow if this is a guest booking
+      if (!booking.user.isGuestUser) {
+        return NextResponse.json(
+          { error: "Authentication required" },
+          { status: 401 }
+        )
+      }
     }
 
     return NextResponse.json({ booking })
