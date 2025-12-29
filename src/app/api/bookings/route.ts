@@ -24,6 +24,15 @@ export async function POST(request: NextRequest) {
 
     if (session?.user?.id) {
       // Web user with NextAuth session
+
+      // SECURITY: Prevent company admins from booking trips
+      if (session.user.role === "COMPANY_ADMIN" || session.user.role === "SUPER_ADMIN") {
+        return NextResponse.json(
+          { error: "Company admins cannot create bookings. Please use a customer account." },
+          { status: 403 }
+        );
+      }
+
       userId = session.user.id;
     } else if (smsSessionId) {
       // SMS user - get or create guest user by phone

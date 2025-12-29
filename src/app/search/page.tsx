@@ -56,6 +56,7 @@ interface Trip {
 function SearchContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { data: session } = useSession()
 
   const [trips, setTrips] = useState<Trip[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -70,6 +71,9 @@ function SearchContent() {
   const [sortBy, setSortBy] = useState("departureTime")
 
   const today = new Date().toISOString().split("T")[0]
+
+  // Check if user is a company admin (not allowed to book)
+  const isCompanyAdmin = session?.user?.role === "COMPANY_ADMIN" || session?.user?.role === "SUPER_ADMIN"
 
   // Fetch cities from API and merge with static Ethiopian cities
   useEffect(() => {
@@ -406,11 +410,17 @@ function SearchContent() {
                               </span>
                             </div>
 
-                            <Link href={`/booking/${trip.id}`}>
-                              <Button disabled={trip.availableSlots === 0}>
-                                {trip.availableSlots === 0 ? "Sold Out" : "Select"}
+                            {isCompanyAdmin ? (
+                              <Button disabled variant="secondary" size="sm">
+                                View Only
                               </Button>
-                            </Link>
+                            ) : (
+                              <Link href={`/booking/${trip.id}`}>
+                                <Button disabled={trip.availableSlots === 0}>
+                                  {trip.availableSlots === 0 ? "Sold Out" : "Select"}
+                                </Button>
+                              </Link>
+                            )}
                           </div>
                         </div>
                       </div>

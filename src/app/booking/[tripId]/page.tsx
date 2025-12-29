@@ -107,6 +107,16 @@ export default function BookingPage() {
     fetchTrip()
   }, [tripId])
 
+  // Prevent company admins from booking trips
+  useEffect(() => {
+    if (status === "authenticated" && (session?.user?.role === "COMPANY_ADMIN" || session?.user?.role === "SUPER_ADMIN")) {
+      toast.error("Company admins cannot book trips", {
+        description: "Please use a customer account to make bookings"
+      })
+      router.push("/search")
+    }
+  }, [status, session, router])
+
   useEffect(() => {
     // Restore passenger data from localStorage
     const savedPassengers = localStorage.getItem(`booking-${tripId}-passengers`)
