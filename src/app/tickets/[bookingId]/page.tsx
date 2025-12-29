@@ -371,6 +371,35 @@ export default function TicketsPage() {
                         <p>Booked: {new Date(booking.createdAt).toLocaleDateString()}</p>
                       </div>
 
+                      {/* Driver/Conductor Contact (included in download) */}
+                      {(booking.trip.driver || booking.trip.conductor) && (
+                        <>
+                          <Separator />
+                          <div className="space-y-2">
+                            <p className="text-xs font-semibold text-muted-foreground">Trip Staff Contact:</p>
+                            {booking.trip.driver && (
+                              <div className="text-xs">
+                                <p className="font-medium flex items-center gap-1">
+                                  <Car className="h-3 w-3" />
+                                  Driver: {booking.trip.driver.name}
+                                </p>
+                                <p className="text-muted-foreground pl-4">📞 {booking.trip.driver.phone}</p>
+                              </div>
+                            )}
+                            {booking.trip.conductor && (
+                              <div className="text-xs">
+                                <p className="font-medium flex items-center gap-1">
+                                  <UserCheck className="h-3 w-3" />
+                                  Conductor: {booking.trip.conductor.name}
+                                </p>
+                                <p className="text-muted-foreground pl-4">📞 {booking.trip.conductor.phone}</p>
+                              </div>
+                            )}
+                            <p className="text-xs text-muted-foreground italic">Call for pickup location</p>
+                          </div>
+                        </>
+                      )}
+
                       <Separator />
 
                       <Button
