@@ -72,7 +72,6 @@ export const ETHIOPIAN_CITIES = [
   "Butajira",
   "Welkite",
   "Worabe",
-  "Bonga",
 
   // Tigray Region
   "Mekelle",
@@ -83,7 +82,6 @@ export const ETHIOPIAN_CITIES = [
   "Wukro",
 
   // Somali Region
-  "Jijiga",
   "Gode",
   "Kebri Dahar",
   "Degehabur",

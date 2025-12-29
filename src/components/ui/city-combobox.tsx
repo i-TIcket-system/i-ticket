@@ -35,9 +35,12 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
 
     // Filter suggestions based on input
     const filteredSuggestions = React.useMemo(() => {
-      if (!inputValue) return suggestions.filter(s => s !== excludeCity).slice(0, 8)
+      // Filter out any empty, null, or undefined values first
+      const validSuggestions = suggestions.filter(s => s && s.trim().length > 0)
 
-      return suggestions
+      if (!inputValue) return validSuggestions.filter(s => s !== excludeCity).slice(0, 8)
+
+      return validSuggestions
         .filter(city =>
           city !== excludeCity &&
           city.toLowerCase().includes(inputValue.toLowerCase())
