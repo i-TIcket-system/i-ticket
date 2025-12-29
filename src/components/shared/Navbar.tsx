@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
-import { Menu, X, User, LogOut, LayoutDashboard, Ticket, Building2, HeadphonesIcon, Bus, Users } from "lucide-react"
+import { Menu, X, User, LogOut, LayoutDashboard, Ticket, Building2, HeadphonesIcon, Bus, Users, FileText } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -64,6 +64,10 @@ export function Navbar() {
                 <Link href="/admin/companies" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
                   <Building2 className="h-4 w-4" />
                   Companies
+                </Link>
+                <Link href="/admin/audit-logs" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                  <FileText className="h-4 w-4" />
+                  Audit Logs
                 </Link>
               </>
             ) : session?.user?.role === "COMPANY_ADMIN" ? (
@@ -187,6 +191,13 @@ export function Navbar() {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Companies
+                  </Link>
+                  <Link
+                    href="/admin/audit-logs"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Audit Logs
                   </Link>
                 </>
               ) : session?.user?.role === "COMPANY_ADMIN" ? (

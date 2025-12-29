@@ -20,7 +20,9 @@ import {
   User,
   Phone,
   CheckCircle,
-  XCircle
+  XCircle,
+  Car,
+  UserCheck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -82,6 +84,22 @@ interface Trip {
     name: string
   }
   bookings: Booking[]
+  driver?: {
+    id: string
+    name: string
+    phone: string
+    licenseNumber?: string
+  } | null
+  conductor?: {
+    id: string
+    name: string
+    phone: string
+  } | null
+  manualTicketer?: {
+    id: string
+    name: string
+    phone: string
+  } | null
 }
 
 export default function TripDetailPage() {
@@ -258,6 +276,54 @@ export default function TripDetailPage() {
                           <Coffee className="h-4 w-4 text-amber-500" /> Snacks
                         </span>
                       )}
+                    </div>
+                  </>
+                )}
+
+                {/* Assigned Staff */}
+                {(trip.driver || trip.conductor || trip.manualTicketer) && (
+                  <>
+                    <Separator />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Assigned Staff:</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {trip.driver && (
+                          <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                            <Car className="h-5 w-5 text-blue-600 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-blue-600 uppercase">Driver</p>
+                              <p className="text-sm font-medium text-gray-900 truncate">{trip.driver.name}</p>
+                              <p className="text-xs text-gray-500">{trip.driver.phone}</p>
+                              {trip.driver.licenseNumber && (
+                                <p className="text-xs text-muted-foreground">License: {trip.driver.licenseNumber}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        {trip.conductor && (
+                          <div className="flex items-start gap-2 p-3 rounded-lg bg-green-50 border border-green-200">
+                            <UserCheck className="h-5 w-5 text-green-600 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-green-600 uppercase">Conductor</p>
+                              <p className="text-sm font-medium text-gray-900 truncate">{trip.conductor.name}</p>
+                              <p className="text-xs text-gray-500">{trip.conductor.phone}</p>
+                            </div>
+                          </div>
+                        )}
+                        {trip.manualTicketer && (
+                          <div className="flex items-start gap-2 p-3 rounded-lg bg-orange-50 border border-orange-200">
+                            <Ticket className="h-5 w-5 text-orange-600 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-orange-600 uppercase">Manual Ticketer</p>
+                              <p className="text-sm font-medium text-gray-900 truncate">{trip.manualTicketer.name}</p>
+                              <p className="text-xs text-gray-500">{trip.manualTicketer.phone}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </>
                 )}

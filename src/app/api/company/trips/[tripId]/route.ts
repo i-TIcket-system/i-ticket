@@ -34,6 +34,28 @@ export async function GET(
             name: true,
           },
         },
+        driver: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            licenseNumber: true,
+          },
+        },
+        conductor: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        manualTicketer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
         bookings: {
           include: {
             user: {
@@ -144,6 +166,9 @@ export async function PUT(
       hasFood,
       bookingHalted,
       isActive,
+      driverId,
+      conductorId,
+      manualTicketerId,
     } = body
 
     // Calculate new available slots if total slots changed
@@ -167,11 +192,36 @@ export async function PUT(
         ...(hasFood !== undefined && { hasFood }),
         ...(bookingHalted !== undefined && { bookingHalted }),
         ...(isActive !== undefined && { isActive }),
+        ...(driverId !== undefined && { driverId: driverId || null }),
+        ...(conductorId !== undefined && { conductorId: conductorId || null }),
+        ...(manualTicketerId !== undefined && { manualTicketerId: manualTicketerId || null }),
       },
       include: {
         company: {
           select: {
             name: true,
+          },
+        },
+        driver: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            licenseNumber: true,
+          },
+        },
+        conductor: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          },
+        },
+        manualTicketer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
           },
         },
       },

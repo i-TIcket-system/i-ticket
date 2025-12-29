@@ -27,6 +27,12 @@ model User {
   nextOfKinPhone String?
   isGuestUser    Boolean   @default(false) // True for SMS users without full registration
   bookings       Booking[]
+
+  // Reverse relations for trip staff assignments
+  tripsAsDriver         Trip[] @relation("TripDriver")
+  tripsAsConductor      Trip[] @relation("TripConductor")
+  tripsAsManualTicketer Trip[] @relation("TripManualTicketer")
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -59,6 +65,15 @@ model Trip {
   id                String    @id @default(cuid())
   companyId         String
   company           Company   @relation(fields: [companyId], references: [id])
+
+  // Staff assignments (nullable - can be assigned later)
+  driverId          String?
+  driver            User?     @relation("TripDriver", fields: [driverId], references: [id], onDelete: SetNull)
+  conductorId       String?
+  conductor         User?     @relation("TripConductor", fields: [conductorId], references: [id], onDelete: SetNull)
+  manualTicketerId  String?
+  manualTicketer    User?     @relation("TripManualTicketer", fields: [manualTicketerId], references: [id], onDelete: SetNull)
+
   origin            String
   destination       String
   route             String?
@@ -83,6 +98,9 @@ model Trip {
   @@index([origin, destination, departureTime])
   @@index([departureTime])
   @@index([companyId])
+  @@index([driverId])
+  @@index([conductorId])
+  @@index([manualTicketerId])
 }
 
 model Booking {
@@ -175,11 +193,13 @@ model AdminLog {
   action    String
   details   String?
   tripId    String?
+  companyId String?  // For company-related audit logs (activation/deactivation)
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
   @@index([action])
   @@index([createdAt])
+  @@index([companyId, createdAt])
 }
 
 model SmsSession {

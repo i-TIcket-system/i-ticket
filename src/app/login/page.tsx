@@ -54,7 +54,14 @@ export default function LoginPage() {
         if (callbackUrl !== "/") {
           router.replace(callbackUrl)
         } else if (session?.user?.role === "COMPANY_ADMIN") {
-          router.replace("/company/dashboard")
+          // Check staffRole for company admins
+          if (session.user.staffRole && session.user.staffRole !== "ADMIN") {
+            // Staff members go to staff dashboard
+            router.replace("/staff/my-trips")
+          } else {
+            // Company admins go to company dashboard
+            router.replace("/company/dashboard")
+          }
         } else if (session?.user?.role === "SUPER_ADMIN") {
           router.replace("/admin/dashboard")
         } else {

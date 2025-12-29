@@ -157,6 +157,7 @@ export async function POST(request: NextRequest) {
         origin: data.origin,
         destination: data.destination,
         route: data.route,
+        intermediateStops: data.intermediateStops,
         departureTime: new Date(data.departureTime),
         estimatedDuration: data.estimatedDuration,
         price: data.price,
@@ -165,9 +166,34 @@ export async function POST(request: NextRequest) {
         availableSlots: data.totalSlots,
         hasWater: data.hasWater,
         hasFood: data.hasFood,
+        driverId: data.driverId || null,
+        conductorId: data.conductorId || null,
+        manualTicketerId: data.manualTicketerId || null,
       },
       include: {
         company: true,
+        driver: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            licenseNumber: true,
+          }
+        },
+        conductor: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          }
+        },
+        manualTicketer: {
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+          }
+        },
       },
     })
 

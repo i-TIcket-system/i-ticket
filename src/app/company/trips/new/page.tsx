@@ -15,7 +15,10 @@ import {
   Loader2,
   AlertCircle,
   Droplets,
-  Coffee
+  Coffee,
+  Car,
+  UserCheck,
+  Ticket
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,6 +49,9 @@ export default function NewTripPage() {
     totalSlots: "",
     hasWater: false,
     hasFood: false,
+    driverId: null as string | null,
+    conductorId: null as string | null,
+    manualTicketerId: null as string | null,
   })
   const [customOrigin, setCustomOrigin] = useState("")
   const [customDestination, setCustomDestination] = useState("")
@@ -53,6 +59,11 @@ export default function NewTripPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [cities, setCities] = useState<string[]>([])
+  const [staff, setStaff] = useState<{
+    drivers: Array<{ id: string; name: string; licenseNumber?: string }>;
+    conductors: Array<{ id: string; name: string }>;
+    ticketers: Array<{ id: string; name: string }>;
+  }>({ drivers: [], conductors: [], ticketers: [] })
 
   // Fetch cities from API
   useEffect(() => {
@@ -69,6 +80,26 @@ export default function NewTripPage() {
       }
     }
     fetchCities()
+  }, [])
+
+  // Fetch staff from API
+  useEffect(() => {
+    async function fetchStaff() {
+      try {
+        const response = await fetch("/api/company/staff")
+        const data = await response.json()
+        if (data.staff) {
+          setStaff({
+            drivers: data.staff.filter((s: any) => s.staffRole === 'DRIVER'),
+            conductors: data.staff.filter((s: any) => s.staffRole === 'CONDUCTOR'),
+            ticketers: data.staff.filter((s: any) => s.staffRole === 'MANUAL_TICKETER')
+          })
+        }
+      } catch (error) {
+        console.error("Failed to fetch staff:", error)
+      }
+    }
+    fetchStaff()
   }, [])
 
   // Redirect if not company admin
@@ -137,6 +168,9 @@ export default function NewTripPage() {
           totalSlots: parseInt(formData.totalSlots),
           hasWater: formData.hasWater,
           hasFood: formData.hasFood,
+          driverId: formData.driverId,
+          conductorId: formData.conductorId,
+          manualTicketerId: formData.manualTicketerId,
         }),
       })
 
@@ -444,6 +478,122 @@ export default function NewTripPage() {
                     <Coffee className="h-4 w-4 text-amber-500" />
                     <span className="text-sm">Snacks/Food</span>
                   </label>
+                </div>
+              </div>
+
+              {/* Staff Assignment */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base">Trip Staff Assignment</Label>
+                  <span className="text-xs text-muted-foreground">Optional</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Assign driver, conductor, and ticketing staff to this trip
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Driver Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="driver" className="flex items-center gap-2">
+                      <Car className="h-4 w-4 text-blue-500" />
+                      Driver
+                    </Label>
+                    <Select
+                      value={formData.driverId || ""}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, driverId: value || null }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select driver" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None assigned</SelectItem>
+                        {staff.drivers.map((driver) => (
+                          <SelectItem key={driver.id} value={driver.id}>
+                            {driver.name}
+                            {driver.licenseNumber && ` (${driver.licenseNumber})`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {staff.drivers.length === 0 && (
+                      <p className="text-xs text-amber-600">
+                        No drivers added yet.{" "}
+                        <Link href="/company/staff" className="underline">
+                          Add staff
+                        </Link>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Conductor Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="conductor" className="flex items-center gap-2">
+                      <UserCheck className="h-4 w-4 text-green-500" />
+                      Conductor
+                    </Label>
+                    <Select
+                      value={formData.conductorId || ""}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, conductorId: value || null }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select conductor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None assigned</SelectItem>
+                        {staff.conductors.map((conductor) => (
+                          <SelectItem key={conductor.id} value={conductor.id}>
+                            {conductor.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {staff.conductors.length === 0 && (
+                      <p className="text-xs text-amber-600">
+                        No conductors added yet.{" "}
+                        <Link href="/company/staff" className="underline">
+                          Add staff
+                        </Link>
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Manual Ticketer Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="ticketer" className="flex items-center gap-2">
+                      <Ticket className="h-4 w-4 text-orange-500" />
+                      Manual Ticketer
+                    </Label>
+                    <Select
+                      value={formData.manualTicketerId || ""}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, manualTicketerId: value || null }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select ticketer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">None assigned</SelectItem>
+                        {staff.ticketers.map((ticketer) => (
+                          <SelectItem key={ticketer.id} value={ticketer.id}>
+                            {ticketer.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {staff.ticketers.length === 0 && (
+                      <p className="text-xs text-amber-600">
+                        No ticketers added yet.{" "}
+                        <Link href="/company/staff" className="underline">
+                          Add staff
+                        </Link>
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
