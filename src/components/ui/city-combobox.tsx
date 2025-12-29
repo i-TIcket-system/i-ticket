@@ -36,16 +36,23 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
     // Filter suggestions based on input
     const filteredSuggestions = React.useMemo(() => {
       // Filter out any empty, null, or undefined values first
-      const validSuggestions = suggestions.filter(s => s && s.trim().length > 0)
+      const validSuggestions = suggestions.filter(s => s && typeof s === 'string' && s.trim().length > 0)
 
-      if (!inputValue) return validSuggestions.filter(s => s !== excludeCity).slice(0, 8)
+      if (!inputValue) {
+        const result = validSuggestions.filter(s => s !== excludeCity).slice(0, 8)
+        console.log('[CityCombobox] Showing', result.length, 'suggestions:', result)
+        return result
+      }
 
-      return validSuggestions
+      const result = validSuggestions
         .filter(city =>
           city !== excludeCity &&
           city.toLowerCase().includes(inputValue.toLowerCase())
         )
         .slice(0, 8) // Limit to 8 suggestions for performance
+
+      console.log('[CityCombobox] Filtered suggestions for "' + inputValue + '":', result)
+      return result
     }, [inputValue, suggestions, excludeCity])
 
     // Handle input change
@@ -122,9 +129,9 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
             className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-50 max-h-64 overflow-y-auto"
           >
             <div className="p-1">
-              {filteredSuggestions.map((city) => (
+              {filteredSuggestions.map((city, index) => (
                 <button
-                  key={city}
+                  key={`${city}-${index}`}
                   type="button"
                   onClick={() => handleSuggestionClick(city)}
                   className={cn(
@@ -133,8 +140,10 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
                     city === inputValue && "bg-accent/50"
                   )}
                 >
-                  <MapPin className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-sm">{city}</span>
+                  <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                  <span className="text-sm text-foreground font-normal flex-1">
+                    {city || "[Empty]"}
+                  </span>
                 </button>
               ))}
             </div>
