@@ -199,8 +199,8 @@ export default function BookingPage() {
     // Save passenger data to localStorage in case user wants to go back
     localStorage.setItem(`booking-${tripId}-passengers`, JSON.stringify(passengers))
 
-    // For guest users, show payment method notification
-    if (!session) {
+    // For guest users with multiple passengers, clarify which phone will be used
+    if (!session && passengers.length > 1) {
       toast.info("TeleBirr payment will be sent to the FIRST passenger", {
         description: `Payment request → ${passengers[0].phone}. Make sure TeleBirr is enabled.`,
         duration: 6000,
