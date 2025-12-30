@@ -114,7 +114,10 @@ export async function POST(
       if (updatedTrip.availableSlots === 0 && !trip.reportGenerated) {
         await tx.trip.update({
           where: { id: params.tripId },
-          data: { reportGenerated: true }
+          data: {
+            reportGenerated: true,
+            lowSlotAlertSent: false, // Dismiss low slot alert when fully sold
+          }
         })
 
         await tx.adminLog.create({

@@ -269,6 +269,7 @@ export async function POST(request: NextRequest) {
           data: {
             reportGenerated: true,
             adminResumedFromAutoHalt: false, // Reset override flag when sold out
+            lowSlotAlertSent: false, // Dismiss low slot alert when fully sold
           }
         })
 
