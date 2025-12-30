@@ -59,6 +59,7 @@ interface Trip {
   intermediateStops: string | null
   departureTime: string
   estimatedDuration: number
+  distance: number | null
   price: number
   busType: string
   totalSlots: number
@@ -339,8 +340,13 @@ export default function BookingPage() {
                   <div className="flex-1 flex items-center gap-2 px-4">
                     <div className="h-2 w-2 rounded-full bg-primary" />
                     <div className="flex-1 border-t-2 border-dashed border-muted-foreground/30" />
-                    <div className="px-2 text-xs text-muted-foreground">
+                    <div className="px-2 text-xs text-muted-foreground text-center">
                       {formatDuration(trip.estimatedDuration)}
+                      {trip.distance && (
+                        <div className="text-[10px] text-muted-foreground/70">
+                          {trip.distance} km
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 border-t-2 border-dashed border-muted-foreground/30" />
                     <div className="h-2 w-2 rounded-full bg-accent" />

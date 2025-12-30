@@ -52,6 +52,7 @@ interface Booking {
     destination: string
     departureTime: string
     estimatedDuration: number
+    distance: number | null
     busType: string
     price: number
     company: {
@@ -342,7 +343,10 @@ export default function TicketsPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span>{formatDuration(booking.trip.estimatedDuration)}</span>
+                          <span>
+                            {formatDuration(booking.trip.estimatedDuration)}
+                            {booking.trip.distance && ` • ${booking.trip.distance} km`}
+                          </span>
                         </div>
                       </div>
 
