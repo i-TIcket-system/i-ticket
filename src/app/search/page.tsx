@@ -42,6 +42,7 @@ interface Trip {
   intermediateStops: string | null
   departureTime: string
   estimatedDuration: number
+  distance: number | null
   price: number
   busType: string
   totalSlots: number
@@ -347,6 +348,11 @@ function SearchContent() {
                                 <span className="text-xs text-muted-foreground">
                                   {formatDuration(trip.estimatedDuration)}
                                 </span>
+                                {trip.distance && (
+                                  <span className="text-xs text-muted-foreground/70">
+                                    {trip.distance} km
+                                  </span>
+                                )}
                                 {(() => {
                                   try {
                                     // Try intermediateStops JSON first

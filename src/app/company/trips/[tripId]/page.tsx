@@ -74,6 +74,7 @@ interface Trip {
   intermediateStops: string | null
   departureTime: string
   estimatedDuration: number
+  distance: number | null
   price: number
   busType: string
   totalSlots: number
@@ -233,6 +234,15 @@ export default function TripDetailPage() {
                       <p className="font-medium">{formatDuration(trip.estimatedDuration)}</p>
                     </div>
                   </div>
+                  {trip.distance && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs text-muted-foreground">Distance</p>
+                        <p className="font-medium">{trip.distance} km</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
                     <Ticket className="h-4 w-4 text-muted-foreground" />
                     <div>
