@@ -32,6 +32,15 @@ export async function GET(
                 phone: true,
               },
             },
+            vehicle: {
+              select: {
+                id: true,
+                plateNumber: true,
+                sideNumber: true,
+                make: true,
+                model: true,
+              },
+            },
           },
         },
         passengers: true,

@@ -21,7 +21,8 @@ import {
   Phone,
   QrCode,
   Car,
-  UserCheck
+  UserCheck,
+  Truck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -69,6 +70,13 @@ interface Booking {
       id: string
       name: string
       phone: string
+    }
+    vehicle?: {
+      id: string
+      plateNumber: string
+      sideNumber: string | null
+      make: string
+      model: string
     }
   }
   tickets: Ticket[]
@@ -375,12 +383,14 @@ export default function TicketsPage() {
                         <p>Booked: {new Date(booking.createdAt).toLocaleDateString()}</p>
                       </div>
 
-                      {/* Driver/Conductor Contact (included in download) */}
-                      {(booking.trip.driver || booking.trip.conductor) && (
+                      {/* Driver/Conductor/Vehicle Contact (included in download) */}
+                      {(booking.trip.driver || booking.trip.conductor || booking.trip.vehicle) && (
                         <>
                           <Separator />
                           <div className="space-y-1">
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">Staff:</p>
+                            <p className="text-xs font-semibold text-muted-foreground mb-1">
+                              {booking.trip.vehicle ? "Staff & Vehicle:" : "Staff:"}
+                            </p>
                             <div className="flex items-center gap-2 text-xs flex-wrap">
                               {booking.trip.driver && (
                                 <span className="flex items-center gap-1">
@@ -393,6 +403,14 @@ export default function TicketsPage() {
                                 <span className="flex items-center gap-1">
                                   <UserCheck className="h-3 w-3" />
                                   {booking.trip.conductor.name} ({booking.trip.conductor.phone})
+                                </span>
+                              )}
+                              {(booking.trip.driver || booking.trip.conductor) && booking.trip.vehicle && <span>•</span>}
+                              {booking.trip.vehicle && (
+                                <span className="flex items-center gap-1 font-mono">
+                                  <Truck className="h-3 w-3" />
+                                  {booking.trip.vehicle.plateNumber}
+                                  {booking.trip.vehicle.sideNumber && ` (${booking.trip.vehicle.sideNumber})`}
                                 </span>
                               )}
                             </div>
@@ -569,6 +587,22 @@ export default function TicketsPage() {
                         <Phone className="h-3 w-3" />
                         {booking.trip.conductor.phone}
                       </a>
+                    </div>
+                  )}
+
+                  {booking.trip.vehicle && (
+                    <div className="p-3 rounded-lg bg-purple-50 border border-purple-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Truck className="h-4 w-4 text-purple-600" />
+                        <span className="text-sm font-semibold text-purple-900">Assigned Vehicle</span>
+                      </div>
+                      <p className="font-medium text-purple-900 font-mono">
+                        {booking.trip.vehicle.plateNumber}
+                        {booking.trip.vehicle.sideNumber && ` (${booking.trip.vehicle.sideNumber})`}
+                      </p>
+                      <p className="text-xs text-purple-700 mt-1">
+                        {booking.trip.vehicle.make} {booking.trip.vehicle.model}
+                      </p>
                     </div>
                   )}
 
