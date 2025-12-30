@@ -56,6 +56,19 @@ export async function GET(
             phone: true,
           },
         },
+        vehicle: {
+          select: {
+            id: true,
+            plateNumber: true,
+            sideNumber: true,
+            make: true,
+            model: true,
+            year: true,
+            busType: true,
+            totalSeats: true,
+            status: true,
+          },
+        },
         bookings: {
           include: {
             user: {
@@ -222,6 +235,19 @@ export async function PUT(
             id: true,
             name: true,
             phone: true,
+          },
+        },
+        vehicle: {
+          select: {
+            id: true,
+            plateNumber: true,
+            sideNumber: true,
+            make: true,
+            model: true,
+            year: true,
+            busType: true,
+            totalSeats: true,
+            status: true,
           },
         },
       },
