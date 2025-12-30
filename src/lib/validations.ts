@@ -139,7 +139,7 @@ const baseVehicleSchema = z.object({
   busType: z.enum(["MINI", "STANDARD", "LUXURY"], {
     errorMap: () => ({ message: "Invalid bus type. Must be MINI, STANDARD, or LUXURY" })
   }),
-  color: z.string().min(2, "Color too short").max(30, "Color too long").optional().or(z.literal("")),
+  color: z.string().min(2, "Color too short").max(30, "Color too long").optional().or(z.literal("")).or(z.null()).transform(val => val || null),
   totalSeats: z.number()
     .int("Seats must be a whole number")
     .positive("Seats must be positive")
