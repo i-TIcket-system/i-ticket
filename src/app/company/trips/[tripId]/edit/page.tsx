@@ -21,7 +21,8 @@ import {
   Trash2,
   Car,
   UserCheck,
-  Ticket
+  Ticket,
+  Truck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -54,6 +55,7 @@ interface Trip {
   destination: string
   departureTime: string
   estimatedDuration: number
+  distance: number | null
   price: number
   busType: string
   totalSlots: number
@@ -78,6 +80,13 @@ interface Trip {
     id: string
     name: string
   }
+  vehicle?: {
+    id: string
+    plateNumber: string
+    sideNumber: string | null
+    make: string
+    model: string
+  }
 }
 
 export default function EditTripPage() {
@@ -95,6 +104,7 @@ export default function EditTripPage() {
     departureDate: "",
     departureTime: "",
     estimatedDuration: "",
+    distance: "",
     price: "",
     busType: "standard",
     totalSlots: "",
@@ -105,7 +115,16 @@ export default function EditTripPage() {
     driverId: null as string | null,
     conductorId: null as string | null,
     manualTicketerId: null as string | null,
+    vehicleId: null as string | null,
   })
+  const [vehicles, setVehicles] = useState<Array<{
+    id: string;
+    plateNumber: string;
+    sideNumber: string | null;
+    make: string;
+    model: string;
+    status: string;
+  }>>([])
   const [staff, setStaff] = useState<{
     drivers: Array<{ id: string; name: string; licenseNumber?: string }>;
     conductors: Array<{ id: string; name: string }>;
@@ -152,6 +171,22 @@ export default function EditTripPage() {
     fetchStaff()
   }, [])
 
+  // Fetch vehicles from API (only active ones)
+  useEffect(() => {
+    async function fetchVehicles() {
+      try {
+        const response = await fetch("/api/company/vehicles?status=ACTIVE")
+        const data = await response.json()
+        if (data.vehicles) {
+          setVehicles(data.vehicles)
+        }
+      } catch (error) {
+        console.error("Failed to fetch vehicles:", error)
+      }
+    }
+    fetchVehicles()
+  }, [])
+
   useEffect(() => {
     if (status === "authenticated") {
       if (session.user.role !== "COMPANY_ADMIN" && session.user.role !== "SUPER_ADMIN") {
@@ -177,6 +212,7 @@ export default function EditTripPage() {
           departureDate: dt.toISOString().split("T")[0],
           departureTime: dt.toTimeString().slice(0, 5),
           estimatedDuration: String(data.trip.estimatedDuration),
+          distance: data.trip.distance ? String(data.trip.distance) : "",
           price: String(data.trip.price),
           busType: data.trip.busType,
           totalSlots: String(data.trip.totalSlots),
@@ -187,6 +223,7 @@ export default function EditTripPage() {
           driverId: data.trip.driver?.id || null,
           conductorId: data.trip.conductor?.id || null,
           manualTicketerId: data.trip.manualTicketer?.id || null,
+          vehicleId: data.trip.vehicle?.id || null,
         })
       } else {
         setError(data.error || "Trip not found")
@@ -233,6 +270,7 @@ export default function EditTripPage() {
           destination: formData.destination,
           departureTime: departureTime.toISOString(),
           estimatedDuration: parseInt(formData.estimatedDuration),
+          distance: formData.distance ? parseInt(formData.distance) : null,
           price: parseFloat(formData.price),
           busType: formData.busType,
           totalSlots: parseInt(formData.totalSlots),
@@ -243,6 +281,7 @@ export default function EditTripPage() {
           driverId: formData.driverId,
           conductorId: formData.conductorId,
           manualTicketerId: formData.manualTicketerId,
+          vehicleId: formData.vehicleId,
         }),
       })
 
@@ -484,21 +523,45 @@ export default function EditTripPage() {
                 </div>
               </div>
 
-              {/* Duration */}
-              <div className="space-y-2">
-                <Label>Estimated Duration (minutes) *</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="number"
-                    name="estimatedDuration"
-                    placeholder="e.g., 540 for 9 hours"
-                    value={formData.estimatedDuration}
-                    onChange={handleChange}
-                    min="30"
-                    className="pl-10"
-                    required
-                  />
+              {/* Duration and Distance */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Estimated Duration (minutes) *</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      name="estimatedDuration"
+                      placeholder="e.g., 540 for 9 hours"
+                      value={formData.estimatedDuration}
+                      onChange={handleChange}
+                      min="30"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Enter duration in minutes (e.g., 540 = 9 hours)
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Distance (kilometers)</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      name="distance"
+                      placeholder="e.g., 450"
+                      value={formData.distance}
+                      onChange={handleChange}
+                      min="1"
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Optional: Trip distance in km
+                  </p>
                 </div>
               </div>
 
@@ -707,6 +770,53 @@ export default function EditTripPage() {
                       </p>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Vehicle Assignment */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base">Vehicle Assignment</Label>
+                  <span className="text-xs text-muted-foreground">Optional</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Assign a vehicle to this trip
+                </p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="vehicle" className="flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-purple-500" />
+                    Vehicle
+                  </Label>
+                  <Select
+                    value={formData.vehicleId || "__none__"}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, vehicleId: value === "__none__" ? null : value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select vehicle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None assigned</SelectItem>
+                      {vehicles.map((vehicle) => (
+                        <SelectItem key={vehicle.id} value={vehicle.id}>
+                          {vehicle.plateNumber}
+                          {vehicle.sideNumber && ` (${vehicle.sideNumber})`}
+                          {" - "}
+                          {vehicle.make} {vehicle.model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {vehicles.length === 0 && (
+                    <p className="text-xs text-amber-600">
+                      No active vehicles found.{" "}
+                      <Link href="/company/vehicles" className="underline">
+                        Add vehicles
+                      </Link>
+                    </p>
+                  )}
                 </div>
               </div>
 

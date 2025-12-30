@@ -22,7 +22,8 @@ import {
   CheckCircle,
   XCircle,
   Car,
-  UserCheck
+  UserCheck,
+  Truck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -280,8 +281,8 @@ export default function TripDetailPage() {
                   </>
                 )}
 
-                {/* Assigned Staff */}
-                {(trip.driver || trip.conductor || trip.manualTicketer) && (
+                {/* Assigned Staff & Vehicle */}
+                {(trip.driver || trip.conductor || trip.manualTicketer || trip.vehicle) && (
                   <>
                     <Separator />
                     <div className="space-y-2">
@@ -320,6 +321,20 @@ export default function TripDetailPage() {
                               <p className="text-xs font-medium text-orange-600 uppercase">Manual Ticketer</p>
                               <p className="text-sm font-medium text-gray-900 truncate">{trip.manualTicketer.name}</p>
                               <p className="text-xs text-gray-500">{trip.manualTicketer.phone}</p>
+                            </div>
+                          </div>
+                        )}
+                        {trip.vehicle && (
+                          <div className="flex items-start gap-2 p-3 rounded-lg bg-purple-50 border border-purple-200">
+                            <Truck className="h-5 w-5 text-purple-600 mt-0.5" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium text-purple-600 uppercase">Vehicle</p>
+                              <p className="text-sm font-medium text-gray-900 font-mono truncate">
+                                {trip.vehicle.plateNumber}
+                                {trip.vehicle.sideNumber && ` (${trip.vehicle.sideNumber})`}
+                              </p>
+                              <p className="text-xs text-gray-500">{trip.vehicle.make} {trip.vehicle.model} ({trip.vehicle.year})</p>
+                              <p className="text-xs text-muted-foreground">{trip.vehicle.totalSeats} seats • {trip.vehicle.busType}</p>
                             </div>
                           </div>
                         )}

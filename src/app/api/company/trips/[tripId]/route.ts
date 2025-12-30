@@ -172,6 +172,7 @@ export async function PUT(
       destination,
       departureTime,
       estimatedDuration,
+      distance,
       price,
       busType,
       totalSlots,
@@ -182,6 +183,7 @@ export async function PUT(
       driverId,
       conductorId,
       manualTicketerId,
+      vehicleId,
     } = body
 
     // Calculate new available slots if total slots changed
@@ -198,6 +200,7 @@ export async function PUT(
         ...(destination && { destination }),
         ...(departureTime && { departureTime: new Date(departureTime) }),
         ...(estimatedDuration && { estimatedDuration }),
+        ...(distance !== undefined && { distance: distance || null }),
         ...(price && { price }),
         ...(busType && { busType }),
         ...(totalSlots && { totalSlots, availableSlots: newAvailableSlots }),
@@ -208,6 +211,7 @@ export async function PUT(
         ...(driverId !== undefined && { driverId: driverId || null }),
         ...(conductorId !== undefined && { conductorId: conductorId || null }),
         ...(manualTicketerId !== undefined && { manualTicketerId: manualTicketerId || null }),
+        ...(vehicleId !== undefined && { vehicleId: vehicleId || null }),
       },
       include: {
         company: {
