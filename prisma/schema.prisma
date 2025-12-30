@@ -57,6 +57,7 @@ model Company {
 
   users     User[]
   trips     Trip[]
+  vehicles  Vehicle[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -73,6 +74,10 @@ model Trip {
   conductor         User?     @relation("TripConductor", fields: [conductorId], references: [id], onDelete: SetNull)
   manualTicketerId  String?
   manualTicketer    User?     @relation("TripManualTicketer", fields: [manualTicketerId], references: [id], onDelete: SetNull)
+
+  // Vehicle assignment (optional - can be assigned later)
+  vehicleId         String?
+  vehicle           Vehicle?  @relation("VehicleTrips", fields: [vehicleId], references: [id], onDelete: SetNull)
 
   origin            String
   destination       String
@@ -102,6 +107,47 @@ model Trip {
   @@index([driverId])
   @@index([conductorId])
   @@index([manualTicketerId])
+  @@index([vehicleId])
+}
+
+model Vehicle {
+  id          String   @id @default(cuid())
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Ethiopian dual identification
+  plateNumber String   // Required: Standard registration (e.g., "3-12345")
+  sideNumber  String?  // Optional: Bus identifier (e.g., "Bus 7", "07")
+
+  // Vehicle specifications
+  make        String   // Manufacturer (Toyota, Isuzu, Mercedes-Benz, etc.)
+  model       String   // Model name (Coaster, NPR, Sprinter, etc.)
+  year        Int      // Manufacturing year
+  busType     String   // MINI, STANDARD, LUXURY (matches Trip.busType)
+  color       String?  // Optional: Vehicle color
+  totalSeats  Int      // Total passenger capacity
+
+  // Status and maintenance tracking
+  status      String   @default("ACTIVE") // ACTIVE, MAINTENANCE, INACTIVE
+  registrationExpiry DateTime? // Vehicle registration expiration date
+  insuranceExpiry    DateTime? // Insurance expiration date
+  lastServiceDate    DateTime? // Last maintenance/service date
+  nextServiceDate    DateTime? // Scheduled next maintenance date
+
+  // Relations
+  trips       Trip[]   @relation("VehicleTrips")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Indexes for performance
+  @@index([companyId])
+  @@index([status])
+  @@index([plateNumber])
+  @@index([sideNumber])
+  // Unique constraints: plate and side numbers must be unique per company
+  @@unique([companyId, plateNumber])
+  @@unique([companyId, sideNumber])
 }
 
 model Booking {

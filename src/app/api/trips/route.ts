@@ -145,6 +145,79 @@ export async function POST(request: NextRequest) {
       ensureCityExists(data.destination)
     ])
 
+    // Validate vehicle assignment if provided
+    if (data.vehicleId) {
+      const vehicle = await prisma.vehicle.findUnique({
+        where: { id: data.vehicleId },
+        select: {
+          id: true,
+          companyId: true,
+          status: true,
+          plateNumber: true,
+          sideNumber: true,
+        }
+      })
+
+      if (!vehicle) {
+        return NextResponse.json(
+          { error: "Vehicle not found" },
+          { status: 404 }
+        )
+      }
+
+      // Verify vehicle belongs to same company
+      if (vehicle.companyId !== companyId) {
+        return NextResponse.json(
+          { error: "Cannot assign vehicle from another company" },
+          { status: 403 }
+        )
+      }
+
+      // Check vehicle status
+      if (vehicle.status === "INACTIVE") {
+        return NextResponse.json(
+          { error: "Vehicle is inactive and cannot be assigned to trips" },
+          { status: 400 }
+        )
+      }
+
+      if (vehicle.status === "MAINTENANCE") {
+        return NextResponse.json(
+          { error: "Vehicle is in maintenance and cannot be assigned to trips" },
+          { status: 400 }
+        )
+      }
+
+      // Check for conflicting trips (vehicle already assigned to active trip at same time)
+      const departureTime = new Date(data.departureTime)
+      const conflictingTrip = await prisma.trip.findFirst({
+        where: {
+          vehicleId: data.vehicleId,
+          isActive: true,
+          departureTime: {
+            // Check if there's any trip within ±12 hours (rough estimate for trip conflict)
+            gte: new Date(departureTime.getTime() - 12 * 60 * 60 * 1000),
+            lte: new Date(departureTime.getTime() + 12 * 60 * 60 * 1000)
+          }
+        },
+        select: {
+          id: true,
+          origin: true,
+          destination: true,
+          departureTime: true
+        }
+      })
+
+      if (conflictingTrip) {
+        return NextResponse.json(
+          {
+            error: `Vehicle ${vehicle.plateNumber}${vehicle.sideNumber ? ` (${vehicle.sideNumber})` : ''} already has an active trip at this time: ${conflictingTrip.origin} → ${conflictingTrip.destination} on ${conflictingTrip.departureTime.toLocaleString()}`
+          },
+          { status: 409 }
+        )
+      }
+    }
+
     // Get session for logging
     const { getServerSession } = await import("next-auth")
     const { authOptions } = await import("@/lib/auth")
@@ -169,6 +242,7 @@ export async function POST(request: NextRequest) {
         driverId: data.driverId || null,
         conductorId: data.conductorId || null,
         manualTicketerId: data.manualTicketerId || null,
+        vehicleId: data.vehicleId || null,
       },
       include: {
         company: true,
@@ -192,6 +266,17 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             phone: true,
+          }
+        },
+        vehicle: {
+          select: {
+            id: true,
+            plateNumber: true,
+            sideNumber: true,
+            make: true,
+            model: true,
+            busType: true,
+            totalSeats: true,
           }
         },
       },

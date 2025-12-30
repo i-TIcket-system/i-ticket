@@ -18,7 +18,8 @@ import {
   Coffee,
   Car,
   UserCheck,
-  Ticket
+  Ticket,
+  Truck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -52,6 +53,7 @@ export default function NewTripPage() {
     driverId: null as string | null,
     conductorId: null as string | null,
     manualTicketerId: null as string | null,
+    vehicleId: null as string | null,
   })
   const [customOrigin, setCustomOrigin] = useState("")
   const [customDestination, setCustomDestination] = useState("")
@@ -64,6 +66,15 @@ export default function NewTripPage() {
     conductors: Array<{ id: string; name: string }>;
     ticketers: Array<{ id: string; name: string }>;
   }>({ drivers: [], conductors: [], ticketers: [] })
+  const [vehicles, setVehicles] = useState<Array<{
+    id: string;
+    plateNumber: string;
+    sideNumber: string | null;
+    make: string;
+    model: string;
+    status: string;
+  }>>([])
+
 
   // Fetch cities from API
   useEffect(() => {
@@ -100,6 +111,22 @@ export default function NewTripPage() {
       }
     }
     fetchStaff()
+  }, [])
+
+  // Fetch vehicles from API (only active ones)
+  useEffect(() => {
+    async function fetchVehicles() {
+      try {
+        const response = await fetch("/api/company/vehicles?status=ACTIVE")
+        const data = await response.json()
+        if (data.vehicles) {
+          setVehicles(data.vehicles)
+        }
+      } catch (error) {
+        console.error("Failed to fetch vehicles:", error)
+      }
+    }
+    fetchVehicles()
   }, [])
 
   // Redirect if not company admin
@@ -171,6 +198,7 @@ export default function NewTripPage() {
           driverId: formData.driverId,
           conductorId: formData.conductorId,
           manualTicketerId: formData.manualTicketerId,
+          vehicleId: formData.vehicleId,
         }),
       })
 
@@ -594,6 +622,53 @@ export default function NewTripPage() {
                       </p>
                     )}
                   </div>
+                </div>
+              </div>
+
+              {/* Vehicle Assignment */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base">Vehicle Assignment</Label>
+                  <span className="text-xs text-muted-foreground">Optional</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Assign a vehicle to this trip
+                </p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="vehicle" className="flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-purple-500" />
+                    Vehicle
+                  </Label>
+                  <Select
+                    value={formData.vehicleId || "__none__"}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, vehicleId: value === "__none__" ? null : value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select vehicle" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None assigned</SelectItem>
+                      {vehicles.map((vehicle) => (
+                        <SelectItem key={vehicle.id} value={vehicle.id}>
+                          {vehicle.plateNumber}
+                          {vehicle.sideNumber && ` (${vehicle.sideNumber})`}
+                          {" - "}
+                          {vehicle.make} {vehicle.model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {vehicles.length === 0 && (
+                    <p className="text-xs text-amber-600">
+                      No active vehicles found.{" "}
+                      <Link href="/company/vehicles" className="underline">
+                        Add vehicles
+                      </Link>
+                    </p>
+                  )}
                 </div>
               </div>
 

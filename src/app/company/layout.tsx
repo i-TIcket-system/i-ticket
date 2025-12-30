@@ -14,7 +14,8 @@ import {
   Loader2,
   Menu,
   X,
-  BarChart3
+  BarChart3,
+  Truck
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
@@ -41,6 +42,11 @@ const sidebarItems = [
     title: "Staff",
     href: "/company/staff",
     icon: Users,
+  },
+  {
+    title: "Vehicles",
+    href: "/company/vehicles",
+    icon: Truck,
   },
   {
     title: "Settings",

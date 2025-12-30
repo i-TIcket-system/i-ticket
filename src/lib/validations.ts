@@ -21,6 +21,7 @@ export const createTripSchema = z.object({
   driverId: z.string().optional().nullable(),
   conductorId: z.string().optional().nullable(),
   manualTicketerId: z.string().optional().nullable(),
+  vehicleId: z.string().optional().nullable(),
 });
 
 export const updateTripSchema = createTripSchema.partial();
@@ -103,6 +104,57 @@ export const createCompanySchema = z.object({
 });
 
 export const updateCompanySchema = createCompanySchema.partial();
+
+// Vehicle validations
+const currentYear = new Date().getFullYear();
+
+// Ethiopian plate number format validation
+// Common formats: "3-12345", "AA-12345", etc.
+const ethiopianPlateNumber = z.string()
+  .min(5, "Plate number too short")
+  .max(15, "Plate number too long")
+  .regex(/^[A-Z0-9]{1,3}-\d{4,6}$|^[A-Z0-9\s]{5,15}$/,
+    "Invalid plate format (e.g., '3-12345' or 'AA 12345')")
+  .transform(val => val.toUpperCase().trim());
+
+// Side number can be flexible format
+const sideNumber = z.string()
+  .min(1, "Side number too short")
+  .max(10, "Side number too long")
+  .regex(/^[A-Z0-9\s-]+$/i, "Side number can only contain letters, numbers, spaces, and hyphens")
+  .transform(val => val.toUpperCase().trim())
+  .optional()
+  .or(z.literal(""));
+
+export const createVehicleSchema = z.object({
+  plateNumber: ethiopianPlateNumber,
+  sideNumber: sideNumber,
+  make: z.string().min(2, "Make must be at least 2 characters").max(50, "Make too long"),
+  model: z.string().min(2, "Model must be at least 2 characters").max(50, "Model too long"),
+  year: z.number()
+    .int("Year must be a whole number")
+    .min(1990, "Year must be 1990 or later")
+    .max(currentYear + 1, `Year cannot be later than ${currentYear + 1}`),
+  busType: z.enum(["MINI", "STANDARD", "LUXURY"], {
+    errorMap: () => ({ message: "Invalid bus type" })
+  }),
+  color: z.string().min(2, "Color too short").max(30, "Color too long").optional().or(z.literal("")),
+  totalSeats: z.number()
+    .int("Seats must be a whole number")
+    .positive("Seats must be positive")
+    .min(4, "Minimum 4 seats")
+    .max(100, "Maximum 100 seats"),
+  status: z.enum(["ACTIVE", "MAINTENANCE", "INACTIVE"]).default("ACTIVE"),
+  registrationExpiry: z.string().datetime().optional().nullable(),
+  insuranceExpiry: z.string().datetime().optional().nullable(),
+  lastServiceDate: z.string().datetime().optional().nullable(),
+  nextServiceDate: z.string().datetime().optional().nullable(),
+});
+
+export const updateVehicleSchema = createVehicleSchema.partial().extend({
+  // Plate number cannot be changed after creation (immutable)
+  plateNumber: z.never().optional(),
+});
 
 // Helper function to validate and parse request body
 export async function validateRequest<T>(
