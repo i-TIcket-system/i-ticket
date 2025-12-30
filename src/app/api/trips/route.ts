@@ -145,6 +145,98 @@ export async function POST(request: NextRequest) {
       ensureCityExists(data.destination)
     ])
 
+    // Check for staff conflicts (24-hour gap) unless overridden
+    const departureTime = new Date(data.departureTime)
+    const staffConflicts = []
+
+    // Check driver conflicts
+    if (data.driverId) {
+      const driverConflict = await prisma.trip.findFirst({
+        where: {
+          driverId: data.driverId,
+          isActive: true,
+          departureTime: {
+            gte: new Date(departureTime.getTime() - 24 * 60 * 60 * 1000),
+            lte: new Date(departureTime.getTime() + 24 * 60 * 60 * 1000)
+          }
+        },
+        select: {
+          id: true,
+          origin: true,
+          destination: true,
+          departureTime: true,
+          driver: { select: { name: true } }
+        }
+      })
+
+      if (driverConflict) {
+        staffConflicts.push(`Driver ${driverConflict.driver?.name} has a trip within 24 hours: ${driverConflict.origin} → ${driverConflict.destination} on ${driverConflict.departureTime.toLocaleString()}`)
+      }
+    }
+
+    // Check conductor conflicts
+    if (data.conductorId) {
+      const conductorConflict = await prisma.trip.findFirst({
+        where: {
+          conductorId: data.conductorId,
+          isActive: true,
+          departureTime: {
+            gte: new Date(departureTime.getTime() - 24 * 60 * 60 * 1000),
+            lte: new Date(departureTime.getTime() + 24 * 60 * 60 * 1000)
+          }
+        },
+        select: {
+          id: true,
+          origin: true,
+          destination: true,
+          departureTime: true,
+          conductor: { select: { name: true } }
+        }
+      })
+
+      if (conductorConflict) {
+        staffConflicts.push(`Conductor ${conductorConflict.conductor?.name} has a trip within 24 hours: ${conductorConflict.origin} → ${conductorConflict.destination} on ${conductorConflict.departureTime.toLocaleString()}`)
+      }
+    }
+
+    // Check manual ticketer conflicts
+    if (data.manualTicketerId) {
+      const ticketerConflict = await prisma.trip.findFirst({
+        where: {
+          manualTicketerId: data.manualTicketerId,
+          isActive: true,
+          departureTime: {
+            gte: new Date(departureTime.getTime() - 24 * 60 * 60 * 1000),
+            lte: new Date(departureTime.getTime() + 24 * 60 * 60 * 1000)
+          }
+        },
+        select: {
+          id: true,
+          origin: true,
+          destination: true,
+          departureTime: true,
+          manualTicketer: { select: { name: true } }
+        }
+      })
+
+      if (ticketerConflict) {
+        staffConflicts.push(`Manual Ticketer ${ticketerConflict.manualTicketer?.name} has a trip within 24 hours: ${ticketerConflict.origin} → ${ticketerConflict.destination} on ${ticketerConflict.departureTime.toLocaleString()}`)
+      }
+    }
+
+    // If conflicts exist and not overridden, return warning
+    const body = await request.json()
+    if (staffConflicts.length > 0 && !body.overrideStaffConflict) {
+      return NextResponse.json(
+        {
+          error: "Staff scheduling conflict detected",
+          conflicts: staffConflicts,
+          canOverride: true
+        },
+        { status: 409 }
+      )
+    }
+
     // Validate vehicle assignment if provided
     if (data.vehicleId) {
       const vehicle = await prisma.vehicle.findUnique({
@@ -233,6 +325,7 @@ export async function POST(request: NextRequest) {
         intermediateStops: data.intermediateStops,
         departureTime: new Date(data.departureTime),
         estimatedDuration: data.estimatedDuration,
+        distance: data.distance || null,
         price: data.price,
         busType: data.busType,
         totalSlots: data.totalSlots,

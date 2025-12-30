@@ -12,7 +12,8 @@ export const createTripSchema = z.object({
   departureTime: z.string().datetime().refine((date) => new Date(date) > new Date(), {
     message: "Departure time must be in the future",
   }),
-  estimatedDuration: z.number().int().positive("Duration must be positive"),
+  estimatedDuration: z.number().int().positive("Duration must be positive").max(48, "Duration cannot exceed 48 hours"),
+  distance: z.number().int().positive("Distance must be positive").max(5000, "Distance seems too far").optional().nullable(),
   price: z.number().positive("Price must be positive").max(100000, "Price seems too high"),
   busType: z.string().min(2, "Bus type is required"),
   totalSlots: z.number().int().positive("Total slots must be positive").max(100, "Too many slots"),
@@ -22,6 +23,7 @@ export const createTripSchema = z.object({
   conductorId: z.string().optional().nullable(),
   manualTicketerId: z.string().optional().nullable(),
   vehicleId: z.string().optional().nullable(),
+  overrideStaffConflict: z.boolean().optional().default(false),
 });
 
 export const updateTripSchema = createTripSchema.partial();

@@ -45,6 +45,7 @@ export default function NewTripPage() {
     departureDate: "",
     departureTime: "",
     estimatedDuration: "",
+    distance: "",
     price: "",
     busType: "standard",
     totalSlots: "",
@@ -54,12 +55,14 @@ export default function NewTripPage() {
     conductorId: null as string | null,
     manualTicketerId: null as string | null,
     vehicleId: null as string | null,
+    overrideStaffConflict: false,
   })
   const [customOrigin, setCustomOrigin] = useState("")
   const [customDestination, setCustomDestination] = useState("")
   const [intermediateStops, setIntermediateStops] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
+  const [staffConflictWarning, setStaffConflictWarning] = useState("")
   const [cities, setCities] = useState<string[]>([])
   const [staff, setStaff] = useState<{
     drivers: Array<{ id: string; name: string; licenseNumber?: string }>;
@@ -190,6 +193,7 @@ export default function NewTripPage() {
           intermediateStops: intermediateStops.length > 0 ? JSON.stringify(intermediateStops) : null,
           departureTime: departureTime.toISOString(),
           estimatedDuration: parseInt(formData.estimatedDuration),
+          distance: formData.distance ? parseInt(formData.distance) : null,
           price: parseFloat(formData.price),
           busType: formData.busType,
           totalSlots: parseInt(formData.totalSlots),
@@ -199,6 +203,7 @@ export default function NewTripPage() {
           conductorId: formData.conductorId,
           manualTicketerId: formData.manualTicketerId,
           vehicleId: formData.vehicleId,
+          overrideStaffConflict: formData.overrideStaffConflict,
         }),
       })
 
@@ -207,7 +212,14 @@ export default function NewTripPage() {
       if (response.ok) {
         router.push("/company/dashboard")
       } else {
-        setError(data.error || "Failed to create trip")
+        // Handle staff conflict with override option
+        if (data.canOverride && data.conflicts) {
+          setStaffConflictWarning(data.conflicts.join(". "))
+          setError("")
+        } else {
+          setError(data.error || "Failed to create trip")
+          setStaffConflictWarning("")
+        }
       }
     } catch (err) {
       setError("An unexpected error occurred")
@@ -401,25 +413,46 @@ export default function NewTripPage() {
                 </div>
               </div>
 
-              {/* Duration */}
-              <div className="space-y-2">
-                <Label>Estimated Duration (minutes) *</Label>
-                <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    type="number"
-                    name="estimatedDuration"
-                    placeholder="e.g., 540 for 9 hours"
-                    value={formData.estimatedDuration}
-                    onChange={handleChange}
-                    min="30"
-                    className="pl-10"
-                    required
-                  />
+              {/* Duration and Distance */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Estimated Duration (minutes) *</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      name="estimatedDuration"
+                      placeholder="e.g., 540 for 9 hours"
+                      value={formData.estimatedDuration}
+                      onChange={handleChange}
+                      min="30"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Enter duration in minutes (e.g., 540 = 9 hours)
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Enter duration in minutes (e.g., 540 = 9 hours)
-                </p>
+
+                <div className="space-y-2">
+                  <Label>Distance (kilometers)</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      name="distance"
+                      placeholder="e.g., 450"
+                      value={formData.distance}
+                      onChange={handleChange}
+                      min="1"
+                      className="pl-10"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Optional: Trip distance in km
+                  </p>
+                </div>
               </div>
 
               {/* Price & Bus Type */}
@@ -671,6 +704,34 @@ export default function NewTripPage() {
                   )}
                 </div>
               </div>
+
+              {/* Staff Conflict Warning */}
+              {staffConflictWarning && (
+                <div className="border border-amber-500 bg-amber-50 p-4 rounded-lg space-y-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-amber-900">Staff Scheduling Conflict</h4>
+                      <p className="text-sm text-amber-800 mt-1">{staffConflictWarning}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 pl-7">
+                    <Checkbox
+                      id="overrideConflict"
+                      checked={formData.overrideStaffConflict}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({ ...prev, overrideStaffConflict: checked as boolean }))
+                      }
+                    />
+                    <label
+                      htmlFor="overrideConflict"
+                      className="text-sm text-amber-900 cursor-pointer"
+                    >
+                      I understand and want to override this conflict
+                    </label>
+                  </div>
+                </div>
+              )}
 
               {/* Submit */}
               <div className="flex gap-4 pt-4">

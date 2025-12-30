@@ -84,7 +84,8 @@ model Trip {
   route             String?
   intermediateStops String?
   departureTime     DateTime
-  estimatedDuration Int
+  estimatedDuration Int      // Duration in hours
+  distance          Int?     // Distance in kilometers (optional)
   price             Float
   busType           String
   totalSlots        Int
