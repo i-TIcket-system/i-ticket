@@ -117,17 +117,22 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json()
 
+    // Log request for debugging
+    console.log("[Vehicle Create] Request body:", JSON.stringify(body, null, 2))
+
     // Validate input
     const validation = createVehicleSchema.safeParse(body)
     if (!validation.success) {
       // Format validation errors to be more descriptive
       const errors = validation.error.errors.map(err => {
         const field = err.path.join('.')
-        return field ? `${field}: ${err.message}` : err.message
+        const fieldDisplay = field || 'general'
+        return `${fieldDisplay}: ${err.message}`
       })
-      const errorMessage = errors.length === 1
-        ? errors[0]
-        : `Validation errors: ${errors.join('; ')}`
+      const errorMessage = errors.join('; ')
+
+      console.error("[Vehicle Create] Validation failed:", errorMessage)
+      console.error("[Vehicle Create] Full errors:", JSON.stringify(validation.error.errors, null, 2))
 
       return NextResponse.json(
         { error: errorMessage },

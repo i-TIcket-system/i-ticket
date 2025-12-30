@@ -126,7 +126,8 @@ const sideNumber = z.string()
   .optional()
   .or(z.literal(""));
 
-export const createVehicleSchema = z.object({
+// Base vehicle schema (without seat range validation)
+const baseVehicleSchema = z.object({
   plateNumber: ethiopianPlateNumber,
   sideNumber: sideNumber,
   make: z.string().min(2, "Make must be at least 2 characters").max(50, "Make too long"),
@@ -136,7 +137,7 @@ export const createVehicleSchema = z.object({
     .min(1990, "Year must be 1990 or later")
     .max(currentYear + 1, `Year cannot be later than ${currentYear + 1}`),
   busType: z.enum(["MINI", "STANDARD", "LUXURY"], {
-    errorMap: () => ({ message: "Invalid bus type" })
+    errorMap: () => ({ message: "Invalid bus type. Must be MINI, STANDARD, or LUXURY" })
   }),
   color: z.string().min(2, "Color too short").max(30, "Color too long").optional().or(z.literal("")),
   totalSeats: z.number()
@@ -149,7 +150,10 @@ export const createVehicleSchema = z.object({
   insuranceExpiry: z.string().datetime().optional().nullable(),
   lastServiceDate: z.string().datetime().optional().nullable(),
   nextServiceDate: z.string().datetime().optional().nullable(),
-}).refine((data) => {
+});
+
+// Create schema with seat range validation
+export const createVehicleSchema = baseVehicleSchema.refine((data) => {
   // Validate totalSeats based on busType
   const seatRanges = {
     MINI: { min: 4, max: 20 },
@@ -158,7 +162,7 @@ export const createVehicleSchema = z.object({
   };
 
   const range = seatRanges[data.busType as keyof typeof seatRanges];
-  if (!range) return true; // Should never happen due to enum validation
+  if (!range) return true;
 
   return data.totalSeats >= range.min && data.totalSeats <= range.max;
 }, (data) => {
@@ -174,9 +178,32 @@ export const createVehicleSchema = z.object({
   };
 });
 
-export const updateVehicleSchema = createVehicleSchema.partial().extend({
-  // Plate number cannot be changed after creation (immutable)
-  plateNumber: z.never().optional(),
+// Update schema - make fields optional and exclude plate number
+export const updateVehicleSchema = baseVehicleSchema.partial().omit({ plateNumber: true }).refine((data) => {
+  // Only validate seat range if both busType and totalSeats are provided
+  if (!data.busType || !data.totalSeats) return true;
+
+  const seatRanges = {
+    MINI: { min: 4, max: 20 },
+    STANDARD: { min: 20, max: 50 },
+    LUXURY: { min: 30, max: 60 },
+  };
+
+  const range = seatRanges[data.busType as keyof typeof seatRanges];
+  if (!range) return true;
+
+  return data.totalSeats >= range.min && data.totalSeats <= range.max;
+}, (data) => {
+  const seatRanges = {
+    MINI: { min: 4, max: 20, label: "Mini Bus" },
+    STANDARD: { min: 20, max: 50, label: "Standard Bus" },
+    LUXURY: { min: 30, max: 60, label: "Luxury Bus" },
+  };
+  const range = seatRanges[data.busType as keyof typeof seatRanges];
+  return {
+    message: `${range.label} must have between ${range.min}-${range.max} seats. You entered ${data.totalSeats} seats.`,
+    path: ["totalSeats"]
+  };
 });
 
 // Helper function to validate and parse request body
