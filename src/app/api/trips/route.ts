@@ -79,6 +79,7 @@ export async function GET(request: NextRequest) {
         intermediateStops: true,
         departureTime: true,
         estimatedDuration: true,
+        distance: true,
         price: true,
         busType: true,
         totalSlots: true,
