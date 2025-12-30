@@ -149,6 +149,29 @@ export const createVehicleSchema = z.object({
   insuranceExpiry: z.string().datetime().optional().nullable(),
   lastServiceDate: z.string().datetime().optional().nullable(),
   nextServiceDate: z.string().datetime().optional().nullable(),
+}).refine((data) => {
+  // Validate totalSeats based on busType
+  const seatRanges = {
+    MINI: { min: 4, max: 20 },
+    STANDARD: { min: 20, max: 50 },
+    LUXURY: { min: 30, max: 60 },
+  };
+
+  const range = seatRanges[data.busType as keyof typeof seatRanges];
+  if (!range) return true; // Should never happen due to enum validation
+
+  return data.totalSeats >= range.min && data.totalSeats <= range.max;
+}, (data) => {
+  const seatRanges = {
+    MINI: { min: 4, max: 20, label: "Mini Bus" },
+    STANDARD: { min: 20, max: 50, label: "Standard Bus" },
+    LUXURY: { min: 30, max: 60, label: "Luxury Bus" },
+  };
+  const range = seatRanges[data.busType as keyof typeof seatRanges];
+  return {
+    message: `${range.label} must have between ${range.min}-${range.max} seats. You entered ${data.totalSeats} seats.`,
+    path: ["totalSeats"]
+  };
 });
 
 export const updateVehicleSchema = createVehicleSchema.partial().extend({

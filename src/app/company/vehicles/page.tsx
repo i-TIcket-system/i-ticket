@@ -628,6 +628,11 @@ export default function VehiclesPage() {
                     max={100}
                     required
                   />
+                  <p className="text-xs text-muted-foreground">
+                    {newVehicle.busType === "MINI" && "Mini Bus: 4-20 seats"}
+                    {newVehicle.busType === "STANDARD" && "Standard Bus: 20-50 seats"}
+                    {newVehicle.busType === "LUXURY" && "Luxury Bus: 30-60 seats"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -810,6 +815,11 @@ export default function VehiclesPage() {
                       max={100}
                       required
                     />
+                    <p className="text-xs text-muted-foreground">
+                      {editForm.busType === "MINI" && "Mini Bus: 4-20 seats"}
+                      {editForm.busType === "STANDARD" && "Standard Bus: 20-50 seats"}
+                      {editForm.busType === "LUXURY" && "Luxury Bus: 30-60 seats"}
+                    </p>
                   </div>
 
                   <div className="space-y-2">

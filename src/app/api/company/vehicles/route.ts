@@ -120,8 +120,17 @@ export async function POST(req: NextRequest) {
     // Validate input
     const validation = createVehicleSchema.safeParse(body)
     if (!validation.success) {
+      // Format validation errors to be more descriptive
+      const errors = validation.error.errors.map(err => {
+        const field = err.path.join('.')
+        return field ? `${field}: ${err.message}` : err.message
+      })
+      const errorMessage = errors.length === 1
+        ? errors[0]
+        : `Validation errors: ${errors.join('; ')}`
+
       return NextResponse.json(
-        { error: validation.error.errors[0].message },
+        { error: errorMessage },
         { status: 400 }
       )
     }
