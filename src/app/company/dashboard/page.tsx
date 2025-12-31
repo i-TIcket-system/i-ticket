@@ -167,7 +167,7 @@ export default function CompanyDashboard() {
   }
 
   const lowSlotTrips = trips.filter(
-    (t) => isLowSlots(t.availableSlots, t.totalSlots) && t.bookingHalted && !dismissedAlerts.has(t.id)
+    (t) => t.availableSlots > 0 && isLowSlots(t.availableSlots, t.totalSlots) && t.bookingHalted && !dismissedAlerts.has(t.id)
   )
 
   return (
