@@ -9,6 +9,23 @@ const updateCompanySchema = z.object({
   name: z.string().min(2, "Company name required").optional(),
   email: z.string().email("Invalid email").optional(),
   phones: z.array(z.string()).optional(),
+  // Contact information
+  fax: z.string().optional(),
+  website: z.string().optional(),
+  address: z.string().optional(),
+  poBox: z.string().optional(),
+  tinNumber: z.string().optional(),
+  // Bank information
+  bankName: z.string().optional(),
+  bankAccount: z.string().optional(),
+  bankBranch: z.string().optional(),
+  // Key contacts
+  adminName: z.string().optional(),
+  adminPhone: z.string().optional(),
+  adminEmail: z.string().email("Invalid admin email").optional().or(z.literal("")),
+  supportName: z.string().optional(),
+  supportPhone: z.string().optional(),
+  // Report signatories
   preparedBy: z.string().optional(),
   reviewedBy: z.string().optional(),
   approvedBy: z.string().optional(),
@@ -42,6 +59,23 @@ export async function GET(req: NextRequest) {
         phones: true,
         email: true,
         isActive: true,
+        // Contact information
+        fax: true,
+        website: true,
+        address: true,
+        poBox: true,
+        tinNumber: true,
+        // Bank information
+        bankName: true,
+        bankAccount: true,
+        bankBranch: true,
+        // Key contacts
+        adminName: true,
+        adminPhone: true,
+        adminEmail: true,
+        supportName: true,
+        supportPhone: true,
+        // Report signatories
         preparedBy: true,
         reviewedBy: true,
         approvedBy: true,
@@ -102,15 +136,39 @@ export async function PATCH(req: NextRequest) {
 
     // Build update data with proper types
     const updateData: Record<string, any> = {}
+
+    // Basic info
     if (validatedData.name !== undefined) updateData.name = validatedData.name
     if (validatedData.email !== undefined) updateData.email = validatedData.email
-    if (validatedData.preparedBy !== undefined) updateData.preparedBy = validatedData.preparedBy
-    if (validatedData.reviewedBy !== undefined) updateData.reviewedBy = validatedData.reviewedBy
-    if (validatedData.approvedBy !== undefined) updateData.approvedBy = validatedData.approvedBy
+
     // Convert phones array to JSON string if provided
     if (validatedData.phones !== undefined) {
       updateData.phones = JSON.stringify(validatedData.phones)
     }
+
+    // Contact information
+    if (validatedData.fax !== undefined) updateData.fax = validatedData.fax || null
+    if (validatedData.website !== undefined) updateData.website = validatedData.website || null
+    if (validatedData.address !== undefined) updateData.address = validatedData.address || null
+    if (validatedData.poBox !== undefined) updateData.poBox = validatedData.poBox || null
+    if (validatedData.tinNumber !== undefined) updateData.tinNumber = validatedData.tinNumber || null
+
+    // Bank information
+    if (validatedData.bankName !== undefined) updateData.bankName = validatedData.bankName || null
+    if (validatedData.bankAccount !== undefined) updateData.bankAccount = validatedData.bankAccount || null
+    if (validatedData.bankBranch !== undefined) updateData.bankBranch = validatedData.bankBranch || null
+
+    // Key contacts
+    if (validatedData.adminName !== undefined) updateData.adminName = validatedData.adminName || null
+    if (validatedData.adminPhone !== undefined) updateData.adminPhone = validatedData.adminPhone || null
+    if (validatedData.adminEmail !== undefined) updateData.adminEmail = validatedData.adminEmail || null
+    if (validatedData.supportName !== undefined) updateData.supportName = validatedData.supportName || null
+    if (validatedData.supportPhone !== undefined) updateData.supportPhone = validatedData.supportPhone || null
+
+    // Report signatories
+    if (validatedData.preparedBy !== undefined) updateData.preparedBy = validatedData.preparedBy || null
+    if (validatedData.reviewedBy !== undefined) updateData.reviewedBy = validatedData.reviewedBy || null
+    if (validatedData.approvedBy !== undefined) updateData.approvedBy = validatedData.approvedBy || null
 
     // Update company
     const company = await prisma.company.update({

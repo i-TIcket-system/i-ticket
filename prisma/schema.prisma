@@ -53,6 +53,25 @@ model Company {
   email     String
   isActive  Boolean  @default(true)
 
+  // Additional contact information (optional)
+  fax         String?  // Fax number
+  website     String?  // Company website URL
+  address     String?  // Physical address
+  poBox       String?  // P.O. Box number
+  tinNumber   String?  // Tax Identification Number
+
+  // Bank information
+  bankName      String?  // Bank name
+  bankAccount   String?  // Bank account number
+  bankBranch    String?  // Bank branch
+
+  // Key contacts
+  adminName     String?  // Company admin/manager name
+  adminPhone    String?  // Company admin/manager phone
+  adminEmail    String?  // Company admin/manager email
+  supportName   String?  // Support contact name
+  supportPhone  String?  // Support contact phone
+
   // Report signatures (for accounting/financial reports)
   preparedBy  String?  // Name of person who prepares reports
   reviewedBy  String?  // Name of person who reviews reports

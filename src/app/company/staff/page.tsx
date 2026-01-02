@@ -70,11 +70,24 @@ interface StaffMember {
   createdAt: string
 }
 
-const STAFF_ROLES = {
+const STAFF_ROLES: Record<string, { label: string; icon: any; color: string }> = {
   ADMIN: { label: "Admin", icon: Shield, color: "bg-purple-100 text-purple-800" },
   DRIVER: { label: "Driver", icon: Car, color: "bg-blue-100 text-blue-800" },
   CONDUCTOR: { label: "Conductor", icon: UserCheck, color: "bg-green-100 text-green-800" },
   MANUAL_TICKETER: { label: "Manual Ticketer", icon: Ticket, color: "bg-orange-100 text-orange-800" },
+}
+
+// Helper to get role display info (handles custom roles)
+const getRoleInfo = (role: string) => {
+  if (STAFF_ROLES[role]) {
+    return STAFF_ROLES[role]
+  }
+  // Custom role fallback
+  return {
+    label: role.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+    icon: Users,
+    color: "bg-gray-100 text-gray-800"
+  }
 }
 
 export default function StaffManagementPage() {
@@ -96,6 +109,7 @@ export default function StaffManagementPage() {
     email: "",
     password: "",
     staffRole: "DRIVER",
+    customRole: "",
     licenseNumber: "",
     employeeId: "",
   })
@@ -140,15 +154,24 @@ export default function StaffManagementPage() {
   const handleAddStaff = async () => {
     setIsSaving(true)
 
+    // Determine the actual role to send
+    const actualRole = newStaff.staffRole === "CUSTOM"
+      ? newStaff.customRole.toUpperCase().replace(/\s+/g, "_")
+      : newStaff.staffRole
+
     try {
       const response = await fetch("/api/company/staff", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newStaff),
+        body: JSON.stringify({
+          ...newStaff,
+          staffRole: actualRole,
+        }),
       })
 
       if (response.ok) {
-        toast.success(`${STAFF_ROLES[newStaff.staffRole as keyof typeof STAFF_ROLES].label} added successfully`)
+        const roleInfo = getRoleInfo(actualRole)
+        toast.success(`${roleInfo.label} added successfully`)
         setIsAddDialogOpen(false)
         setNewStaff({
           name: "",
@@ -156,6 +179,7 @@ export default function StaffManagementPage() {
           email: "",
           password: "",
           staffRole: "DRIVER",
+          customRole: "",
           licenseNumber: "",
           employeeId: "",
         })
@@ -244,12 +268,14 @@ export default function StaffManagementPage() {
   }
 
   // Group staff by role for stats
+  const knownRoles = ["ADMIN", "DRIVER", "CONDUCTOR", "MANUAL_TICKETER"]
   const stats = {
     total: staff.length,
     admins: staff.filter(s => s.staffRole === "ADMIN").length,
     drivers: staff.filter(s => s.staffRole === "DRIVER").length,
     conductors: staff.filter(s => s.staffRole === "CONDUCTOR").length,
     ticketers: staff.filter(s => s.staffRole === "MANUAL_TICKETER").length,
+    others: staff.filter(s => !knownRoles.includes(s.staffRole)).length,
   }
 
   return (
@@ -274,7 +300,7 @@ export default function StaffManagementPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
@@ -324,6 +350,18 @@ export default function StaffManagementPage() {
             </div>
           </CardContent>
         </Card>
+
+        {stats.others > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <Users className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+                <p className="text-2xl font-bold">{stats.others}</p>
+                <p className="text-xs text-muted-foreground">Other Roles</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Staff Table */}
@@ -362,7 +400,7 @@ export default function StaffManagementPage() {
                 </TableHeader>
                 <TableBody>
                   {staff.map((member) => {
-                    const roleInfo = STAFF_ROLES[member.staffRole as keyof typeof STAFF_ROLES]
+                    const roleInfo = getRoleInfo(member.staffRole)
                     const RoleIcon = roleInfo.icon
 
                     return (
@@ -470,7 +508,7 @@ export default function StaffManagementPage() {
                 <Label htmlFor="staffRole">Role *</Label>
                 <Select
                   value={newStaff.staffRole}
-                  onValueChange={(value) => setNewStaff({ ...newStaff, staffRole: value })}
+                  onValueChange={(value) => setNewStaff({ ...newStaff, staffRole: value, customRole: "" })}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -480,9 +518,26 @@ export default function StaffManagementPage() {
                     <SelectItem value="DRIVER">Driver</SelectItem>
                     <SelectItem value="CONDUCTOR">Conductor</SelectItem>
                     <SelectItem value="MANUAL_TICKETER">Manual Ticketer</SelectItem>
+                    <SelectItem value="CUSTOM">Custom Role...</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
+
+              {newStaff.staffRole === "CUSTOM" && (
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="customRole">Custom Role Name *</Label>
+                  <Input
+                    id="customRole"
+                    value={newStaff.customRole}
+                    onChange={(e) => setNewStaff({ ...newStaff, customRole: e.target.value })}
+                    placeholder="e.g., Supervisor, Cashier, Mechanic"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Enter a custom role name for this staff member
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -584,8 +639,8 @@ export default function StaffManagementPage() {
             <div className="space-y-4">
               <div className="p-3 rounded-lg bg-muted">
                 <div className="flex items-center gap-2 mb-1">
-                  <Badge className={STAFF_ROLES[staffToEdit.staffRole as keyof typeof STAFF_ROLES].color}>
-                    {STAFF_ROLES[staffToEdit.staffRole as keyof typeof STAFF_ROLES].label}
+                  <Badge className={getRoleInfo(staffToEdit.staffRole).color}>
+                    {getRoleInfo(staffToEdit.staffRole).label}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
                     Role cannot be changed

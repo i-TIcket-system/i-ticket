@@ -16,7 +16,17 @@ import {
   Shield,
   Car,
   Ticket,
-  UserCheck
+  UserCheck,
+  Globe,
+  MapPin,
+  Printer,
+  FileText,
+  Hash,
+  Landmark,
+  CreditCard,
+  UserCog,
+  HeadphonesIcon,
+  Mailbox
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -55,6 +65,19 @@ interface Company {
   name: string
   email: string
   phones: string[]
+  fax: string | null
+  website: string | null
+  address: string | null
+  poBox: string | null
+  tinNumber: string | null
+  bankName: string | null
+  bankAccount: string | null
+  bankBranch: string | null
+  adminName: string | null
+  adminPhone: string | null
+  adminEmail: string | null
+  supportName: string | null
+  supportPhone: string | null
   preparedBy: string | null
   reviewedBy: string | null
   approvedBy: string | null
@@ -92,6 +115,19 @@ export default function CompanyProfilePage() {
     name: "",
     email: "",
     phones: [] as string[],
+    fax: "",
+    website: "",
+    address: "",
+    poBox: "",
+    tinNumber: "",
+    bankName: "",
+    bankAccount: "",
+    bankBranch: "",
+    adminName: "",
+    adminPhone: "",
+    adminEmail: "",
+    supportName: "",
+    supportPhone: "",
     preparedBy: "",
     reviewedBy: "",
     approvedBy: "",
@@ -132,6 +168,19 @@ export default function CompanyProfilePage() {
           phones: typeof data.company.phones === 'string'
             ? JSON.parse(data.company.phones)
             : data.company.phones,
+          fax: data.company.fax || "",
+          website: data.company.website || "",
+          address: data.company.address || "",
+          poBox: data.company.poBox || "",
+          tinNumber: data.company.tinNumber || "",
+          bankName: data.company.bankName || "",
+          bankAccount: data.company.bankAccount || "",
+          bankBranch: data.company.bankBranch || "",
+          adminName: data.company.adminName || "",
+          adminPhone: data.company.adminPhone || "",
+          adminEmail: data.company.adminEmail || "",
+          supportName: data.company.supportName || "",
+          supportPhone: data.company.supportPhone || "",
           preparedBy: data.company.preparedBy || "",
           reviewedBy: data.company.reviewedBy || "",
           approvedBy: data.company.approvedBy || "",
@@ -263,29 +312,162 @@ export default function CompanyProfilePage() {
           <CardDescription>Update your company details and contact information</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleUpdateCompany} className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Company Name *</Label>
-                <Input
-                  id="name"
-                  value={companyForm.name}
-                  onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <form onSubmit={handleUpdateCompany} className="space-y-6">
+            {/* Basic Information */}
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Basic Information
+              </h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Company Name *</Label>
                   <Input
-                    id="email"
-                    type="email"
-                    className="pl-10"
-                    value={companyForm.email}
-                    onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })}
+                    id="name"
+                    value={companyForm.name}
+                    onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      className="pl-10"
+                      value={companyForm.email}
+                      onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tinNumber">TIN Number</Label>
+                  <div className="relative">
+                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="tinNumber"
+                      className="pl-10"
+                      placeholder="Tax Identification Number"
+                      value={companyForm.tinNumber}
+                      onChange={(e) => setCompanyForm({ ...companyForm, tinNumber: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website</Label>
+                  <div className="relative">
+                    <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="website"
+                      className="pl-10"
+                      placeholder="https://www.example.com"
+                      value={companyForm.website}
+                      onChange={(e) => setCompanyForm({ ...companyForm, website: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Contact Information */}
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <Phone className="h-4 w-4" />
+                Contact Information
+              </h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fax">Fax Number</Label>
+                  <div className="relative">
+                    <Printer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="fax"
+                      className="pl-10"
+                      placeholder="+251-XX-XXX-XXXX"
+                      value={companyForm.fax}
+                      onChange={(e) => setCompanyForm({ ...companyForm, fax: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="poBox">P.O. Box</Label>
+                  <div className="relative">
+                    <Mailbox className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="poBox"
+                      className="pl-10"
+                      placeholder="P.O. Box 12345"
+                      value={companyForm.poBox}
+                      onChange={(e) => setCompanyForm({ ...companyForm, poBox: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 md:col-span-2 lg:col-span-1">
+                  <Label htmlFor="address">Physical Address</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="address"
+                      className="pl-10"
+                      placeholder="Bole, Addis Ababa"
+                      value={companyForm.address}
+                      onChange={(e) => setCompanyForm({ ...companyForm, address: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Bank Information */}
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <Landmark className="h-4 w-4" />
+                Bank Information
+              </h3>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Input
+                    id="bankName"
+                    placeholder="Commercial Bank of Ethiopia"
+                    value={companyForm.bankName}
+                    onChange={(e) => setCompanyForm({ ...companyForm, bankName: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bankAccount">Account Number</Label>
+                  <div className="relative">
+                    <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="bankAccount"
+                      className="pl-10"
+                      placeholder="1000XXXXXXXXXX"
+                      value={companyForm.bankAccount}
+                      onChange={(e) => setCompanyForm({ ...companyForm, bankAccount: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="bankBranch">Branch</Label>
+                  <Input
+                    id="bankBranch"
+                    placeholder="Main Branch"
+                    value={companyForm.bankBranch}
+                    onChange={(e) => setCompanyForm({ ...companyForm, bankBranch: e.target.value })}
                   />
                 </div>
               </div>
@@ -293,9 +475,101 @@ export default function CompanyProfilePage() {
 
             <Separator />
 
+            {/* Key Contacts */}
             <div>
-              <Label className="mb-2 block">Report Authorized Signatories</Label>
-              <p className="text-sm text-muted-foreground mb-4">
+              <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                <UserCog className="h-4 w-4" />
+                Key Contacts
+              </h3>
+
+              {/* Company Admin/Manager */}
+              <div className="mb-4">
+                <p className="text-xs text-muted-foreground mb-2">Company Administrator</p>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="adminName">Name</Label>
+                    <Input
+                      id="adminName"
+                      placeholder="John Doe"
+                      value={companyForm.adminName}
+                      onChange={(e) => setCompanyForm({ ...companyForm, adminName: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="adminPhone">Phone</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="adminPhone"
+                        className="pl-10"
+                        placeholder="+251-9XX-XXX-XXX"
+                        value={companyForm.adminPhone}
+                        onChange={(e) => setCompanyForm({ ...companyForm, adminPhone: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="adminEmail">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="adminEmail"
+                        type="email"
+                        className="pl-10"
+                        placeholder="admin@company.com"
+                        value={companyForm.adminEmail}
+                        onChange={(e) => setCompanyForm({ ...companyForm, adminEmail: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Support Contact */}
+              <div>
+                <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                  <HeadphonesIcon className="h-3 w-3" />
+                  Support Contact
+                </p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="supportName">Name</Label>
+                    <Input
+                      id="supportName"
+                      placeholder="Support Team"
+                      value={companyForm.supportName}
+                      onChange={(e) => setCompanyForm({ ...companyForm, supportName: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="supportPhone">Phone</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="supportPhone"
+                        className="pl-10"
+                        placeholder="+251-9XX-XXX-XXX"
+                        value={companyForm.supportPhone}
+                        onChange={(e) => setCompanyForm({ ...companyForm, supportPhone: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Report Signatories */}
+            <div>
+              <h3 className="text-sm font-medium text-muted-foreground mb-1 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Report Authorized Signatories
+              </h3>
+              <p className="text-xs text-muted-foreground mb-4">
                 These names will appear on financial reports and invoices
               </p>
 

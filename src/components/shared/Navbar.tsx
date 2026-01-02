@@ -146,7 +146,7 @@ export function Navbar() {
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
-                  {session.user.role !== "SALES_PERSON" && (
+                  {session.user.role === "CUSTOMER" && (
                     <DropdownMenuItem asChild>
                       <Link href="/tickets">
                         <Ticket className="mr-2 h-4 w-4" />
@@ -305,13 +305,15 @@ export function Navbar() {
                   >
                     Dashboard
                   </Link>
-                  <Link
-                    href="/tickets"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    My Tickets
-                  </Link>
+                  {session.user.role === "CUSTOMER" && (
+                    <Link
+                      href="/tickets"
+                      className="text-sm font-medium hover:text-primary transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      My Tickets
+                    </Link>
+                  )}
                   <button
                     className="text-sm font-medium text-left text-red-500 hover:text-red-600 transition-colors"
                     onClick={() => {
