@@ -135,13 +135,17 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
                   type="button"
                   onClick={() => handleSuggestionClick(city)}
                   className={cn(
-                    "w-full text-left px-3 py-2 rounded-sm hover:bg-accent hover:text-accent-foreground transition-colors",
+                    "w-full text-left px-3 py-2 rounded-sm transition-colors",
                     "flex items-center gap-2",
-                    city === inputValue && "bg-accent/50"
+                    "hover:bg-primary/10 hover:text-primary",
+                    city === inputValue && "bg-primary/20 text-primary font-medium"
                   )}
                 >
-                  <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
-                  <span className="text-sm text-foreground font-normal flex-1">
+                  <MapPin className={cn(
+                    "h-3 w-3 flex-shrink-0",
+                    city === inputValue ? "text-primary" : "text-muted-foreground"
+                  )} />
+                  <span className="text-sm flex-1">
                     {city || "[Empty]"}
                   </span>
                 </button>

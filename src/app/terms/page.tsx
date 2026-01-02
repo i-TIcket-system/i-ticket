@@ -23,7 +23,7 @@ export default function TermsPage() {
           <CardHeader className="border-b">
             <CardTitle className="text-4xl font-bold">Terms & Conditions</CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Last updated: December 29, 2025 | Effective Date: January 1, 2024
+              Last updated: January 2, 2026 | Effective Date: January 1, 2024
             </p>
             <p className="text-xs text-muted-foreground mt-1 italic">
               Please read these Terms and Conditions carefully before using our service
@@ -668,6 +668,142 @@ export default function TermsPage() {
               Urgent matters (payment issues, trip cancellations) receive priority handling.
             </p>
 
+            <h2 className="text-2xl font-bold mt-8 mb-4">20. Sales Person Referral Program</h2>
+            <h3 className="text-xl font-semibold mt-6 mb-3">20.1 Program Overview</h3>
+            <p>
+              The i-Ticket Sales Person Referral Program enables authorized individuals to earn commissions by
+              referring new users to the platform. Sales Persons are independent contractors managed directly
+              by i-Ticket (Super Admin) and are not employees of any Bus Company.
+            </p>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">20.2 Eligibility and Registration</h3>
+            <p>To become an i-Ticket Sales Person, you must:</p>
+            <ul>
+              <li>Be at least 18 years of age</li>
+              <li>Have a valid Ethiopian phone number</li>
+              <li>Complete the Sales Person registration process</li>
+              <li>Be approved by i-Ticket administration</li>
+              <li>Agree to these Terms and Conditions</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">20.3 Referral Codes and QR Flyers</h3>
+            <p>
+              Upon approval, each Sales Person receives a <strong>unique permanent referral code</strong> (e.g., ABEL23)
+              and QR-coded promotional materials. These materials are for personal use only and may not be:
+            </p>
+            <ul>
+              <li>Transferred or sold to others</li>
+              <li>Used for fraudulent purposes</li>
+              <li>Duplicated without authorization</li>
+              <li>Modified or altered in any way</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">20.4 Referral Attribution</h3>
+            <p>
+              Referrals are attributed using a <strong>first-come, first-served</strong> model. When a new user
+              scans a Sales Person's QR code or uses their referral link:
+            </p>
+            <ul>
+              <li>The user is attributed to that Sales Person for as long as the Sales Person remains ACTIVE with i-Ticket</li>
+              <li>Attribution is based on the FIRST referral - subsequent scans by other Sales Persons do not change attribution</li>
+              <li>Attribution persists across all future bookings by that user while the Sales Person is employed</li>
+              <li>Existing platform users cannot be claimed as referrals</li>
+              <li><strong>Important:</strong> Commission earning rights terminate when the Sales Person leaves i-Ticket</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">20.5 Commission Structure</h3>
+            <p>
+              Sales Persons earn commission on all completed bookings made by their referred users:
+            </p>
+            <div className="bg-teal-50 border-l-4 border-teal-500 p-4 my-4">
+              <p className="text-sm text-teal-900">
+                <strong>Commission Rate:</strong> 5% of the platform's 5% service fee (equivalent to 0.25% of the total ticket price)
+              </p>
+              <p className="text-sm text-teal-800 mt-2">
+                <strong>Example:</strong> If a referred user books a ticket for 1,000 ETB, the platform fee is 50 ETB (5%),
+                and the Sales Person earns 2.50 ETB (5% of 50 ETB).
+              </p>
+            </div>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">20.6 Commission Eligibility</h3>
+            <p>Commissions are earned only when:</p>
+            <ul>
+              <li>The booking is completed and paid in full</li>
+              <li>The Sales Person's account is in ACTIVE status</li>
+              <li>The booking is not cancelled or refunded</li>
+              <li>The referral was legitimate and not fraudulent</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">20.7 Payout Process</h3>
+            <p>
+              Commissions are accumulated and paid out upon request, subject to the following conditions:
+            </p>
+            <ul>
+              <li><strong>Minimum payout:</strong> 50 ETB</li>
+              <li><strong>Payment methods:</strong> Cash or TeleBirr transfer</li>
+              <li><strong>Processing time:</strong> Up to 5 business days after approval</li>
+              <li>Payouts are processed by i-Ticket administration</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">20.8 Prohibited Conduct for Sales Persons</h3>
+            <p>Sales Persons must NOT:</p>
+            <ul>
+              <li>Create fake accounts or self-referrals</li>
+              <li>Use automated tools or bots to generate scans</li>
+              <li>Misrepresent the platform or make false promises</li>
+              <li>Harass potential users or engage in aggressive marketing</li>
+              <li>Share referral codes with other Sales Persons</li>
+              <li>Manipulate the referral tracking system</li>
+              <li>Claim commission on personal bookings</li>
+              <li>Engage in any fraudulent activities</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">20.9 Fraud Prevention</h3>
+            <p>
+              i-Ticket employs multiple fraud prevention measures including:
+            </p>
+            <ul>
+              <li>Visitor deduplication (same device/visitor can only be counted once)</li>
+              <li>IP and device fingerprinting for scan validation</li>
+              <li>Manual review of suspicious referral patterns</li>
+              <li>Commission reversal for fraudulent bookings</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">20.10 Account Status and Termination</h3>
+            <p>
+              Sales Person accounts may be suspended or terminated for:
+            </p>
+            <ul>
+              <li>Voluntary resignation from the Sales Person program</li>
+              <li>Violation of these Terms and Conditions</li>
+              <li>Fraudulent or suspicious activity</li>
+              <li>Extended inactivity (no referrals for 12 months)</li>
+              <li>At i-Ticket's sole discretion with 30 days notice</li>
+            </ul>
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 my-4">
+              <p className="text-sm font-semibold text-red-900 mb-2">Important: Effect of Termination on Commissions</p>
+              <p className="text-sm text-red-800">
+                Upon termination (for any reason), unpaid commissions above the minimum threshold will be paid within 30 days.
+                <strong> All future commission rights from existing referrals are permanently forfeited.</strong> The "lifetime"
+                commission benefit applies only while the Sales Person remains an active member of i-Ticket's sales team.
+              </p>
+            </div>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">20.11 Program Modifications</h3>
+            <p>
+              i-Ticket reserves the right to modify the Sales Person Program at any time, including:
+            </p>
+            <ul>
+              <li>Commission rates and structure</li>
+              <li>Payout thresholds and methods</li>
+              <li>Program rules and eligibility criteria</li>
+              <li>Termination of the program entirely</li>
+            </ul>
+            <p className="mt-3">
+              Material changes will be communicated with at least 30 days notice. Continued participation
+              after the notice period constitutes acceptance of the modified terms.
+            </p>
+
             <div className="bg-primary/5 border-2 border-primary/20 p-6 rounded-lg mt-8">
               <p className="font-semibold text-lg mb-3">Acknowledgment</p>
               <p className="text-sm">
@@ -678,8 +814,8 @@ export default function TermsPage() {
             </div>
 
             <div className="text-center text-xs text-muted-foreground mt-8 pt-6 border-t">
-              <p>© 2024-2025 i-Ticket Platform Services. All rights reserved.</p>
-              <p className="mt-2">Document Version 2.0 | Effective Date: January 1, 2024 | Last Updated: December 29, 2025</p>
+              <p>© 2024-2026 i-Ticket Platform Services. All rights reserved.</p>
+              <p className="mt-2">Document Version 2.1 | Effective Date: January 1, 2024 | Last Updated: January 2, 2026</p>
             </div>
           </CardContent>
         </Card>

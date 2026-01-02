@@ -62,6 +62,12 @@ const ACTION_COLORS: Record<string, string> = {
   TRIP_CREATED: "bg-green-100 text-green-800",
   TRIP_UPDATED: "bg-blue-100 text-blue-800",
   TRIP_DELETED: "bg-red-100 text-red-800",
+  // Sales Person actions
+  SALES_PERSON_CREATED: "bg-teal-100 text-teal-800",
+  SALES_PERSON_UPDATED: "bg-cyan-100 text-cyan-800",
+  SALES_PERSON_DEACTIVATED: "bg-rose-100 text-rose-800",
+  SALES_PAYOUT_PROCESSED: "bg-emerald-100 text-emerald-800",
+  SALES_REFERRAL_CONVERSION: "bg-indigo-100 text-indigo-800",
 }
 
 export default function AuditLogsPage() {
@@ -219,6 +225,11 @@ export default function AuditLogsPage() {
                     <SelectItem value="TRIP_CREATED">Trip Created</SelectItem>
                     <SelectItem value="TRIP_UPDATED">Trip Updated</SelectItem>
                     <SelectItem value="TRIP_DELETED">Trip Deleted</SelectItem>
+                    <SelectItem value="SALES_PERSON_CREATED">Sales Person Created</SelectItem>
+                    <SelectItem value="SALES_PERSON_UPDATED">Sales Person Updated</SelectItem>
+                    <SelectItem value="SALES_PERSON_DEACTIVATED">Sales Person Deactivated</SelectItem>
+                    <SelectItem value="SALES_PAYOUT_PROCESSED">Sales Payout Processed</SelectItem>
+                    <SelectItem value="SALES_REFERRAL_CONVERSION">Sales Referral Conversion</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
