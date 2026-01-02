@@ -327,7 +327,7 @@ export async function generatePlatformRevenueReport(options: ReportOptions): Pro
         minute: "2-digit"
       })
 
-      const ticketCodes = booking.tickets.map(t => t.shortCode).join(", ") || "N/A"
+      const ticketCodes = booking.tickets.map((t: { shortCode: string }) => t.shortCode).join(", ") || "N/A"
       const passengerCount = booking.passengers.length
       const totalAmount = Number(booking.totalAmount)
       const commission = Number(booking.commission)

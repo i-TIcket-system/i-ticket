@@ -335,10 +335,10 @@ export default function AdminSupportPage() {
                         <code className="text-sm font-mono font-bold text-primary">
                           {ticket.ticketNumber}
                         </code>
-                        <Badge className={`${STATUS_COLORS[ticket.status]} text-white`}>
+                        <Badge className={`${STATUS_COLORS[ticket.status as keyof typeof STATUS_COLORS]} text-white`}>
                           {ticket.status.replace("_", " ")}
                         </Badge>
-                        <Badge className={CATEGORY_COLORS[ticket.category]}>
+                        <Badge className={CATEGORY_COLORS[ticket.category as keyof typeof CATEGORY_COLORS]}>
                           {ticket.category}
                         </Badge>
                         <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium text-white ${PRIORITY_LABELS[ticket.priority as keyof typeof PRIORITY_LABELS].color}`}>

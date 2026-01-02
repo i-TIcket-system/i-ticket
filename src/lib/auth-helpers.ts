@@ -60,6 +60,13 @@ export async function requireSuperAdmin(): Promise<AuthSession> {
 }
 
 /**
+ * Require sales person
+ */
+export async function requireSalesPerson(): Promise<AuthSession> {
+  return requireRole(["SALES_PERSON"]);
+}
+
+/**
  * Check if user owns a resource
  */
 export async function requireOwnership(resourceUserId: string): Promise<AuthSession> {

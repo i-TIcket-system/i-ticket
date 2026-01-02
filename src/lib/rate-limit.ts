@@ -16,7 +16,7 @@ class RateLimiter {
     // Clean up expired records every minute
     this.cleanupInterval = setInterval(() => {
       const now = Date.now()
-      for (const [key, record] of this.store.entries()) {
+      for (const [key, record] of Array.from(this.store.entries())) {
         if (now > record.resetTime) {
           this.store.delete(key)
         }

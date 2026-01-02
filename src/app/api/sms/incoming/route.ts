@@ -146,8 +146,8 @@ export async function POST(request: NextRequest) {
     const response = await processMessage(from, sanitizedMessage);
 
     // Send response
-    const gateway = getSmsGateway();
-    await gateway.send(from, response);
+    const smsGateway = getSmsGateway();
+    await smsGateway.send(from, response);
 
     // Log to AdminLog for tracking
     await prisma.adminLog.create({

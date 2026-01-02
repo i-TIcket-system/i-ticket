@@ -21,7 +21,7 @@ export async function GET(
     headers.set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
     headers.set("Content-Disposition", `attachment; filename="passenger-manifest-${params.tripId.slice(0, 8)}.xlsx"`)
 
-    return new Response(buffer, {
+    return new Response(new Uint8Array(buffer), {
       status: 200,
       headers,
     })

@@ -49,6 +49,7 @@ interface Booking {
   commission: number
   createdAt: string
   trip: {
+    id: string
     origin: string
     destination: string
     departureTime: string

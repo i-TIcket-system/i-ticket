@@ -78,18 +78,19 @@ export async function PATCH(
       )
     }
 
-    const updates = validation.data
+    const validatedData = validation.data
+    const updateData: Record<string, any> = { ...validatedData }
 
     // If status changed to RESOLVED, set resolvedBy and resolvedAt
-    if (updates.status === "RESOLVED") {
-      updates.resolvedBy = session.user.id
-      ;(updates as any).resolvedAt = new Date()
+    if (validatedData.status === "RESOLVED") {
+      updateData.resolvedBy = session.user.id
+      updateData.resolvedAt = new Date()
     }
 
     // Update ticket
     const ticket = await prisma.supportTicket.update({
       where: { id: params.ticketId },
-      data: updates
+      data: updateData
     })
 
     return NextResponse.json({

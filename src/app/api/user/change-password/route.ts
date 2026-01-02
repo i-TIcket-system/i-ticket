@@ -66,6 +66,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
+    if (!user.password) {
+      return NextResponse.json(
+        { error: "Cannot change password for guest accounts" },
+        { status: 400 }
+      )
+    }
+
     // Verify current password
     const isValid = await bcrypt.compare(currentPassword, user.password)
     if (!isValid) {

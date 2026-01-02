@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { ArrowLeft, HelpCircle, Search, CreditCard, Ticket, RefreshCw, MessageSquare, Shield, Bus, AlertCircle } from "lucide-react"
 

@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { cn } from "@/lib/utils"
 import {
   Loader2,
   Bus,
@@ -351,7 +352,7 @@ function TripCard({ trip, highlight = false, past = false }: { trip: Trip; highl
 
           <div className="text-right">
             <Badge className="mb-2">
-              {BUS_TYPES[trip.busType as keyof typeof BUS_TYPES] || trip.busType}
+              {BUS_TYPES.find(b => b.value === trip.busType)?.label || trip.busType}
             </Badge>
             <p className="text-lg font-bold text-primary">{formatCurrency(trip.price)}</p>
             <p className="text-xs text-muted-foreground">per seat</p>

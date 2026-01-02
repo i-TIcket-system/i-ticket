@@ -98,17 +98,24 @@ export async function PATCH(req: NextRequest) {
       )
     }
 
-    const updates = validation.data
+    const validatedData = validation.data
 
+    // Build update data with proper types
+    const updateData: Record<string, any> = {}
+    if (validatedData.name !== undefined) updateData.name = validatedData.name
+    if (validatedData.email !== undefined) updateData.email = validatedData.email
+    if (validatedData.preparedBy !== undefined) updateData.preparedBy = validatedData.preparedBy
+    if (validatedData.reviewedBy !== undefined) updateData.reviewedBy = validatedData.reviewedBy
+    if (validatedData.approvedBy !== undefined) updateData.approvedBy = validatedData.approvedBy
     // Convert phones array to JSON string if provided
-    if (updates.phones) {
-      (updates as any).phones = JSON.stringify(updates.phones)
+    if (validatedData.phones !== undefined) {
+      updateData.phones = JSON.stringify(validatedData.phones)
     }
 
     // Update company
     const company = await prisma.company.update({
       where: { id: session.user.companyId },
-      data: updates
+      data: updateData
     })
 
     // Log the update
@@ -116,7 +123,7 @@ export async function PATCH(req: NextRequest) {
       data: {
         userId: session.user.id,
         action: "COMPANY_PROFILE_UPDATED",
-        details: `Updated company profile: ${Object.keys(updates).join(", ")}`
+        details: `Updated company profile: ${Object.keys(updateData).join(", ")}`
       }
     })
 

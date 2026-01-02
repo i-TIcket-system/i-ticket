@@ -98,7 +98,7 @@ export default function CompanyDashboard() {
   // Persist dismissed alerts to localStorage
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('dismissedAlerts', JSON.stringify([...dismissedAlerts]))
+      localStorage.setItem('dismissedAlerts', JSON.stringify(Array.from(dismissedAlerts)))
     }
   }, [dismissedAlerts])
 
@@ -132,7 +132,7 @@ export default function CompanyDashboard() {
 
       if (response.ok) {
         // Add to dismissed alerts
-        setDismissedAlerts(prev => new Set([...prev, tripId]))
+        setDismissedAlerts(prev => new Set([...Array.from(prev), tripId]))
 
         // Show success toast
         if (allowContinue) {

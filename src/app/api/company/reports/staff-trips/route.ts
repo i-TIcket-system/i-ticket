@@ -195,9 +195,9 @@ export async function GET(request: NextRequest) {
     // Convert Maps to arrays and format routes
     const formatReport = (report: any) => ({
       ...report,
-      routes: Array.from(report.routes.entries()).map(([route, count]) => ({
-        route,
-        tripCount: count,
+      routes: (Array.from(report.routes.entries()) as [string, number][]).map((entry) => ({
+        route: entry[0],
+        tripCount: entry[1],
       })).sort((a, b) => b.tripCount - a.tripCount),
     })
 

@@ -3,24 +3,16 @@ import prisma from "@/lib/db";
 import { cleanupExpiredSessions } from "@/lib/sms/session";
 import { getSmsGateway } from "@/lib/sms/gateway";
 
-/**
- * GET /api/cron/cleanup
- *
- * Cleanup cron job - runs periodically to:
- * 1. Delete expired SMS sessions
- * 2. Handle payment timeouts
- * 3. General cleanup tasks
- *
- * Should be configured to run every 5-15 minutes via Vercel Cron or external scheduler
- *
- * Example Vercel cron config (vercel.json):
- * {
- *   "crons": [{
- *     "path": "/api/cron/cleanup",
- *     "schedule": "*/15 * * * *"
- *   }]
- * }
- */
+// GET /api/cron/cleanup
+//
+// Cleanup cron job - runs periodically to:
+// 1. Delete expired SMS sessions
+// 2. Handle payment timeouts
+// 3. General cleanup tasks
+//
+// Should be configured to run every 5-15 minutes via Vercel Cron or external scheduler
+// Example Vercel cron config (vercel.json):
+// { "crons": [{ "path": "/api/cron/cleanup", "schedule": "*/15 * * * *" }] }
 export async function GET(request: NextRequest) {
   try {
     // Verify cron secret (optional security measure)

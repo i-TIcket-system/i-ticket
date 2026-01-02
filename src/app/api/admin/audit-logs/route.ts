@@ -61,8 +61,8 @@ export async function GET(request: NextRequest) {
     ])
 
     // Fetch user and company names for logs
-    const userIds = [...new Set(logs.map(log => log.userId).filter(id => id !== "SYSTEM"))]
-    const companyIds = [...new Set(logs.map(log => log.companyId).filter(Boolean))] as string[]
+    const userIds = Array.from(new Set(logs.map(log => log.userId).filter(id => id !== "SYSTEM")))
+    const companyIds = Array.from(new Set(logs.map(log => log.companyId).filter(Boolean))) as string[]
 
     const [users, companies] = await Promise.all([
       prisma.user.findMany({

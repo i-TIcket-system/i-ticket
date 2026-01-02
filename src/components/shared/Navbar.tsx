@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
-import { Menu, X, User, LogOut, LayoutDashboard, Ticket, Building2, HeadphonesIcon, Bus, Users, FileText } from "lucide-react"
+import { Menu, X, User, LogOut, LayoutDashboard, Ticket, Building2, HeadphonesIcon, Bus, Users, FileText, UserCheck } from "lucide-react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -26,6 +26,8 @@ export function Navbar() {
         return "/admin/dashboard"
       case "COMPANY_ADMIN":
         return "/company/dashboard"
+      case "SALES_PERSON":
+        return "/sales/dashboard"
       default:
         return "/tickets"
     }
@@ -65,9 +67,28 @@ export function Navbar() {
                   <Building2 className="h-4 w-4" />
                   Companies
                 </Link>
+                <Link href="/admin/sales-persons" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                  <UserCheck className="h-4 w-4" />
+                  Sales Team
+                </Link>
                 <Link href="/admin/audit-logs" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
                   <FileText className="h-4 w-4" />
                   Audit Logs
+                </Link>
+              </>
+            ) : session?.user?.role === "SALES_PERSON" ? (
+              <>
+                <Link href="/sales/dashboard" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Link>
+                <Link href="/sales/referrals" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                  <Users className="h-4 w-4" />
+                  Referrals
+                </Link>
+                <Link href="/sales/commissions" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
+                  <Ticket className="h-4 w-4" />
+                  Commissions
                 </Link>
               </>
             ) : session?.user?.role === "COMPANY_ADMIN" ? (
@@ -125,14 +146,16 @@ export function Navbar() {
                       Dashboard
                     </Link>
                   </DropdownMenuItem>
+                  {session.user.role !== "SALES_PERSON" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/tickets">
+                        <Ticket className="mr-2 h-4 w-4" />
+                        My Tickets
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
-                    <Link href="/tickets">
-                      <Ticket className="mr-2 h-4 w-4" />
-                      My Tickets
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile">
+                    <Link href={session.user.role === "SALES_PERSON" ? "/sales/profile" : "/profile"}>
                       <User className="mr-2 h-4 w-4" />
                       Profile
                     </Link>
@@ -193,11 +216,42 @@ export function Navbar() {
                     Companies
                   </Link>
                   <Link
+                    href="/admin/sales-persons"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Sales Team
+                  </Link>
+                  <Link
                     href="/admin/audit-logs"
                     className="text-sm font-medium hover:text-primary transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Audit Logs
+                  </Link>
+                </>
+              ) : session?.user?.role === "SALES_PERSON" ? (
+                <>
+                  <Link
+                    href="/sales/dashboard"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="/sales/referrals"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Referrals
+                  </Link>
+                  <Link
+                    href="/sales/commissions"
+                    className="text-sm font-medium hover:text-primary transition-colors"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Commissions
                   </Link>
                 </>
               ) : session?.user?.role === "COMPANY_ADMIN" ? (

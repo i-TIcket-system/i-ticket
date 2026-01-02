@@ -121,7 +121,7 @@ export async function POST(request: NextRequest) {
     // Import auth helpers dynamically to avoid circular dependencies
     const { requireCompanyAdmin, handleAuthError } = await import("@/lib/auth-helpers")
     const { createTripSchema, validateRequest } = await import("@/lib/validations")
-    const { ensureCityExists } = await import("@/app/api/cities/route")
+    const { ensureCityExists } = await import("@/lib/city-utils")
 
     // Require company admin authentication
     let companyId: string

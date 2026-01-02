@@ -16,31 +16,68 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Phone and password required")
         }
 
+        // First, try to find regular user
         const user = await prisma.user.findUnique({
           where: { phone: credentials.phone },
           include: { company: true }
         })
 
-        if (!user) {
-          throw new Error("No user found with this phone number")
+        if (user) {
+          if (!user.password) {
+            throw new Error("This account has no password set. Please use SMS login.")
+          }
+
+          const isValid = await compare(credentials.password, user.password)
+          if (!isValid) {
+            throw new Error("Invalid password")
+          }
+
+          return {
+            id: user.id,
+            name: user.name,
+            phone: user.phone,
+            email: user.email,
+            role: user.role,
+            companyId: user.companyId,
+            companyName: user.company?.name || null,
+            staffRole: user.staffRole,
+          }
         }
 
-        const isValid = await compare(credentials.password, user.password)
+        // If not found, try sales person
+        const salesPerson = await prisma.salesPerson.findUnique({
+          where: { phone: credentials.phone }
+        })
 
-        if (!isValid) {
-          throw new Error("Invalid password")
+        if (salesPerson) {
+          if (salesPerson.status !== 'ACTIVE') {
+            throw new Error("Your account has been deactivated. Please contact admin.")
+          }
+
+          const isValid = await compare(credentials.password, salesPerson.password)
+          if (!isValid) {
+            throw new Error("Invalid password")
+          }
+
+          // Update last login
+          await prisma.salesPerson.update({
+            where: { id: salesPerson.id },
+            data: { lastLoginAt: new Date() }
+          })
+
+          return {
+            id: salesPerson.id,
+            name: salesPerson.name,
+            phone: salesPerson.phone,
+            email: salesPerson.email,
+            role: 'SALES_PERSON',
+            companyId: null,
+            companyName: null,
+            staffRole: null,
+          }
         }
 
-        return {
-          id: user.id,
-          name: user.name,
-          phone: user.phone,
-          email: user.email,
-          role: user.role,
-          companyId: user.companyId,
-          companyName: user.company?.name,
-          staffRole: user.staffRole,
-        }
+        throw new Error("No user found with this phone number")
       }
     })
   ],

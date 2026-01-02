@@ -204,7 +204,29 @@ async function handleSuccessfulPayment(payment: any, callback: TelebirrCallbackP
       }
     });
 
-    // 5. Send tickets via SMS
+    // 5. INTERNAL: Create sales commission if user was referred
+    const salesReferral = await tx.salesReferral.findUnique({
+      where: { userId: payment.booking.userId },
+      include: { salesPerson: true }
+    });
+
+    if (salesReferral && salesReferral.salesPerson.status === 'ACTIVE') {
+      const platformCommission = Number(payment.booking.commission);
+      const salesCommission = platformCommission * 0.05; // 5% of platform's 5%
+
+      await tx.salesCommission.create({
+        data: {
+          salesPersonId: salesReferral.salesPersonId,
+          bookingId: payment.booking.id,
+          ticketAmount: Number(payment.booking.totalAmount),
+          platformCommission,
+          salesCommission,
+          status: 'PENDING',
+        }
+      });
+    }
+
+    // 6. Send tickets via SMS
     await sendTicketsSms(payment.booking, tickets);
 
     console.log(`[TeleBirr Callback] Payment processed successfully: ${tickets.length} tickets generated`);

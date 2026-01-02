@@ -102,6 +102,16 @@ interface Trip {
     name: string
     phone: string
   } | null
+  vehicle?: {
+    id: string
+    plateNumber: string
+    sideNumber: string | null
+    busType: string
+    make: string | null
+    model: string | null
+    year: number | null
+    totalSeats: number
+  } | null
 }
 
 export default function TripDetailPage() {

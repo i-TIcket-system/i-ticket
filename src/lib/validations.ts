@@ -32,8 +32,8 @@ export const searchTripsSchema = z.object({
   origin: z.string().optional(),
   destination: z.string().optional(),
   date: z.string().optional(),
-  page: z.string().optional().transform((val) => parseInt(val || "1", 10)),
-  limit: z.string().optional().transform((val) => parseInt(val || "20", 10)),
+  page: z.coerce.number().default(1),
+  limit: z.coerce.number().default(20),
 });
 
 // Booking validations

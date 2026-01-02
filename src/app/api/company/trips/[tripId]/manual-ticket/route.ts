@@ -34,6 +34,7 @@ export async function POST(
         destination: true,
         bookingHalted: true,
         reportGenerated: true,
+        lowSlotAlertSent: true,
       }
     })
 

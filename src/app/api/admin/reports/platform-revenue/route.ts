@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     const filename = `platform-revenue-${dateStr}.xlsx`
 
     // Return Excel file
-    return new NextResponse(reportBuffer, {
+    return new NextResponse(new Uint8Array(reportBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { PhoneInput } from "@/components/ui/phone-input"
 import { toast } from "sonner"
+import { getReferralCode } from "@/hooks/use-referral-tracking"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -53,6 +54,9 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
+      // Get referral code if user was referred by a sales person
+      const referralCode = getReferralCode()
+
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -61,6 +65,7 @@ export default function RegisterPage() {
           phone: formData.phone,
           email: formData.email || undefined,
           password: formData.password,
+          referralCode: referralCode || undefined,
         }),
       })
 

@@ -21,6 +21,9 @@ This document tracks major features and technical architecture for the i-Ticket 
 
 ## Recent Development Summary
 
+### January 2026
+- **Sales Person Referral System** - Platform-level sales team with QR-coded flyers, lifetime commission tracking (5% of platform's 5%), fraud prevention, first-come attribution
+
 ### December 2025
 - **Auto-Halt Logic Fix** - Added `adminResumedFromAutoHalt` flag to prevent re-triggering after manual resume
 - **Manifest Improvements** - Enhanced Excel reports with actual driver/conductor names and proper alignment
@@ -38,10 +41,19 @@ This document tracks major features and technical architecture for the i-Ticket 
 ## Core Features
 
 ### Authentication & Users
-- Multi-role system (Customer, Company Admin, Super Admin, Staff: Driver/Conductor/Ticketer)
+- Multi-role system (Customer, Company Admin, Super Admin, Staff: Driver/Conductor/Ticketer, Sales Person)
 - NextAuth.js session management, role-based access control
 - Guest users (SMS-only, no password required)
 - Password reset via OTP
+
+### Sales Person System
+- Platform-level sales team (managed by Super Admin)
+- QR-coded flyers with permanent referral codes (e.g., ABEL23)
+- Lifetime user attribution - sales person earns on all future bookings by referred users
+- Commission model: 5% of platform's 5% = 0.25% of ticket price
+- Fraud prevention: visitor deduplication, first-come attribution (first referral wins)
+- Sales portal: dashboard, referrals list, commission history, profile management
+- Admin management: CRUD, performance metrics, payout processing (Cash/TeleBirr)
 
 ### Trip Management
 - Trip CRUD with intermediate stops, dynamic city database
@@ -99,10 +111,15 @@ This document tracks major features and technical architecture for the i-Ticket 
 - **AdminLog** - Audit trail
 - **SupportTicket** - Customer support
 - **SmsSession** - SMS bot state tracking
+- **SalesPerson** - Sales team accounts with referral codes, status tracking
+- **SalesQrScan** - QR scan tracking with visitor deduplication
+- **SalesReferral** - Lifetime user attribution (userId unique)
+- **SalesCommission** - Commission per booking (5% of platform's 5%)
+- **SalesPayout** - Payout records (Cash/TeleBirr)
 
 ### Key API Endpoints
 
-**Public**: `/api/trips`, `/api/track/[code]`, `/api/tickets/verify/public`, `/api/support/tickets`
+**Public**: `/api/trips`, `/api/track/[code]`, `/api/track/scan`, `/api/tickets/verify/public`, `/api/support/tickets`
 
 **Customer**: `/api/bookings`, `/api/payments`, `/api/user/*`
 
@@ -110,7 +127,9 @@ This document tracks major features and technical architecture for the i-Ticket 
 
 **Staff**: `/api/staff/my-trips`
 
-**Admin**: `/api/admin/stats`, `/api/admin/companies`, `/api/admin/audit-logs`, `/api/admin/analytics/*`, `/api/admin/reports/platform-revenue`, `/api/admin/support/tickets`
+**Admin**: `/api/admin/stats`, `/api/admin/companies`, `/api/admin/audit-logs`, `/api/admin/analytics/*`, `/api/admin/reports/platform-revenue`, `/api/admin/support/tickets`, `/api/admin/sales-persons/*`
+
+**Sales**: `/api/sales/dashboard`, `/api/sales/referrals`, `/api/sales/commissions`, `/api/sales/qr-code`, `/api/sales/profile`, `/api/sales/password`
 
 **SMS**: `/api/sms/incoming`, `/api/sms/outgoing`, `/api/payments/telebirr/callback`
 
@@ -121,14 +140,17 @@ This document tracks major features and technical architecture for the i-Ticket 
 - `/(customer)` - Search, Booking, Tickets, Profile, Track
 - `/(company)` - Dashboard, Trips, Staff, Vehicles, Reports, Profile, Verification
 - `/(staff)` - My Trips
-- `/(admin)` - Dashboard, Companies, Audit Logs, Support Tickets
+- `/(admin)` - Dashboard, Companies, Audit Logs, Support Tickets, Sales Persons
+- `/(sales)` - Dashboard, Referrals, Commissions, Profile
 - `/contact`, `/track/[code]`, `/terms`, `/privacy`, `/faq`
 
 ### Key Libraries
 - **Reports**: `src/lib/report-generator.ts`, `src/lib/platform-revenue-report.ts`
 - **SMS**: `src/lib/sms/bot.ts`, `src/lib/sms/gateway.ts`, `src/lib/sms/messages.ts`
 - **Payments**: `src/lib/payments/telebirr.ts`
-- **Utils**: `src/lib/rate-limit.ts`, `src/lib/validations.ts`, `src/lib/auth-helpers.ts`
+- **Sales**: `src/lib/sales/referral-utils.ts` (QR generation, code generation, visitor hashing)
+- **Hooks**: `src/hooks/use-referral-tracking.ts` (client-side referral tracking)
+- **Utils**: `src/lib/rate-limit.ts`, `src/lib/validations.ts`, `src/lib/auth-helpers.ts`, `src/lib/city-utils.ts`
 
 ### Security Features
 - Zod validation on all inputs

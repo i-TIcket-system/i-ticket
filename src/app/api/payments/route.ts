@@ -147,6 +147,28 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      // INTERNAL: Create sales commission if user was referred (not shown on ticket)
+      const salesReferral = await tx.salesReferral.findUnique({
+        where: { userId: booking.userId },
+        include: { salesPerson: true }
+      })
+
+      if (salesReferral && salesReferral.salesPerson.status === 'ACTIVE') {
+        const platformCommission = Number(booking.commission)
+        const salesCommission = platformCommission * 0.05 // 5% of platform's 5%
+
+        await tx.salesCommission.create({
+          data: {
+            salesPersonId: salesReferral.salesPersonId,
+            bookingId: booking.id,
+            ticketAmount: Number(booking.totalAmount),
+            platformCommission,
+            salesCommission,
+            status: 'PENDING',
+          }
+        })
+      }
+
       // Log SMS notification (in production, actually send SMS)
       console.log(`[SMS] Tickets sent to ${userForLogging?.phone}:`)
       tickets.forEach((ticket) => {

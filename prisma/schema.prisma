@@ -28,6 +28,9 @@ model User {
   isGuestUser    Boolean   @default(false) // True for SMS users without full registration
   bookings       Booking[]
 
+  // Sales referral (if user was referred by a sales person)
+  salesReferral  SalesReferral?
+
   // Reverse relations for trip staff assignments
   tripsAsDriver         Trip[] @relation("TripDriver")
   tripsAsConductor      Trip[] @relation("TripConductor")
@@ -164,6 +167,10 @@ model Booking {
   isQuickTicket Boolean     @default(false)
   payment       Payment?
   tickets       Ticket[]
+
+  // Sales commission (if user was referred by a sales person)
+  salesCommission SalesCommission?
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -317,4 +324,126 @@ model SupportTicket {
   @@index([status, priority])
   @@index([email])
   @@index([createdAt])
+}
+
+// ==================== SALES PERSON REFERRAL SYSTEM ====================
+
+model SalesPerson {
+  id             String    @id @default(cuid())
+  name           String
+  phone          String    @unique
+  email          String?
+  password       String    // Hashed password for login
+  referralCode   String    @unique // e.g., "ABEL23" - permanent unique code
+  status         String    @default("ACTIVE") // ACTIVE, INACTIVE
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastLoginAt    DateTime?
+
+  // Relations
+  qrScans        SalesQrScan[]
+  referrals      SalesReferral[]
+  commissions    SalesCommission[]
+  payouts        SalesPayout[]
+
+  @@index([referralCode])
+  @@index([phone])
+  @@index([status])
+}
+
+model SalesQrScan {
+  id              String      @id @default(cuid())
+  salesPersonId   String
+  salesPerson     SalesPerson @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
+
+  // Visitor fingerprint (for unique visitor tracking)
+  visitorHash     String      // Hash of IP + User-Agent for deduplication
+
+  // Device/browser info
+  deviceType      String?     // MOBILE, DESKTOP, TABLET
+  browser         String?     // Chrome, Safari, Firefox, etc.
+  os              String?     // Android, iOS, Windows, etc.
+
+  // Location (if available via IP geolocation)
+  city            String?
+  region          String?
+  country         String?
+
+  // Referrer info
+  referrerUrl     String?     // Where they came from
+  landingPage     String      @default("/") // Which page they landed on
+
+  createdAt       DateTime    @default(now())
+
+  @@index([salesPersonId, createdAt])
+  @@index([visitorHash])
+}
+
+model SalesReferral {
+  id              String      @id @default(cuid())
+  salesPersonId   String
+  salesPerson     SalesPerson @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
+
+  userId          String      @unique // Each user can only be referred once
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Attribution metadata
+  attributedAt    DateTime    @default(now()) // When the user registered with this referral
+
+  @@index([salesPersonId])
+  @@index([userId])
+}
+
+model SalesCommission {
+  id                  String       @id @default(cuid())
+  salesPersonId       String
+  salesPerson         SalesPerson  @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
+
+  bookingId           String       @unique
+  booking             Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  // Commission calculation
+  ticketAmount        Float        // Total ticket price
+  platformCommission  Float        // Platform's 5% (stored for reference)
+  salesCommission     Float        // Sales person's 5% of platform's 5% = 0.25% of ticket
+
+  // Status tracking
+  status              String       @default("PENDING") // PENDING, APPROVED, PAID
+
+  // Payout tracking
+  payoutId            String?
+  payout              SalesPayout? @relation(fields: [payoutId], references: [id])
+  paidAt              DateTime?
+
+  createdAt           DateTime     @default(now())
+
+  @@index([salesPersonId, status])
+  @@index([bookingId])
+  @@index([status, createdAt])
+  @@index([payoutId])
+}
+
+model SalesPayout {
+  id              String            @id @default(cuid())
+  salesPersonId   String
+  salesPerson     SalesPerson       @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
+
+  amount          Float             // Total payout amount
+  commissionCount Int               // Number of commissions included
+
+  // Payment details
+  paymentMethod   String            // TELEBIRR, CASH
+  paymentRef      String?           // Transaction reference
+
+  // Admin tracking
+  processedBy     String            // Admin user ID who processed payout
+  notes           String?
+
+  createdAt       DateTime          @default(now())
+
+  // Related commissions
+  commissions     SalesCommission[]
+
+  @@index([salesPersonId, createdAt])
 }

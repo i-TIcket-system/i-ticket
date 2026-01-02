@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter } from "next/navigation"
+import { useReferralTracking } from "@/hooks/use-referral-tracking"
 import Link from "next/link"
 import {
   Bus,
@@ -59,6 +60,10 @@ const stats = [
 
 export default function HomePage() {
   const router = useRouter()
+
+  // Track referral codes from QR scans (first-come attribution)
+  useReferralTracking()
+
   const [origin, setOrigin] = useState("")
   const [destination, setDestination] = useState("")
   const [date, setDate] = useState("")
