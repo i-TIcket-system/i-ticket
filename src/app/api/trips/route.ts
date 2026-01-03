@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { searchTripsSchema, validateQueryParams } from "@/lib/validations"
+import { createAuditLogTask } from "@/lib/clickup"
 
 export async function GET(request: NextRequest) {
   try {
@@ -385,6 +386,16 @@ export async function POST(request: NextRequest) {
           tripId: trip.id,
           details: `Trip created: ${session.user.name} (${trip.company.name}) created trip from ${trip.origin} to ${trip.destination}. Departure: ${trip.departureTime.toISOString()}, Price: ${trip.price} ETB, Capacity: ${trip.totalSlots} seats, Bus Type: ${trip.busType}.`,
         },
+      })
+
+      // Create ClickUp audit task (non-blocking)
+      createAuditLogTask({
+        action: "TRIP_CREATED",
+        userId: session.user.id,
+        userName: session.user.name,
+        companyName: trip.company.name,
+        tripId: trip.id,
+        details: `${trip.origin} to ${trip.destination}, ${trip.departureTime.toISOString()}, ${trip.price} ETB, ${trip.totalSlots} seats`,
       })
 
       console.log(`[TRIP CREATE] ${session.user.name} created trip ${trip.id}: ${trip.origin} to ${trip.destination}`)

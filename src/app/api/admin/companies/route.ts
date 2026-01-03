@@ -4,6 +4,7 @@ import { requireSuperAdmin, handleAuthError } from "@/lib/auth-helpers"
 import { z } from "zod"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
+import { createAuditLogTask } from "@/lib/clickup"
 
 const CompanyStatusSchema = z.object({
   companyId: z.string().min(1, "Company ID is required"),
@@ -102,6 +103,16 @@ export async function PATCH(request: NextRequest) {
         },
       }),
     ])
+
+    // Create ClickUp audit task (non-blocking)
+    createAuditLogTask({
+      action: isActive ? "COMPANY_ACTIVATED" : "COMPANY_DEACTIVATED",
+      userId: session!.user.id,
+      userName: session!.user.name,
+      companyId,
+      companyName: existingCompany.name,
+      details: reason,
+    })
 
     return NextResponse.json({
       success: true,

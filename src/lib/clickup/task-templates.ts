@@ -1,0 +1,208 @@
+import { getClickUpClient } from './client';
+
+/**
+ * Task Templates for ClickUp Integration
+ *
+ * Provides pre-configured task creation for each trigger type:
+ * 1. Support Tickets
+ * 2. Audit Logs (important actions only)
+ * 3. Low Slot Alerts
+ */
+
+// Support ticket category tags
+const CATEGORY_TAGS: Record<string, string> = {
+  GENERAL: 'general',
+  TECHNICAL: 'technical',
+  BOOKING: 'booking',
+  PAYMENT: 'payment',
+  ACCOUNT: 'account',
+  FEEDBACK: 'feedback',
+};
+
+/**
+ * Create ClickUp task for a new support ticket
+ */
+export function createSupportTicketTask(ticket: {
+  ticketNumber: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  subject: string;
+  message: string;
+  category: string;
+  priority: number; // 1=Low, 2=Medium, 3=High, 4=Urgent
+}): void {
+  const client = getClickUpClient();
+
+  // Map i-Ticket priority (1-4 low-urgent) to ClickUp (1-4 urgent-low)
+  const clickUpPriority = (5 - ticket.priority) as 1 | 2 | 3 | 4;
+
+  const description = `
+**Ticket Number:** ${ticket.ticketNumber}
+**From:** ${ticket.name} (${ticket.email}${ticket.phone ? `, ${ticket.phone}` : ''})
+**Category:** ${ticket.category}
+
+---
+
+**Message:**
+${ticket.message}
+
+---
+*Created via i-Ticket Support System*
+  `.trim();
+
+  client.createTaskAsync({
+    listId: client.lists.support,
+    name: `[${ticket.ticketNumber}] ${ticket.subject}`,
+    description,
+    priority: clickUpPriority,
+    tags: ['support', CATEGORY_TAGS[ticket.category] || 'general'],
+  });
+}
+
+/**
+ * Audit log actions that warrant ClickUp tasks
+ */
+const IMPORTANT_AUDIT_ACTIONS = [
+  'COMPANY_ACTIVATED',
+  'COMPANY_DEACTIVATED',
+  'TRIP_CREATED',
+  'TRIP_DELETED',
+  'AUTO_HALT_LOW_SLOTS',
+] as const;
+
+type ImportantAction = (typeof IMPORTANT_AUDIT_ACTIONS)[number];
+
+/**
+ * Check if an audit action is important enough for ClickUp
+ */
+export function isImportantAuditAction(action: string): action is ImportantAction {
+  return IMPORTANT_AUDIT_ACTIONS.includes(action as ImportantAction);
+}
+
+/**
+ * Create ClickUp task for an important audit log entry
+ */
+export function createAuditLogTask(log: {
+  action: string;
+  userId: string;
+  userName?: string | null;
+  companyId?: string | null;
+  companyName?: string | null;
+  tripId?: string | null;
+  details?: string | null;
+}): void {
+  if (!isImportantAuditAction(log.action)) {
+    return; // Skip non-important actions
+  }
+
+  const client = getClickUpClient();
+
+  // Determine priority based on action type
+  let priority: 1 | 2 | 3 | 4 = 3;
+  const tags: string[] = ['audit'];
+
+  switch (log.action) {
+    case 'COMPANY_DEACTIVATED':
+      priority = 2; // High
+      tags.push('company', 'deactivation');
+      break;
+    case 'COMPANY_ACTIVATED':
+      priority = 3; // Normal
+      tags.push('company', 'activation');
+      break;
+    case 'TRIP_DELETED':
+      priority = 2; // High (potential refund issues)
+      tags.push('trip', 'deletion');
+      break;
+    case 'TRIP_CREATED':
+      priority = 4; // Low
+      tags.push('trip', 'creation');
+      break;
+    case 'AUTO_HALT_LOW_SLOTS':
+      priority = 1; // Urgent
+      tags.push('alert', 'low-slots');
+      break;
+  }
+
+  const description = `
+**Action:** ${log.action}
+**Performed by:** ${log.userName || log.userId}
+${log.companyName ? `**Company:** ${log.companyName}` : ''}
+${log.tripId ? `**Trip ID:** ${log.tripId}` : ''}
+
+---
+
+**Details:**
+${log.details || 'No additional details'}
+
+---
+*Logged via i-Ticket Admin System*
+  `.trim();
+
+  client.createTaskAsync({
+    listId: client.lists.audit,
+    name: `[${log.action}] ${log.companyName || 'System Action'}`,
+    description,
+    priority,
+    tags,
+  });
+}
+
+/**
+ * Create ClickUp task for low slot alert (AUTO_HALT_LOW_SLOTS)
+ * This is a dedicated function for alerts to ensure visibility
+ */
+export function createLowSlotAlertTask(alert: {
+  tripId: string;
+  origin: string;
+  destination: string;
+  departureTime: Date;
+  availableSlots: number;
+  totalSlots: number;
+  companyName?: string | null;
+  triggeredBy: 'online_booking' | 'manual_ticket_sale';
+}): void {
+  const client = getClickUpClient();
+
+  const percentFull = Math.round(
+    ((alert.totalSlots - alert.availableSlots) / alert.totalSlots) * 100
+  );
+
+  const description = `
+## Low Slot Alert - Action Required
+
+**Route:** ${alert.origin} to ${alert.destination}
+**Company:** ${alert.companyName || 'Unknown'}
+**Departure:** ${alert.departureTime.toLocaleString()}
+
+---
+
+### Slot Status
+- **Available Slots:** ${alert.availableSlots}
+- **Total Slots:** ${alert.totalSlots}
+- **Capacity Filled:** ${percentFull}%
+
+### Trigger
+- **Triggered By:** ${alert.triggeredBy === 'online_booking' ? 'Online Booking' : 'Manual Ticket Sale'}
+- **Trip ID:** ${alert.tripId}
+
+---
+
+**Action Required:**
+1. Review remaining seats
+2. Contact company admin if needed
+3. Resume booking if more seats available
+
+*Auto-generated by i-Ticket Low Slot Alert System*
+  `.trim();
+
+  client.createTaskAsync({
+    listId: client.lists.alerts,
+    name: `[URGENT] Low Slots: ${alert.origin} -> ${alert.destination} (${alert.availableSlots} left)`,
+    description,
+    priority: 1, // Urgent
+    tags: ['alert', 'low-slots', 'action-required'],
+    dueDate: new Date(Date.now() + 2 * 60 * 60 * 1000), // 2 hours from now
+  });
+}

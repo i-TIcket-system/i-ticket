@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { requireCompanyAdmin, handleAuthError } from "@/lib/auth-helpers"
+import { createLowSlotAlertTask } from "@/lib/clickup"
 
 /**
  * Record a manual ticket sale (sold at company office)
@@ -32,9 +33,13 @@ export async function POST(
         totalSlots: true,
         origin: true,
         destination: true,
+        departureTime: true,
         bookingHalted: true,
         reportGenerated: true,
         lowSlotAlertSent: true,
+        company: {
+          select: { name: true }
+        }
       }
     })
 
@@ -106,6 +111,18 @@ export async function POST(
               timestamp: new Date().toISOString(),
             }),
           },
+        })
+
+        // Create ClickUp alert task (non-blocking)
+        createLowSlotAlertTask({
+          tripId: params.tripId,
+          origin: trip.origin,
+          destination: trip.destination,
+          departureTime: trip.departureTime,
+          availableSlots: updatedTrip.availableSlots,
+          totalSlots: updatedTrip.totalSlots,
+          companyName: trip.company.name,
+          triggeredBy: 'manual_ticket_sale',
         })
 
         console.log(`[ALERT] Trip ${params.tripId} auto-halted: Only ${updatedTrip.availableSlots} slots remaining`)

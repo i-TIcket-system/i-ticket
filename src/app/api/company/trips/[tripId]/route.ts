@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import prisma from "@/lib/db"
 import { authOptions } from "@/lib/auth"
+import { createAuditLogTask } from "@/lib/clickup"
 
 export async function GET(
   request: NextRequest,
@@ -362,6 +363,16 @@ export async function DELETE(
           action: "TRIP_DELETED",
           details: `Trip deleted: ${session.user.name} (${tripDetails.company.name}) deleted trip from ${tripDetails.origin} to ${tripDetails.destination}. Departure was: ${tripDetails.departureTime.toISOString()}, Price: ${tripDetails.price} ETB, Capacity: ${tripDetails.totalSlots} seats. Available slots at deletion: ${tripDetails.availableSlots}.`,
         },
+      })
+
+      // Create ClickUp audit task (non-blocking)
+      createAuditLogTask({
+        action: "TRIP_DELETED",
+        userId: session.user.id,
+        userName: session.user.name,
+        companyName: tripDetails.company.name,
+        tripId,
+        details: `${tripDetails.origin} to ${tripDetails.destination}, was scheduled for ${tripDetails.departureTime.toISOString()}`,
       })
 
       console.log(`[TRIP DELETE] ${session.user.name} deleted trip ${tripId}: ${tripDetails.origin} to ${tripDetails.destination}`)

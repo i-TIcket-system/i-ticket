@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db"
 import { authOptions } from "@/lib/auth"
 import { z } from "zod"
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
+import { createSupportTicketTask } from "@/lib/clickup"
 
 // Generate unique ticket number
 function generateTicketNumber(): string {
@@ -86,6 +87,18 @@ export async function POST(req: NextRequest) {
     })
 
     // TODO: Send email notification to user and admin
+
+    // Create ClickUp task asynchronously (non-blocking)
+    createSupportTicketTask({
+      ticketNumber: ticket.ticketNumber,
+      name,
+      email,
+      phone,
+      subject,
+      message,
+      category: detectedCategory,
+      priority,
+    })
 
     return NextResponse.json({
       success: true,

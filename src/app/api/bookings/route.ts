@@ -4,6 +4,7 @@ import prisma from "@/lib/db"
 import { authOptions } from "@/lib/auth"
 import { getAvailableSeatNumbers } from "@/lib/utils"
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
+import { createLowSlotAlertTask } from "@/lib/clickup"
 
 export async function POST(request: NextRequest) {
   try {
@@ -256,6 +257,18 @@ export async function POST(request: NextRequest) {
               timestamp: new Date().toISOString(),
             }),
           },
+        })
+
+        // Create ClickUp alert task (non-blocking)
+        createLowSlotAlertTask({
+          tripId,
+          origin: newBooking.trip.origin,
+          destination: newBooking.trip.destination,
+          departureTime: newBooking.trip.departureTime,
+          availableSlots: updatedTrip.availableSlots,
+          totalSlots: updatedTrip.totalSlots,
+          companyName: newBooking.trip.company.name,
+          triggeredBy: 'online_booking',
         })
 
         // In production, send SMS notification to company admin
