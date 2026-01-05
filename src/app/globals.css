@@ -4,48 +4,65 @@
 
 @layer base {
   :root {
-    --background: 0 0% 96%; /* #F4F4F4 */
-    --foreground: 190 100% 19%; /* #005461 */
+    /* Teal Gradient Theme - from user's color palette */
+    --background: 0 0% 96%; /* #f5f5f5 - clean light gray */
+    --foreground: 189 78% 21%; /* #0d4f5c - deep teal */
     --card: 0 0% 100%;
-    --card-foreground: 190 100% 19%;
+    --card-foreground: 189 78% 21%;
     --popover: 0 0% 100%;
-    --popover-foreground: 190 100% 19%;
-    --primary: 182 99% 28%; /* #018790 */
+    --popover-foreground: 189 78% 21%;
+    --primary: 180 82% 32%; /* #0e9494 - medium teal */
     --primary-foreground: 0 0% 100%;
-    --secondary: 179 100% 36%; /* #00B7B5 */
+    --secondary: 180 73% 45%; /* #20c4c4 - bright cyan */
     --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 92%;
-    --muted-foreground: 190 30% 40%;
-    --accent: 190 100% 19%; /* #005461 */
+    --muted: 180 10% 92%;
+    --muted-foreground: 189 40% 35%;
+    --accent: 189 78% 21%; /* Deep teal as accent */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --border: 190 20% 85%;
-    --input: 190 20% 85%;
-    --ring: 182 99% 28%;
-    --radius: 0.75rem;
+    --border: 180 20% 88%;
+    --input: 180 20% 88%;
+    --ring: 180 82% 32%;
+    --radius: 0.625rem;
+
+    /* Ethiopian flag accent colors */
+    --eth-green: 142 76% 36%;
+    --eth-yellow: 45 100% 51%;
+    --eth-red: 0 84% 60%;
+
+    /* Extended teal palette for gradients */
+    --teal-dark: 189 78% 21%; /* #0d4f5c */
+    --teal-medium: 180 82% 32%; /* #0e9494 */
+    --teal-light: 180 73% 45%; /* #20c4c4 */
+    --teal-pale: 180 50% 90%; /* Light teal tint */
   }
 
   .dark {
-    --background: 190 100% 10%;
-    --foreground: 0 0% 96%;
-    --card: 190 100% 15%;
-    --card-foreground: 0 0% 96%;
-    --popover: 190 100% 15%;
-    --popover-foreground: 0 0% 96%;
-    --primary: 179 100% 36%;
-    --primary-foreground: 190 100% 10%;
-    --secondary: 182 99% 28%;
+    --background: 189 78% 8%;
+    --foreground: 180 20% 95%;
+    --card: 189 60% 12%;
+    --card-foreground: 180 20% 95%;
+    --popover: 189 60% 12%;
+    --popover-foreground: 180 20% 95%;
+    --primary: 180 73% 45%;
+    --primary-foreground: 189 78% 8%;
+    --secondary: 180 82% 32%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 190 50% 20%;
-    --muted-foreground: 190 20% 65%;
-    --accent: 179 100% 36%;
+    --muted: 189 40% 18%;
+    --muted-foreground: 180 20% 65%;
+    --accent: 180 73% 45%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
-    --border: 190 50% 25%;
-    --input: 190 50% 25%;
-    --ring: 179 100% 36%;
+    --border: 189 30% 22%;
+    --input: 189 30% 22%;
+    --ring: 180 73% 45%;
+
+    --teal-dark: 189 60% 12%;
+    --teal-medium: 180 82% 32%;
+    --teal-light: 180 73% 45%;
+    --teal-pale: 189 40% 20%;
   }
 }
 
@@ -55,54 +72,237 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Elegant headings with display font */
+  h1, h2, h3 {
+    @apply font-display tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl lg:text-6xl font-normal leading-[1.1];
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl font-normal leading-tight;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl font-normal;
   }
 }
 
-/* Custom scrollbar */
+/* ===================================
+   CUSTOM SCROLLBAR
+   =================================== */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted rounded-full;
+  @apply bg-muted/50;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary/30 rounded-full hover:bg-primary/50 transition-colors;
+  @apply bg-primary/20 rounded-full border-2 border-transparent bg-clip-padding;
+  transition: background-color 0.2s;
 }
 
-/* Smooth animations */
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out;
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary/40;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ===================================
+   ETHIOPIAN DESIGN ELEMENTS
+   =================================== */
+
+/* Ethiopian flag gradient bar */
+.ethiopian-bar {
+  @apply flex gap-1;
 }
 
-/* Card hover effect */
+.ethiopian-bar > div {
+  @apply h-1.5 w-10 rounded-full;
+}
+
+.ethiopian-bar > div:nth-child(1) { background: hsl(var(--eth-green)); }
+.ethiopian-bar > div:nth-child(2) { background: hsl(var(--eth-yellow)); }
+.ethiopian-bar > div:nth-child(3) { background: hsl(var(--eth-red)); }
+
+/* Ethiopian geometric pattern background */
+.eth-pattern {
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230e9494' fill-opacity='0.06'%3E%3Cpath d='M40 40L20 20v40l20-20zm0 0l20 20V20L40 40zM0 40l20-20H0v20zm0 0l20 20H0V40zm80 0L60 20h20v20zm0 0L60 60h20V40zM40 0L20 20h40L40 0zm0 80L20 60h40L40 80z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Subtle noise/grain texture overlay */
+.grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ===================================
+   ANIMATION UTILITIES
+   =================================== */
+
+/* Staggered animation delays for children */
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 400ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 500ms; }
+
+/* Initial hidden state for animated elements */
+.animate-on-scroll {
+  opacity: 0;
+}
+
+/* Card hover effect - enhanced */
 .card-hover {
-  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  @apply transition-all duration-500 ease-out;
 }
 
-/* Ethiopian flag gradient */
-.ethiopian-gradient {
-  background: linear-gradient(135deg, #10B981 0%, #FBBF24 50%, #EF4444 100%);
+.card-hover:hover {
+  @apply shadow-xl shadow-primary/10 -translate-y-2;
 }
 
-/* Glass effect */
+/* Glass morphism effect */
 .glass {
-  @apply bg-white/80 backdrop-blur-md border border-white/20;
+  @apply bg-white/70 backdrop-blur-xl border border-white/30;
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
 }
 
 .dark .glass {
-  @apply bg-slate-900/80 border-slate-700/20;
+  @apply bg-slate-900/70 border-slate-700/30;
+  box-shadow:
+    0 4px 30px rgba(0, 0, 0, 0.2),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+/* Premium gradient backgrounds - Teal theme */
+.gradient-hero {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, hsl(var(--teal-light) / 0.25), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 50%, hsl(var(--teal-medium) / 0.2), transparent),
+    radial-gradient(ellipse 50% 30% at 0% 80%, hsl(var(--teal-dark) / 0.15), transparent),
+    linear-gradient(160deg, #0d4f5c 0%, #0a3d47 50%, #0d4f5c 100%);
+}
+
+/* Shimmer effect for loading states */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* ===================================
+   BUTTON ENHANCEMENTS
+   =================================== */
+
+/* Primary button glow effect */
+.btn-glow {
+  position: relative;
+}
+
+.btn-glow::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  filter: blur(12px);
+}
+
+.btn-glow:hover::after {
+  opacity: 0.4;
+}
+
+/* ===================================
+   FOCUS STATES
+   =================================== */
+
+/* Enhanced focus ring */
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-background;
+}
+
+/* ===================================
+   SELECTION STYLING
+   =================================== */
+
+::selection {
+  @apply bg-primary/20 text-foreground;
+}
+
+/* ===================================
+   SMOOTH PAGE TRANSITIONS
+   =================================== */
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* ===================================
+   RESPONSIVE TYPOGRAPHY SCALING
+   =================================== */
+
+@media (min-width: 1536px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+/* ===================================
+   FORM INPUT ENHANCEMENTS
+   =================================== */
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
+}
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7);
+}
+
+/* ===================================
+   LINK UNDERLINE ANIMATION
+   =================================== */
+
+.link-underline {
+  position: relative;
+}
+
+.link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: hsl(var(--primary));
+  transition: width 0.3s ease;
+}
+
+.link-underline:hover::after {
+  width: 100%;
 }

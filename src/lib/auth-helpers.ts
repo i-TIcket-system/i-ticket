@@ -40,16 +40,16 @@ export async function requireRole(allowedRoles: string[]): Promise<AuthSession> 
 }
 
 /**
- * Require company admin and return their companyId
+ * Require company admin and return their companyId and userId
  */
-export async function requireCompanyAdmin(): Promise<{ session: AuthSession; companyId: string }> {
+export async function requireCompanyAdmin(): Promise<{ session: AuthSession; companyId: string; userId: string }> {
   const session = await requireRole(["COMPANY_ADMIN"]);
 
   if (!session.user.companyId) {
     throw new Error("FORBIDDEN");
   }
 
-  return { session, companyId: session.user.companyId };
+  return { session, companyId: session.user.companyId, userId: session.user.id };
 }
 
 /**

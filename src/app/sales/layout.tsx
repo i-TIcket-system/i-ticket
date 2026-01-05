@@ -24,16 +24,16 @@ export default function SalesLayout({
 
   if (status === "loading") {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-[60vh]" style={{ background: "linear-gradient(135deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#0e9494" }} />
       </div>
     )
   }
 
   if (session?.user?.role !== "SALES_PERSON") {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-[60vh]" style={{ background: "linear-gradient(135deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#0e9494" }} />
       </div>
     )
   }

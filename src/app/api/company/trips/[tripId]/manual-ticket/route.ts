@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { requireCompanyAdmin, handleAuthError } from "@/lib/auth-helpers"
 import { createLowSlotAlertTask } from "@/lib/clickup"
+import { getAvailableSeatNumbers } from "@/lib/utils"
 
 /**
  * Record a manual ticket sale (sold at company office)
- * Decrements available slots and logs the sale
+ * Creates placeholder booking with seat assignments, decrements available slots
  */
 export async function POST(
   request: NextRequest,
   { params }: { params: { tripId: string } }
 ) {
   try {
-    const { companyId } = await requireCompanyAdmin()
+    const { companyId, userId } = await requireCompanyAdmin()
 
     const { passengerCount = 1 } = await request.json()
 
@@ -31,12 +32,14 @@ export async function POST(
         companyId: true,
         availableSlots: true,
         totalSlots: true,
+        price: true,
         origin: true,
         destination: true,
         departureTime: true,
         bookingHalted: true,
         reportGenerated: true,
         lowSlotAlertSent: true,
+        adminResumedFromAutoHalt: true,
         company: {
           select: { name: true }
         }
@@ -63,6 +66,37 @@ export async function POST(
 
     // Update available slots in transaction
     const result = await prisma.$transaction(async (tx) => {
+      // Get available seat numbers BEFORE decrementing slots
+      const seatNumbers = await getAvailableSeatNumbers(
+        params.tripId,
+        passengerCount,
+        trip.totalSlots,
+        tx
+      )
+
+      // Create placeholder booking for manual sale (no commission - sold at office)
+      const totalAmount = Number(trip.price) * passengerCount
+      const booking = await tx.booking.create({
+        data: {
+          tripId: params.tripId,
+          userId, // Company admin who recorded the sale
+          totalAmount,
+          commission: 0, // No platform commission for office sales
+          status: "PAID", // Manual sales are already paid
+          isQuickTicket: true, // Marks as manual/office sale
+          passengers: {
+            create: seatNumbers.map((seatNumber, index) => ({
+              name: `Manual Sale #${index + 1}`,
+              nationalId: `MANUAL-${Date.now()}-${index}`,
+              phone: "OFFICE",
+              seatNumber,
+              pickupLocation: null,
+              dropoffLocation: null,
+            })),
+          },
+        },
+      })
+
       // Decrement available slots
       const updatedTrip = await tx.trip.update({
         where: { id: params.tripId },
@@ -73,7 +107,7 @@ export async function POST(
         },
       })
 
-      // Log the manual sale
+      // Log the manual sale with seat numbers
       await tx.adminLog.create({
         data: {
           userId: companyId,
@@ -81,6 +115,8 @@ export async function POST(
           tripId: params.tripId,
           details: JSON.stringify({
             passengerCount,
+            seatNumbers,
+            bookingId: booking.id,
             remainingSlots: updatedTrip.availableSlots,
             soldAt: new Date().toISOString(),
           }),
@@ -88,8 +124,13 @@ export async function POST(
       })
 
       // CRITICAL: Auto-halt if slots drop to 10 or below
-      // Skip if: sold out (0), already halted, or admin already handled (lowSlotAlertSent)
-      if (updatedTrip.availableSlots > 0 && updatedTrip.availableSlots <= 10 && !trip.bookingHalted && !trip.lowSlotAlertSent) {
+      // Skip if: sold out (0), already halted, or admin resumed from auto-halt
+      if (
+        updatedTrip.availableSlots > 0 &&
+        updatedTrip.availableSlots <= 10 &&
+        !trip.bookingHalted &&
+        !trip.adminResumedFromAutoHalt
+      ) {
         await tx.trip.update({
           where: { id: params.tripId },
           data: {
@@ -154,21 +195,39 @@ export async function POST(
         console.log(`[MANIFEST] Bus FULL for trip ${params.tripId}! Download manifest from trip details.`)
       }
 
-      return updatedTrip
+      return { updatedTrip, seatNumbers, bookingId: booking.id }
     })
 
     return NextResponse.json({
       success: true,
       message: `Successfully recorded ${passengerCount} manual ticket sale(s)`,
       trip: {
-        id: result.id,
-        availableSlots: result.availableSlots,
-        totalSlots: result.totalSlots,
-        slotsPercentage: Math.round((result.availableSlots / result.totalSlots) * 100),
+        id: result.updatedTrip.id,
+        availableSlots: result.updatedTrip.availableSlots,
+        totalSlots: result.updatedTrip.totalSlots,
+        slotsPercentage: Math.round((result.updatedTrip.availableSlots / result.updatedTrip.totalSlots) * 100),
       },
+      seatNumbers: result.seatNumbers,
+      bookingId: result.bookingId,
     })
   } catch (error) {
     console.error("Manual ticket sale error:", error)
-    return handleAuthError(error)
+
+    // Handle auth errors separately
+    if (error instanceof Error) {
+      if (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN") {
+        return handleAuthError(error)
+      }
+      // Return the actual error message for non-auth errors
+      return NextResponse.json(
+        { error: error.message },
+        { status: 400 }
+      )
+    }
+
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    )
   }
 }

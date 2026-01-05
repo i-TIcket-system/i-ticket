@@ -22,7 +22,8 @@ import {
   Droplets,
   BadgeCheck,
   Accessibility,
-  Users
+  Users,
+  Baby
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -31,6 +32,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { PhoneInput } from "@/components/ui/phone-input"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -79,6 +81,7 @@ interface Passenger {
   specialNeeds: string
   pickupLocation?: string
   dropoffLocation?: string
+  isChild?: boolean
 }
 
 const emptyPassenger: Passenger = {
@@ -88,6 +91,7 @@ const emptyPassenger: Passenger = {
   specialNeeds: "",
   pickupLocation: "",
   dropoffLocation: "",
+  isChild: false,
 }
 
 export default function BookingPage() {
@@ -190,9 +194,23 @@ export default function BookingPage() {
   }
 
   const validatePassengers = () => {
-    for (const passenger of passengers) {
-      if (!passenger.name || !passenger.nationalId || !passenger.phone) {
+    // First passenger must NOT be a child (needed for payment contact)
+    if (passengers[0]?.isChild) {
+      return false
+    }
+
+    for (let i = 0; i < passengers.length; i++) {
+      const passenger = passengers[i]
+      // All passengers need a name
+      if (!passenger.name) {
         return false
+      }
+      // Non-child passengers need ID and phone
+      // First passenger always needs ID and phone (for booking contact)
+      if (!passenger.isChild || i === 0) {
+        if (!passenger.nationalId || !passenger.phone) {
+          return false
+        }
       }
     }
     return true
@@ -418,18 +436,74 @@ export default function BookingPage() {
                 {passengers.map((passenger, index) => (
                   <div key={index} className="p-4 border rounded-lg space-y-4">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-medium">Passenger {index + 1}</h4>
-                      {passengers.length > 1 && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setPassengerToRemove(index)}
-                        >
-                          <Minus className="h-4 w-4 mr-1" />
-                          Remove
-                        </Button>
-                      )}
+                      <h4 className="font-medium">
+                        {index === 0 ? (
+                          <span className="flex items-center gap-2">
+                            Passenger 1
+                            <span className="text-xs font-normal text-muted-foreground bg-primary/10 px-2 py-0.5 rounded">
+                              Primary Contact (Adult/Guardian)
+                            </span>
+                          </span>
+                        ) : (
+                          `Passenger ${index + 1}`
+                        )}
+                      </h4>
+                      <div className="flex items-center gap-3">
+                        {/* Child toggle - only for passengers 2+ (first must be adult/guardian) */}
+                        {index > 0 && (
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <Checkbox
+                              checked={passenger.isChild || false}
+                              onCheckedChange={(checked) => {
+                                setPassengers((prev) =>
+                                  prev.map((p, i) =>
+                                    i === index
+                                      ? {
+                                          ...p,
+                                          isChild: checked as boolean,
+                                          // Clear ID and phone when marking as child
+                                          nationalId: checked ? "" : p.nationalId,
+                                          phone: checked ? "" : p.phone,
+                                        }
+                                      : p
+                                  )
+                                )
+                              }}
+                            />
+                            <span className="text-sm flex items-center gap-1">
+                              <Baby className="h-4 w-4 text-pink-500" />
+                              Child
+                            </span>
+                          </label>
+                        )}
+                        {passengers.length > 1 && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setPassengerToRemove(index)}
+                          >
+                            <Minus className="h-4 w-4 mr-1" />
+                            Remove
+                          </Button>
+                        )}
+                      </div>
                     </div>
+
+                    {/* First passenger note - must be adult/guardian */}
+                    {index === 0 && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 text-blue-700 rounded-md text-sm">
+                        <User className="h-4 w-4" />
+                        Adult/Guardian required for booking contact &amp; payment
+                      </div>
+                    )}
+
+                    {/* Child badge indicator */}
+                    {passenger.isChild && (
+                      <div className="flex items-center gap-2 px-3 py-2 bg-pink-50 text-pink-700 rounded-md text-sm">
+                        <Baby className="h-4 w-4" />
+                        Child passenger - ID and phone not required
+                      </div>
+                    )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -437,7 +511,7 @@ export default function BookingPage() {
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
-                            placeholder="As shown on ID"
+                            placeholder={passenger.isChild ? "Child's name" : "As shown on ID"}
                             value={passenger.name}
                             onChange={(e) => updatePassenger(index, "name", e.target.value)}
                             className="pl-10"
@@ -447,25 +521,31 @@ export default function BookingPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>National ID / Passport *</Label>
+                        <Label>
+                          National ID / Passport {passenger.isChild ? "(Optional)" : "*"}
+                        </Label>
                         <div className="relative">
                           <BadgeCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
-                            placeholder="ID number"
+                            placeholder={passenger.isChild ? "Not required for children" : "ID number"}
                             value={passenger.nationalId}
                             onChange={(e) => updatePassenger(index, "nationalId", e.target.value)}
                             className="pl-10"
-                            required
+                            disabled={passenger.isChild}
+                            required={!passenger.isChild}
                           />
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Phone Number *</Label>
+                        <Label>
+                          Phone Number {passenger.isChild ? "(Optional)" : "*"}
+                        </Label>
                         <PhoneInput
                           value={passenger.phone}
                           onChange={(value) => updatePassenger(index, "phone", value)}
-                          required
+                          disabled={passenger.isChild}
+                          required={!passenger.isChild}
                         />
                       </div>
 

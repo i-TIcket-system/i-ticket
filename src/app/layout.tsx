@@ -1,12 +1,25 @@
 import type { Metadata, Viewport } from "next"
-import { Inter } from "next/font/google"
+import { Plus_Jakarta_Sans, DM_Serif_Display } from "next/font/google"
 import "./globals.css"
 import { SessionProvider } from "@/components/providers/SessionProvider"
 import { Navbar } from "@/components/shared/Navbar"
 import { Footer } from "@/components/shared/Footer"
 import { Toaster } from "sonner"
 
-const inter = Inter({ subsets: ["latin"] })
+// Body font - modern, clean, characterful
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+})
+
+// Display font - elegant, editorial feel for headings
+const dmSerif = DM_Serif_Display({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-display",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "i-Ticket - Book Bus Tickets in Ethiopia",
@@ -29,8 +42,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning className={`${jakarta.variable} ${dmSerif.variable}`}>
+      <body className="font-body antialiased">
         <SessionProvider>
           <div className="flex min-h-screen flex-col">
             <Navbar />

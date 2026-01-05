@@ -171,10 +171,11 @@ export async function POST(request: NextRequest) {
           passengers: {
             create: passengers.map((p: any, index: number) => ({
               name: p.name,
-              nationalId: p.nationalId,
-              phone: p.phone || smsSession?.phone || session?.user?.phone, // Use SMS phone if not provided
+              // For child passengers, use placeholder values
+              nationalId: p.isChild ? `CHILD-${Date.now()}-${index}` : p.nationalId,
+              phone: p.isChild ? (passengers[0]?.phone || smsSession?.phone || "CHILD") : (p.phone || smsSession?.phone || session?.user?.phone),
               seatNumber: seatNumbers[index], // Assign seat number
-              specialNeeds: p.specialNeeds || null,
+              specialNeeds: p.isChild ? "child" : (p.specialNeeds || null),
               pickupLocation: p.pickupLocation || null,
               dropoffLocation: p.dropoffLocation || null,
             })),

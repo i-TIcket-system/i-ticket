@@ -3,8 +3,8 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
-import { Menu, X, User, LogOut, LayoutDashboard, Ticket, Building2, HeadphonesIcon, Bus, Users, FileText, UserCheck } from "lucide-react"
-import { useState } from "react"
+import { Menu, X, User, LogOut, LayoutDashboard, Ticket, Building2, HeadphonesIcon, Bus, Users, FileText, UserCheck, ChevronDown } from "lucide-react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -18,6 +18,16 @@ import {
 export function Navbar() {
   const { data: session, status } = useSession()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  // Track scroll position for navbar styling
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   const getDashboardLink = () => {
     if (!session) return "/login"
@@ -34,146 +44,141 @@ export function Navbar() {
   }
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <nav
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
+        scrolled
+          ? "bg-background/95 backdrop-blur-xl border-b shadow-sm"
+          : "bg-transparent border-b border-transparent"
+      }`}
+    >
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/logo.svg"
-              alt="i-Ticket"
-              width={40}
-              height={40}
-              className="h-10 w-10"
-            />
-            <span className="text-xl font-bold">
-              <span className="text-primary">i</span>-Ticket
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="relative">
+              <Image
+                src="/logo.svg"
+                alt="i-Ticket"
+                width={40}
+                height={40}
+                className="h-10 w-10 transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <span className="text-xl font-bold tracking-tight">
+              <span className="text-primary">i</span>
+              <span className="text-foreground">-Ticket</span>
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-6">
+          <div className="hidden md:flex items-center gap-1">
             {session?.user?.role === "SUPER_ADMIN" ? (
               <>
-                <Link href="/admin/dashboard" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-                  <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
-                </Link>
-                <Link href="/admin/support" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-                  <HeadphonesIcon className="h-4 w-4" />
-                  Support
-                </Link>
-                <Link href="/admin/companies" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-                  <Building2 className="h-4 w-4" />
-                  Companies
-                </Link>
-                <Link href="/admin/sales-persons" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-                  <UserCheck className="h-4 w-4" />
-                  Sales Team
-                </Link>
-                <Link href="/admin/audit-logs" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-                  <FileText className="h-4 w-4" />
-                  Audit Logs
-                </Link>
+                <NavLink href="/admin/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
+                <NavLink href="/admin/support" icon={HeadphonesIcon}>Support</NavLink>
+                <NavLink href="/admin/companies" icon={Building2}>Companies</NavLink>
+                <NavLink href="/admin/sales-persons" icon={UserCheck}>Sales Team</NavLink>
+                <NavLink href="/admin/audit-logs" icon={FileText}>Audit Logs</NavLink>
               </>
             ) : session?.user?.role === "SALES_PERSON" ? (
               <>
-                <Link href="/sales/dashboard" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-                  <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
-                </Link>
-                <Link href="/sales/referrals" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-                  <Users className="h-4 w-4" />
-                  Referrals
-                </Link>
-                <Link href="/sales/commissions" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-                  <Ticket className="h-4 w-4" />
-                  Commissions
-                </Link>
+                <NavLink href="/sales/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
+                <NavLink href="/sales/referrals" icon={Users}>Referrals</NavLink>
+                <NavLink href="/sales/commissions" icon={Ticket}>Commissions</NavLink>
               </>
             ) : session?.user?.role === "COMPANY_ADMIN" ? (
               <>
-                <Link href="/company/dashboard" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-                  <LayoutDashboard className="h-4 w-4" />
-                  Dashboard
-                </Link>
-                <Link href="/company/trips" className="text-sm font-medium hover:text-primary transition-colors flex items-center gap-1">
-                  <Bus className="h-4 w-4" />
-                  Trips
-                </Link>
+                <NavLink href="/company/dashboard" icon={LayoutDashboard}>Dashboard</NavLink>
+                <NavLink href="/company/trips" icon={Bus}>Trips</NavLink>
               </>
             ) : (
               <>
-                <Link href="/search" className="text-sm font-medium hover:text-primary transition-colors">
-                  Find Trips
-                </Link>
-                <Link href="/about" className="text-sm font-medium hover:text-primary transition-colors">
-                  About
-                </Link>
-                <Link href="/contact" className="text-sm font-medium hover:text-primary transition-colors">
-                  Contact
-                </Link>
+                <NavLink href="/search">Find Trips</NavLink>
+                <NavLink href="/about">About</NavLink>
+                <NavLink href="/contact">Contact</NavLink>
               </>
             )}
           </div>
 
           {/* Auth Buttons */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
             {status === "loading" ? (
-              <div className="h-10 w-24 animate-pulse rounded-md bg-muted" />
+              <div className="h-10 w-24 animate-pulse rounded-lg bg-muted" />
             ) : session ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                    <Avatar className="h-10 w-10">
-                      <AvatarFallback className="bg-primary text-white">
+                  <Button variant="ghost" className="relative h-10 gap-2 pl-2 pr-3 rounded-full hover:bg-muted">
+                    <Avatar className="h-8 w-8 border-2 border-primary/30">
+                      <AvatarFallback className="text-white text-sm font-medium" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
                         {session.user.name?.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
+                    <span className="text-sm font-medium text-foreground hidden lg:block max-w-[100px] truncate">
+                      {session.user.name?.split(" ")[0]}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <div className="flex items-center justify-start gap-2 p-2">
-                    <div className="flex flex-col space-y-1 leading-none">
-                      <p className="font-medium">{session.user.name}</p>
+                  <div className="flex items-center gap-3 p-3 border-b">
+                    <Avatar className="h-10 w-10 border-2 border-primary/30">
+                      <AvatarFallback className="text-white font-medium" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
+                        {session.user.name?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col space-y-0.5 leading-none">
+                      <p className="font-medium text-foreground">{session.user.name}</p>
                       <p className="text-xs text-muted-foreground">{session.user.phone}</p>
                     </div>
                   </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href={getDashboardLink()}>
-                      <LayoutDashboard className="mr-2 h-4 w-4" />
-                      Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                  {session.user.role === "CUSTOMER" && (
-                    <DropdownMenuItem asChild>
-                      <Link href="/tickets">
-                        <Ticket className="mr-2 h-4 w-4" />
-                        My Tickets
+                  <div className="p-1">
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link href={getDashboardLink()} className="flex items-center gap-2 py-2">
+                        <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+                        Dashboard
                       </Link>
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem asChild>
-                    <Link href={session.user.role === "SALES_PERSON" ? "/sales/profile" : "/profile"}>
-                      <User className="mr-2 h-4 w-4" />
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
+                    {session.user.role === "CUSTOMER" && (
+                      <DropdownMenuItem asChild className="cursor-pointer">
+                        <Link href="/tickets" className="flex items-center gap-2 py-2">
+                          <Ticket className="h-4 w-4 text-muted-foreground" />
+                          My Tickets
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem asChild className="cursor-pointer">
+                      <Link
+                        href={session.user.role === "SALES_PERSON" ? "/sales/profile" : "/profile"}
+                        className="flex items-center gap-2 py-2"
+                      >
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                  </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => signOut()}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Log out
-                  </DropdownMenuItem>
+                  <div className="p-1">
+                    <DropdownMenuItem
+                      onClick={() => signOut()}
+                      className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      Log out
+                    </DropdownMenuItem>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost">Log in</Button>
+                  <Button variant="ghost" className="h-10 px-4 font-medium">
+                    Log in
+                  </Button>
                 </Link>
                 <Link href="/register">
-                  <Button>Sign up</Button>
+                  <Button className="h-10 px-5 font-medium btn-glow">
+                    Sign up
+                  </Button>
                 </Link>
               </>
             )}
@@ -181,7 +186,7 @@ export function Navbar() {
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2"
+            className="md:hidden p-2 rounded-lg hover:bg-muted transition-colors"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -191,146 +196,60 @@ export function Navbar() {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 border-t animate-fade-in">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1">
               {session?.user?.role === "SUPER_ADMIN" ? (
                 <>
-                  <Link
-                    href="/admin/dashboard"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/admin/support"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Support
-                  </Link>
-                  <Link
-                    href="/admin/companies"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Companies
-                  </Link>
-                  <Link
-                    href="/admin/sales-persons"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Sales Team
-                  </Link>
-                  <Link
-                    href="/admin/audit-logs"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Audit Logs
-                  </Link>
+                  <MobileNavLink href="/admin/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</MobileNavLink>
+                  <MobileNavLink href="/admin/support" onClick={() => setMobileMenuOpen(false)}>Support</MobileNavLink>
+                  <MobileNavLink href="/admin/companies" onClick={() => setMobileMenuOpen(false)}>Companies</MobileNavLink>
+                  <MobileNavLink href="/admin/sales-persons" onClick={() => setMobileMenuOpen(false)}>Sales Team</MobileNavLink>
+                  <MobileNavLink href="/admin/audit-logs" onClick={() => setMobileMenuOpen(false)}>Audit Logs</MobileNavLink>
                 </>
               ) : session?.user?.role === "SALES_PERSON" ? (
                 <>
-                  <Link
-                    href="/sales/dashboard"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/sales/referrals"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Referrals
-                  </Link>
-                  <Link
-                    href="/sales/commissions"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Commissions
-                  </Link>
+                  <MobileNavLink href="/sales/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</MobileNavLink>
+                  <MobileNavLink href="/sales/referrals" onClick={() => setMobileMenuOpen(false)}>Referrals</MobileNavLink>
+                  <MobileNavLink href="/sales/commissions" onClick={() => setMobileMenuOpen(false)}>Commissions</MobileNavLink>
                 </>
               ) : session?.user?.role === "COMPANY_ADMIN" ? (
                 <>
-                  <Link
-                    href="/company/dashboard"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/company/trips"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Trips
-                  </Link>
+                  <MobileNavLink href="/company/dashboard" onClick={() => setMobileMenuOpen(false)}>Dashboard</MobileNavLink>
+                  <MobileNavLink href="/company/trips" onClick={() => setMobileMenuOpen(false)}>Trips</MobileNavLink>
                 </>
               ) : (
                 <>
-                  <Link
-                    href="/search"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Find Trips
-                  </Link>
-                  <Link
-                    href="/about"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    About
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Contact
-                  </Link>
+                  <MobileNavLink href="/search" onClick={() => setMobileMenuOpen(false)}>Find Trips</MobileNavLink>
+                  <MobileNavLink href="/about" onClick={() => setMobileMenuOpen(false)}>About</MobileNavLink>
+                  <MobileNavLink href="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</MobileNavLink>
                 </>
               )}
+
+              <div className="my-2 border-t" />
+
               {session ? (
                 <>
-                  <Link
-                    href={getDashboardLink()}
-                    className="text-sm font-medium hover:text-primary transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Dashboard
-                  </Link>
+                  <MobileNavLink href={getDashboardLink()} onClick={() => setMobileMenuOpen(false)}>Dashboard</MobileNavLink>
                   {session.user.role === "CUSTOMER" && (
-                    <Link
-                      href="/tickets"
-                      className="text-sm font-medium hover:text-primary transition-colors"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      My Tickets
-                    </Link>
+                    <MobileNavLink href="/tickets" onClick={() => setMobileMenuOpen(false)}>My Tickets</MobileNavLink>
                   )}
                   <button
-                    className="text-sm font-medium text-left text-red-500 hover:text-red-600 transition-colors"
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors text-left font-medium"
                     onClick={() => {
                       setMobileMenuOpen(false)
                       signOut()
                     }}
                   >
+                    <LogOut className="h-4 w-4" />
                     Log out
                   </button>
                 </>
               ) : (
-                <div className="flex gap-2 pt-2">
-                  <Link href="/login" className="flex-1">
-                    <Button variant="outline" className="w-full">Log in</Button>
+                <div className="flex gap-2 pt-2 px-1">
+                  <Link href="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full h-11 font-medium">Log in</Button>
                   </Link>
-                  <Link href="/register" className="flex-1">
-                    <Button className="w-full">Sign up</Button>
+                  <Link href="/register" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                    <Button className="w-full h-11 font-medium">Sign up</Button>
                   </Link>
                 </div>
               )}
@@ -339,5 +258,47 @@ export function Navbar() {
         )}
       </div>
     </nav>
+  )
+}
+
+// Desktop nav link component
+function NavLink({
+  href,
+  children,
+  icon: Icon,
+}: {
+  href: string
+  children: React.ReactNode
+  icon?: React.ComponentType<{ className?: string }>
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
+    >
+      {Icon && <Icon className="h-4 w-4" />}
+      {children}
+    </Link>
+  )
+}
+
+// Mobile nav link component
+function MobileNavLink({
+  href,
+  children,
+  onClick,
+}: {
+  href: string
+  children: React.ReactNode
+  onClick?: () => void
+}) {
+  return (
+    <Link
+      href={href}
+      className="flex items-center px-3 py-2.5 rounded-lg text-foreground font-medium hover:bg-muted transition-colors"
+      onClick={onClick}
+    >
+      {children}
+    </Link>
   )
 }

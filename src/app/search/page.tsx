@@ -169,9 +169,9 @@ function SearchContent() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-muted/30">
+    <div className="min-h-[calc(100vh-4rem)]" style={{ background: "linear-gradient(180deg, #f0fafa 0%, #f5f5f5 100%)" }}>
       {/* Search Header */}
-      <div className="bg-slate-900 text-white py-8">
+      <div className="text-white py-8" style={{ background: "linear-gradient(135deg, #0d4f5c 0%, #0e9494 100%)" }}>
         <div className="container mx-auto px-4">
           <form onSubmit={handleSearch}>
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">

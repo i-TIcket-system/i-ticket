@@ -160,8 +160,16 @@ export default function CompanyDashboard() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative inline-block">
+            <div className="absolute inset-0 animate-ping">
+              <div className="h-16 w-16 rounded-full bg-emerald-500/20" />
+            </div>
+            <Loader2 className="h-16 w-16 animate-spin text-emerald-600" />
+          </div>
+          <p className="mt-4 text-slate-600 font-medium">Loading dashboard...</p>
+        </div>
       </div>
     )
   }

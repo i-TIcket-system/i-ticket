@@ -270,7 +270,7 @@ export default function EditTripPage() {
           destination: formData.destination,
           departureTime: departureTime.toISOString(),
           estimatedDuration: parseInt(formData.estimatedDuration),
-          distance: formData.distance ? parseInt(formData.distance) : null,
+          distance: parseInt(formData.distance),
           price: parseFloat(formData.price),
           busType: formData.busType,
           totalSlots: parseInt(formData.totalSlots),
@@ -546,7 +546,7 @@ export default function EditTripPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Distance (kilometers)</Label>
+                  <Label>Distance (km) *</Label>
                   <div className="relative">
                     <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -556,11 +556,13 @@ export default function EditTripPage() {
                       value={formData.distance}
                       onChange={handleChange}
                       min="1"
+                      max="5000"
                       className="pl-10"
+                      required
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Optional: Trip distance in km
+                    Route distance in kilometers
                   </p>
                 </div>
               </div>

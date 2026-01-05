@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useReferralTracking } from "@/hooks/use-referral-tracking"
 import Link from "next/link"
@@ -13,10 +13,12 @@ import {
   Clock,
   Smartphone,
   ChevronRight,
-  Star,
   Users,
   Ticket,
-  UserPlus
+  UserPlus,
+  ArrowRight,
+  Sparkles,
+  CheckCircle2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,11 +28,11 @@ import { getAllCities } from "@/lib/ethiopian-cities"
 import { toast } from "sonner"
 
 const busCompanies = [
-  { name: "Selam Bus", logo: "S", color: "bg-blue-500" },
-  { name: "Sky Bus", logo: "SK", color: "bg-purple-500" },
-  { name: "Abay Bus", logo: "A", color: "bg-green-500" },
-  { name: "Ghion Bus", logo: "G", color: "bg-orange-500" },
-  { name: "Awash Bus", logo: "AW", color: "bg-red-500" },
+  { name: "Selam Bus", logo: "S", color: "from-blue-500 to-blue-600" },
+  { name: "Sky Bus", logo: "SK", color: "from-purple-500 to-purple-600" },
+  { name: "Abay Bus", logo: "A", color: "from-emerald-500 to-emerald-600" },
+  { name: "Ghion Bus", logo: "G", color: "from-orange-500 to-orange-600" },
+  { name: "Awash Bus", logo: "AW", color: "from-rose-500 to-rose-600" },
 ]
 
 const features = [
@@ -38,24 +40,27 @@ const features = [
     icon: Shield,
     title: "Secure Booking",
     description: "Your payment and personal information are protected with industry-standard encryption.",
+    accent: "from-[#0e9494] to-[#0d4f5c]",
   },
   {
     icon: Clock,
     title: "Real-time Updates",
     description: "Get instant notifications about your trip status and any schedule changes.",
+    accent: "from-[#20c4c4] to-[#0e9494]",
   },
   {
     icon: Smartphone,
     title: "QR Code Tickets",
     description: "No paper tickets needed. Just show your QR code at boarding.",
+    accent: "from-[#0d4f5c] to-[#0e9494]",
   },
 ]
 
 const stats = [
-  { value: "50K+", label: "Happy Travelers" },
-  { value: "100+", label: "Daily Trips" },
-  { value: "20+", label: "Destinations" },
-  { value: "5+", label: "Partner Companies" },
+  { value: "50K+", label: "Happy Travelers", icon: Users },
+  { value: "100+", label: "Daily Trips", icon: Bus },
+  { value: "20+", label: "Destinations", icon: MapPin },
+  { value: "5+", label: "Partner Companies", icon: Sparkles },
 ]
 
 export default function HomePage() {
@@ -70,6 +75,11 @@ export default function HomePage() {
   const [cities, setCities] = useState<string[]>([])
   const [citiesLoading, setCitiesLoading] = useState(true)
   const [trackingCode, setTrackingCode] = useState("")
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Fetch cities from API on mount
   useEffect(() => {
@@ -79,17 +89,14 @@ export default function HomePage() {
         const data = await response.json()
         if (data.cities) {
           const dbCities = data.cities.map((c: any) => c.name)
-          // Merge database cities with comprehensive Ethiopian cities list
           const allCities = getAllCities(dbCities)
           setCities(allCities)
         } else {
-          // Fallback to static list if API fails
           const allCities = getAllCities([])
           setCities(allCities)
         }
       } catch (error) {
         console.error("Failed to fetch cities:", error)
-        // Fallback to static list on error
         const allCities = getAllCities([])
         setCities(allCities)
       } finally {
@@ -127,123 +134,143 @@ export default function HomePage() {
   const today = new Date().toISOString().split("T")[0]
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col overflow-hidden">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        {/* Decorative Elements */}
+      <section className="relative min-h-[90vh] flex items-center gradient-hero text-white overflow-hidden">
+        {/* Background elements */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 h-80 w-80 rounded-full bg-primary/20 blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 h-80 w-80 rounded-full bg-secondary/20 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
+          {/* Ethiopian pattern overlay */}
+          <div className="absolute inset-0 eth-pattern opacity-20" />
         </div>
 
-        <div className="container relative mx-auto px-4 py-20 md:py-32">
-          <div className="max-w-3xl mx-auto text-center mb-12">
-            {/* Ethiopian Flag Colors Bar */}
-            <div className="flex justify-center gap-1 mb-6">
-              <div className="h-1 w-12 bg-green-500 rounded" />
-              <div className="h-1 w-12 bg-yellow-500 rounded" />
-              <div className="h-1 w-12 bg-red-500 rounded" />
+        <div className="container relative z-10 mx-auto px-4 py-20">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left content */}
+            <div className={`space-y-8 ${mounted ? 'animate-fade-up' : 'opacity-0'}`}>
+              {/* Ethiopian Flag Bar */}
+              <div className="ethiopian-bar">
+                <div />
+                <div />
+                <div />
+              </div>
+
+              <h1 className="text-white leading-[1.15]">
+                Travel Ethiopia
+                <br />
+                <span className="text-[#20c4c4]">
+                  with Confidence
+                </span>
+              </h1>
+
+              <p className="text-lg md:text-xl text-white/70 max-w-xl leading-relaxed">
+                Book bus tickets from Ethiopia&apos;s top companies. Fast, secure, and hassle-free booking at your fingertips.
+              </p>
+
+              {/* Trust indicators */}
+              <div className="flex flex-wrap gap-4 text-sm text-white/60">
+                {["Instant QR Tickets", "TeleBirr Payment", "24/7 Support"].map((item, i) => (
+                  <div key={item} className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary-400" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Popular Routes */}
+              <div className="pt-4">
+                <p className="text-sm text-white/40 mb-3 uppercase tracking-wider">Popular Routes</p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { from: "Addis Ababa", to: "Bahir Dar" },
+                    { from: "Addis Ababa", to: "Hawassa" },
+                    { from: "Addis Ababa", to: "Gondar" },
+                  ].map((route) => (
+                    <Link
+                      key={`${route.from}-${route.to}`}
+                      href={`/search?from=${route.from}&to=${route.to}`}
+                      className="group inline-flex items-center px-4 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300 text-sm"
+                    >
+                      <span className="text-white/80">{route.from}</span>
+                      <ArrowRight className="h-3.5 w-3.5 mx-2 text-primary-400 group-hover:translate-x-0.5 transition-transform" />
+                      <span className="text-white">{route.to}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             </div>
 
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Travel Ethiopia with{" "}
-              <span className="text-primary">Ease</span>
-            </h1>
-            <p className="text-lg md:text-xl text-slate-300 mb-8">
-              Book bus tickets from Ethiopia&apos;s top companies.
-              Fast, secure, and hassle-free booking at your fingertips.
-            </p>
-          </div>
-
-          {/* Search Form */}
-          <Card className="max-w-4xl mx-auto bg-white/10 backdrop-blur-lg border-white/20">
-            <CardContent className="p-6">
-              <form onSubmit={handleSearch}>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/80">From</label>
-                    <CityCombobox
-                      value={origin}
-                      onChange={setOrigin}
-                      suggestions={cities}
-                      placeholder={citiesLoading ? "Loading cities..." : "Type or select origin city"}
-                      disabled={citiesLoading}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                      icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary pointer-events-none z-10" />}
-                    />
+            {/* Right - Search Form */}
+            <div className={`${mounted ? 'animate-fade-up' : 'opacity-0'}`} style={{ animationDelay: '200ms' }}>
+              <Card className="glass border-white/10 shadow-2xl shadow-black/20">
+                <CardContent className="p-8">
+                  <div className="mb-6">
+                    <h3 className="text-xl font-display text-foreground mb-1">Find Your Trip</h3>
+                    <p className="text-sm text-muted-foreground">Search from 100+ daily departures</p>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/80">To</label>
-                    <CityCombobox
-                      value={destination}
-                      onChange={setDestination}
-                      suggestions={cities}
-                      excludeCity={origin}
-                      placeholder={citiesLoading ? "Loading cities..." : "Type or select destination"}
-                      disabled={citiesLoading}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                      icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-accent pointer-events-none z-10" />}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/80">Date</label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
-                      <Input
-                        type="date"
-                        value={date}
-                        onChange={(e) => setDate(e.target.value)}
-                        min={today}
-                        className="pl-10 bg-white/10 border-white/20 text-white"
+                  <form onSubmit={handleSearch} className="space-y-5">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground/70">From</label>
+                      <CityCombobox
+                        value={origin}
+                        onChange={setOrigin}
+                        suggestions={cities}
+                        placeholder={citiesLoading ? "Loading cities..." : "Where are you departing from?"}
+                        disabled={citiesLoading}
+                        className="h-12"
+                        icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none z-10" />}
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-white/80 invisible md:visible">Search</label>
-                    <Button type="submit" className="w-full h-10" size="lg">
-                      <Search className="h-4 w-4 mr-2" />
-                      Search Trips
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground/70">To</label>
+                      <CityCombobox
+                        value={destination}
+                        onChange={setDestination}
+                        suggestions={cities}
+                        excludeCity={origin}
+                        placeholder={citiesLoading ? "Loading cities..." : "Where are you going?"}
+                        disabled={citiesLoading}
+                        className="h-12"
+                        icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary pointer-events-none z-10" />}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-foreground/70">Date</label>
+                      <div className="relative">
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                        <Input
+                          type="date"
+                          value={date}
+                          onChange={(e) => setDate(e.target.value)}
+                          min={today}
+                          className="pl-11 h-12"
+                        />
+                      </div>
+                    </div>
+
+                    <Button type="submit" className="w-full h-12 text-base btn-glow" size="lg">
+                      <Search className="h-5 w-5 mr-2" />
+                      Search Available Trips
                     </Button>
-                  </div>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Popular Routes */}
-          <div className="mt-8 text-center">
-            <p className="text-sm text-slate-400 mb-3">Popular routes:</p>
-            <div className="flex flex-wrap justify-center gap-2">
-              {[
-                { from: "Addis Ababa", to: "Bahir Dar" },
-                { from: "Addis Ababa", to: "Hawassa" },
-                { from: "Addis Ababa", to: "Gondar" },
-              ].map((route) => (
-                <Link
-                  key={`${route.from}-${route.to}`}
-                  href={`/search?from=${route.from}&to=${route.to}`}
-                  className="inline-flex items-center px-4 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-sm"
-                >
-                  {route.from} <ChevronRight className="h-4 w-4 mx-1" /> {route.to}
-                </Link>
-              ))}
+                  </form>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
+
       </section>
 
       {/* Track Booking Section */}
-      <section className="py-8 bg-slate-50">
+      <section className="py-8 relative z-20 bg-background">
         <div className="container mx-auto px-4">
-          <Card className="max-w-2xl mx-auto border-primary/20 shadow-sm">
+          <Card className="max-w-3xl mx-auto border-primary/10 shadow-lg shadow-primary/5">
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row md:items-center gap-4">
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1 flex items-center gap-2">
+                  <h3 className="text-lg font-display text-foreground mb-1 flex items-center gap-2">
                     <Ticket className="h-5 w-5 text-primary" />
                     Already have a booking?
                   </h3>
@@ -253,8 +280,8 @@ export default function HomePage() {
                 </div>
                 <div className="flex gap-2 md:w-auto w-full">
                   <Input
-                    placeholder="Enter booking ID or ticket code"
-                    className="md:w-64"
+                    placeholder="Enter code..."
+                    className="md:w-56 h-11"
                     value={trackingCode}
                     onChange={(e) => setTrackingCode(e.target.value)}
                     onKeyDown={(e) => {
@@ -263,10 +290,7 @@ export default function HomePage() {
                       }
                     }}
                   />
-                  <Button
-                    onClick={handleTrackBooking}
-                    className="shrink-0"
-                  >
+                  <Button onClick={handleTrackBooking} className="shrink-0 h-11 px-6">
                     <Search className="h-4 w-4 md:mr-2" />
                     <span className="hidden md:inline">Track</span>
                   </Button>
@@ -278,13 +302,22 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 bg-primary">
-        <div className="container mx-auto px-4">
+      <section className="py-16 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0e9494 0%, #0d4f5c 100%)" }}>
+        {/* Pattern overlay */}
+        <div className="absolute inset-0 eth-pattern opacity-10" />
+
+        <div className="container relative z-10 mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center text-white">
-                <div className="text-3xl md:text-4xl font-bold mb-1">{stat.value}</div>
-                <div className="text-sm text-white/80">{stat.label}</div>
+            {stats.map((stat, i) => (
+              <div
+                key={stat.label}
+                className="text-center text-white group"
+              >
+                <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-white/10 backdrop-blur mb-4 group-hover:scale-110 transition-transform duration-300">
+                  <stat.icon className="h-7 w-7" />
+                </div>
+                <div className="text-4xl md:text-5xl font-display mb-2">{stat.value}</div>
+                <div className="text-sm text-white/70 uppercase tracking-wider">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -292,25 +325,30 @@ export default function HomePage() {
       </section>
 
       {/* Bus Companies */}
-      <section className="py-16 md:py-24">
+      <section className="py-20 md:py-28 eth-pattern">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Our Trusted Partners</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+          <div className="text-center mb-14">
+            <div className="ethiopian-bar justify-center mb-6">
+              <div />
+              <div />
+              <div />
+            </div>
+            <h2 className="mb-4">Our Trusted Partners</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
               We partner with Ethiopia&apos;s leading bus companies to bring you the best travel experience.
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-8">
-            {busCompanies.map((company) => (
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+            {busCompanies.map((company, i) => (
               <div
                 key={company.name}
-                className="flex flex-col items-center gap-3 p-6 rounded-xl bg-muted/50 hover:bg-muted transition-colors"
+                className="group flex flex-col items-center gap-4 p-6 rounded-2xl bg-card hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 hover:-translate-y-1 border border-transparent hover:border-primary/10"
               >
-                <div className={`h-16 w-16 rounded-full ${company.color} flex items-center justify-center text-white text-xl font-bold`}>
+                <div className={`h-20 w-20 rounded-2xl bg-gradient-to-br ${company.color} flex items-center justify-center text-white text-2xl font-bold shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                   {company.logo}
                 </div>
-                <span className="font-medium">{company.name}</span>
+                <span className="font-medium text-foreground">{company.name}</span>
               </div>
             ))}
           </div>
@@ -318,24 +356,27 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section className="py-16 md:py-24 bg-muted/30">
+      <section className="py-20 md:py-28 bg-muted/30">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">Why Choose i-Ticket?</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="mb-4">Why Choose i-Ticket?</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
               We&apos;ve built the most convenient way to book bus tickets in Ethiopia.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature) => (
-              <Card key={feature.title} className="card-hover">
-                <CardContent className="p-6">
-                  <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <feature.icon className="h-6 w-6 text-primary" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {features.map((feature, i) => (
+              <Card key={feature.title} className="card-hover border-0 shadow-lg shadow-black/5 overflow-hidden group">
+                <CardContent className="p-8 relative">
+                  {/* Gradient accent line */}
+                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${feature.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+
+                  <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${feature.accent} flex items-center justify-center mb-6 shadow-lg`}>
+                    <feature.icon className="h-7 w-7 text-white" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <h3 className="mb-3 text-foreground">{feature.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -344,11 +385,11 @@ export default function HomePage() {
       </section>
 
       {/* How it Works */}
-      <section className="py-16 md:py-24">
+      <section className="py-20 md:py-28">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-4">How It Works</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="mb-4">How It Works</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
               Book your bus ticket in 3 simple steps
             </p>
           </div>
@@ -373,13 +414,18 @@ export default function HomePage() {
                 title: "Travel",
                 description: "Receive your QR code ticket instantly and show it when boarding.",
               },
-            ].map((item) => (
-              <div key={item.step} className="relative text-center">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white text-2xl font-bold mb-4">
-                  {item.step}
+            ].map((item, i) => (
+              <div key={item.step} className="relative text-center group">
+                {/* Connector line */}
+                {i < 2 && (
+                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/30 to-transparent" />
+                )}
+
+                <div className="inline-flex h-20 w-20 items-center justify-center rounded-full text-white shadow-xl shadow-[#0e9494]/30 mb-6 group-hover:scale-110 transition-transform duration-300" style={{ background: "linear-gradient(135deg, #0e9494 0%, #0d4f5c 100%)" }}>
+                  <span className="text-3xl font-display">{item.step}</span>
                 </div>
-                <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                <p className="text-muted-foreground">{item.description}</p>
+                <h3 className="mb-3 text-foreground">{item.title}</h3>
+                <p className="text-muted-foreground leading-relaxed">{item.description}</p>
               </div>
             ))}
           </div>
@@ -387,23 +433,33 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 md:py-24 bg-gradient-to-r from-primary to-primary/80 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+      <section className="py-20 md:py-28 gradient-hero text-white relative overflow-hidden">
+        {/* Background elements */}
+        <div className="absolute inset-0 eth-pattern opacity-20" />
+
+        <div className="container relative z-10 mx-auto px-4 text-center">
+          <div className="ethiopian-bar justify-center mb-8">
+            <div />
+            <div />
+            <div />
+          </div>
+
+          <h2 className="text-white mb-6">
             Ready to Start Your Journey?
           </h2>
-          <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed">
             Join thousands of travelers who trust i-Ticket for their bus bookings across Ethiopia.
           </p>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/search">
-              <Button size="lg" variant="secondary" className="text-primary">
+              <Button size="lg" variant="secondary" className="h-14 px-8 text-base font-medium shadow-xl">
                 <Search className="h-5 w-5 mr-2" />
                 Find Trips
               </Button>
             </Link>
             <Link href="/register">
-              <Button size="lg" variant="secondary" className="text-primary">
+              <Button size="lg" variant="outline" className="h-14 px-8 text-base font-medium border-white/20 text-white hover:bg-white/10 hover:text-white">
                 <UserPlus className="h-5 w-5 mr-2" />
                 Create Account
               </Button>

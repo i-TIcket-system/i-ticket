@@ -141,10 +141,15 @@ export default function AdminDashboard() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="container mx-auto py-12">
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading dashboard...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative inline-block">
+            <div className="absolute inset-0 animate-ping">
+              <div className="h-16 w-16 rounded-full bg-[#0e9494]/20" />
+            </div>
+            <Loader2 className="h-16 w-16 animate-spin text-[#0e9494]" />
+          </div>
+          <p className="mt-4 text-muted-foreground font-medium">Loading dashboard...</p>
         </div>
       </div>
     )
@@ -157,9 +162,9 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Animated Background Gradient */}
-      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-primary/5 via-purple-50/50 to-blue-50/50">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-transparent"></div>
+      <div className="fixed inset-0 -z-10" style={{ background: "linear-gradient(135deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at top right, rgba(14, 148, 148, 0.1) 0%, transparent 50%)" }}></div>
+        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at bottom left, rgba(32, 196, 196, 0.1) 0%, transparent 50%)" }}></div>
       </div>
 
       <div className="container mx-auto py-12 px-4">

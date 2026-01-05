@@ -146,10 +146,15 @@ export default function CompaniesManagement() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="container mx-auto py-12">
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Loading companies...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative inline-block">
+            <div className="absolute inset-0 animate-ping">
+              <div className="h-16 w-16 rounded-full bg-amber-500/20" />
+            </div>
+            <Loader2 className="h-16 w-16 animate-spin text-amber-600" />
+          </div>
+          <p className="mt-4 text-stone-600 font-medium">Loading companies...</p>
         </div>
       </div>
     )

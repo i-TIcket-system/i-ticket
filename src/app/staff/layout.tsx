@@ -57,16 +57,16 @@ export default function StaffLayout({
 
   if (status === "loading" || status === "unauthenticated") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#0e9494" }} />
       </div>
     )
   }
 
   if (!session || session.user.role !== "COMPANY_ADMIN" || !session.user.staffRole || session.user.staffRole === "ADMIN") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
+        <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#0e9494" }} />
       </div>
     )
   }
@@ -81,43 +81,49 @@ export default function StaffLayout({
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex" style={{ background: "linear-gradient(135deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar - Teal Theme */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-card border-r transform transition-transform duration-200 lg:translate-x-0 lg:static",
+          "fixed inset-y-0 left-0 z-50 w-64 text-white transform transition-transform duration-200 lg:translate-x-0 lg:static shadow-2xl",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
+        style={{ background: "linear-gradient(180deg, #0d4f5c 0%, #0a3d47 100%)", borderRight: "1px solid rgba(32, 196, 196, 0.2)" }}
       >
-        <div className="flex flex-col h-full">
+        {/* Ethiopian flag top border */}
+        <div className="h-1 bg-gradient-to-r from-green-500 via-yellow-400 to-red-500" />
+
+        <div className="flex flex-col h-[calc(100%-4px)]">
           {/* Header */}
-          <div className="p-4 border-b">
+          <div className="p-4" style={{ borderBottom: "1px solid rgba(32, 196, 196, 0.2)" }}>
             <div className="flex items-center justify-between">
               <Link href="/staff/my-trips" className="flex items-center gap-2">
-                <Bus className="h-6 w-6 text-primary" />
-                <span className="font-bold text-lg">i-Ticket</span>
+                <div className="p-1.5 rounded-lg" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
+                  <Bus className="h-5 w-5 text-white" />
+                </div>
+                <span className="font-bold text-lg text-white">i-Ticket</span>
               </Link>
               <Button
                 variant="ghost"
                 size="icon"
-                className="lg:hidden"
+                className="lg:hidden text-white/60 hover:text-white hover:bg-white/10"
                 onClick={() => setSidebarOpen(false)}
               >
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground mt-1 truncate">
+            <p className="text-xs text-white/60 mt-1 truncate">
               {session.user.companyName}
             </p>
-            <p className="text-xs text-primary font-medium">
+            <p className="text-xs font-medium" style={{ color: "#20c4c4" }}>
               {getRoleLabel()}
             </p>
           </div>
@@ -134,9 +140,10 @@ export default function StaffLayout({
                   className={cn(
                     "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "text-white shadow-lg"
+                      : "text-white/60 hover:bg-white/10 hover:text-white"
                   )}
+                  style={isActive ? { background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" } : undefined}
                 >
                   <item.icon className="h-5 w-5" />
                   {item.title}
@@ -146,14 +153,14 @@ export default function StaffLayout({
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t space-y-2">
-            <div className="px-3 py-2">
-              <p className="text-sm font-medium truncate">{session.user.name}</p>
-              <p className="text-xs text-muted-foreground">{getRoleLabel()}</p>
+          <div className="p-4 space-y-2" style={{ borderTop: "1px solid rgba(32, 196, 196, 0.2)" }}>
+            <div className="px-3 py-2 bg-white/10 rounded-lg">
+              <p className="text-sm font-medium truncate text-white">{session.user.name}</p>
+              <p className="text-xs text-white/60">{getRoleLabel()}</p>
             </div>
             <Button
               variant="ghost"
-              className="w-full justify-start text-muted-foreground hover:text-foreground"
+              className="w-full justify-start text-white/60 hover:text-red-400 hover:bg-red-950/30"
               onClick={() => signOut({ callbackUrl: "/" })}
             >
               <LogOut className="h-5 w-5 mr-3" />
@@ -166,17 +173,21 @@ export default function StaffLayout({
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile header */}
-        <header className="lg:hidden sticky top-0 z-30 bg-background border-b px-4 py-3">
+        <header className="lg:hidden sticky top-0 z-30 text-white px-4 py-3 shadow-lg" style={{ background: "linear-gradient(135deg, #0d4f5c 0%, #0a3d47 100%)" }}>
+          <div className="h-0.5 absolute top-0 left-0 right-0 bg-gradient-to-r from-green-500 via-yellow-400 to-red-500" />
           <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="icon"
+              className="text-white/70 hover:text-white hover:bg-white/10"
               onClick={() => setSidebarOpen(true)}
             >
               <Menu className="h-5 w-5" />
             </Button>
             <Link href="/staff/my-trips" className="flex items-center gap-2">
-              <Bus className="h-5 w-5 text-primary" />
+              <div className="p-1 rounded-lg" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
+                <Bus className="h-4 w-4 text-white" />
+              </div>
               <span className="font-bold">i-Ticket</span>
             </Link>
             <div className="w-10" /> {/* Spacer for centering */}

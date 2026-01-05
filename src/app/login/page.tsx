@@ -5,11 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { signIn, getSession } from "next-auth/react"
 import Image from "next/image"
-import { Phone, Lock, Loader2, AlertCircle } from "lucide-react"
+import { Lock, Loader2, AlertCircle, ArrowRight, Bus, Shield, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { PhoneInput } from "@/components/ui/phone-input"
 import { toast } from "sonner"
 
@@ -37,29 +36,18 @@ export default function LoginPage() {
 
       if (result?.error) {
         setError(result.error)
-        toast.error("Login failed", {
-          description: result.error
-        })
+        toast.error("Login failed", { description: result.error })
       } else {
-        toast.success("Login successful!", {
-          description: "Redirecting..."
-        })
-        // Small delay to ensure session is fully propagated
+        toast.success("Login successful!", { description: "Redirecting..." })
         await new Promise(resolve => setTimeout(resolve, 300))
-
-        // Get the session to check user role
         const session = await getSession()
 
-        // Redirect based on role using replace (prevents back button issues)
         if (callbackUrl !== "/") {
           router.replace(callbackUrl)
         } else if (session?.user?.role === "COMPANY_ADMIN") {
-          // Check staffRole for company admins
           if (session.user.staffRole && session.user.staffRole !== "ADMIN") {
-            // Staff members go to staff dashboard
             router.replace("/staff/my-trips")
           } else {
-            // Company admins go to company dashboard
             router.replace("/company/dashboard")
           }
         } else if (session?.user?.role === "SUPER_ADMIN") {
@@ -67,7 +55,6 @@ export default function LoginPage() {
         } else if (session?.user?.role === "SALES_PERSON") {
           router.replace("/sales/dashboard")
         } else {
-          // Redirect customers to search page to start booking
           router.replace("/search")
         }
       }
@@ -78,7 +65,6 @@ export default function LoginPage() {
     }
   }
 
-  // Demo account quick fill
   const fillDemoAccount = (type: "customer" | "company" | "admin") => {
     const accounts = {
       customer: { phone: "0911234567", password: "demo123" },
@@ -90,48 +76,101 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center p-4 bg-muted/30">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-4">
-            <Image
-              src="/logo.svg"
-              alt="i-Ticket"
-              width={48}
-              height={48}
-              className="h-12 w-12"
-            />
-          </div>
-          <CardTitle className="text-2xl">Welcome back</CardTitle>
-          <CardDescription>
-            Sign in to your i-Ticket account
-          </CardDescription>
-        </CardHeader>
+    <div className="min-h-screen flex">
+      {/* Left Panel - Teal Gradient */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(160deg, #0d4f5c 0%, #0e9494 50%, #20c4c4 100%)" }}
+        />
+        <div className="absolute inset-0 eth-pattern opacity-10" />
 
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+        {/* Content */}
+        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 text-white">
+          <div className="ethiopian-bar mb-8">
+            <div />
+            <div />
+            <div />
+          </div>
+          <h1 className="text-4xl xl:text-5xl font-display mb-4 leading-tight">
+            Travel Ethiopia<br />
+            <span className="text-white/80">with confidence</span>
+          </h1>
+          <p className="text-base text-white/70 max-w-md leading-relaxed">
+            Book bus tickets from trusted operators across the country.
+          </p>
+
+          {/* Features */}
+          <div className="flex flex-col gap-4 mt-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                <Bus className="h-5 w-5" />
+              </div>
+              <span className="text-sm text-white/80">50+ Bus Companies</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                <Shield className="h-5 w-5" />
+              </div>
+              <span className="text-sm text-white/80">Secure TeleBirr Payments</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-white/10 flex items-center justify-center">
+                <Clock className="h-5 w-5" />
+              </div>
+              <span className="text-sm text-white/80">24/7 Customer Support</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative overflow-hidden" style={{ background: "linear-gradient(180deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
+        {/* Subtle teal accent elements */}
+        <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #20c4c4 0%, transparent 70%)" }} />
+        <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #0e9494 0%, transparent 70%)" }} />
+
+        {/* Teal accent line on left edge */}
+        <div className="hidden lg:block absolute left-0 top-1/4 bottom-1/4 w-1" style={{ background: "linear-gradient(180deg, #20c4c4 0%, #0e9494 50%, #0d4f5c 100%)" }} />
+
+        <div className="w-full max-w-md relative z-10">
+          {/* Mobile Header */}
+          <div className="lg:hidden flex flex-col items-center mb-8">
+            <div
+              className="p-3 rounded-xl mb-4"
+              style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}
+            >
+              <Image src="/logo.svg" alt="i-Ticket" width={32} height={32} className="h-8 w-8" />
+            </div>
+            <div className="ethiopian-bar">
+              <div />
+              <div />
+              <div />
+            </div>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-2xl sm:text-3xl font-display mb-2" style={{ color: "#0d4f5c" }}>Welcome back</h2>
+            <p className="text-sm" style={{ color: "#0e9494" }}>Sign in to continue to i-Ticket</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
-                <AlertCircle className="h-4 w-4" />
-                {error}
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 text-destructive text-sm border border-destructive/20">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>{error}</span>
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <PhoneInput
-                id="phone"
-                value={phone}
-                onChange={setPhone}
-                required
-                disabled={isLoading}
-              />
+              <Label htmlFor="phone" className="text-sm font-medium">Phone Number</Label>
+              <PhoneInput id="phone" value={phone} onChange={setPhone} required disabled={isLoading} />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password">Password</Label>
-                <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+                <Link href="/forgot-password" className="text-xs text-primary hover:text-primary/80 transition-colors">
                   Forgot password?
                 </Link>
               </div>
@@ -143,69 +182,52 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 h-11"
                   required
                 />
               </div>
             </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full h-11 font-medium group" disabled={isLoading}>
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Signing in...
                 </>
               ) : (
-                "Sign in"
+                <>
+                  Sign in
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </>
               )}
             </Button>
 
-            {/* Demo Mode Quick Access */}
             {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
-              <div className="pt-4 border-t">
-                <p className="text-sm text-muted-foreground text-center mb-3">
-                  Demo Mode - Quick Access
-                </p>
+              <div className="pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground text-center mb-3">Demo Mode - Quick Access</p>
                 <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fillDemoAccount("customer")}
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={() => fillDemoAccount("customer")} className="text-xs">
                     Customer
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fillDemoAccount("company")}
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={() => fillDemoAccount("company")} className="text-xs">
                     Company
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fillDemoAccount("admin")}
-                  >
+                  <Button type="button" variant="outline" size="sm" onClick={() => fillDemoAccount("admin")} className="text-xs">
                     Admin
                   </Button>
                 </div>
               </div>
             )}
-          </CardContent>
-        </form>
+          </form>
 
-        <CardFooter className="flex flex-col gap-4">
-          <div className="text-center text-sm text-muted-foreground">
+          <p className="mt-8 text-center text-sm text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary hover:underline font-medium">
-              Sign up
+            <Link href="/register" className="text-primary font-medium hover:text-primary/80 transition-colors">
+              Create account
             </Link>
-          </div>
-        </CardFooter>
-      </Card>
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

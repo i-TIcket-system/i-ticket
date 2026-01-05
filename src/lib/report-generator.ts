@@ -237,6 +237,7 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   allPassengers.sort((a, b) => (a.seatNumber || 999) - (b.seatNumber || 999))
 
   // Add passenger rows with alternating colors
+  // For manual sales (isQuickTicket), show empty rows with only seat number filled
   allPassengers.forEach((p, index) => {
     const bookingTime = new Date(p.bookingTime).toLocaleString("en-ET", {
       month: "short",
@@ -245,22 +246,21 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
       minute: "2-digit"
     })
 
-    const bookedByText = p.isQuickTicket
-      ? `${trip.company.name} (Office)`
-      : `${p.bookedBy} (Online)`
+    const isManualSale = p.isQuickTicket
 
+    // For manual tickets, show empty cells (only seat number and "Manual Sale" status)
     const row = sheet.addRow([
       p.seatNumber || "N/A",
-      p.name,
-      p.nationalId,
-      p.phone,
-      p.pickupLocation || "Standard",
-      p.dropoffLocation || "Standard",
-      bookedByText,
-      bookingTime,
-      p.bookingId.slice(0, 8).toUpperCase(),
-      p.ticketCode,
-      "PAID"
+      isManualSale ? "" : p.name,
+      isManualSale ? "" : p.nationalId,
+      isManualSale ? "" : p.phone,
+      isManualSale ? "" : (p.pickupLocation || "Standard"),
+      isManualSale ? "" : (p.dropoffLocation || "Standard"),
+      isManualSale ? "Office Sale" : `${p.bookedBy} (Online)`,
+      isManualSale ? "" : bookingTime,
+      isManualSale ? "" : p.bookingId.slice(0, 8).toUpperCase(),
+      isManualSale ? "" : p.ticketCode,
+      isManualSale ? "MANUAL" : "PAID"
     ])
 
     row.height = 20
@@ -283,40 +283,49 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
         cell.font = { bold: true, size: 11, color: { argb: colors.primary } }
       }
 
-      // Status column - green badge
+      // Status column - green for PAID, yellow for MANUAL
       if (colNumber === 11) {
-        cell.font = { bold: true, color: { argb: colors.success } }
+        const statusColor = isManualSale ? colors.warning : colors.success
+        cell.font = { bold: true, color: { argb: statusColor } }
       }
     })
   })
 
   currentRow = sheet.lastRow!.number + 2
 
+  // Count online vs manual passengers (now both are in allPassengers array)
+  const onlinePassengers = allPassengers.filter(p => !p.isQuickTicket)
+  const manualPassengers = allPassengers.filter(p => p.isQuickTicket)
+  const onlineCount = onlinePassengers.length
+  const manualCount = manualPassengers.length
+  const totalBooked = onlineCount + manualCount
+
   // ============================================
-  // MANUAL SALES SECTION
+  // SUMMARY NOTES SECTION
   // ============================================
 
   sheet.mergeCells(`A${currentRow}:K${currentRow}`)
-  const manualSectionHeader = sheet.getCell(`A${currentRow}`)
-  manualSectionHeader.value = "SECTION 2: MANUAL/OFFICE TICKET SALES"
-  manualSectionHeader.font = { bold: true, size: 12, color: { argb: colors.white } }
-  manualSectionHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.warning } }
-  manualSectionHeader.alignment = { horizontal: "center", vertical: "middle" }
+  const noteHeader = sheet.getCell(`A${currentRow}`)
+  noteHeader.value = "BOOKING SUMMARY"
+  noteHeader.font = { bold: true, size: 12, color: { argb: colors.white } }
+  noteHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.warning } }
+  noteHeader.alignment = { horizontal: "center", vertical: "middle" }
   sheet.getRow(currentRow).height = 25
   currentRow++
 
-  const iTicketPassengers = allPassengers.length
-  const totalBooked = trip.totalSlots - trip.availableSlots
-  const manualSales = totalBooked - iTicketPassengers
-
-  sheet.getCell(`A${currentRow}`).value = "Total Manual/Office Sales:"
+  sheet.getCell(`A${currentRow}`).value = "Online Bookings (i-Ticket):"
   sheet.getCell(`A${currentRow}`).font = { bold: true }
-  sheet.getCell(`B${currentRow}`).value = `${manualSales} tickets`
-  sheet.getCell(`B${currentRow}`).font = { size: 11, color: { argb: colors.warning } }
+  sheet.getCell(`B${currentRow}`).value = `${onlineCount} passengers`
+  sheet.getCell(`B${currentRow}`).font = { size: 11, color: { argb: colors.success } }
+
+  sheet.getCell(`D${currentRow}`).value = "Manual/Office Sales:"
+  sheet.getCell(`D${currentRow}`).font = { bold: true }
+  sheet.getCell(`E${currentRow}`).value = `${manualCount} tickets`
+  sheet.getCell(`E${currentRow}`).font = { size: 11, color: { argb: colors.warning } }
   currentRow++
 
   sheet.mergeCells(`A${currentRow}:K${currentRow}`)
-  sheet.getCell(`A${currentRow}`).value = "Note: Passenger details not available for tickets sold at office/terminal"
+  sheet.getCell(`A${currentRow}`).value = "Note: Manual ticket passengers are shown with seat numbers only. Details can be collected at boarding."
   sheet.getCell(`A${currentRow}`).font = { italic: true, size: 10, color: { argb: "FF666666" } }
   sheet.getCell(`A${currentRow}`).alignment = { horizontal: "center" }
 
@@ -335,15 +344,18 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   sheet.getRow(currentRow).height = 25
   currentRow++
 
-  const totalRevenue = trip.bookings.reduce((sum, b) => sum + Number(b.totalAmount), 0)
+  // Only count revenue from online bookings (manual sales have commission 0)
+  const onlineRevenue = trip.bookings
+    .filter((b) => !b.isQuickTicket)
+    .reduce((sum, b) => sum + Number(b.totalAmount), 0)
   const totalCommission = trip.bookings.reduce((sum, b) => sum + Number(b.commission), 0)
 
   // Summary table with professional layout
   const summaryData = [
     ["Capacity Information", "", "Revenue Information", ""],
-    ["Total Capacity:", `${trip.totalSlots} seats`, "I-Ticket Revenue:", formatCurrency(totalRevenue)],
-    ["I-Ticket Bookings:", `${iTicketPassengers} passengers`, "Platform Commission:", formatCurrency(totalCommission)],
-    ["Manual/Office Sales:", `${manualSales} tickets`, "Company Net Revenue:", formatCurrency(totalRevenue - totalCommission)],
+    ["Total Capacity:", `${trip.totalSlots} seats`, "Online Revenue (i-Ticket):", formatCurrency(onlineRevenue)],
+    ["Online Bookings:", `${onlineCount} passengers`, "Platform Commission:", formatCurrency(totalCommission)],
+    ["Manual/Office Sales:", `${manualCount} tickets`, "Company Net (Online):", formatCurrency(onlineRevenue - totalCommission)],
     ["Total Booked:", `${totalBooked}/${trip.totalSlots}`, "Average per Seat:", formatCurrency(Number(trip.price))],
     ["Available Seats:", `${trip.availableSlots}`, "Bus Occupancy:", `${Math.round((totalBooked / trip.totalSlots) * 100)}%`],
   ]
