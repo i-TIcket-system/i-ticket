@@ -57,7 +57,7 @@ const features = [
 ]
 
 const stats = [
-  { value: "50K+", label: "Happy Travelers", icon: Users },
+  { value: "1K+", label: "Happy Travelers", icon: Users },
   { value: "100+", label: "Daily Trips", icon: Bus },
   { value: "20+", label: "Destinations", icon: MapPin },
   { value: "5+", label: "Partner Companies", icon: Sparkles },
@@ -459,7 +459,7 @@ export default function HomePage() {
               </Button>
             </Link>
             <Link href="/register">
-              <Button size="lg" variant="outline" className="h-14 px-8 text-base font-medium border-white/20 text-white hover:bg-white/10 hover:text-white">
+              <Button size="lg" variant="outline" className="h-14 px-8 text-base font-medium border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/50 backdrop-blur-sm">
                 <UserPlus className="h-5 w-5 mr-2" />
                 Create Account
               </Button>

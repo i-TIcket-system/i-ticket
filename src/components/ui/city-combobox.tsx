@@ -137,7 +137,7 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
                   className={cn(
                     "w-full text-left px-3 py-2 rounded-sm transition-colors",
                     "flex items-center gap-2",
-                    "hover:bg-primary/10 hover:text-primary",
+                    "text-foreground hover:bg-primary/10 hover:text-primary",
                     city === inputValue && "bg-primary/20 text-primary font-medium"
                   )}
                 >
@@ -145,7 +145,7 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
                     "h-3 w-3 flex-shrink-0",
                     city === inputValue ? "text-primary" : "text-muted-foreground"
                   )} />
-                  <span className="text-sm flex-1">
+                  <span className="text-sm flex-1 text-inherit">
                     {city || "[Empty]"}
                   </span>
                 </button>
