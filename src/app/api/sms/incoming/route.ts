@@ -44,15 +44,39 @@ function validateEthiopianPhone(phone: string): boolean {
 
 /**
  * Sanitize user input to prevent injection attacks
+ * Enhanced security: HTML encoding + strict character allowlist
  *
  * @param input - User input string
  * @returns Sanitized string
  */
 function sanitizeInput(input: string): string {
-  return input
-    .replace(/[^\w\s\-.,አ-ፚ]/g, '') // Allow letters, numbers, spaces, basic punctuation, and Amharic chars
-    .trim()
-    .slice(0, 500); // Max 500 chars
+  if (!input || typeof input !== 'string') {
+    return ''
+  }
+
+  // Step 1: Basic cleanup
+  let sanitized = input.trim()
+
+  // Step 2: Limit length FIRST (prevent ReDoS attacks)
+  sanitized = sanitized.slice(0, 500)
+
+  // Step 3: Remove dangerous characters (strict allowlist)
+  // Allow: letters, numbers, spaces, basic punctuation, Amharic characters
+  sanitized = sanitized.replace(/[^\w\s\-.,አ-ፚ]/g, '')
+
+  // Step 4: HTML encode for XSS prevention
+  sanitized = sanitized
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;')
+
+  // Step 5: Remove excessive whitespace
+  sanitized = sanitized.replace(/\s+/g, ' ').trim()
+
+  return sanitized
 }
 
 /**

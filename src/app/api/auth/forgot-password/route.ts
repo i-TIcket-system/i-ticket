@@ -31,20 +31,18 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Generate 6-digit reset code
-    const resetToken = Math.floor(100000 + Math.random() * 900000).toString()
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+    // Generate cryptographically secure reset token
+    // Token is hashed before storage for security
+    const { token: resetToken, expiresAt } = await createPasswordReset(user.id, 1) // 1 hour expiry
 
-    // Store reset token (in production, use a separate PasswordReset table)
-    // For now, we'll use AdminLog as a temporary storage
+    // Log the request for audit trail
     await prisma.adminLog.create({
       data: {
         userId: user.id,
         action: "PASSWORD_RESET_REQUEST",
         details: JSON.stringify({
-          resetToken,
-          expiresAt: expiresAt.toISOString(),
           phone: user.phone,
+          expiresAt: expiresAt.toISOString(),
         }),
       },
     })

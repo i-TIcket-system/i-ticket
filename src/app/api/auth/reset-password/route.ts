@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import bcrypt from "bcryptjs"
 import { resetPasswordSchema, validateRequest } from "@/lib/validations"
+import { verifyResetToken } from "@/lib/password-reset"
 
 /**
  * Reset password using reset token
@@ -16,39 +17,10 @@ export async function POST(request: NextRequest) {
 
     const { token, newPassword } = validation.data
 
-    // Find the most recent password reset request with this token
-    const recentResets = await prisma.adminLog.findMany({
-      where: {
-        action: "PASSWORD_RESET_REQUEST",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 100, // Check last 100 reset requests
-    })
+    // Verify token and get userId (also marks token as used)
+    const userId = await verifyResetToken(token)
 
-    let matchingReset = null
-    let userId = null
-
-    for (const reset of recentResets) {
-      try {
-        const details = JSON.parse(reset.details || "{}")
-        if (details.resetToken === token) {
-          // Check if token is expired
-          const expiresAt = new Date(details.expiresAt)
-          if (expiresAt > new Date()) {
-            matchingReset = reset
-            userId = reset.userId
-            break
-          }
-        }
-      } catch (e) {
-        // Skip invalid JSON
-        continue
-      }
-    }
-
-    if (!matchingReset || !userId) {
+    if (!userId) {
       return NextResponse.json(
         { error: "Invalid or expired reset token" },
         { status: 400 }

@@ -4,13 +4,24 @@ import prisma from "@/lib/db"
 import { authOptions } from "@/lib/auth"
 import { generateShortCode } from "@/lib/utils"
 import QRCode from "qrcode"
+import { checkEnhancedRateLimit, checkBookingRateLimit, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-
     const body = await request.json()
     const { bookingId, method } = body
+
+    // SECURITY: Enhanced rate limiting (IP + user + per-booking)
+    // Prevents attacks using multiple IPs or spamming same booking
+    if (!checkEnhancedRateLimit(request, session?.user?.id, RATE_LIMITS.PROCESS_PAYMENT)) {
+      return rateLimitExceeded(60)
+    }
+
+    // SECURITY: Per-booking rate limiting (max 3 payment attempts per booking per hour)
+    if (!checkBookingRateLimit(bookingId, 3, 60 * 60 * 1000)) {
+      return rateLimitExceeded(3600) // Retry after 1 hour
+    }
 
     // Get booking with user details
     const booking = await prisma.booking.findUnique({
@@ -67,8 +78,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // SECURITY: Recalculate amount server-side (never trust client)
+    const passengerCount = booking.passengers.length
+    const tripPrice = Number(booking.trip.price)
+    const expectedTicketAmount = tripPrice * passengerCount
+    const expectedCommission = Math.round(expectedTicketAmount * 0.05)
+    const expectedTotal = expectedTicketAmount + expectedCommission
+
+    // Verify booking amounts match expected calculation
+    if (Math.abs(Number(booking.totalAmount) - expectedTicketAmount) > 0.01) {
+      console.error(`[Payment] Amount mismatch: Expected ${expectedTicketAmount}, got ${booking.totalAmount}`)
+      return NextResponse.json(
+        { error: "Booking amount mismatch. Please create a new booking." },
+        { status: 400 }
+      )
+    }
+
+    if (Math.abs(Number(booking.commission) - expectedCommission) > 0.01) {
+      console.error(`[Payment] Commission mismatch: Expected ${expectedCommission}, got ${booking.commission}`)
+      return NextResponse.json(
+        { error: "Commission calculation error. Please create a new booking." },
+        { status: 400 }
+      )
+    }
+
     // Customer pays: ticket price + 5% commission
-    const totalAmount = Number(booking.totalAmount) + Number(booking.commission)
+    const totalAmount = expectedTotal
 
     // In demo mode, simulate successful payment
     // In production, integrate with TeleBirr API

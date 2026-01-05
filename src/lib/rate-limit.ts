@@ -147,6 +147,68 @@ export function getClientIdentifier(request: Request): string {
 }
 
 /**
+ * Enhanced rate limiting: Check BOTH IP and user-based limits
+ * Prevents attacks using multiple IPs
+ *
+ * @param request - HTTP request
+ * @param userId - Optional user ID for user-based limiting
+ * @param config - Rate limit configuration
+ * @returns true if allowed, false if rate limited
+ */
+export function checkEnhancedRateLimit(
+  request: Request,
+  userId: string | null | undefined,
+  config: { maxRequests: number; windowMs: number }
+): boolean {
+  // Check 1: IP-based rate limiting
+  const ip = getClientIdentifier(request)
+  const ipAllowed = globalRateLimiter.check(
+    `ip:${ip}`,
+    config.maxRequests,
+    config.windowMs
+  )
+
+  if (!ipAllowed) {
+    return false
+  }
+
+  // Check 2: User-based rate limiting (if authenticated)
+  if (userId) {
+    const userAllowed = globalRateLimiter.check(
+      `user:${userId}`,
+      config.maxRequests,
+      config.windowMs
+    )
+
+    if (!userAllowed) {
+      return false
+    }
+  }
+
+  return true
+}
+
+/**
+ * Per-booking rate limiting (prevent payment spam on single booking)
+ *
+ * @param bookingId - Booking ID
+ * @param maxAttempts - Maximum payment attempts allowed
+ * @param windowMs - Time window
+ * @returns true if allowed, false if rate limited
+ */
+export function checkBookingRateLimit(
+  bookingId: string,
+  maxAttempts: number = 3,
+  windowMs: number = 60 * 60 * 1000 // 1 hour
+): boolean {
+  return globalRateLimiter.check(
+    `booking:${bookingId}`,
+    maxAttempts,
+    windowMs
+  )
+}
+
+/**
  * Helper function to create rate limit error response
  */
 export function rateLimitExceeded(retryAfter: number = 60) {
