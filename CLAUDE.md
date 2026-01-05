@@ -25,7 +25,7 @@ This document tracks major features and technical architecture for the i-Ticket 
 - **CRITICAL SECURITY HARDENING** - Comprehensive security audit identified and fixed 16 vulnerabilities (6 P0 critical, 5 P1 high, 3 P2, 2 P3). Production-ready security achieved (C- → A- rating)
   - **P0 Fixes**: Environment validation, credential rotation, trip update IDOR protection, booking race condition fix (row-level locking), payment callback replay protection (SHA-256 hashing), SQL injection prevention
   - **P1 Fixes**: Secure password reset system (bcrypt hashed tokens), reduced session duration (7 days → 24 hours), payment amount server-side verification, enhanced SMS sanitization (5-layer XSS prevention), enhanced rate limiting (IP + User + Booking)
-  - **P2/P3 Fixes**: Cryptographically secure short codes (crypto.randomBytes), safe error messages, passenger data validation, transaction timeouts, performance indexes
+  - **P2/P3 Fixes**: Cryptographically secure short codes (crypto.randomBytes), safe error messages, passenger data validation, transaction timeouts, performance indexes, CSP security headers, optimistic locking (version field)
   - **New Models**: ProcessedCallback (replay protection), PasswordReset (secure tokens)
   - **New Utilities**: trip-update-validator.ts, callback-hash.ts, password-reset.ts, error-handler.ts
   - **Documentation**: SECURITY.md (479 lines), .env.example (77 lines)
@@ -211,6 +211,8 @@ This document tracks major features and technical architecture for the i-Ticket 
 - **Business Logic Protection**: Trip price/slot immutability after paid bookings, audit trail for all blocked attempts
 - **Data Security**: Cryptographically secure random generation (crypto.randomBytes), XSS prevention (HTML encoding), safe error messages (no technical details leaked)
 - **Performance**: Transaction timeouts (10s), composite database indexes, optimized queries
+- **Browser Security**: Content Security Policy headers (XSS/injection prevention), X-Frame-Options (clickjacking prevention), strict referrer policy
+- **Concurrency**: Optimistic locking with version field (prevents concurrent update conflicts)
 
 ---
 
