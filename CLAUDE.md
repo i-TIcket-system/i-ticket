@@ -22,6 +22,14 @@ This document tracks major features and technical architecture for the i-Ticket 
 ## Recent Development Summary
 
 ### January 2026
+- **CRITICAL SECURITY HARDENING** - Comprehensive security audit identified and fixed 16 vulnerabilities (6 P0 critical, 5 P1 high, 3 P2, 2 P3). Production-ready security achieved (C- → A- rating)
+  - **P0 Fixes**: Environment validation, credential rotation, trip update IDOR protection, booking race condition fix (row-level locking), payment callback replay protection (SHA-256 hashing), SQL injection prevention
+  - **P1 Fixes**: Secure password reset system (bcrypt hashed tokens), reduced session duration (7 days → 24 hours), payment amount server-side verification, enhanced SMS sanitization (5-layer XSS prevention), enhanced rate limiting (IP + User + Booking)
+  - **P2/P3 Fixes**: Cryptographically secure short codes (crypto.randomBytes), safe error messages, passenger data validation, transaction timeouts, performance indexes
+  - **New Models**: ProcessedCallback (replay protection), PasswordReset (secure tokens)
+  - **New Utilities**: trip-update-validator.ts, callback-hash.ts, password-reset.ts, error-handler.ts
+  - **Documentation**: SECURITY.md (479 lines), .env.example (77 lines)
+- **Payment Architecture Clarification** - Platform-as-Merchant model with bank account settlements confirmed as optimal approach. TeleBirr multi-merchant routing not supported; WeBirr aggregator research recommended for multi-payment method support (TeleBirr + CBE Birr + Awash Birr)
 - **Comprehensive UI Overhaul** - Complete design system with teal gradient theme, custom animations (fade-up, slide-in, scale-in, float, shimmer), Ethiopian patterns (SVG backgrounds, flag-colored accents), responsive components, modern auth pages, enhanced home page
 - **Collapsible Sidebars** - Responsive navigation across all admin interfaces (Super Admin, Company Admin, Sales Person, Staff) with tooltips, smooth animations, and mobile hamburger menus
 - **ClickUp Integration** - One-way task management automation for support tickets (priority-mapped), audit logs (company activation/deactivation, trip operations), and low slot alerts (urgent 2-hour deadlines). Fire-and-forget async calls with exponential backoff retry logic
@@ -145,6 +153,8 @@ This document tracks major features and technical architecture for the i-Ticket 
 - **SalesReferral** - Lifetime user attribution (userId unique)
 - **SalesCommission** - Commission per booking (5% of platform's 5%)
 - **SalesPayout** - Payout records (Cash/TeleBirr)
+- **ProcessedCallback** - Payment callback idempotency tracking (`transactionId`, `callbackHash`, replay protection)
+- **PasswordReset** - Secure password reset tokens (`tokenHash` bcrypt, `isUsed`, one-time use enforcement)
 
 ### External Integrations
 - **TeleBirr** - Payment gateway (web + SMS merchant-initiated payments, HMAC-SHA256 signature verification)
@@ -182,20 +192,25 @@ This document tracks major features and technical architecture for the i-Ticket 
 ### Key Libraries
 - **Reports**: `src/lib/report-generator.ts`, `src/lib/platform-revenue-report.ts`
 - **SMS**: `src/lib/sms/bot.ts`, `src/lib/sms/gateway.ts`, `src/lib/sms/messages.ts`
-- **Payments**: `src/lib/payments/telebirr.ts`
+- **Payments**: `src/lib/payments/telebirr.ts`, `src/lib/payments/callback-hash.ts` (replay protection)
 - **Sales**: `src/lib/sales/referral-utils.ts` (QR generation, code generation, visitor hashing)
 - **ClickUp**: `src/lib/clickup/client.ts`, `src/lib/clickup/task-templates.ts`, `src/lib/clickup/index.ts`
 - **Charts**: `recharts` (analytics visualization for revenue charts)
+- **Security**: `src/lib/trip-update-validator.ts` (business rule enforcement), `src/lib/password-reset.ts` (secure token management), `src/lib/error-handler.ts` (safe error responses)
 - **Hooks**: `src/hooks/use-referral-tracking.ts` (client-side referral tracking)
-- **Utils**: `src/lib/rate-limit.ts`, `src/lib/validations.ts`, `src/lib/auth-helpers.ts`, `src/lib/city-utils.ts`
+- **Utils**: `src/lib/rate-limit.ts` (enhanced multi-layer limiting), `src/lib/validations.ts`, `src/lib/auth-helpers.ts`, `src/lib/city-utils.ts`
 
 ### Security Features
-- Zod validation on all inputs
-- Rate limiting (staff: 10/hr, tickets: 5/hr, SMS: per-phone)
-- Password hashing (bcrypt)
-- Role-based authorization
-- Input sanitization (SQL injection, XSS prevention)
-- Payment signature verification (HMAC-SHA256)
+- **Environment Security**: NEXTAUTH_SECRET validation on startup (32+ byte requirement), strong credential enforcement, .gitignore protection
+- **Authentication**: Password hashing (bcrypt), secure password reset (hashed tokens, one-time use), session duration 24 hours (reduced from 7 days)
+- **Authorization**: Role-based access control, field-level permissions (trip updates), ownership verification
+- **Input Validation**: Zod schemas on all endpoints, passenger data validation (name length, national ID format, child limits), SQL injection prevention (parameterized queries)
+- **Rate Limiting**: Enhanced multi-layer (IP + User + Booking), SMS per-phone limiting, payment spam protection (3 attempts per booking per hour)
+- **Payment Security**: Callback replay protection (SHA-256 hash + transaction ID), signature verification (HMAC-SHA256), amount recalculation server-side, idempotency enforcement
+- **Race Condition Protection**: PostgreSQL row-level locking (SELECT FOR UPDATE NOWAIT), atomic slot updates, transaction isolation (Serializable)
+- **Business Logic Protection**: Trip price/slot immutability after paid bookings, audit trail for all blocked attempts
+- **Data Security**: Cryptographically secure random generation (crypto.randomBytes), XSS prevention (HTML encoding), safe error messages (no technical details leaked)
+- **Performance**: Transaction timeouts (10s), composite database indexes, optimized queries
 
 ---
 
