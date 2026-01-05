@@ -214,9 +214,14 @@ export async function PUT(
       newAvailableSlots = Math.max(0, existingTrip.availableSlots + slotsDifference)
     }
 
+    // OPTIMISTIC LOCKING: Update with version check
     const updatedTrip = await prisma.trip.update({
-      where: { id: tripId },
+      where: {
+        id: tripId,
+        version: existingTrip.version // Ensures no concurrent modification
+      },
       data: {
+        version: { increment: 1 }, // Increment version on each update
         ...(origin && { origin }),
         ...(destination && { destination }),
         ...(departureTime && { departureTime: new Date(departureTime) }),

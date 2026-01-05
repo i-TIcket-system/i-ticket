@@ -123,12 +123,14 @@ model Trip {
   bookingHalted            Boolean   @default(false)
   adminResumedFromAutoHalt Boolean   @default(false)
   reportGenerated          Boolean   @default(false)
+  version           Int       @default(0)  // P3: Optimistic locking version
   bookings          Booking[]
   tickets           Ticket[]
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   @@index([origin, destination, departureTime])
+  @@index([version])  // P3: Index for optimistic locking queries
   @@index([departureTime])
   @@index([companyId])
   @@index([driverId])
