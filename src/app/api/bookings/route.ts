@@ -133,30 +133,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use transaction to ensure atomic booking
+    // Use transaction to ensure atomic booking with row-level locking
     const booking = await prisma.$transaction(async (tx) => {
-      // Get trip info
-      const trip = await tx.trip.findUnique({
-        where: { id: tripId },
-      })
+      // CRITICAL: Use SELECT FOR UPDATE NOWAIT to lock the trip row
+      // This prevents concurrent bookings from reading stale availableSlots
+      const trip = await tx.$queryRaw<Array<{
+        id: string
+        companyId: string
+        availableSlots: number
+        bookingHalted: boolean
+        totalSlots: number
+        price: number
+      }>>`
+        SELECT id, "companyId", "availableSlots", "bookingHalted", "totalSlots", price
+        FROM "Trip"
+        WHERE id = ${tripId}
+        FOR UPDATE NOWAIT
+      `
 
-      if (!trip) {
+      if (!trip || trip.length === 0) {
         throw new Error("Trip not found")
       }
 
-      if (trip.bookingHalted) {
+      const lockedTrip = trip[0]
+
+      if (lockedTrip.bookingHalted) {
         throw new Error("Booking is currently halted for this trip")
       }
 
-      if (trip.availableSlots < passengers.length) {
-        throw new Error("Not enough seats available")
+      if (lockedTrip.availableSlots < passengers.length) {
+        throw new Error(`Only ${lockedTrip.availableSlots} seats available`)
       }
 
       // Get available seat numbers
       const seatNumbers = await getAvailableSeatNumbers(
         tripId,
         passengers.length,
-        trip.totalSlots,
+        lockedTrip.totalSlots,
         tx
       )
 
@@ -202,25 +215,18 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // ATOMIC UPDATE: Only decrement if enough slots still available
-      // This prevents race conditions by using a WHERE clause
-      const updateResult = await tx.trip.updateMany({
-        where: {
-          id: tripId,
-          availableSlots: {
-            gte: passengers.length,
-          },
-          bookingHalted: false,
-        },
-        data: {
-          availableSlots: {
-            decrement: passengers.length,
-          },
-        },
-      })
+      // ATOMIC UPDATE: Use raw SQL for better concurrency control
+      const updateResult = await tx.$executeRaw`
+        UPDATE "Trip"
+        SET "availableSlots" = "availableSlots" - ${passengers.length},
+            "updatedAt" = NOW()
+        WHERE id = ${tripId}
+          AND "availableSlots" >= ${passengers.length}
+          AND "bookingHalted" = false
+      `
 
       // If no rows were updated, another booking took the seats
-      if (updateResult.count === 0) {
+      if (updateResult === 0) {
         throw new Error("Seats no longer available. Please search again.")
       }
 
@@ -311,8 +317,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ booking }, { status: 201 })
   } catch (error) {
     console.error("Booking error:", error)
+
+    // Handle lock timeout (NOWAIT failed - another booking in progress)
+    if (error instanceof Error) {
+      if (error.message.includes('could not obtain lock') ||
+          error.message.includes('NOWAIT')) {
+        return NextResponse.json(
+          { error: "This trip is being booked by another user. Please try again in a moment." },
+          { status: 409 }
+        )
+      }
+
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      )
+    }
+
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Booking failed" },
+      { error: "Booking failed" },
       { status: 500 }
     )
   }

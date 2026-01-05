@@ -466,3 +466,23 @@ model SalesPayout {
 
   @@index([salesPersonId, createdAt])
 }
+
+model ProcessedCallback {
+  id              String   @id @default(cuid())
+  transactionId   String   @unique
+  bookingId       String
+  callbackHash    String   @unique
+  nonce           String?
+  status          String
+  processedAt     DateTime @default(now())
+
+  // Metadata for debugging
+  amount          Float
+  signature       String
+  rawPayload      String   @db.Text
+
+  @@index([transactionId])
+  @@index([bookingId])
+  @@index([callbackHash])
+  @@index([processedAt])
+}

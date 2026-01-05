@@ -3,6 +3,52 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import prisma from "./db"
 
+// Validate required environment variables at startup
+function validateEnvVars() {
+  const required = {
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    DATABASE_URL: process.env.DATABASE_URL,
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+  }
+
+  const missing: string[] = []
+
+  for (const [key, value] of Object.entries(required)) {
+    if (!value || value.trim() === '') {
+      missing.push(key)
+    }
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missing.join(', ')}\n` +
+      `Please check your .env.local file and ensure all required variables are set.`
+    )
+  }
+
+  // Validate NEXTAUTH_SECRET strength
+  const secret = required.NEXTAUTH_SECRET!
+  if (secret.length < 32) {
+    throw new Error(
+      `NEXTAUTH_SECRET is too weak (${secret.length} characters). ` +
+      `Generate a strong secret with: node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
+    )
+  }
+
+  // Warn about default values in production
+  if (process.env.NODE_ENV === 'production') {
+    if (secret.includes('your-super-secret-key') || secret.includes('change-in-production')) {
+      throw new Error(
+        'NEXTAUTH_SECRET contains default placeholder text. ' +
+        'You MUST generate a new secret for production.'
+      )
+    }
+  }
+}
+
+// Run validation on module load
+validateEnvVars()
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({

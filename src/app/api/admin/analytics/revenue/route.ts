@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
     thirtyDaysAgo.setHours(0, 0, 0, 0)
 
-    // Query daily revenue
+    // Query daily revenue with explicit type casting for SQL injection safety
     const dailyRevenue = await prisma.$queryRaw<Array<{
       date: Date
       revenue: number
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
         COUNT(*)::int as bookings
       FROM "Booking"
       WHERE status = 'PAID'
-        AND "createdAt" >= ${thirtyDaysAgo}
+        AND "createdAt" >= ${thirtyDaysAgo}::timestamp
       GROUP BY DATE("createdAt")
       ORDER BY date ASC
     `

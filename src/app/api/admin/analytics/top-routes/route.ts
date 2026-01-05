@@ -23,27 +23,36 @@ export async function GET(request: NextRequest) {
     const thirtyDaysAgo = new Date()
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
+    // Use parameterized query with explicit type casting for SQL injection safety
     const topRoutes = await prisma.$queryRaw<Array<{
       origin: string
       destination: string
-      bookings: number
-      revenue: number
+      bookings: bigint
+      revenue: bigint
     }>>`
       SELECT
         t.origin,
         t.destination,
-        COUNT(b.id)::int as bookings,
-        COALESCE(SUM(b."totalAmount"), 0)::float as revenue
+        COUNT(b.id) as bookings,
+        COALESCE(SUM(b."totalAmount"), 0) as revenue
       FROM "Trip" t
       INNER JOIN "Booking" b ON b."tripId" = t.id
       WHERE b.status = 'PAID'
-        AND b."createdAt" >= ${thirtyDaysAgo}
+        AND b."createdAt" >= ${thirtyDaysAgo}::timestamp
       GROUP BY t.origin, t.destination
       ORDER BY bookings DESC
       LIMIT 5
     `
 
-    return NextResponse.json({ topRoutes })
+    // Convert bigint to number for JSON serialization
+    const formattedRoutes = topRoutes.map(route => ({
+      origin: route.origin,
+      destination: route.destination,
+      bookings: Number(route.bookings),
+      revenue: Number(route.revenue)
+    }))
+
+    return NextResponse.json({ topRoutes: formattedRoutes })
   } catch (error) {
     console.error('[Top Routes] Error:', error)
     return NextResponse.json(

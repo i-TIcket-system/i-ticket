@@ -6,7 +6,7 @@ services:
     container_name: iticket-postgres
     environment:
       POSTGRES_USER: iticket
-      POSTGRES_PASSWORD: iticket123
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-f07b194d24b363497d8dc1c64e6e16c6}
       POSTGRES_DB: iticket
     ports:
       - "5432:5432"

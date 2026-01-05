@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import prisma from "@/lib/db"
 import { authOptions } from "@/lib/auth"
 import { createAuditLogTask } from "@/lib/clickup"
+import { validateTripUpdate } from "@/lib/trip-update-validator"
 
 export async function GET(
   request: NextRequest,
@@ -186,6 +187,25 @@ export async function PUT(
       manualTicketerId,
       vehicleId,
     } = body
+
+    // SECURITY: Validate update based on business rules
+    const validation = await validateTripUpdate(tripId, {
+      price,
+      totalSlots,
+      busType,
+      departureTime,
+    })
+
+    if (!validation.allowed) {
+      return NextResponse.json(
+        {
+          error: validation.reason,
+          blockedFields: validation.blockedFields,
+          paidBookingCount: validation.paidBookingCount
+        },
+        { status: 403 }
+      )
+    }
 
     // Calculate new available slots if total slots changed
     let newAvailableSlots = existingTrip.availableSlots

@@ -4,6 +4,7 @@ import { verifyTelebirrSignature, type TelebirrCallbackPayload } from "@/lib/pay
 import { generateShortCode } from "@/lib/utils";
 import { getSmsGateway } from "@/lib/sms/gateway";
 import QRCode from "qrcode";
+import { generateCallbackHash, isCallbackProcessed, recordProcessedCallback } from "@/lib/payments/callback-hash";
 
 /**
  * POST /api/payments/telebirr/callback
@@ -31,8 +32,48 @@ export async function POST(request: NextRequest) {
 
     const isDemoMode = process.env.DEMO_MODE === 'true';
 
+    // SECURITY CHECK 1: Generate callback hash for idempotency
+    const callbackHash = generateCallbackHash(body);
+
+    // SECURITY CHECK 2: Check if already processed (prevents replay attacks)
+    const { processed, existingRecord } = await isCallbackProcessed(
+      transactionId,
+      callbackHash
+    );
+
+    if (processed) {
+      console.warn(`[TeleBirr Callback] REPLAY DETECTED: ${transactionId}`);
+      console.warn(`[TeleBirr Callback] Original processing: ${existingRecord.processedAt}`);
+
+      // Log replay attempt for forensics
+      await prisma.adminLog.create({
+        data: {
+          userId: 'SYSTEM',
+          action: 'PAYMENT_CALLBACK_REPLAY_BLOCKED',
+          details: JSON.stringify({
+            transactionId,
+            callbackHash,
+            originalProcessedAt: existingRecord.processedAt,
+            attemptedAt: new Date().toISOString(),
+            clientIP: request.headers.get('x-forwarded-for') ||
+                     request.headers.get('x-real-ip') ||
+                     'unknown'
+          })
+        }
+      });
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Already processed",
+          processedAt: existingRecord.processedAt
+        },
+        { status: 200 }
+      );
+    }
+
     if (!isDemoMode) {
-      // Security Check 1: Verify signature
+      // Security Check 3: Verify signature
       if (!verifyTelebirrSignature(body)) {
         console.error('[TeleBirr Callback] Invalid signature');
         return NextResponse.json(
@@ -117,6 +158,20 @@ export async function POST(request: NextRequest) {
       console.log(`[TeleBirr Callback] Payment already processed: ${transactionId}`);
       return NextResponse.json({ success: true, message: "Already processed" });
     }
+
+    // CRITICAL: Record callback as processed BEFORE handling
+    // This ensures idempotency even if processing fails
+    await recordProcessedCallback(
+      transactionId,
+      payment.bookingId,
+      callbackHash,
+      body,
+      status,
+      parseFloat(amount),
+      signature
+    );
+
+    console.log(`[TeleBirr Callback] Recorded callback for idempotency: ${transactionId}`);
 
     // Process based on status
     if (status === 'SUCCESS') {
