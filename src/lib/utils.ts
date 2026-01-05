@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import crypto from "crypto"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -28,12 +29,19 @@ export function formatDuration(minutes: number): string {
   return `${hours}h ${mins}min`
 }
 
+/**
+ * Generate cryptographically secure 6-character short code
+ * Uses crypto.randomBytes instead of Math.random for security
+ */
 export function generateShortCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const bytes = crypto.randomBytes(6)
   let code = ''
+
   for (let i = 0; i < 6; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
+    code += chars[bytes[i] % chars.length]
   }
+
   return code
 }
 

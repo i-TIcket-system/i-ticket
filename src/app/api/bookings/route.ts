@@ -133,6 +133,54 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // SECURITY: Validate passenger data
+    let childCount = 0
+    for (const passenger of passengers) {
+      // Validate required fields for non-child passengers
+      if (!passenger.isChild) {
+        if (!passenger.name || !passenger.nationalId) {
+          return NextResponse.json(
+            { error: "All passengers must have name and national ID" },
+            { status: 400 }
+          )
+        }
+
+        // Validate national ID format (basic check)
+        if (passenger.nationalId.length < 4) {
+          return NextResponse.json(
+            { error: "Invalid national ID format" },
+            { status: 400 }
+          )
+        }
+      } else {
+        childCount++
+      }
+
+      // Validate name length
+      if (passenger.name && (passenger.name.length < 2 || passenger.name.length > 100)) {
+        return NextResponse.json(
+          { error: "Passenger names must be between 2 and 100 characters" },
+          { status: 400 }
+        )
+      }
+    }
+
+    // SECURITY: Limit child passengers (prevent abuse)
+    if (childCount > 3) {
+      return NextResponse.json(
+        { error: "Maximum 3 child passengers per booking. Children must be accompanied by adults." },
+        { status: 400 }
+      )
+    }
+
+    // Require at least one adult if children are present
+    if (childCount > 0 && childCount === passengers.length) {
+      return NextResponse.json(
+        { error: "Child passengers must be accompanied by at least one adult" },
+        { status: 400 }
+      )
+    }
+
     // Use transaction to ensure atomic booking with row-level locking
     const booking = await prisma.$transaction(async (tx) => {
       // CRITICAL: Use SELECT FOR UPDATE NOWAIT to lock the trip row
@@ -312,6 +360,8 @@ export async function POST(request: NextRequest) {
       }
 
       return newBooking
+    }, {
+      timeout: 10000, // 10 second timeout for booking transaction
     })
 
     return NextResponse.json({ booking }, { status: 201 })

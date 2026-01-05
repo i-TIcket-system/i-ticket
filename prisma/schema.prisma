@@ -46,6 +46,7 @@ model User {
   @@index([companyId])
   @@index([isGuestUser, createdAt])
   @@index([companyId, staffRole])
+  @@index([phone, isGuestUser])  // P3-2: Optimize guest user lookups
 }
 
 model Company {
@@ -234,6 +235,7 @@ model Ticket {
 
   @@index([tripId])
   @@index([shortCode])
+  @@index([shortCode, isUsed])  // P3-2: Optimize ticket verification queries
 }
 
 model Payment {
