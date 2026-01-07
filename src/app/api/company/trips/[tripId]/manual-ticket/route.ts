@@ -66,7 +66,7 @@ export async function POST(
 
     // Update available slots in transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Get available seat numbers BEFORE decrementing slots
+      // AUTO-ASSIGNMENT: Get available seat numbers automatically
       const seatNumbers = await getAvailableSeatNumbers(
         params.tripId,
         passengerCount,

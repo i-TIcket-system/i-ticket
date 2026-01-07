@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     const session = await getServerSession(authOptions)
     const body = await request.json()
-    const { tripId, passengers, totalAmount, commission, smsSessionId } = body
+    const { tripId, passengers, totalAmount, commission, smsSessionId, selectedSeats } = body
 
     // Determine userId based on authentication method
     let userId: string;
@@ -213,13 +213,54 @@ export async function POST(request: NextRequest) {
         throw new Error(`Only ${lockedTrip.availableSlots} seats available`)
       }
 
-      // Get available seat numbers
-      const seatNumbers = await getAvailableSeatNumbers(
-        tripId,
-        passengers.length,
-        lockedTrip.totalSlots,
-        tx
-      )
+      // Seat assignment: Use selected seats if provided, otherwise auto-assign
+      let seatNumbers: number[]
+
+      if (selectedSeats && Array.isArray(selectedSeats) && selectedSeats.length > 0) {
+        // MANUAL SELECTION: Validate user-selected seats
+        if (selectedSeats.length !== passengers.length) {
+          throw new Error(`You must select exactly ${passengers.length} seat${passengers.length > 1 ? 's' : ''} for ${passengers.length} passenger${passengers.length > 1 ? 's' : ''}`)
+        }
+
+        // Verify all selected seats are available (security check)
+        const occupiedPassengers = await tx.passenger.findMany({
+          where: {
+            booking: {
+              tripId,
+              status: {
+                not: "CANCELLED",
+              },
+            },
+            seatNumber: {
+              in: selectedSeats,
+            },
+          },
+          select: {
+            seatNumber: true,
+          },
+        })
+
+        if (occupiedPassengers.length > 0) {
+          const occupiedNumbers = occupiedPassengers.map((p: any) => p.seatNumber).join(", ")
+          throw new Error(`Seats ${occupiedNumbers} are no longer available. Please select different seats.`)
+        }
+
+        // Verify seats are within valid range
+        const invalidSeats = selectedSeats.filter((s: number) => s < 1 || s > lockedTrip.totalSlots)
+        if (invalidSeats.length > 0) {
+          throw new Error(`Invalid seat numbers: ${invalidSeats.join(", ")}`)
+        }
+
+        seatNumbers = selectedSeats
+      } else {
+        // AUTO-ASSIGNMENT: Get available seat numbers automatically
+        seatNumbers = await getAvailableSeatNumbers(
+          tripId,
+          passengers.length,
+          lockedTrip.totalSlots,
+          tx
+        )
+      }
 
       // Create booking with seat assignments
       const newBooking = await tx.booking.create({

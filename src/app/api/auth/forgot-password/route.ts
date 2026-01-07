@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { requestPasswordResetSchema, validateRequest } from "@/lib/validations"
 import { generateShortCode } from "@/lib/utils"
+import { createPasswordReset } from "@/lib/password-reset"
 
 /**
  * Request a password reset

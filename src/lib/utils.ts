@@ -46,7 +46,7 @@ export function generateShortCode(): string {
 }
 
 export function calculateCommission(amount: number): number {
-  return amount * 0.05 // 5% commission
+  return Math.round(amount * 0.05) // 5% commission, rounded to match backend validation
 }
 
 export function getSlotsPercentage(available: number, total: number): number {

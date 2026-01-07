@@ -159,7 +159,7 @@ export function Navbar() {
                   <DropdownMenuSeparator />
                   <div className="p-1">
                     <DropdownMenuItem
-                      onClick={() => signOut()}
+                      onClick={() => signOut({ callbackUrl: '/' })}
                       className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
                     >
                       <LogOut className="mr-2 h-4 w-4" />
@@ -238,7 +238,7 @@ export function Navbar() {
                     className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-destructive hover:bg-destructive/10 transition-colors text-left font-medium"
                     onClick={() => {
                       setMobileMenuOpen(false)
-                      signOut()
+                      signOut({ callbackUrl: '/' })
                     }}
                   >
                     <LogOut className="h-4 w-4" />

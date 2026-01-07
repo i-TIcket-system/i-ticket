@@ -1,10 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Minus, Ticket, Loader2, Check } from "lucide-react"
+import { Plus, Minus, Ticket, Loader2, Check, Eye, EyeOff, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { SeatMap } from "@/components/booking/SeatMap"
 
 interface ManualTicketingCardProps {
   tripId: string
@@ -22,6 +23,8 @@ export function ManualTicketingCard({
   const [count, setCount] = useState(1)
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [showSeatMap, setShowSeatMap] = useState(false)
+  const [selectedSeats, setSelectedSeats] = useState<number[]>([])
 
   const handleSellTickets = async () => {
     setIsLoading(true)
@@ -37,16 +40,18 @@ export function ManualTicketingCard({
       const data = await response.json()
 
       if (response.ok) {
+        const assignedSeats = data.seatNumbers?.join(", ") || "auto-assigned"
         setMessage({
           type: "success",
-          text: `Sold ${count} ticket(s)! ${data.trip.availableSlots} seats remaining.`,
+          text: `Sold ${count} ticket(s)! Seats: ${assignedSeats}. ${data.trip.availableSlots} remaining.`,
         })
         setCount(1)
+        setSelectedSeats([]) // Clear any selections
         // Refresh parent component
         setTimeout(() => {
           onUpdate()
           setMessage(null)
-        }, 2000)
+        }, 10000) // 10 seconds - enough time to write seat numbers on paper ticket
       } else {
         setMessage({ type: "error", text: data.error || "Failed to record sale" })
       }
@@ -164,6 +169,51 @@ export function ManualTicketingCard({
         <p className="text-xs text-muted-foreground text-center">
           For tickets sold at your office. Online slots update automatically.
         </p>
+
+        {/* Seat Reference (Toggleable) */}
+        <div className="border-t pt-3">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full text-xs"
+            type="button"
+            onClick={() => setShowSeatMap(!showSeatMap)}
+          >
+            {showSeatMap ? (
+              <>
+                <EyeOff className="h-3 w-3 mr-1" />
+                Hide Seat Reference
+              </>
+            ) : (
+              <>
+                <Eye className="h-3 w-3 mr-1" />
+                View Available Seats
+              </>
+            )}
+          </Button>
+
+          {showSeatMap && (
+            <div className="mt-3 space-y-3 animate-fade-in">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-blue-700">
+                    <strong>Reference only.</strong> Seats auto-assigned when you sell.
+                    Write the assigned numbers on paper tickets.
+                  </p>
+                </div>
+              </div>
+              <div className="max-h-[300px] overflow-y-auto">
+                <SeatMap
+                  tripId={tripId}
+                  passengerCount={count}
+                  onSeatsSelected={() => {}} // View-only
+                  className="shadow-none border-0"
+                />
+              </div>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   )

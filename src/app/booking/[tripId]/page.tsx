@@ -23,7 +23,8 @@ import {
   BadgeCheck,
   Accessibility,
   Users,
-  Baby
+  Baby,
+  CheckCircle2
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -52,6 +53,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { formatCurrency, formatDuration, formatDate, calculateCommission, BUS_TYPES } from "@/lib/utils"
+import { SeatMap } from "@/components/booking/SeatMap"
 
 interface Trip {
   id: string
@@ -107,6 +109,7 @@ export default function BookingPage() {
 
   const [passengers, setPassengers] = useState<Passenger[]>([{ ...emptyPassenger }])
   const [passengerToRemove, setPassengerToRemove] = useState<number | null>(null)
+  const [selectedSeats, setSelectedSeats] = useState<number[]>([])
 
   useEffect(() => {
     fetchTrip()
@@ -254,6 +257,7 @@ export default function BookingPage() {
           passengers,
           totalAmount: subtotal,
           commission,
+          selectedSeats: selectedSeats.length > 0 ? selectedSeats : undefined, // Optional: auto-assign if not selected
         }),
       })
 
@@ -598,6 +602,13 @@ export default function BookingPage() {
                 ))}
               </CardContent>
             </Card>
+
+            {/* Seat Selection */}
+            <SeatMap
+              tripId={tripId}
+              passengerCount={passengers.length}
+              onSeatsSelected={setSelectedSeats}
+            />
           </div>
 
           {/* Price Summary Sidebar */}
@@ -625,6 +636,26 @@ export default function BookingPage() {
                   <span>Total</span>
                   <span className="text-primary">{formatCurrency(total)}</span>
                 </div>
+
+                {/* Selected Seats Summary */}
+                {selectedSeats.length > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium flex items-center gap-1">
+                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        Selected Seats:
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedSeats.map((seat) => (
+                          <Badge key={seat} variant="secondary" className="bg-blue-500 text-white">
+                            {seat}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 <div className="text-xs text-muted-foreground">
                   Price includes all taxes and fees. Payment via TeleBirr.
