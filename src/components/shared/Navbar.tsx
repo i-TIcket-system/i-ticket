@@ -3,10 +3,11 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
-import { Menu, X, User, LogOut, LayoutDashboard, Ticket, Building2, HeadphonesIcon, Bus, Users, FileText, UserCheck, ChevronDown } from "lucide-react"
+import { Menu, X, User, LogOut, LayoutDashboard, Ticket, Building2, HeadphonesIcon, Bus, Users, FileText, UserCheck, ChevronDown, Moon, Sun } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { useTheme } from "@/components/providers/ThemeProvider"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ import {
 
 export function Navbar() {
   const { data: session, status } = useSession()
+  const { theme, toggleTheme } = useTheme()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -102,6 +104,21 @@ export function Navbar() {
 
           {/* Auth Buttons */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="h-10 w-10 rounded-full"
+              aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+            >
+              {theme === "light" ? (
+                <Moon className="h-5 w-5" />
+              ) : (
+                <Sun className="h-5 w-5" />
+              )}
+            </Button>
+
             {status === "loading" ? (
               <div className="h-10 w-24 animate-pulse rounded-lg bg-muted" />
             ) : session ? (
@@ -225,6 +242,26 @@ export function Navbar() {
                   <MobileNavLink href="/contact" onClick={() => setMobileMenuOpen(false)}>Contact</MobileNavLink>
                 </>
               )}
+
+              <div className="my-2 border-t" />
+
+              {/* Theme Toggle - Mobile */}
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left font-medium w-full"
+              >
+                {theme === "light" ? (
+                  <>
+                    <Moon className="h-4 w-4" />
+                    Dark Mode
+                  </>
+                ) : (
+                  <>
+                    <Sun className="h-4 w-4" />
+                    Light Mode
+                  </>
+                )}
+              </button>
 
               <div className="my-2 border-t" />
 

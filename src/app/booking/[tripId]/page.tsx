@@ -110,6 +110,7 @@ export default function BookingPage() {
   const [passengers, setPassengers] = useState<Passenger[]>([{ ...emptyPassenger }])
   const [passengerToRemove, setPassengerToRemove] = useState<number | null>(null)
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
   useEffect(() => {
     fetchTrip()
@@ -197,26 +198,35 @@ export default function BookingPage() {
   }
 
   const validatePassengers = () => {
+    const errors: Record<string, string> = {}
+
     // First passenger must NOT be a child (needed for payment contact)
     if (passengers[0]?.isChild) {
-      return false
+      errors["passenger-0-child"] = "First passenger must be an adult (payment contact)"
     }
 
     for (let i = 0; i < passengers.length; i++) {
       const passenger = passengers[i]
+
       // All passengers need a name
-      if (!passenger.name) {
-        return false
+      if (!passenger.name || passenger.name.trim() === "") {
+        errors[`passenger-${i}-name`] = "Name is required"
       }
+
       // Non-child passengers need ID and phone
       // First passenger always needs ID and phone (for booking contact)
       if (!passenger.isChild || i === 0) {
-        if (!passenger.nationalId || !passenger.phone) {
-          return false
+        if (!passenger.nationalId || passenger.nationalId.trim() === "") {
+          errors[`passenger-${i}-nationalId`] = "ID is required"
+        }
+        if (!passenger.phone || passenger.phone.trim() === "") {
+          errors[`passenger-${i}-phone`] = "Phone is required"
         }
       }
     }
-    return true
+
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
   }
 
   const calculateTotal = () => {
@@ -510,11 +520,28 @@ export default function BookingPage() {
                           <Input
                             placeholder={passenger.isChild ? "Child's name" : "As shown on ID"}
                             value={passenger.name}
-                            onChange={(e) => updatePassenger(index, "name", e.target.value)}
-                            className="pl-10"
+                            onChange={(e) => {
+                              updatePassenger(index, "name", e.target.value)
+                              // Clear error when user types
+                              if (validationErrors[`passenger-${index}-name`]) {
+                                setValidationErrors((prev) => {
+                                  const newErrors = { ...prev }
+                                  delete newErrors[`passenger-${index}-name`]
+                                  return newErrors
+                                })
+                              }
+                            }}
+                            className={`pl-10 ${validationErrors[`passenger-${index}-name`] ? "border-destructive" : ""}`}
                             required
+                            aria-invalid={!!validationErrors[`passenger-${index}-name`]}
+                            aria-describedby={validationErrors[`passenger-${index}-name`] ? `passenger-${index}-name-error` : undefined}
                           />
                         </div>
+                        {validationErrors[`passenger-${index}-name`] && (
+                          <p id={`passenger-${index}-name-error`} className="text-xs text-destructive" role="alert" aria-live="polite">
+                            {validationErrors[`passenger-${index}-name`]}
+                          </p>
+                        )}
                       </div>
 
                       <div className="space-y-2">

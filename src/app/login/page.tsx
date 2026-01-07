@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { signIn, getSession } from "next-auth/react"
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PhoneInput } from "@/components/ui/phone-input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 
 export default function LoginPage() {
@@ -22,6 +23,17 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
+
+  // Load saved phone on mount if Remember Me was checked
+  useEffect(() => {
+    const savedPhone = localStorage.getItem("savedPhone")
+    const wasRemembered = localStorage.getItem("rememberMe") === "true"
+    if (savedPhone && wasRemembered) {
+      setPhone(savedPhone)
+      setRememberMe(true)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,6 +51,15 @@ export default function LoginPage() {
         setError(result.error)
         toast.error("Login failed", { description: result.error })
       } else {
+        // Save phone to localStorage if Remember Me is checked
+        if (rememberMe) {
+          localStorage.setItem("savedPhone", phone)
+          localStorage.setItem("rememberMe", "true")
+        } else {
+          localStorage.removeItem("savedPhone")
+          localStorage.removeItem("rememberMe")
+        }
+
         toast.success("Login successful!", { description: "Redirecting..." })
         await new Promise(resolve => setTimeout(resolve, 300))
         const session = await getSession()
@@ -157,7 +178,11 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 text-destructive text-sm border border-destructive/20">
+              <div
+                role="alert"
+                aria-live="polite"
+                className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 text-destructive text-sm border border-destructive/20"
+              >
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                 <span>{error}</span>
               </div>
@@ -199,6 +224,21 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* Remember Me Checkbox */}
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="remember-me"
+                checked={rememberMe}
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+              />
+              <Label
+                htmlFor="remember-me"
+                className="text-sm font-normal cursor-pointer text-muted-foreground"
+              >
+                Remember me for 30 days
+              </Label>
             </div>
 
             <Button type="submit" className="w-full h-11 font-medium group" disabled={isLoading}>

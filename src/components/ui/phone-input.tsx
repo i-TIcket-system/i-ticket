@@ -164,7 +164,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
           )}
         </div>
         {showError && (
-          <p id="phone-error" className="text-xs text-destructive mt-1" role="alert">
+          <p id="phone-error" className="text-xs text-destructive mt-1" role="alert" aria-live="polite">
             {validationMessage}
           </p>
         )}

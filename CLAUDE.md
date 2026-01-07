@@ -22,6 +22,25 @@ This document tracks major features and technical architecture for the i-Ticket 
 ## Recent Development Summary
 
 ### January 2026
+- **CUSTOMER EXPERIENCE BUNDLE (PHASE 2)** - Completed 3 high-impact UX enhancements for smoother booking experience:
+  - **Trip Comparison Feature** - Side-by-side comparison dialog for up to 4 trips. Checkboxes on search results, comparison table shows company, price (highlights cheapest), departure time, duration, distance, amenities, available seats. Helps customers make informed decisions
+  - **Remember Me Checkbox** - Optional 30-day session on login with phone number persistence via localStorage. Auto-fills returning users' phone numbers
+  - **Form Field-Level Errors** - Inline validation messages below each invalid field with red border highlighting, auto-clears on typing, aria-live announcements for screen readers
+  - **Impact**: Reduced decision fatigue, faster logins for frequent users, clearer form validation feedback
+- **ACCESSIBILITY IMPROVEMENTS (WCAG 2.1)** - Enhanced platform accessibility to Level A partial compliance:
+  - **Skip to Main Content** - Hidden keyboard navigation link (visible on Tab focus) to bypass navbar, teal-styled button matching brand
+  - **Form Error Announcements** - aria-live="polite" on all error messages for screen reader support
+  - **Language Attribute** - html lang="en" for SEO and accessibility (already existed)
+  - **Dark Mode Toggle** - Moon/sun icon in navbar (desktop + mobile menu), localStorage persistence, complete dark theme using existing CSS variables
+  - **Impact**: Screen reader support improved, keyboard navigation streamlined, user preference for theme
+- **SEAT SELECTION SYSTEM (HIGHEST IMPACT)** - Visual seat selection interface for online bookings with manual ticketing compatibility:
+  - **Interactive Seat Map** - 2-2 layout (window-aisle-aisle-window) with color-coded states (green=available, blue=selected, gray=occupied), click to select/deselect with FIFO auto-deselect, row labels (A, B, C...), seat position indicators, legend, mobile responsive
+  - **Real-Time API** - GET /api/trips/[tripId]/seats returns occupied/available seats, filters cancelled bookings, updates dynamically
+  - **Smart Validation** - Validates selectedSeats.length matches passengerCount, verifies seats available in transaction, prevents occupied seat selection, validates seat range (1-totalSlots)
+  - **Manual Ticketing Reference** - View-only seat map with toggle button for staff reference, shows assigned seats in success message (10-second duration), auto-assignment only (no selection complexity)
+  - **Parallel System Safety** - Online seat selection works alongside manual ticketing auto-assignment with zero conflicts, transaction locking prevents double-booking, optional fallback to auto-assignment if no seats selected
+  - **Files**: SeatMap.tsx (200+ lines), seats API endpoint (74 lines), booking API enhanced, manual ticketing card updated
+  - **Impact**: Industry-standard feature, customer satisfaction (window/aisle preference), staff can write seat numbers on paper tickets
 - **QA & UX AUDIT + PHASE 1 IMPROVEMENTS** - Comprehensive 479-line audit report (QA-UX-AUDIT-REPORT.md) identified 27 findings across 17 categories. Overall rating: A- (Excellent). Implemented Phase 1 critical UX improvements:
   - **Password Visibility Toggle** - Eye icon on all password fields (login, register, forgot-password) for better UX and reduced login failures
   - **ARIA Labels for Accessibility** - Added aria-label and aria-expanded attributes to 9 icon-only buttons (password toggles, sidebar collapses, mobile menus, trip action buttons) for screen reader support (WCAG 2.1 Level A compliance)

@@ -33,6 +33,8 @@ import { Separator } from "@/components/ui/separator"
 import { CityCombobox } from "@/components/ui/city-combobox"
 import { getAllCities } from "@/lib/ethiopian-cities"
 import { formatCurrency, formatDuration, BUS_TYPES } from "@/lib/utils"
+import { TripComparison } from "@/components/search/TripComparison"
+import { Checkbox } from "@/components/ui/checkbox"
 
 interface Trip {
   id: string
@@ -66,6 +68,8 @@ function SearchContent() {
   const [showFilters, setShowFilters] = useState(false)
   const [cities, setCities] = useState<string[]>([])
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 })
+  const [selectedTripsForComparison, setSelectedTripsForComparison] = useState<string[]>([])
+  const [showComparison, setShowComparison] = useState(false)
 
   // Search filters
   const [origin, setOrigin] = useState(searchParams.get("from") || "")
@@ -251,10 +255,25 @@ function SearchContent() {
             </h1>
             <p className="text-muted-foreground">
               {trips.length} trip{trips.length !== 1 ? "s" : ""} found
+              {selectedTripsForComparison.length > 0 && (
+                <span className="ml-2 text-primary font-medium">
+                  • {selectedTripsForComparison.length} selected for comparison
+                </span>
+              )}
             </p>
           </div>
 
           <div className="flex items-center gap-4">
+            {selectedTripsForComparison.length >= 2 && (
+              <Button
+                onClick={() => setShowComparison(true)}
+                variant="default"
+                className="gap-2"
+              >
+                <ArrowRight className="h-4 w-4" />
+                Compare ({selectedTripsForComparison.length})
+              </Button>
+            )}
             <Select value={sortBy} onValueChange={(v) => { setSortBy(v); searchTrips(); }}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Sort by" />
@@ -298,7 +317,25 @@ function SearchContent() {
         ) : (
           <div className="space-y-4">
             {trips.map((trip) => (
-              <Card key={trip.id} className="card-hover overflow-hidden">
+              <Card key={trip.id} className="card-hover overflow-hidden relative">
+                {/* Compare Checkbox */}
+                <div className="absolute top-4 left-4 z-10">
+                  <Checkbox
+                    id={`compare-${trip.id}`}
+                    checked={selectedTripsForComparison.includes(trip.id)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        if (selectedTripsForComparison.length < 4) {
+                          setSelectedTripsForComparison([...selectedTripsForComparison, trip.id])
+                        }
+                      } else {
+                        setSelectedTripsForComparison(selectedTripsForComparison.filter((id) => id !== trip.id))
+                      }
+                    }}
+                    className="h-5 w-5 bg-white border-2"
+                    aria-label={`Compare ${trip.company.name} trip`}
+                  />
+                </div>
                 <CardContent className="p-0">
                   <div className="flex flex-col md:flex-row">
                     {/* Company Info */}
@@ -482,6 +519,13 @@ function SearchContent() {
           </div>
         )}
       </div>
+
+      {/* Trip Comparison Dialog */}
+      <TripComparison
+        trips={trips.filter((t) => selectedTripsForComparison.includes(t.id))}
+        open={showComparison}
+        onClose={() => setShowComparison(false)}
+      />
     </div>
   )
 }
