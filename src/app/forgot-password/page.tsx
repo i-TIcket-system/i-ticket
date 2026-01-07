@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Loader2, Key, Lock, ArrowRight, ShieldCheck, MessageSquare } from "lucide-react"
+import { ArrowLeft, Loader2, Key, Lock, ArrowRight, ShieldCheck, MessageSquare, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,12 +19,22 @@ export default function ForgotPasswordPage() {
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [showNewPassword, setShowNewPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const handleRequestOTP = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!phone.match(/^09\d{8}$/)) {
-      toast.error("Please enter a valid Ethiopian phone number (09XXXXXXXX)")
+    // Normalize and validate phone number (accepts 09XXXXXXXX, 07XXXXXXXX, or +2519XXXXXXXX)
+    const normalizedPhone = phone.replace(/[^\d+]/g, "");
+    const isValidFormat = /^0[79]\d{8}$/.test(normalizedPhone) ||
+                          /^\+251[79]\d{8}$/.test(normalizedPhone) ||
+                          /^251[79]\d{8}$/.test(normalizedPhone);
+
+    if (!isValidFormat) {
+      toast.error("Please enter a valid Ethiopian phone number", {
+        description: "Use 09XXXXXXXX, 07XXXXXXXX, or +2519XXXXXXXX format"
+      })
       return
     }
 
@@ -250,15 +260,28 @@ export default function ForgotPasswordPage() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="newPassword"
-                    type="password"
+                    type={showNewPassword ? "text" : "password"}
                     placeholder="Enter new password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="pl-10 h-11"
+                    className="pl-10 pr-10 h-11"
                     required
                     disabled={isLoading}
                     minLength={6}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showNewPassword ? "Hide password" : "Show password"}
+                    disabled={isLoading}
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -268,15 +291,28 @@ export default function ForgotPasswordPage() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     placeholder="Confirm new password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10 h-11"
+                    className="pl-10 pr-10 h-11"
                     required
                     disabled={isLoading}
                     minLength={6}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    disabled={isLoading}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 

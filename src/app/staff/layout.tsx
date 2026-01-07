@@ -181,6 +181,7 @@ export default function StaffLayout({
               size="icon"
               className="text-white/70 hover:text-white hover:bg-white/10"
               onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar menu"
             >
               <Menu className="h-5 w-5" />
             </Button>

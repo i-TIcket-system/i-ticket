@@ -106,8 +106,14 @@ export default function SalesPersonsPage() {
     if (!formData.name || formData.name.length < 2) {
       newErrors.name = "Name must be at least 2 characters"
     }
-    if (!formData.phone || !/^09\d{8}$/.test(formData.phone)) {
-      newErrors.phone = "Invalid phone format (09XXXXXXXX)"
+    // Normalize and validate phone number (accepts 09XXXXXXXX, 07XXXXXXXX, or +2519XXXXXXXX)
+    const normalizedPhone = formData.phone?.replace(/[^\d+]/g, "") || "";
+    const isValidFormat = /^0[79]\d{8}$/.test(normalizedPhone) ||
+                          /^\+251[79]\d{8}$/.test(normalizedPhone) ||
+                          /^251[79]\d{8}$/.test(normalizedPhone);
+
+    if (!formData.phone || !isValidFormat) {
+      newErrors.phone = "Invalid phone format (use 09XXXXXXXX, 07XXXXXXXX, or +2519XXXXXXXX)"
     }
     if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email format"

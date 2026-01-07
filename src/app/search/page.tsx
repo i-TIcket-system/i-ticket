@@ -272,6 +272,7 @@ function SearchContent() {
               size="icon"
               className="md:hidden"
               onClick={() => setShowFilters(!showFilters)}
+              aria-label={showFilters ? "Close filters" : "Open filters"}
             >
               {showFilters ? <X className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
             </Button>

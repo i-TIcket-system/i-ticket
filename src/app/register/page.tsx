@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { User, Lock, Mail, Loader2, Check, ArrowRight, Ticket, MapPin, Smartphone } from "lucide-react"
+import { User, Lock, Mail, Loader2, Check, ArrowRight, Ticket, MapPin, Smartphone, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,6 +23,8 @@ export default function RegisterPage() {
     confirmPassword: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -44,8 +46,16 @@ export default function RegisterPage() {
       return
     }
 
-    if (!/^09\d{8}$/.test(formData.phone)) {
-      toast.error("Please enter a valid Ethiopian phone number (09XXXXXXXX)")
+    // Normalize and validate phone number (accepts 09XXXXXXXX, 07XXXXXXXX, or +2519XXXXXXXX)
+    const normalizedPhone = formData.phone.replace(/[^\d+]/g, "");
+    const isValidFormat = /^0[79]\d{8}$/.test(normalizedPhone) ||
+                          /^\+251[79]\d{8}$/.test(normalizedPhone) ||
+                          /^251[79]\d{8}$/.test(normalizedPhone);
+
+    if (!isValidFormat) {
+      toast.error("Please enter a valid Ethiopian phone number", {
+        description: "Use 09XXXXXXXX, 07XXXXXXXX, or +2519XXXXXXXX format"
+      })
       return
     }
 
@@ -221,13 +231,25 @@ export default function RegisterPage() {
                   <Input
                     id="password"
                     name="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="Create password"
                     value={formData.password}
                     onChange={handleChange}
-                    className="pl-10 h-11"
+                    className="pl-10 pr-10 h-11"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -238,13 +260,25 @@ export default function RegisterPage() {
                   <Input
                     id="confirmPassword"
                     name="confirmPassword"
-                    type="password"
+                    type={showConfirmPassword ? "text" : "password"}
                     placeholder="Confirm password"
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className="pl-10 h-11"
+                    className="pl-10 pr-10 h-11"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
               </div>
             </div>

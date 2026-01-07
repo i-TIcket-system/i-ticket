@@ -142,7 +142,7 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
               showError && "border-destructive focus-visible:ring-destructive",
               className
             )}
-            placeholder="0911 234 567"
+            placeholder="0911 234 567 or +251 911 234 567"
             aria-label="Ethiopian phone number"
             aria-describedby={showError ? "phone-error" : undefined}
             aria-invalid={showError ? true : undefined}

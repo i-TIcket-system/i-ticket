@@ -1,7 +1,36 @@
 import { z } from "zod";
 
 // Phone number validation for Ethiopian format
-const ethiopianPhone = z.string().regex(/^09\d{8}$/, "Invalid Ethiopian phone number (must be 09XXXXXXXX)");
+// Accepts: 09XXXXXXXX, 07XXXXXXXX, +2519XXXXXXXX, +2517XXXXXXXX, 2519XXXXXXXX, 2517XXXXXXXX
+const ethiopianPhone = z.string()
+  .transform((val) => {
+    // Normalize phone number: remove all non-digit and non-plus characters
+    let cleaned = val.replace(/[^\d+]/g, "");
+
+    // Handle international format +251
+    if (cleaned.startsWith("+251")) {
+      const withoutCountryCode = cleaned.substring(4); // Remove +251
+      if (withoutCountryCode.startsWith("9") || withoutCountryCode.startsWith("7")) {
+        return "0" + withoutCountryCode.substring(0, 9); // 09/07 + 8 digits
+      }
+      return withoutCountryCode.substring(0, 10);
+    }
+
+    // Handle 251 without +
+    if (cleaned.startsWith("251")) {
+      const withoutCountryCode = cleaned.substring(3); // Remove 251
+      if (withoutCountryCode.startsWith("9") || withoutCountryCode.startsWith("7")) {
+        return "0" + withoutCountryCode.substring(0, 9);
+      }
+      return withoutCountryCode.substring(0, 10);
+    }
+
+    // Local format - limit to 10 digits
+    return cleaned.substring(0, 10);
+  })
+  .refine((val) => /^0[79]\d{8}$/.test(val), {
+    message: "Invalid phone number. Use 09XXXXXXXX, 07XXXXXXXX, or +2519XXXXXXXX format"
+  });
 
 // Trip validations
 export const createTripSchema = z.object({

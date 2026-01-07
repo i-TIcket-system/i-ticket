@@ -221,6 +221,7 @@ export default function AdminLayout({
                   collapsed ? "justify-center px-2" : "justify-start"
                 )}
                 onClick={() => setCollapsed(!collapsed)}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
                 {collapsed ? (
                   <ChevronRight className="h-4 w-4" />
@@ -283,6 +284,7 @@ export default function AdminLayout({
               size="icon"
               className="text-white/70 hover:text-white hover:bg-white/10"
               onClick={() => setSidebarOpen(true)}
+              aria-label="Open sidebar menu"
             >
               <Menu className="h-5 w-5" />
             </Button>

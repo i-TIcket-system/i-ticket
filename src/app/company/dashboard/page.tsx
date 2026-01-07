@@ -379,12 +379,12 @@ export default function CompanyDashboard() {
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             <Link href={`/company/trips/${trip.id}`}>
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" aria-label="View trip details">
                                 <Eye className="h-4 w-4" />
                               </Button>
                             </Link>
                             <Link href={`/company/trips/${trip.id}/edit`}>
-                              <Button variant="ghost" size="sm">
+                              <Button variant="ghost" size="sm" aria-label="Edit trip">
                                 <Edit className="h-4 w-4" />
                               </Button>
                             </Link>

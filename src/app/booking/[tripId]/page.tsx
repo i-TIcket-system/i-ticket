@@ -237,16 +237,9 @@ export default function BookingPage() {
     // Save passenger data to localStorage in case user wants to go back
     localStorage.setItem(`booking-${tripId}-passengers`, JSON.stringify(passengers))
 
-    // For guest users with multiple passengers, clarify which phone will be used
-    if (!session && passengers.length > 1) {
-      toast.info("TeleBirr payment will be sent to the FIRST passenger", {
-        description: `Payment request → ${passengers[0].phone}. Make sure TeleBirr is enabled.`,
-        duration: 12000, // 12 seconds - important payment info
-      })
-    }
-
     // Guest checkout is allowed - no login required!
     // The API will create a guest user account automatically
+    // Payment phone is clearly shown in the persistent banner above the payment button
 
     setIsSubmitting(true)
 
@@ -641,6 +634,29 @@ export default function BookingPage() {
                     </span>
                   )}
                 </div>
+
+                {/* Payment Phone Clarity Banner */}
+                {passengers.length > 0 && passengers[0].phone && (
+                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+                    <div className="flex items-start gap-2">
+                      <Phone className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-blue-900">
+                          TeleBirr Payment Request
+                        </p>
+                        <p className="text-xs text-blue-700 mt-1">
+                          Will be sent to: <span className="font-semibold">{passengers[0].phone}</span>
+                          {passengers.length > 1 && (
+                            <span className="text-blue-600"> (Passenger 1 - Primary Contact)</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          Make sure this number has TeleBirr enabled
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <Button
                   className="w-full"

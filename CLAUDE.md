@@ -22,6 +22,13 @@ This document tracks major features and technical architecture for the i-Ticket 
 ## Recent Development Summary
 
 ### January 2026
+- **QA & UX AUDIT + PHASE 1 IMPROVEMENTS** - Comprehensive 479-line audit report (QA-UX-AUDIT-REPORT.md) identified 27 findings across 17 categories. Overall rating: A- (Excellent). Implemented Phase 1 critical UX improvements:
+  - **Password Visibility Toggle** - Eye icon on all password fields (login, register, forgot-password) for better UX and reduced login failures
+  - **ARIA Labels for Accessibility** - Added aria-label and aria-expanded attributes to 9 icon-only buttons (password toggles, sidebar collapses, mobile menus, trip action buttons) for screen reader support (WCAG 2.1 Level A compliance)
+  - **Payment Phone Clarity Banner** - Persistent blue banner on booking page showing which phone receives TeleBirr payment request, especially critical for multi-passenger bookings. Replaced time-limited toast with always-visible banner
+  - **International Phone Format** - Full support for +251 format (critical for iPhone autofill). Updated PhoneInput component, Zod schemas, and all form validations. Accepts 09XXXXXXXX, 07XXXXXXXX, +2519XXXXXXXX formats with auto-normalization
+  - **Files Modified**: 12 files (3 auth pages, 4 layouts, 1 component, 1 validation library, 3 forms)
+  - **Impact**: Improved accessibility for screen reader users, eliminated iPhone autofill friction, clarified payment flow for guest users
 - **CRITICAL SECURITY HARDENING** - Comprehensive security audit identified and fixed 16 vulnerabilities (6 P0 critical, 5 P1 high, 3 P2, 2 P3). Production-ready security achieved (C- → A- rating)
   - **P0 Fixes**: Environment validation, credential rotation, trip update IDOR protection, booking race condition fix (row-level locking), payment callback replay protection (SHA-256 hashing), SQL injection prevention
   - **P1 Fixes**: Secure password reset system (bcrypt hashed tokens), reduced session duration (7 days → 24 hours), payment amount server-side verification, enhanced SMS sanitization (5-layer XSS prevention), enhanced rate limiting (IP + User + Booking)
