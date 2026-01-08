@@ -294,6 +294,89 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* NEW: Business Insights */}
+      <div className="mb-6">
+        <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+          <Award className="h-5 w-5 text-primary" />
+          Business Insights
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Average Booking Value */}
+          <Card className="backdrop-blur-xl bg-gradient-to-br from-purple-50 to-purple-100/80 border-purple-200 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Avg Booking Value</CardTitle>
+              <div className="p-2 rounded-lg bg-purple-500/20">
+                <DollarSign className="h-5 w-5 text-purple-700" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-900">
+                {formatCurrency(stats?.stats?.insights?.avgBookingValue || 0)}
+              </div>
+              <p className="text-xs text-purple-800 mt-1">
+                Per paid booking
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Booking Success Rate */}
+          <Card className="backdrop-blur-xl bg-gradient-to-br from-green-50 to-green-100/80 border-green-200 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Success Rate</CardTitle>
+              <div className="p-2 rounded-lg bg-green-500/20">
+                <TrendingUp className="h-5 w-5 text-green-700" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-green-900">
+                {stats?.stats?.insights?.bookingSuccessRate?.toFixed(1) || 0}%
+              </div>
+              <p className="text-xs text-green-800 mt-1">
+                Paid vs total bookings
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Cancellation Rate */}
+          <Card className="backdrop-blur-xl bg-gradient-to-br from-red-50 to-red-100/80 border-red-200 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Cancellation Rate</CardTitle>
+              <div className="p-2 rounded-lg bg-red-500/20">
+                <TrendingDown className="h-5 w-5 text-red-700" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-red-900">
+                {stats?.stats?.insights?.cancellationRate?.toFixed(1) || 0}%
+              </div>
+              <p className="text-xs text-red-800 mt-1">
+                {stats?.stats?.bookings?.cancelled || 0} cancelled
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Peak Booking Hours */}
+          <Card className="backdrop-blur-xl bg-gradient-to-br from-orange-50 to-orange-100/80 border-orange-200 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Peak Hours</CardTitle>
+              <div className="p-2 rounded-lg bg-orange-500/20">
+                <Smartphone className="h-5 w-5 text-orange-700" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-900">
+                {stats?.stats?.insights?.peakHours?.[0]?.label || "N/A"}
+              </div>
+              <div className="text-xs text-orange-800 mt-1 space-y-0.5">
+                {stats?.stats?.insights?.peakHours?.slice(0, 2).map((peak: any, i: number) => (
+                  <div key={i}>#{i + 1}: {peak.label} ({peak.count} bookings)</div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       {/* Key Metrics */}
       <div className="mb-6">
         <h2 className="text-lg font-semibold mb-4">Key Metrics</h2>

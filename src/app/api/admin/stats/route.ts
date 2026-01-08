@@ -53,6 +53,9 @@ export async function GET(request: NextRequest) {
 
       // Recent bookings
       recentBookings,
+
+      // NEW: Business Insights - Booking analytics by hour for peak hours
+      bookingsByHour,
     ] = await Promise.all([
       // User counts
       prisma.user.count(),
@@ -138,6 +141,12 @@ export async function GET(request: NextRequest) {
           },
         },
       }),
+
+      // NEW: Get all bookings with timestamps for hourly analysis
+      prisma.booking.findMany({
+        where: { status: "PAID", createdAt: { gte: weekAgo } },
+        select: { createdAt: true }
+      }),
     ])
 
     // Calculate changes
@@ -146,6 +155,39 @@ export async function GET(request: NextRequest) {
     const revenueChange = yesterdayRevenueValue > 0
       ? ((todayRevenueValue - yesterdayRevenueValue) / yesterdayRevenueValue) * 100
       : 0
+
+    // NEW: Calculate Business Insights
+    // 1. Average Booking Value
+    const avgBookingValue = paidBookings > 0
+      ? (totalRevenue._sum.totalAmount || 0) / paidBookings
+      : 0
+
+    // 2. Cancellation Rate
+    const cancellationRate = totalBookings > 0
+      ? (cancelledBookings / totalBookings) * 100
+      : 0
+
+    // 3. Booking Success Rate (paid / total)
+    const bookingSuccessRate = totalBookings > 0
+      ? (paidBookings / totalBookings) * 100
+      : 0
+
+    // 4. Peak Booking Hours (analyze last 7 days)
+    const hourlyDistribution: { [hour: number]: number } = {}
+    bookingsByHour.forEach((booking: any) => {
+      const hour = new Date(booking.createdAt).getHours()
+      hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1
+    })
+
+    // Find top 3 peak hours
+    const peakHours = Object.entries(hourlyDistribution)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .slice(0, 3)
+      .map(([hour, count]) => ({
+        hour: parseInt(hour),
+        count: count as number,
+        label: `${hour.toString().padStart(2, '0')}:00`
+      }))
 
     return NextResponse.json({
       stats: {
@@ -190,6 +232,13 @@ export async function GET(request: NextRequest) {
         payments: {
           telebirr: telebirrPayments,
           demo: demoPayments,
+        },
+        // NEW: Business Insights
+        insights: {
+          avgBookingValue,
+          cancellationRate,
+          bookingSuccessRate,
+          peakHours,
         },
       },
       recentBookings,
