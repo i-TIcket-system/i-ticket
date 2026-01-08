@@ -214,23 +214,34 @@ export default function CompanyTripsPage() {
       }
 
       // Ctrl/Cmd + A: Select all visible trips
-      if ((e.ctrlKey || e.metaKey) && e.key === 'a' && filteredTrips.length > 0) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
         e.preventDefault()
-        setSelectedTrips(new Set(filteredTrips.map(t => t.id)))
-        toast.success(`Selected all ${filteredTrips.length} trip(s)`)
+        setSelectedTrips((prev) => {
+          const filtered = filteredTrips
+          if (filtered.length > 0) {
+            toast.success(`Selected all ${filtered.length} trip(s)`)
+            return new Set(filtered.map(t => t.id))
+          }
+          return prev
+        })
       }
 
       // Escape: Clear selection
-      if (e.key === 'Escape' && selectedTrips.size > 0) {
+      if (e.key === 'Escape') {
         e.preventDefault()
-        setSelectedTrips(new Set())
-        toast.success('Selection cleared')
+        setSelectedTrips((prev) => {
+          if (prev.size > 0) {
+            toast.success('Selection cleared')
+            return new Set()
+          }
+          return prev
+        })
       }
     }
 
     document.addEventListener('keydown', handleKeyboard)
     return () => document.removeEventListener('keydown', handleKeyboard)
-  }, [filteredTrips, selectedTrips])
+  }, []) // Empty deps - use functional updates instead
 
   // Bulk operations
   const handleBulkPriceUpdate = async () => {
