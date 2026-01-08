@@ -3,6 +3,68 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import prisma from "./db"
 
+// P0-SEC-002: Server-side rate limiting for login attempts
+const loginAttempts = new Map<string, { count: number; firstAttempt: number; lockedUntil?: number }>()
+
+function checkLoginRateLimit(identifier: string, type: 'ip' | 'phone'): { allowed: boolean; remainingMinutes?: number } {
+  const now = Date.now()
+  const limits = {
+    ip: { maxAttempts: 10, windowMs: 15 * 60 * 1000 }, // 10 attempts per 15 minutes per IP
+    phone: { maxAttempts: 5, windowMs: 30 * 60 * 1000, lockoutMs: 15 * 60 * 1000 } // 5 attempts per 30 min, 15 min lockout
+  }
+
+  const limit = limits[type]
+  const attempt = loginAttempts.get(identifier)
+
+  if (!attempt) {
+    loginAttempts.set(identifier, { count: 1, firstAttempt: now })
+    return { allowed: true }
+  }
+
+  // Check if lockout period has expired
+  if (attempt.lockedUntil && now < attempt.lockedUntil) {
+    const remainingMs = attempt.lockedUntil - now
+    return {
+      allowed: false,
+      remainingMinutes: Math.ceil(remainingMs / 60000)
+    }
+  }
+
+  // Check if window has expired
+  if (now - attempt.firstAttempt > limit.windowMs) {
+    loginAttempts.set(identifier, { count: 1, firstAttempt: now })
+    return { allowed: true }
+  }
+
+  // Increment attempt count
+  attempt.count++
+
+  // Check if max attempts exceeded
+  if (attempt.count > limit.maxAttempts) {
+    // Set lockout for phone-based limiting
+    if (type === 'phone' && 'lockoutMs' in limit) {
+      attempt.lockedUntil = now + limit.lockoutMs
+    }
+
+    return {
+      allowed: false,
+      remainingMinutes: type === 'phone' ? 15 : Math.ceil((limit.windowMs - (now - attempt.firstAttempt)) / 60000)
+    }
+  }
+
+  return { allowed: true }
+}
+
+// Cleanup old entries every hour
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, value] of Array.from(loginAttempts.entries())) {
+    if (now - value.firstAttempt > 60 * 60 * 1000 && (!value.lockedUntil || now > value.lockedUntil)) {
+      loginAttempts.delete(key)
+    }
+  }
+}, 60 * 60 * 1000)
+
 // Validate required environment variables at startup
 function validateEnvVars() {
   const required = {
@@ -57,9 +119,19 @@ export const authOptions: NextAuthOptions = {
         phone: { label: "Phone", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.phone || !credentials?.password) {
           throw new Error("Phone and password required")
+        }
+
+        // P0-SEC-002: Server-side rate limiting
+        const phone = credentials.phone
+        const phoneLimit = checkLoginRateLimit(`phone:${phone}`, 'phone')
+
+        if (!phoneLimit.allowed) {
+          throw new Error(
+            `Account temporarily locked. Too many failed attempts. Try again in ${phoneLimit.remainingMinutes} minute${phoneLimit.remainingMinutes !== 1 ? 's' : ''} or reset your password.`
+          )
         }
 
         // First, try to find regular user
@@ -75,8 +147,12 @@ export const authOptions: NextAuthOptions = {
 
           const isValid = await compare(credentials.password, user.password)
           if (!isValid) {
+            // Failed attempt - will be counted by rate limiter
             throw new Error("Invalid password")
           }
+
+          // P0-SEC-002: Clear rate limit on successful login
+          loginAttempts.delete(`phone:${phone}`)
 
           return {
             id: user.id,

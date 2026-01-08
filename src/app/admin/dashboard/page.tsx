@@ -757,10 +757,28 @@ export default function AdminDashboard() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => exportBookingsToCSV(
-                stats?.recentBookings || [],
-                `bookings-${new Date().toISOString().split('T')[0]}.csv`
-              )}
+              onClick={async () => {
+                try {
+                  const response = await fetch('/api/admin/bookings/export')
+                  if (response.ok) {
+                    const blob = await response.blob()
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `bookings-${new Date().toISOString().split('T')[0]}.csv`
+                    document.body.appendChild(a)
+                    a.click()
+                    window.URL.revokeObjectURL(url)
+                    document.body.removeChild(a)
+                  } else {
+                    const error = await response.json()
+                    alert(error.error || 'Export failed')
+                  }
+                } catch (error) {
+                  console.error('Export error:', error)
+                  alert('Failed to export data')
+                }
+              }}
               disabled={!stats?.recentBookings || stats.recentBookings.length === 0}
             >
               <Download className="h-4 w-4 mr-2" />

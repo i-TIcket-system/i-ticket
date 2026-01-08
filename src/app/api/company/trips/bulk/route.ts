@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import prisma from "@/lib/db"
+import prisma, { transactionWithTimeout } from "@/lib/db"
 import { authOptions } from "@/lib/auth"
 import { validateTripUpdate } from "@/lib/trip-update-validator"
 
@@ -68,10 +68,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    let updated = 0
-    let failed = 0
-    const errors: string[] = []
-
     switch (action) {
       case "updatePrice": {
         if (!price || isNaN(parseFloat(price))) {
@@ -89,43 +85,72 @@ export async function POST(request: NextRequest) {
           )
         }
 
-        // Process each trip individually (must check for paid bookings)
-        for (const tripId of tripIds) {
-          try {
-            // Validate if trip can be updated
-            const validation = await validateTripUpdate(tripId, { price: newPrice })
+        // P0-SEC-003: Wrap in transaction with timeout for atomicity
+        const result = await transactionWithTimeout(async (tx) => {
+          let updated = 0
+          let failed = 0
+          const errors: string[] = []
 
-            if (validation.allowed) {
-              await prisma.trip.update({
+          for (const tripId of tripIds) {
+            try {
+              // Get trip with version for optimistic locking
+              const trip = await tx.trip.findUnique({
                 where: { id: tripId },
-                data: { price: newPrice }
+                include: {
+                  bookings: { where: { status: 'PAID' } }
+                }
+              })
+
+              if (!trip) {
+                failed++
+                errors.push(`Trip ${tripId}: Not found`)
+                continue
+              }
+
+              // Check if has paid bookings
+              if (trip.bookings.length > 0) {
+                failed++
+                errors.push(`Trip ${tripId}: Has ${trip.bookings.length} paid booking(s)`)
+                continue
+              }
+
+              // Update with optimistic locking
+              await tx.trip.update({
+                where: { id: tripId, version: trip.version },
+                data: {
+                  price: newPrice,
+                  version: { increment: 1 }
+                }
               })
               updated++
-            } else {
+            } catch (error: any) {
               failed++
-              errors.push(`Trip ${tripId}: ${validation.reason}`)
+              if (error.code === 'P2025') {
+                errors.push(`Trip ${tripId}: Modified by another user`)
+              } else {
+                errors.push(`Trip ${tripId}: Update failed`)
+              }
+              console.error(`Bulk price update error for trip ${tripId}:`, error)
             }
-          } catch (error) {
-            failed++
-            errors.push(`Trip ${tripId}: Update failed`)
-            console.error(`Bulk price update error for trip ${tripId}:`, error)
           }
-        }
 
-        // Log bulk action
+          return { updated, failed, errors }
+        }, 15000) // 15 second timeout for bulk operations
+
+        // Log bulk action (outside transaction)
         await prisma.adminLog.create({
           data: {
             userId: session.user.id,
             action: "BULK_PRICE_UPDATE",
-            details: `Bulk price update: ${updated} trips updated to ${newPrice} ETB, ${failed} trips failed. User: ${session.user.name}`
+            details: `Bulk price update: ${result.updated} trips updated to ${newPrice} ETB, ${result.failed} trips failed. User: ${session.user.name}`
           }
         })
 
         return NextResponse.json({
           success: true,
-          updated,
-          failed,
-          errors: failed > 0 ? errors : undefined
+          updated: result.updated,
+          failed: result.failed,
+          errors: result.failed > 0 ? result.errors : undefined
         })
       }
 
@@ -138,26 +163,24 @@ export async function POST(request: NextRequest) {
           whereClause.companyId = session.user.companyId
         }
 
-        const result = await prisma.trip.updateMany({
+        const haltResult = await prisma.trip.updateMany({
           where: whereClause,
           data: {
             bookingHalted: true
           }
         })
 
-        updated = result.count
-
         await prisma.adminLog.create({
           data: {
             userId: session.user.id,
             action: "BULK_HALT_BOOKING",
-            details: `Bulk halt: ${updated} trips halted. User: ${session.user.name}`
+            details: `Bulk halt: ${haltResult.count} trips halted. User: ${session.user.name}`
           }
         })
 
         return NextResponse.json({
           success: true,
-          updated
+          updated: haltResult.count
         })
       }
 
@@ -170,26 +193,24 @@ export async function POST(request: NextRequest) {
           whereClause.companyId = session.user.companyId
         }
 
-        const result = await prisma.trip.updateMany({
+        const resumeResult = await prisma.trip.updateMany({
           where: whereClause,
           data: {
             bookingHalted: false
           }
         })
 
-        updated = result.count
-
         await prisma.adminLog.create({
           data: {
             userId: session.user.id,
             action: "BULK_RESUME_BOOKING",
-            details: `Bulk resume: ${updated} trips resumed. User: ${session.user.name}`
+            details: `Bulk resume: ${resumeResult.count} trips resumed. User: ${session.user.name}`
           }
         })
 
         return NextResponse.json({
           success: true,
-          updated
+          updated: resumeResult.count
         })
       }
 
@@ -269,68 +290,73 @@ export async function DELETE(request: NextRequest) {
       }
     }
 
-    let deleted = 0
-    let failed = 0
-    const errors: string[] = []
+    // P0-SEC-003: Wrap bulk delete in transaction with timeout
+    const result = await transactionWithTimeout(async (tx) => {
+      let deleted = 0
+      let failed = 0
+      const errors: string[] = []
 
-    // Process each trip individually (must check for paid bookings)
-    for (const tripId of tripIds) {
-      try {
-        const trip = await prisma.trip.findUnique({
-          where: { id: tripId },
-          include: {
-            bookings: {
-              where: { status: "PAID" }
+      // Process each trip individually (must check for paid bookings)
+      for (const tripId of tripIds) {
+        try {
+          const trip = await tx.trip.findUnique({
+            where: { id: tripId },
+            include: {
+              bookings: {
+                where: { status: "PAID" }
+              }
             }
+          })
+
+          if (!trip) {
+            failed++
+            errors.push(`Trip ${tripId}: Not found`)
+            continue
           }
-        })
 
-        if (!trip) {
+          // Verify company access
+          if (session.user.role === "COMPANY_ADMIN" && trip.companyId !== session.user.companyId) {
+            failed++
+            errors.push(`Trip ${tripId}: Access denied`)
+            continue
+          }
+
+          // Cannot delete if paid bookings exist
+          if (trip.bookings.length > 0) {
+            failed++
+            errors.push(`Trip ${tripId}: Has ${trip.bookings.length} paid booking(s), cannot delete`)
+            continue
+          }
+
+          // Safe to delete
+          await tx.trip.delete({
+            where: { id: tripId }
+          })
+          deleted++
+        } catch (error) {
           failed++
-          errors.push(`Trip ${tripId}: Not found`)
-          continue
+          errors.push(`Trip ${tripId}: Delete failed`)
+          console.error(`Bulk delete error for trip ${tripId}:`, error)
         }
-
-        // Verify company access
-        if (session.user.role === "COMPANY_ADMIN" && trip.companyId !== session.user.companyId) {
-          failed++
-          errors.push(`Trip ${tripId}: Access denied`)
-          continue
-        }
-
-        // Cannot delete if paid bookings exist
-        if (trip.bookings.length > 0) {
-          failed++
-          errors.push(`Trip ${tripId}: Has paid bookings, cannot delete`)
-          continue
-        }
-
-        // Safe to delete
-        await prisma.trip.delete({
-          where: { id: tripId }
-        })
-        deleted++
-      } catch (error) {
-        failed++
-        errors.push(`Trip ${tripId}: Delete failed`)
-        console.error(`Bulk delete error for trip ${tripId}:`, error)
       }
-    }
 
-    // Log bulk delete action
+      return { deleted, failed, errors }
+    }, 15000) // 15 second timeout
+
+    // Log bulk delete action (outside transaction)
     await prisma.adminLog.create({
       data: {
         userId: session.user.id,
         action: "BULK_DELETE_TRIPS",
-        details: `Bulk delete: ${deleted} trips deleted, ${failed} trips failed. User: ${session.user.name}`
+        details: `Bulk delete: ${result.deleted} trips deleted, ${result.failed} trips failed. User: ${session.user.name}`
       }
     })
 
     return NextResponse.json({
       success: true,
-      deleted,
-      failed,
-      errors: failed > 0 ? errors : undefined
+      deleted: result.deleted,
+      failed: result.failed,
+      errors: result.failed > 0 ? result.errors : undefined
     })
   } catch (error) {
     console.error("Bulk delete error:", error)
