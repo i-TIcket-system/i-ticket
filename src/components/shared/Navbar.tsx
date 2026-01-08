@@ -248,7 +248,10 @@ export function Navbar() {
 
               {/* Theme Toggle - Mobile */}
               <button
-                onClick={toggleTheme}
+                onClick={() => {
+                  toggleTheme()
+                  setMobileMenuOpen(false) // P2-UX-008: Close menu to show theme change
+                }}
                 className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left font-medium w-full"
               >
                 {theme === "light" ? (
