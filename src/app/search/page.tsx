@@ -161,9 +161,23 @@ function SearchContent() {
     if (origin) params.set("from", origin)
     if (destination) params.set("to", destination)
     if (date) params.set("date", date)
+    if (busType) params.set("type", busType) // P2: Persist bus type filter in URL
     router.push(`/search?${params.toString()}`)
     searchTrips(1, false) // Reset to page 1
   }
+
+  // P2: Update URL when bus type filter changes
+  useEffect(() => {
+    if (trips.length > 0) {
+      const params = new URLSearchParams(window.location.search)
+      if (busType) {
+        params.set("type", busType)
+      } else {
+        params.delete("type")
+      }
+      router.replace(`/search?${params.toString()}`, { scroll: false })
+    }
+  }, [busType])
 
   const getSlotsColor = (available: number, total: number) => {
     const percentage = (available / total) * 100
