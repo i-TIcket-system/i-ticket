@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { exportBookingsToCSV } from "@/lib/csv-export"
+import { StatCardSkeleton, TableRowSkeleton } from "@/components/ui/skeleton"
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -142,15 +143,29 @@ export default function AdminDashboard() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative inline-block">
-            <div className="absolute inset-0 animate-ping">
-              <div className="h-16 w-16 rounded-full bg-[#0e9494]/20" />
-            </div>
-            <Loader2 className="h-16 w-16 animate-spin text-[#0e9494]" />
+      <div className="container mx-auto py-12 px-4">
+        <div className="mb-8">
+          <div className="h-8 w-64 bg-muted animate-shimmer rounded mb-2" />
+          <div className="h-4 w-48 bg-muted animate-shimmer rounded" />
+        </div>
+
+        <div className="mb-6">
+          <div className="h-6 w-48 bg-muted animate-shimmer rounded mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
           </div>
-          <p className="mt-4 text-muted-foreground font-medium">Loading dashboard...</p>
+        </div>
+
+        <div className="mb-6">
+          <div className="h-6 w-48 bg-muted animate-shimmer rounded mb-4" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+            <StatCardSkeleton />
+          </div>
         </div>
       </div>
     )
