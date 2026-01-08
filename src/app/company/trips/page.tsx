@@ -20,7 +20,8 @@ import {
   PlayCircle,
   PauseCircle,
   CheckSquare,
-  Square
+  Square,
+  Search
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -44,6 +45,13 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { formatCurrency, formatDate, getSlotsPercentage, isLowSlots } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -75,6 +83,12 @@ export default function CompanyTripsPage() {
   const [newPrice, setNewPrice] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
 
+  // P2: Search and filter state
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [dateFilter, setDateFilter] = useState("")
+  const [filteredTrips, setFilteredTrips] = useState<Trip[]>([])
+
   useEffect(() => {
     if (status === "authenticated") {
       if (session.user.role !== "COMPANY_ADMIN" && session.user.role !== "SUPER_ADMIN") {
@@ -92,6 +106,7 @@ export default function CompanyTripsPage() {
 
       if (response.ok) {
         setTrips(data.trips)
+        setFilteredTrips(data.trips)
       }
     } catch (error) {
       console.error("Failed to fetch trips:", error)
@@ -99,6 +114,42 @@ export default function CompanyTripsPage() {
       setIsLoading(false)
     }
   }
+
+  // P2: Filter trips based on search query, status, and date
+  useEffect(() => {
+    let filtered = [...trips]
+
+    // Text search (destination, origin, driver, conductor, vehicle)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(trip =>
+        trip.origin.toLowerCase().includes(query) ||
+        trip.destination.toLowerCase().includes(query) ||
+        trip.busType.toLowerCase().includes(query)
+      )
+    }
+
+    // Status filter
+    if (statusFilter !== "all") {
+      if (statusFilter === "active") {
+        filtered = filtered.filter(trip => trip.isActive && !trip.bookingHalted)
+      } else if (statusFilter === "halted") {
+        filtered = filtered.filter(trip => trip.bookingHalted)
+      } else if (statusFilter === "inactive") {
+        filtered = filtered.filter(trip => !trip.isActive)
+      }
+    }
+
+    // Date filter
+    if (dateFilter) {
+      filtered = filtered.filter(trip => {
+        const tripDate = new Date(trip.departureTime).toISOString().split('T')[0]
+        return tripDate === dateFilter
+      })
+    }
+
+    setFilteredTrips(filtered)
+  }, [searchQuery, statusFilter, dateFilter, trips])
 
   // Selection handlers
   const toggleSelectAll = () => {
@@ -248,15 +299,22 @@ export default function CompanyTripsPage() {
     )
   }
 
-  const allSelected = selectedTrips.size === trips.length && trips.length > 0
-  const someSelected = selectedTrips.size > 0 && selectedTrips.size < trips.length
+  const allSelected = selectedTrips.size === filteredTrips.length && filteredTrips.length > 0
+  const someSelected = selectedTrips.size > 0 && selectedTrips.size < filteredTrips.length
 
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">Trip Management</h1>
-          <p className="text-muted-foreground">Manage your company's trips and schedules</p>
+          <p className="text-muted-foreground">
+            Manage your company's trips and schedules
+            {filteredTrips.length !== trips.length && (
+              <span className="ml-2 text-primary">
+                ({filteredTrips.length} of {trips.length} trips shown)
+              </span>
+            )}
+          </p>
         </div>
         <Link href="/company/trips/new">
           <Button>
@@ -265,6 +323,76 @@ export default function CompanyTripsPage() {
           </Button>
         </Link>
       </div>
+
+      {/* P2: Search and Filter Bar */}
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="md:col-span-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by route, bus type..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active Only</SelectItem>
+                <SelectItem value="halted">Halted Only</SelectItem>
+                <SelectItem value="inactive">Inactive Only</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              placeholder="Filter by date"
+            />
+          </div>
+          {(searchQuery || statusFilter !== "all" || dateFilter) && (
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Active filters:</span>
+              {searchQuery && (
+                <Badge variant="secondary" className="gap-1">
+                  Search: {searchQuery}
+                  <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchQuery("")} />
+                </Badge>
+              )}
+              {statusFilter !== "all" && (
+                <Badge variant="secondary" className="gap-1">
+                  Status: {statusFilter}
+                  <X className="h-3 w-3 cursor-pointer" onClick={() => setStatusFilter("all")} />
+                </Badge>
+              )}
+              {dateFilter && (
+                <Badge variant="secondary" className="gap-1">
+                  Date: {dateFilter}
+                  <X className="h-3 w-3 cursor-pointer" onClick={() => setDateFilter("")} />
+                </Badge>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("")
+                  setStatusFilter("all")
+                  setDateFilter("")
+                }}
+              >
+                Clear All
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -292,14 +420,16 @@ export default function CompanyTripsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {trips.length === 0 ? (
+              {filteredTrips.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                    No trips found. Create your first trip to get started.
+                    {trips.length === 0
+                      ? "No trips found. Create your first trip to get started."
+                      : "No trips match your filters. Try adjusting your search criteria."}
                   </TableCell>
                 </TableRow>
               ) : (
-                trips.map((trip) => {
+                filteredTrips.map((trip) => {
                   const slotsPercentage = getSlotsPercentage(trip.availableSlots, trip.totalSlots)
                   const lowSlots = isLowSlots(trip.availableSlots, trip.totalSlots)
                   const isSelected = selectedTrips.has(trip.id)

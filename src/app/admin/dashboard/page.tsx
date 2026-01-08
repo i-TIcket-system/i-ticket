@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { exportBookingsToCSV } from "@/lib/csv-export"
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/ui/skeleton"
+import { DateRangeSelector } from "@/components/ui/date-range-selector"
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -36,6 +37,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [isDownloading, setIsDownloading] = useState(false)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  const [dateRangeStart, setDateRangeStart] = useState("")
+  const [dateRangeEnd, setDateRangeEnd] = useState("")
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [revenueData, setRevenueData] = useState<any[]>([])
   const [topRoutes, setTopRoutes] = useState<any[]>([])
@@ -191,11 +194,19 @@ export default function AdminDashboard() {
             <p className="text-muted-foreground">System-wide overview and management</p>
           </div>
           <div className="flex items-center gap-3">
+            <DateRangeSelector
+              onRangeChange={(start, end) => {
+                setDateRangeStart(start)
+                setDateRangeEnd(end)
+              }}
+              defaultRange="30days"
+            />
             <Input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               className="w-[180px]"
+              placeholder="Single date invoice"
             />
             <Button
               onClick={downloadRevenueReport}
