@@ -44,6 +44,12 @@ export default function AdminDashboard() {
   const [topRoutes, setTopRoutes] = useState<any[]>([])
   const [topCompanies, setTopCompanies] = useState<any[]>([])
 
+  // Memoize date range callback to prevent infinite loop
+  const handleDateRangeChange = useCallback((start: string, end: string) => {
+    setDateRangeStart(start)
+    setDateRangeEnd(end)
+  }, [])
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
@@ -208,10 +214,7 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <DateRangeSelector
-              onRangeChange={useCallback((start: string, end: string) => {
-                setDateRangeStart(start)
-                setDateRangeEnd(end)
-              }, [])}
+              onRangeChange={handleDateRangeChange}
               defaultRange="30days"
             />
             <Input
