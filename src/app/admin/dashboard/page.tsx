@@ -73,10 +73,16 @@ export default function AdminDashboard() {
 
   const fetchAnalytics = async () => {
     try {
+      // P1-UX-002: Use date range in analytics API calls
+      const params = new URLSearchParams()
+      if (dateRangeStart) params.set('startDate', dateRangeStart)
+      if (dateRangeEnd) params.set('endDate', dateRangeEnd)
+
+      const queryString = params.toString()
       const [revenueRes, routesRes, companiesRes] = await Promise.all([
-        fetch('/api/admin/analytics/revenue'),
-        fetch('/api/admin/analytics/top-routes'),
-        fetch('/api/admin/analytics/top-companies')
+        fetch(`/api/admin/analytics/revenue${queryString ? '?' + queryString : ''}`),
+        fetch(`/api/admin/analytics/top-routes${queryString ? '?' + queryString : ''}`),
+        fetch(`/api/admin/analytics/top-companies${queryString ? '?' + queryString : ''}`)
       ])
 
       if (revenueRes.ok) {
@@ -97,6 +103,13 @@ export default function AdminDashboard() {
       console.error('Failed to fetch analytics:', error)
     }
   }
+
+  // P1-UX-002: Refetch analytics when date range changes
+  useEffect(() => {
+    if (session?.user?.role === "SUPER_ADMIN" && (dateRangeStart || dateRangeEnd)) {
+      fetchAnalytics()
+    }
+  }, [dateRangeStart, dateRangeEnd, session])
 
   const downloadRevenueReport = async () => {
     setIsDownloading(true)
