@@ -106,10 +106,10 @@ export default function AdminDashboard() {
 
   // P1-UX-002: Refetch analytics when date range changes
   useEffect(() => {
-    if (session?.user?.role === "SUPER_ADMIN" && (dateRangeStart || dateRangeEnd)) {
+    if (session?.user?.role === "SUPER_ADMIN" && dateRangeStart && dateRangeEnd) {
       fetchAnalytics()
     }
-  }, [dateRangeStart, dateRangeEnd, session])
+  }, [dateRangeStart, dateRangeEnd]) // Removed session from deps to prevent loop
 
   const downloadRevenueReport = async () => {
     setIsDownloading(true)
