@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { exportBookingsToCSV } from "@/lib/csv-export"
-import { StatCardSkeleton, TableRowSkeleton } from "@/components/ui/skeleton"
+import { StatCardSkeleton, TableRowSkeleton, TodayActivityCardSkeleton, InsightsCardSkeleton } from "@/components/ui/skeleton"
 import { DateRangeSelector } from "@/components/ui/date-range-selector"
 
 export default function AdminDashboard() {
@@ -155,19 +155,19 @@ export default function AdminDashboard() {
         <div className="mb-6">
           <div className="h-6 w-48 bg-muted animate-shimmer rounded mb-4" />
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
+            <TodayActivityCardSkeleton />
+            <TodayActivityCardSkeleton />
+            <TodayActivityCardSkeleton />
           </div>
         </div>
 
         <div className="mb-6">
           <div className="h-6 w-48 bg-muted animate-shimmer rounded mb-4" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
-            <StatCardSkeleton />
+            <InsightsCardSkeleton />
+            <InsightsCardSkeleton />
+            <InsightsCardSkeleton />
+            <InsightsCardSkeleton />
           </div>
         </div>
       </div>

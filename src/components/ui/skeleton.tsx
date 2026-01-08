@@ -12,7 +12,36 @@ function Skeleton({
   )
 }
 
-// Dashboard Stats Card Skeleton
+// P1-UX-003: Matched skeleton layouts for different card types
+// Today's Activity Card Skeleton
+export function TodayActivityCardSkeleton() {
+  return (
+    <div className="backdrop-blur-xl bg-gradient-to-br from-teal-50 to-teal-100/80 border-teal-200 shadow-xl p-6 rounded-lg">
+      <div className="flex items-center justify-between mb-3">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-10 w-10 rounded-lg" />
+      </div>
+      <Skeleton className="h-10 w-20 mb-2" />
+      <Skeleton className="h-3 w-32" />
+    </div>
+  )
+}
+
+// Business Insights Card Skeleton
+export function InsightsCardSkeleton() {
+  return (
+    <div className="backdrop-blur-xl bg-gradient-to-br from-purple-50 to-purple-100/80 border-purple-200 shadow-xl p-6 rounded-lg">
+      <div className="flex items-center justify-between mb-3">
+        <Skeleton className="h-3 w-32" />
+        <Skeleton className="h-10 w-10 rounded-lg" />
+      </div>
+      <Skeleton className="h-9 w-28 mb-2" />
+      <Skeleton className="h-3 w-24" />
+    </div>
+  )
+}
+
+// Fallback: Generic stat card skeleton
 export function StatCardSkeleton() {
   return (
     <div className="backdrop-blur-xl bg-gradient-to-br from-gray-50 to-gray-100/80 border-gray-200 shadow-xl p-6 rounded-lg">
