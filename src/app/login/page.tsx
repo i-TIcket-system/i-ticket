@@ -24,14 +24,21 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
+  const [failedAttempts, setFailedAttempts] = useState(0)
 
-  // Load saved phone on mount if Remember Me was checked
+  // Load saved phone and failed attempts on mount
   useEffect(() => {
     const savedPhone = localStorage.getItem("savedPhone")
     const wasRemembered = localStorage.getItem("rememberMe") === "true"
     if (savedPhone && wasRemembered) {
       setPhone(savedPhone)
       setRememberMe(true)
+    }
+
+    // P2: Track failed login attempts (resets on browser close)
+    const attempts = sessionStorage.getItem("failedLoginAttempts")
+    if (attempts) {
+      setFailedAttempts(parseInt(attempts))
     }
   }, [])
 
@@ -48,9 +55,30 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
+        // P2: Track failed attempts and show warnings
+        const newAttempts = failedAttempts + 1
+        setFailedAttempts(newAttempts)
+        sessionStorage.setItem("failedLoginAttempts", newAttempts.toString())
+
         setError(result.error)
+
+        // Show progressive warnings
+        if (newAttempts >= 3 && newAttempts < 5) {
+          const remaining = 5 - newAttempts
+          toast.error("Invalid credentials", {
+            description: `${remaining} more attempt${remaining !== 1 ? 's' : ''} before temporary lockout`
+          })
+        } else if (newAttempts >= 5) {
+          toast.error("Account locked", {
+            description: "Too many failed attempts. Please try again in 15 minutes or reset your password."
+          })
+        }
         toast.error("Login failed", { description: result.error })
       } else {
+        // P2: Clear failed attempts on successful login
+        sessionStorage.removeItem("failedLoginAttempts")
+        setFailedAttempts(0)
+
         // Save phone to localStorage if Remember Me is checked
         if (rememberMe) {
           localStorage.setItem("savedPhone", phone)
