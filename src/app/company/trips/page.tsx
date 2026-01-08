@@ -140,23 +140,45 @@ export default function CompanyTripsPage() {
       }
     }
 
-    // Date filter
+    // P2-QA-003: Date filter with timezone-aware comparison
     if (dateFilter) {
       filtered = filtered.filter(trip => {
-        const tripDate = new Date(trip.departureTime).toISOString().split('T')[0]
-        return tripDate === dateFilter
+        const tripDate = new Date(trip.departureTime)
+        const filterDate = new Date(dateFilter)
+
+        // Compare year, month, day only (ignore time and timezone)
+        return (
+          tripDate.getFullYear() === filterDate.getFullYear() &&
+          tripDate.getMonth() === filterDate.getMonth() &&
+          tripDate.getDate() === filterDate.getDate()
+        )
       })
     }
 
     setFilteredTrips(filtered)
   }, [searchQuery, statusFilter, dateFilter, trips])
 
+  // P2-UX-004: Fix selection to work with filtered trips only
+  const visibleSelectedCount = filteredTrips.filter(t => selectedTrips.has(t.id)).length
+  const allVisibleSelected = visibleSelectedCount === filteredTrips.length && filteredTrips.length > 0
+  const someVisibleSelected = visibleSelectedCount > 0 && visibleSelectedCount < filteredTrips.length
+
   // Selection handlers
   const toggleSelectAll = () => {
-    if (selectedTrips.size === trips.length) {
-      setSelectedTrips(new Set())
+    if (allVisibleSelected) {
+      // Deselect all visible trips
+      setSelectedTrips((prev) => {
+        const newSet = new Set(prev)
+        filteredTrips.forEach(t => newSet.delete(t.id))
+        return newSet
+      })
     } else {
-      setSelectedTrips(new Set(trips.map(t => t.id)))
+      // Select all visible trips
+      setSelectedTrips((prev) => {
+        const newSet = new Set(prev)
+        filteredTrips.forEach(t => newSet.add(t.id))
+        return newSet
+      })
     }
   }
 
@@ -299,9 +321,6 @@ export default function CompanyTripsPage() {
     )
   }
 
-  const allSelected = selectedTrips.size === filteredTrips.length && filteredTrips.length > 0
-  const someSelected = selectedTrips.size > 0 && selectedTrips.size < filteredTrips.length
-
   return (
     <div className="container mx-auto py-12 px-4">
       <div className="flex items-center justify-between mb-8">
@@ -404,10 +423,10 @@ export default function CompanyTripsPage() {
               <TableRow>
                 <TableHead className="w-[50px]">
                   <Checkbox
-                    checked={allSelected}
+                    checked={allVisibleSelected}
                     onCheckedChange={toggleSelectAll}
-                    aria-label="Select all trips"
-                    className={someSelected ? "data-[state=checked]:bg-primary/50" : ""}
+                    aria-label="Select all visible trips"
+                    className={someVisibleSelected ? "data-[state=checked]:bg-primary/50" : ""}
                   />
                 </TableHead>
                 <TableHead>Route</TableHead>
@@ -537,6 +556,11 @@ export default function CompanyTripsPage() {
                 <div className="flex items-center gap-2">
                   <CheckSquare className="h-5 w-5 text-primary" />
                   <span className="font-semibold">{selectedTrips.size} trip(s) selected</span>
+                  {filteredTrips.length !== trips.length && selectedTrips.size > visibleSelectedCount && (
+                    <Badge variant="secondary" className="ml-2">
+                      {selectedTrips.size - visibleSelectedCount} hidden by filters
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-2">
                   <Button

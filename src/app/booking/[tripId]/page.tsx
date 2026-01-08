@@ -128,8 +128,8 @@ export default function BookingPage() {
   }, [status, session, router])
 
   useEffect(() => {
-    // Restore passenger data from localStorage
-    const savedPassengers = localStorage.getItem(`booking-${tripId}-passengers`)
+    // P2-SEC-006: Use sessionStorage instead of localStorage for passenger data (privacy)
+    const savedPassengers = sessionStorage.getItem(`booking-${tripId}-passengers`)
 
     if (savedPassengers) {
       try {
@@ -141,7 +141,7 @@ export default function BookingPage() {
 
           // Clean up localStorage only for logged-in users (guests need it for back navigation)
           if (session?.user) {
-            localStorage.removeItem(`booking-${tripId}-passengers`)
+            sessionStorage.removeItem(`booking-${tripId}-passengers`)
             toast.success("Your passenger information has been restored")
           }
         }
@@ -309,7 +309,7 @@ export default function BookingPage() {
     }
 
     // Save passenger data to localStorage in case user wants to go back
-    localStorage.setItem(`booking-${tripId}-passengers`, JSON.stringify(passengers))
+    sessionStorage.setItem(`booking-${tripId}-passengers`, JSON.stringify(passengers))
 
     // Guest checkout is allowed - no login required!
     // The API will create a guest user account automatically
