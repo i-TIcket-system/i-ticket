@@ -72,7 +72,22 @@
       "Bash(start \"\" \"http://localhost:3000\")",
       "Bash(start \"\" \"http://localhost:3002\")",
       "mcp__ide__getDiagnostics",
-      "Bash(start \"\" \"http://localhost:3000/company/dashboard\")"
+      "Bash(start \"\" \"http://localhost:3000/company/dashboard\")",
+      "Bash(start \"\" \"http://localhost:3002/login\")",
+      "Bash(start \"\" \"http://localhost:3000/about\")",
+      "Bash(docker-compose down:*)",
+      "Bash(docker-compose:*)",
+      "WebFetch(domain:www.webirr.com)",
+      "WebFetch(domain:nbe.gov.et)",
+      "Bash(start \"\" \"http://localhost:3001/admin/dashboard\")",
+      "Bash(start \"\" \"http://localhost:3003\")",
+      "Bash(start \"\" \"http://localhost:3003/login\")",
+      "Bash(start \"\" \"http://localhost:3003/admin/dashboard\")",
+      "Bash(\"C:\\\\Program Files\\\\Docker\\\\Docker\\\\resources\\\\bin\\\\docker.exe\" exec iticket-postgres psql -U iticket -d iticket -c \"ALTER USER iticket WITH PASSWORD ''f07b194d24b363497d8dc1c64e6e16c6'';\")",
+      "Bash(git tag:*)",
+      "Bash(git branch:*)",
+      "Bash(timeout:*)",
+      "Bash(npx next build:*)"
     ]
   }
 }

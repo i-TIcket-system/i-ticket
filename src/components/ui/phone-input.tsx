@@ -22,6 +22,22 @@ export const PhoneInput = React.forwardRef<HTMLInputElement, PhoneInputProps>(
   ({ className, value, onChange, error, disabled, ...props }, ref) => {
     const [isFocused, setIsFocused] = React.useState(false)
 
+    // P3: Format phone for display (091 123 4567)
+    const formatPhoneDisplay = (phone: string): string => {
+      if (!phone) return ""
+      const cleaned = phone.replace(/[^\d]/g, "")
+
+      // Format: 091 123 4567
+      if (cleaned.length >= 3) {
+        const parts = []
+        parts.push(cleaned.substring(0, 3))
+        if (cleaned.length > 3) parts.push(cleaned.substring(3, 6))
+        if (cleaned.length > 6) parts.push(cleaned.substring(6, 10))
+        return parts.join(" ")
+      }
+      return cleaned
+    }
+
     // Normalize phone number to local format (09XX or 07XX)
     const normalizePhone = (input: string): string => {
       // Remove all non-digit and non-plus characters

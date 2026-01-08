@@ -32,11 +32,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.toggle("dark", newTheme === "dark")
   }
 
-  // Prevent flash of wrong theme
-  if (!mounted) {
-    return <>{children}</>
-  }
-
+  // Always provide the context - the mounted check in useEffect handles theme loading
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       {children}
