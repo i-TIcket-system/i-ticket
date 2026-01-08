@@ -46,11 +46,23 @@ export function exportToCSV(data: any[], filename: string, headers?: string[]) {
 }
 
 /**
- * Export bookings to CSV
+ * P3-SEC-008: Safe export fields whitelist
+ * Export bookings to CSV with only approved fields
  */
+const SAFE_EXPORT_FIELDS = [
+  'Booking ID',
+  'Date',
+  'Customer',
+  'Phone',
+  'Route',
+  'Company',
+  'Amount',
+  'Status'
+] as const
+
 export function exportBookingsToCSV(bookings: any[], filename: string = 'bookings.csv') {
   const csvData = bookings.map(booking => ({
-    'Booking ID': booking.id,
+    'Booking ID': booking.id.slice(0, 12), // Truncate for privacy
     'Date': new Date(booking.createdAt).toLocaleString(),
     'Customer': booking.user?.name || 'N/A',
     'Phone': booking.user?.phone || 'N/A',
@@ -60,5 +72,5 @@ export function exportBookingsToCSV(bookings: any[], filename: string = 'booking
     'Status': booking.status,
   }))
 
-  exportToCSV(csvData, filename)
+  exportToCSV(csvData, filename, [...SAFE_EXPORT_FIELDS])
 }

@@ -312,7 +312,11 @@ function NavLink({
   icon?: React.ComponentType<{ className?: string }>
 }) {
   const pathname = usePathname()
-  const isActive = pathname === href || pathname.startsWith(href + '/')
+
+  // P2-UX-005: Better active detection for nested routes
+  const isActive = pathname === href ||
+                   pathname.startsWith(href + '/') ||
+                   (href !== '/' && pathname.includes(href))
 
   return (
     <Link

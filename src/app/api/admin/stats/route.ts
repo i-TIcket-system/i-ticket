@@ -179,22 +179,28 @@ export async function GET(request: NextRequest) {
       hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1
     })
 
-    // Find top 3 peak hours - FIXED: Return defaults if no data
+    // Find top 3 peak hours - P2-QA-005: Use 12-hour format for Ethiopian users
     let peakHours = Object.entries(hourlyDistribution)
       .sort(([, a], [, b]) => (b as number) - (a as number))
       .slice(0, 3)
-      .map(([hour, count]) => ({
-        hour: parseInt(hour),
-        count: count as number,
-        label: `${hour.toString().padStart(2, '0')}:00`
-      }))
+      .map(([hour, count]) => {
+        const hourNum = parseInt(hour)
+        const ampm = hourNum >= 12 ? 'PM' : 'AM'
+        const hour12 = hourNum % 12 || 12
 
-    // P1-QA-001: Return default peak hours if no booking data
+        return {
+          hour: hourNum,
+          count: count as number,
+          label: `${hour12}:00 ${ampm}`
+        }
+      })
+
+    // P1-QA-001: Return default peak hours if no booking data (12-hour format)
     if (peakHours.length === 0) {
       peakHours = [
-        { hour: 9, count: 0, label: '09:00' },
-        { hour: 14, count: 0, label: '14:00' },
-        { hour: 17, count: 0, label: '17:00' }
+        { hour: 9, count: 0, label: '9:00 AM' },
+        { hour: 14, count: 0, label: '2:00 PM' },
+        { hour: 17, count: 0, label: '5:00 PM' }
       ]
     }
 

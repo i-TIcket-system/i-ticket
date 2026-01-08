@@ -272,19 +272,28 @@
     scroll-behavior: auto !important;
   }
 
+  /* P2-UX-009: Preserve essential animations (loading spinners) */
   .shimmer,
   .animate-shimmer,
-  .animate-spin,
   .animate-pulse,
   .animate-bounce,
   .animate-ping {
     animation: none !important;
   }
 
+  /* Keep loading spinners but slower */
+  .animate-spin {
+    animation: spin 2s linear infinite !important;
+  }
+
+  /* Reduce motion of transforms, don't eliminate */
   .card-hover:hover,
-  .hover\:scale-105:hover,
   .hover\:-translate-y-2:hover {
-    transform: none !important;
+    transform: translateY(-2px) !important;
+  }
+
+  .hover\:scale-105:hover {
+    transform: scale(1.02) !important;
   }
 }
 
