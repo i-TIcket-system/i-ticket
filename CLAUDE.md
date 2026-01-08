@@ -51,7 +51,14 @@ This document tracks major features and technical architecture for the i-Ticket 
 - **CRITICAL SECURITY HARDENING** - Comprehensive security audit identified and fixed 16 vulnerabilities (6 P0 critical, 5 P1 high, 3 P2, 2 P3). Production-ready security achieved (C- → A- rating)
   - **P0 Fixes**: Environment validation, credential rotation, trip update IDOR protection, booking race condition fix (row-level locking), payment callback replay protection (SHA-256 hashing), SQL injection prevention
   - **P1 Fixes**: Secure password reset system (bcrypt hashed tokens), reduced session duration (7 days → 24 hours), payment amount server-side verification, enhanced SMS sanitization (5-layer XSS prevention), enhanced rate limiting (IP + User + Booking)
-  - **P2/P3 Fixes**: Cryptographically secure short codes (crypto.randomBytes), safe error messages, passenger data validation, transaction timeouts, performance indexes, CSP security headers, optimistic locking (version field)
+  - **P2/P3 Fixes** (Fully Implemented):
+  - **P2 - Transaction Timeouts**: 10-second timeout on all critical operations (bookings, payments, payouts, manual tickets) using `transactionWithTimeout` utility
+  - **P3 - Optimistic Locking**: Version field with increment on trip updates, prevents concurrent modification conflicts with 409 Conflict errors
+  - **P3 - Cryptographically Secure Short Codes**: Using crypto.randomBytes for ticket codes and tokens
+  - **P3 - Safe Error Messages**: Generic error responses without technical details leakage
+  - **P3 - Passenger Data Validation**: Name length (2-100 chars), national ID format, child limits (max 3), adult requirement
+  - **P3 - Performance Indexes**: Composite indexes on high-traffic queries (see schema.prisma lines 132-240)
+  - **P3 - CSP Security Headers**: Content Security Policy implemented in next.config.js (lines 42-54)
   - **New Models**: ProcessedCallback (replay protection), PasswordReset (secure tokens)
   - **New Utilities**: trip-update-validator.ts, callback-hash.ts, password-reset.ts, error-handler.ts
   - **Documentation**: SECURITY.md (479 lines), .env.example (77 lines)
@@ -222,7 +229,7 @@ This document tracks major features and technical architecture for the i-Ticket 
 - **Sales**: `src/lib/sales/referral-utils.ts` (QR generation, code generation, visitor hashing)
 - **ClickUp**: `src/lib/clickup/client.ts`, `src/lib/clickup/task-templates.ts`, `src/lib/clickup/index.ts`
 - **Charts**: `recharts` (analytics visualization for revenue charts)
-- **Security**: `src/lib/trip-update-validator.ts` (business rule enforcement), `src/lib/password-reset.ts` (secure token management), `src/lib/error-handler.ts` (safe error responses)
+- **Security**: `src/lib/trip-update-validator.ts` (business rule enforcement), `src/lib/password-reset.ts` (secure token management), `src/lib/error-handler.ts` (safe error responses), `src/lib/optimistic-locking.ts` (P3 version-based concurrency control), `src/lib/db.ts` (P2 transaction timeout utility)
 - **Hooks**: `src/hooks/use-referral-tracking.ts` (client-side referral tracking)
 - **Utils**: `src/lib/rate-limit.ts` (enhanced multi-layer limiting), `src/lib/validations.ts`, `src/lib/auth-helpers.ts`, `src/lib/city-utils.ts`
 

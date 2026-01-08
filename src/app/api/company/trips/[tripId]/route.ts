@@ -214,14 +214,16 @@ export async function PUT(
       newAvailableSlots = Math.max(0, existingTrip.availableSlots + slotsDifference)
     }
 
-    // OPTIMISTIC LOCKING: Update with version check
-    const updatedTrip = await prisma.trip.update({
-      where: {
-        id: tripId,
-        version: existingTrip.version // Ensures no concurrent modification
-      },
-      data: {
-        version: { increment: 1 }, // Increment version on each update
+    // P3: OPTIMISTIC LOCKING - Update with version check to prevent concurrent modifications
+    let updatedTrip;
+    try {
+      updatedTrip = await prisma.trip.update({
+        where: {
+          id: tripId,
+          version: existingTrip.version // Ensures no concurrent modification
+        },
+        data: {
+          version: { increment: 1 }, // Increment version on each update
         ...(origin && { origin }),
         ...(destination && { destination }),
         ...(departureTime && { departureTime: new Date(departureTime) }),
@@ -282,6 +284,27 @@ export async function PUT(
         },
       },
     })
+    } catch (error: any) {
+      // Check if this is an optimistic locking error (record not found means version mismatch)
+      if (error.code === 'P2025' || error.message?.includes('Record to update not found')) {
+        // Fetch current version to inform user
+        const currentTrip = await prisma.trip.findUnique({
+          where: { id: tripId },
+          select: { version: true }
+        })
+
+        return NextResponse.json(
+          {
+            error: 'Trip was modified by another user. Please refresh the page and try again.',
+            code: 'OPTIMISTIC_LOCK_ERROR',
+            expectedVersion: existingTrip.version,
+            currentVersion: currentTrip?.version || 'unknown'
+          },
+          { status: 409 } // 409 Conflict
+        )
+      }
+      throw error // Re-throw other errors
+    }
 
     // Log trip update for dispute management (track what changed)
     const changes: string[] = []

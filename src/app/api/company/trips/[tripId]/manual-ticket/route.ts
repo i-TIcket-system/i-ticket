@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import prisma from "@/lib/db"
+import prisma, { transactionWithTimeout } from "@/lib/db"
 import { requireCompanyAdmin, handleAuthError } from "@/lib/auth-helpers"
 import { createLowSlotAlertTask } from "@/lib/clickup"
 import { getAvailableSeatNumbers } from "@/lib/utils"
@@ -64,8 +64,8 @@ export async function POST(
       )
     }
 
-    // Update available slots in transaction
-    const result = await prisma.$transaction(async (tx) => {
+    // P2: Update available slots in transaction with timeout
+    const result = await transactionWithTimeout(async (tx) => {
       // AUTO-ASSIGNMENT: Get available seat numbers automatically
       const seatNumbers = await getAvailableSeatNumbers(
         params.tripId,

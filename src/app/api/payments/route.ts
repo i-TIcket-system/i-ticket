@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import prisma from "@/lib/db"
+import prisma, { transactionWithTimeout } from "@/lib/db"
 import { authOptions } from "@/lib/auth"
 import { generateShortCode } from "@/lib/utils"
 import QRCode from "qrcode"
@@ -114,8 +114,8 @@ export async function POST(request: NextRequest) {
       await new Promise((resolve) => setTimeout(resolve, 1500))
     }
 
-    // Use transaction to create payment and tickets
-    const result = await prisma.$transaction(async (tx) => {
+    // P2: Use transaction with timeout to create payment and tickets
+    const result = await transactionWithTimeout(async (tx) => {
       // Create payment record
       const payment = await tx.payment.create({
         data: {

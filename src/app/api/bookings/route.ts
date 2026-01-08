@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
-import prisma from "@/lib/db"
+import prisma, { transactionWithTimeout } from "@/lib/db"
 import { authOptions } from "@/lib/auth"
 import { getAvailableSeatNumbers } from "@/lib/utils"
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
@@ -181,8 +181,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use transaction to ensure atomic booking with row-level locking
-    const booking = await prisma.$transaction(async (tx) => {
+    // P2: Use transaction with timeout (10s) to ensure atomic booking with row-level locking
+    const booking = await transactionWithTimeout(async (tx) => {
       // CRITICAL: Use SELECT FOR UPDATE NOWAIT to lock the trip row
       // This prevents concurrent bookings from reading stale availableSlots
       const trip = await tx.$queryRaw<Array<{
@@ -401,9 +401,7 @@ export async function POST(request: NextRequest) {
       }
 
       return newBooking
-    }, {
-      timeout: 10000, // 10 second timeout for booking transaction
-    })
+    }) // Using default 10-second timeout from transactionWithTimeout
 
     return NextResponse.json({ booking }, { status: 201 })
   } catch (error) {

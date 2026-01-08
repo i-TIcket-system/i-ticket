@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/db";
+import prisma, { transactionWithTimeout } from "@/lib/db";
 import { verifyTelebirrSignature, type TelebirrCallbackPayload } from "@/lib/payments/telebirr";
 import { generateShortCode } from "@/lib/utils";
 import { getSmsGateway } from "@/lib/sms/gateway";
@@ -198,7 +198,8 @@ async function handleSuccessfulPayment(payment: any, callback: TelebirrCallbackP
 
   console.log(`[TeleBirr Callback] Processing successful payment: ${transactionId}`);
 
-  await prisma.$transaction(async (tx) => {
+  // P2: Use transaction with timeout for payment processing
+  await transactionWithTimeout(async (tx) => {
     // 1. Update payment status
     await tx.payment.update({
       where: { id: payment.id },
@@ -296,7 +297,8 @@ async function handleFailedPayment(payment: any, callback: TelebirrCallbackPaylo
 
   console.log(`[TeleBirr Callback] Processing failed payment: ${transactionId}`);
 
-  await prisma.$transaction(async (tx) => {
+  // P2: Use transaction with timeout for payment failure handling
+  await transactionWithTimeout(async (tx) => {
     // Update payment status
     await tx.payment.update({
       where: { id: payment.id },

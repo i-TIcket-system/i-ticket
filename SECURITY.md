@@ -169,29 +169,33 @@ await handleSuccessfulPayment(...)
 
 **Problem:** Multiple users booking last seats simultaneously = overbooking
 
-**Solution:** Row-level database locking
+**Solution:** Row-level database locking + Transaction timeouts
 
 ```typescript
-// Lock trip row during booking
-const trip = await tx.$queryRaw`
-  SELECT * FROM "Trip"
-  WHERE id = ${tripId}
-  FOR UPDATE NOWAIT
-`
+// P2: Use transaction with timeout (10s max)
+const booking = await transactionWithTimeout(async (tx) => {
+  // Lock trip row during booking
+  const trip = await tx.$queryRaw`
+    SELECT * FROM "Trip"
+    WHERE id = ${tripId}
+    FOR UPDATE NOWAIT
+  `
 
-// Atomic slot decrement
-await tx.$executeRaw`
-  UPDATE "Trip"
-  SET "availableSlots" = "availableSlots" - ${count}
-  WHERE id = ${tripId}
-    AND "availableSlots" >= ${count}
-`
+  // Atomic slot decrement
+  await tx.$executeRaw`
+    UPDATE "Trip"
+    SET "availableSlots" = "availableSlots" - ${count}
+    WHERE id = ${tripId}
+      AND "availableSlots" >= ${count}
+  `
+}, 10000) // 10 second timeout
 ```
 
 **Benefits:**
 - Prevents overbooking
 - Fast failure with NOWAIT (better UX)
 - Serializable transaction isolation
+- **P2: 10-second timeout prevents hung transactions**
 
 ---
 
@@ -214,10 +218,37 @@ if (!validation.allowed) {
 }
 ```
 
+**P3: Optimistic Locking:**
+```typescript
+// Prevents concurrent update conflicts using version field
+try {
+  const updatedTrip = await prisma.trip.update({
+    where: {
+      id: tripId,
+      version: existingTrip.version // Only update if version matches
+    },
+    data: {
+      version: { increment: 1 }, // Increment version on each update
+      price: newPrice,
+      // ... other fields
+    }
+  })
+} catch (error) {
+  if (error.code === 'P2025') {
+    // Version mismatch - another user modified the record
+    return NextResponse.json(
+      { error: 'Trip was modified by another user. Please refresh and try again.' },
+      { status: 409 } // 409 Conflict
+    )
+  }
+}
+```
+
 **Audit Trail:**
 - All update attempts logged (successful and blocked)
 - Shows who tried to change what
 - Includes paid booking count at time of attempt
+- **P3: Version conflicts logged for audit**
 
 ---
 
@@ -263,6 +294,9 @@ if (!validation.allowed) {
 - [ ] Error monitoring configured (Sentry, DataDog, etc.)
 - [ ] Rate limiting enabled on all public endpoints
 - [ ] CORS properly configured (production domain only)
+- [ ] **P2: Transaction timeouts configured (10 seconds)**
+- [ ] **P3: Optimistic locking enabled (version field in schema)**
+- [ ] **P3: Performance indexes created (see schema.prisma)**
 
 ### Regulatory Compliance
 

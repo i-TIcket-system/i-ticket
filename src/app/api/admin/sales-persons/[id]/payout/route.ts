@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
-import prisma from "@/lib/db"
+import prisma, { transactionWithTimeout } from "@/lib/db"
 import { requireSuperAdmin, handleAuthError } from "@/lib/auth-helpers"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
@@ -63,8 +63,8 @@ export async function POST(
       0
     )
 
-    // Process payout in transaction
-    const payout = await prisma.$transaction(async (tx) => {
+    // P2: Process payout in transaction with timeout
+    const payout = await transactionWithTimeout(async (tx) => {
       // Create payout record
       const newPayout = await tx.salesPayout.create({
         data: {
