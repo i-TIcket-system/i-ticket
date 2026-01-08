@@ -14,7 +14,13 @@ import {
   MapPin,
   AlertTriangle,
   Check,
-  X
+  X,
+  Trash2,
+  DollarSign,
+  PlayCircle,
+  PauseCircle,
+  CheckSquare,
+  Square
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -27,7 +33,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
 import { formatCurrency, formatDate, getSlotsPercentage, isLowSlots } from "@/lib/utils"
+import { toast } from "sonner"
 
 interface Trip {
   id: string
@@ -45,11 +63,17 @@ interface Trip {
   }
 }
 
+type BulkAction = "price" | "halt" | "resume" | "delete" | null
+
 export default function CompanyTripsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [trips, setTrips] = useState<Trip[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedTrips, setSelectedTrips] = useState<Set<string>>(new Set())
+  const [bulkAction, setBulkAction] = useState<BulkAction>(null)
+  const [newPrice, setNewPrice] = useState("")
+  const [isProcessing, setIsProcessing] = useState(false)
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -76,6 +100,143 @@ export default function CompanyTripsPage() {
     }
   }
 
+  // Selection handlers
+  const toggleSelectAll = () => {
+    if (selectedTrips.size === trips.length) {
+      setSelectedTrips(new Set())
+    } else {
+      setSelectedTrips(new Set(trips.map(t => t.id)))
+    }
+  }
+
+  const toggleSelectTrip = (tripId: string) => {
+    const newSelected = new Set(selectedTrips)
+    if (newSelected.has(tripId)) {
+      newSelected.delete(tripId)
+    } else {
+      newSelected.add(tripId)
+    }
+    setSelectedTrips(newSelected)
+  }
+
+  const clearSelection = () => {
+    setSelectedTrips(new Set())
+  }
+
+  // Bulk operations
+  const handleBulkPriceUpdate = async () => {
+    if (!newPrice || isNaN(parseFloat(newPrice))) {
+      toast.error("Invalid Price", {
+        description: "Please enter a valid price"
+      })
+      return
+    }
+
+    setIsProcessing(true)
+    try {
+      const response = await fetch("/api/company/trips/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "updatePrice",
+          tripIds: Array.from(selectedTrips),
+          price: parseFloat(newPrice)
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success("Success", {
+          description: `Updated price for ${data.updated} trip(s). ${data.failed > 0 ? `${data.failed} trip(s) couldn't be updated (paid bookings exist).` : ''}`
+        })
+        fetchTrips()
+        clearSelection()
+        setBulkAction(null)
+        setNewPrice("")
+      } else {
+        toast.error("Error", {
+          description: data.error || "Failed to update prices"
+        })
+      }
+    } catch (error) {
+      toast.error("Error", {
+        description: "An error occurred while updating prices"
+      })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleBulkHaltResume = async (halt: boolean) => {
+    setIsProcessing(true)
+    try {
+      const response = await fetch("/api/company/trips/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: halt ? "halt" : "resume",
+          tripIds: Array.from(selectedTrips)
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success("Success", {
+          description: `${halt ? 'Halted' : 'Resumed'} ${data.updated} trip(s)`
+        })
+        fetchTrips()
+        clearSelection()
+        setBulkAction(null)
+      } else {
+        toast.error("Error", {
+          description: data.error || `Failed to ${halt ? 'halt' : 'resume'} trips`
+        })
+      }
+    } catch (error) {
+      toast.error("Error", {
+        description: `An error occurred while ${halt ? 'halting' : 'resuming'} trips`
+      })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    setIsProcessing(true)
+    try {
+      const response = await fetch("/api/company/trips/bulk", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tripIds: Array.from(selectedTrips)
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success("Success", {
+          description: `Deleted ${data.deleted} trip(s). ${data.failed > 0 ? `${data.failed} trip(s) couldn't be deleted (paid bookings exist).` : ''}`
+        })
+        fetchTrips()
+        clearSelection()
+        setBulkAction(null)
+      } else {
+        toast.error("Error", {
+          description: data.error || "Failed to delete trips"
+        })
+      }
+    } catch (error) {
+      toast.error("Error", {
+        description: "An error occurred while deleting trips"
+      })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
   if (status === "loading" || isLoading) {
     return (
       <div className="container mx-auto py-12">
@@ -86,6 +247,9 @@ export default function CompanyTripsPage() {
       </div>
     )
   }
+
+  const allSelected = selectedTrips.size === trips.length && trips.length > 0
+  const someSelected = selectedTrips.size > 0 && selectedTrips.size < trips.length
 
   return (
     <div className="container mx-auto py-12 px-4">
@@ -110,6 +274,14 @@ export default function CompanyTripsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all trips"
+                    className={someSelected ? "data-[state=checked]:bg-primary/50" : ""}
+                  />
+                </TableHead>
                 <TableHead>Route</TableHead>
                 <TableHead>Departure</TableHead>
                 <TableHead>Price</TableHead>
@@ -122,7 +294,7 @@ export default function CompanyTripsPage() {
             <TableBody>
               {trips.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                     No trips found. Create your first trip to get started.
                   </TableCell>
                 </TableRow>
@@ -130,9 +302,17 @@ export default function CompanyTripsPage() {
                 trips.map((trip) => {
                   const slotsPercentage = getSlotsPercentage(trip.availableSlots, trip.totalSlots)
                   const lowSlots = isLowSlots(trip.availableSlots, trip.totalSlots)
+                  const isSelected = selectedTrips.has(trip.id)
 
                   return (
-                    <TableRow key={trip.id}>
+                    <TableRow key={trip.id} className={isSelected ? "bg-muted/50" : ""}>
+                      <TableCell>
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleSelectTrip(trip.id)}
+                          aria-label={`Select trip from ${trip.origin} to ${trip.destination}`}
+                        />
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
@@ -217,6 +397,188 @@ export default function CompanyTripsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Bulk Actions Panel - Floating at bottom when items selected */}
+      {selectedTrips.size > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-4">
+          <Card className="shadow-2xl border-2">
+            <CardContent className="py-4 px-6">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-5 w-5 text-primary" />
+                  <span className="font-semibold">{selectedTrips.size} trip(s) selected</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBulkAction("price")}
+                    disabled={isProcessing}
+                  >
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    Update Price
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBulkAction("halt")}
+                    disabled={isProcessing}
+                  >
+                    <PauseCircle className="h-4 w-4 mr-1" />
+                    Halt Booking
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setBulkAction("resume")}
+                    disabled={isProcessing}
+                  >
+                    <PlayCircle className="h-4 w-4 mr-1" />
+                    Resume Booking
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setBulkAction("delete")}
+                    disabled={isProcessing}
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearSelection}
+                    disabled={isProcessing}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Bulk Price Update Dialog */}
+      <Dialog open={bulkAction === "price"} onOpenChange={() => setBulkAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Price for {selectedTrips.size} Trip(s)</DialogTitle>
+            <DialogDescription>
+              Enter the new price for selected trips. Trips with paid bookings cannot be updated.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Label htmlFor="newPrice">New Price (ETB)</Label>
+            <Input
+              id="newPrice"
+              type="number"
+              step="0.01"
+              placeholder="Enter new price"
+              value={newPrice}
+              onChange={(e) => setNewPrice(e.target.value)}
+              className="mt-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkAction(null)} disabled={isProcessing}>
+              Cancel
+            </Button>
+            <Button onClick={handleBulkPriceUpdate} disabled={isProcessing}>
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                "Update Price"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Halt Dialog */}
+      <Dialog open={bulkAction === "halt"} onOpenChange={() => setBulkAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Halt Booking for {selectedTrips.size} Trip(s)?</DialogTitle>
+            <DialogDescription>
+              This will temporarily stop customers from booking these trips. You can resume them later.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkAction(null)} disabled={isProcessing}>
+              Cancel
+            </Button>
+            <Button onClick={() => handleBulkHaltResume(true)} disabled={isProcessing} variant="destructive">
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Halting...
+                </>
+              ) : (
+                "Halt Booking"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Resume Dialog */}
+      <Dialog open={bulkAction === "resume"} onOpenChange={() => setBulkAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Resume Booking for {selectedTrips.size} Trip(s)?</DialogTitle>
+            <DialogDescription>
+              This will allow customers to book these trips again.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkAction(null)} disabled={isProcessing}>
+              Cancel
+            </Button>
+            <Button onClick={() => handleBulkHaltResume(false)} disabled={isProcessing}>
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Resuming...
+                </>
+              ) : (
+                "Resume Booking"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bulk Delete Dialog */}
+      <Dialog open={bulkAction === "delete"} onOpenChange={() => setBulkAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete {selectedTrips.size} Trip(s)?</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. Trips with paid bookings cannot be deleted.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkAction(null)} disabled={isProcessing}>
+              Cancel
+            </Button>
+            <Button onClick={handleBulkDelete} disabled={isProcessing} variant="destructive">
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete Trips"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
