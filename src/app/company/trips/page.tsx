@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -88,6 +88,16 @@ export default function CompanyTripsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [dateFilter, setDateFilter] = useState("")
   const [filteredTrips, setFilteredTrips] = useState<Trip[]>([])
+
+  // Refs for keyboard shortcuts to avoid dependency issues
+  const filteredTripsRef = useRef<Trip[]>([])
+  const selectedTripsRef = useRef<Set<string>>(new Set())
+
+  // Keep refs updated
+  useEffect(() => {
+    filteredTripsRef.current = filteredTrips
+    selectedTripsRef.current = selectedTrips
+  }, [filteredTrips, selectedTrips])
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -205,7 +215,7 @@ export default function CompanyTripsPage() {
     setSelectedTrips(new Set())
   }
 
-  // P3-UX-012: Keyboard shortcuts for power users
+  // P3-UX-012: Keyboard shortcuts for power users (using refs to avoid infinite loop)
   useEffect(() => {
     const handleKeyboard = (e: KeyboardEvent) => {
       // Ignore if typing in input/textarea
@@ -216,7 +226,7 @@ export default function CompanyTripsPage() {
       // Ctrl/Cmd + A: Select all visible trips
       if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
         e.preventDefault()
-        const filtered = filteredTrips
+        const filtered = filteredTripsRef.current
         if (filtered.length > 0) {
           setSelectedTrips(new Set(filtered.map(t => t.id)))
           toast.success(`Selected all ${filtered.length} trip(s)`)
@@ -225,7 +235,7 @@ export default function CompanyTripsPage() {
 
       // Escape: Clear selection
       if (e.key === 'Escape') {
-        if (selectedTrips.size > 0) {
+        if (selectedTripsRef.current.size > 0) {
           setSelectedTrips(new Set())
           toast.success('Selection cleared')
         }
@@ -234,7 +244,7 @@ export default function CompanyTripsPage() {
 
     document.addEventListener('keydown', handleKeyboard)
     return () => document.removeEventListener('keydown', handleKeyboard)
-  }, [filteredTrips, selectedTrips]) // Need deps for closure to access current values
+  }, []) // Empty deps - use refs for current values
 
   // Bulk operations
   const handleBulkPriceUpdate = async () => {
