@@ -55,24 +55,27 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        // P2: Track failed attempts and show warnings
-        const newAttempts = failedAttempts + 1
-        setFailedAttempts(newAttempts)
-        sessionStorage.setItem("failedLoginAttempts", newAttempts.toString())
+        // P1-QA-002: Use functional state update to prevent race condition
+        setFailedAttempts((prev) => {
+          const newAttempts = prev + 1
+          sessionStorage.setItem("failedLoginAttempts", newAttempts.toString())
+
+          // Show progressive warnings
+          if (newAttempts >= 3 && newAttempts < 5) {
+            const remaining = 5 - newAttempts
+            toast.error("Invalid credentials", {
+              description: `${remaining} more attempt${remaining !== 1 ? 's' : ''} before temporary lockout`
+            })
+          } else if (newAttempts >= 5) {
+            toast.error("Account locked", {
+              description: "Too many failed attempts. Please try again in 15 minutes or reset your password."
+            })
+          }
+
+          return newAttempts
+        })
 
         setError(result.error)
-
-        // Show progressive warnings
-        if (newAttempts >= 3 && newAttempts < 5) {
-          const remaining = 5 - newAttempts
-          toast.error("Invalid credentials", {
-            description: `${remaining} more attempt${remaining !== 1 ? 's' : ''} before temporary lockout`
-          })
-        } else if (newAttempts >= 5) {
-          toast.error("Account locked", {
-            description: "Too many failed attempts. Please try again in 15 minutes or reset your password."
-          })
-        }
         toast.error("Login failed", { description: result.error })
       } else {
         // P2: Clear failed attempts on successful login

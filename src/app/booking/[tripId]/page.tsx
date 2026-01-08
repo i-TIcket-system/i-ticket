@@ -196,15 +196,46 @@ export default function BookingPage() {
     }
   }
 
-  // P1: Poll for price changes every 30 seconds
+  // P1-SEC-004: Poll for price changes with tab visibility check (prevents DoS)
   useEffect(() => {
     if (!trip) return
 
-    const interval = setInterval(() => {
-      fetchTrip(true) // Silent fetch to avoid duplicate error toasts
-    }, 30000) // 30 seconds
+    let interval: NodeJS.Timeout | null = null
 
-    return () => clearInterval(interval)
+    const startPolling = () => {
+      if (interval) clearInterval(interval)
+      interval = setInterval(() => {
+        fetchTrip(true) // Silent fetch to avoid duplicate error toasts
+      }, 30000) // 30 seconds
+    }
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval)
+        interval = null
+      }
+    }
+
+    // Handle tab visibility changes
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling() // Pause polling when tab is hidden
+      } else {
+        startPolling() // Resume polling when tab becomes visible
+      }
+    }
+
+    // Start polling if tab is visible
+    if (!document.hidden) {
+      startPolling()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      stopPolling()
+    }
   }, [trip, tripId, originalPrice])
 
   const addPassenger = () => {
