@@ -196,6 +196,33 @@ export default function CompanyTripsPage() {
     setSelectedTrips(new Set())
   }
 
+  // P3-UX-012: Keyboard shortcuts for power users
+  useEffect(() => {
+    const handleKeyboard = (e: KeyboardEvent) => {
+      // Ignore if typing in input/textarea
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      // Ctrl/Cmd + A: Select all visible trips
+      if ((e.ctrlKey || e.metaKey) && e.key === 'a' && filteredTrips.length > 0) {
+        e.preventDefault()
+        setSelectedTrips(new Set(filteredTrips.map(t => t.id)))
+        toast.success(`Selected all ${filteredTrips.length} trip(s)`)
+      }
+
+      // Escape: Clear selection
+      if (e.key === 'Escape' && selectedTrips.size > 0) {
+        e.preventDefault()
+        setSelectedTrips(new Set())
+        toast.success('Selection cleared')
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyboard)
+    return () => document.removeEventListener('keydown', handleKeyboard)
+  }, [filteredTrips, selectedTrips])
+
   // Bulk operations
   const handleBulkPriceUpdate = async () => {
     if (!newPrice || isNaN(parseFloat(newPrice))) {
@@ -278,6 +305,13 @@ export default function CompanyTripsPage() {
 
   const handleBulkDelete = async () => {
     setIsProcessing(true)
+    setBulkAction(null) // P2-UX-010: Close dialog immediately
+
+    // Show loading toast
+    const loadingToast = toast.loading(`Deleting ${selectedTrips.size} trip(s)...`, {
+      duration: Infinity
+    })
+
     try {
       const response = await fetch("/api/company/trips/bulk", {
         method: "DELETE",
@@ -289,19 +323,21 @@ export default function CompanyTripsPage() {
 
       const data = await response.json()
 
+      toast.dismiss(loadingToast)
+
       if (response.ok) {
-        toast.success("Success", {
+        toast.success("Bulk delete completed", {
           description: `Deleted ${data.deleted} trip(s). ${data.failed > 0 ? `${data.failed} trip(s) couldn't be deleted (paid bookings exist).` : ''}`
         })
         fetchTrips()
         clearSelection()
-        setBulkAction(null)
       } else {
         toast.error("Error", {
           description: data.error || "Failed to delete trips"
         })
       }
     } catch (error) {
+      toast.dismiss(loadingToast)
       toast.error("Error", {
         description: "An error occurred while deleting trips"
       })
@@ -707,15 +743,42 @@ export default function CompanyTripsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Bulk Delete Dialog */}
+      {/* Bulk Delete Dialog - P1-UX-001: With trip preview */}
       <Dialog open={bulkAction === "delete"} onOpenChange={() => setBulkAction(null)}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>Delete {selectedTrips.size} Trip(s)?</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. Trips with paid bookings cannot be deleted.
+              This action cannot be undone. The following trips will be permanently deleted:
             </DialogDescription>
           </DialogHeader>
+          <div className="max-h-60 overflow-y-auto border rounded-lg p-4 space-y-2 my-4">
+            {filteredTrips
+              .filter((t) => selectedTrips.has(t.id))
+              .slice(0, 10)
+              .map((trip) => (
+                <div key={trip.id} className="text-sm flex items-center gap-2">
+                  <MapPin className="h-3 w-3 text-muted-foreground" />
+                  <span>
+                    {trip.origin} → {trip.destination} ({formatDate(trip.departureTime)})
+                  </span>
+                  <Badge variant="secondary" className="text-xs">
+                    {trip._count.bookings} booking(s)
+                  </Badge>
+                </div>
+              ))}
+            {selectedTrips.size > 10 && (
+              <p className="text-sm text-muted-foreground italic">
+                ... and {selectedTrips.size - 10} more trip(s)
+              </p>
+            )}
+          </div>
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+            <p className="text-sm text-destructive font-medium flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              Trips with paid bookings cannot be deleted and will be skipped.
+            </p>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBulkAction(null)} disabled={isProcessing}>
               Cancel

@@ -271,7 +271,7 @@ function SearchContent() {
               {trips.length} trip{trips.length !== 1 ? "s" : ""} found
               {selectedTripsForComparison.length > 0 && (
                 <span className="ml-2 text-primary font-medium">
-                  • {selectedTripsForComparison.length} selected for comparison
+                  • {selectedTripsForComparison.length} of 4 selected for comparison
                 </span>
               )}
             </p>

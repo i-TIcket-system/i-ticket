@@ -60,7 +60,32 @@ const SAFE_EXPORT_FIELDS = [
   'Status'
 ] as const
 
-export function exportBookingsToCSV(bookings: any[], filename: string = 'bookings.csv') {
+export function exportBookingsToCSV(
+  bookings: any[],
+  filename?: string,
+  filters?: { status?: string; channel?: string; company?: string }
+) {
+  // P3-UX-011: Generate filename with filter context
+  if (!filename) {
+    const today = new Date().toISOString().split('T')[0]
+    let generatedFilename = `bookings-${today}`
+
+    if (filters?.status && filters.status !== 'all') {
+      generatedFilename += `-${filters.status.toLowerCase()}`
+    }
+    if (filters?.channel) {
+      generatedFilename += `-${filters.channel.toLowerCase()}`
+    }
+    if (filters?.company) {
+      generatedFilename += `-${filters.company.toLowerCase().replace(/\s+/g, '-').slice(0, 20)}`
+    }
+    if (bookings.length > 0) {
+      generatedFilename += `-${bookings.length}records`
+    }
+
+    filename = generatedFilename + '.csv'
+  }
+
   const csvData = bookings.map(booking => ({
     'Booking ID': booking.id.slice(0, 12), // Truncate for privacy
     'Date': new Date(booking.createdAt).toLocaleString(),
