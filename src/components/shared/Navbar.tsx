@@ -3,6 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useSession, signOut } from "next-auth/react"
+import { usePathname } from "next/navigation"
 import { Menu, X, User, LogOut, LayoutDashboard, Ticket, Building2, HeadphonesIcon, Bus, Users, FileText, UserCheck, ChevronDown, Moon, Sun } from "lucide-react"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
@@ -310,10 +311,17 @@ function NavLink({
   children: React.ReactNode
   icon?: React.ComponentType<{ className?: string }>
 }) {
+  const pathname = usePathname()
+  const isActive = pathname === href || pathname.startsWith(href + '/')
+
   return (
     <Link
       href={href}
-      className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-foreground/70 hover:text-foreground hover:bg-muted transition-colors"
+      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+        isActive
+          ? 'bg-primary/10 text-primary font-semibold border-b-2 border-primary'
+          : 'text-foreground/70 hover:text-foreground hover:bg-muted'
+      }`}
     >
       {Icon && <Icon className="h-4 w-4" />}
       {children}

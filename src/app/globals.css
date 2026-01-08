@@ -261,6 +261,33 @@
   }
 }
 
+/* P2: Disable animations for users with motion sensitivity */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .shimmer,
+  .animate-shimmer,
+  .animate-spin,
+  .animate-pulse,
+  .animate-bounce,
+  .animate-ping {
+    animation: none !important;
+  }
+
+  .card-hover:hover,
+  .hover\:scale-105:hover,
+  .hover\:-translate-y-2:hover {
+    transform: none !important;
+  }
+}
+
 /* ===================================
    RESPONSIVE TYPOGRAPHY SCALING
    =================================== */

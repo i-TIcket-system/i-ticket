@@ -51,7 +51,9 @@ export default function ForgotPasswordPage() {
 
       if (response.ok) {
         toast.success("OTP sent to your phone!", {
-          description: data.otp ? `Your OTP is: ${data.otp}` : undefined,
+          description: data.otp
+            ? `Your OTP is: ${data.otp}`
+            : "Check your phone in ~30 seconds. The OTP will arrive shortly.",
         })
         setStep("otp")
       } else {
