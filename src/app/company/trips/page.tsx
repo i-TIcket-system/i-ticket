@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -158,10 +158,19 @@ export default function CompanyTripsPage() {
     setFilteredTrips(filtered)
   }, [searchQuery, statusFilter, dateFilter, trips])
 
-  // P2-UX-004: Fix selection to work with filtered trips only
-  const visibleSelectedCount = filteredTrips.filter(t => selectedTrips.has(t.id)).length
-  const allVisibleSelected = visibleSelectedCount === filteredTrips.length && filteredTrips.length > 0
-  const someVisibleSelected = visibleSelectedCount > 0 && visibleSelectedCount < filteredTrips.length
+  // P2-UX-004: Fix selection to work with filtered trips only (memoized to prevent render loop)
+  const visibleSelectedCount = useMemo(
+    () => filteredTrips.filter(t => selectedTrips.has(t.id)).length,
+    [filteredTrips, selectedTrips]
+  )
+  const allVisibleSelected = useMemo(
+    () => visibleSelectedCount === filteredTrips.length && filteredTrips.length > 0,
+    [visibleSelectedCount, filteredTrips.length]
+  )
+  const someVisibleSelected = useMemo(
+    () => visibleSelectedCount > 0 && visibleSelectedCount < filteredTrips.length,
+    [visibleSelectedCount, filteredTrips.length]
+  )
 
   // Selection handlers
   const toggleSelectAll = () => {
