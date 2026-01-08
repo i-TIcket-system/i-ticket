@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import {
   Loader2,
   Users,
@@ -208,10 +208,10 @@ export default function AdminDashboard() {
           </div>
           <div className="flex items-center gap-3">
             <DateRangeSelector
-              onRangeChange={(start, end) => {
+              onRangeChange={useCallback((start: string, end: string) => {
                 setDateRangeStart(start)
                 setDateRangeEnd(end)
-              }}
+              }, [])}
               defaultRange="30days"
             />
             <Input
