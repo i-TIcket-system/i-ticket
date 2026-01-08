@@ -93,11 +93,9 @@ export default function CompanyTripsPage() {
   const filteredTripsRef = useRef<Trip[]>([])
   const selectedTripsRef = useRef<Set<string>>(new Set())
 
-  // Keep refs updated
-  useEffect(() => {
-    filteredTripsRef.current = filteredTrips
-    selectedTripsRef.current = selectedTrips
-  }, [filteredTrips, selectedTrips])
+  // Update refs on every render (no useEffect needed - refs don't trigger re-renders)
+  filteredTripsRef.current = filteredTrips
+  selectedTripsRef.current = selectedTrips
 
   useEffect(() => {
     if (status === "authenticated") {
