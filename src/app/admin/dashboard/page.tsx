@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { formatCurrency, formatDate } from "@/lib/utils"
+import { exportBookingsToCSV } from "@/lib/csv-export"
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -717,13 +718,29 @@ export default function AdminDashboard() {
       {/* Recent Bookings */}
       <Card className="mb-8 backdrop-blur-lg bg-white/50 border-white/40 shadow-lg">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Bus className="h-5 w-5 text-primary" />
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Bus className="h-5 w-5 text-primary" />
+                </div>
+                Recent Bookings
+              </CardTitle>
+              <CardDescription>Latest bookings across all companies</CardDescription>
             </div>
-            Recent Bookings
-          </CardTitle>
-          <CardDescription>Latest bookings across all companies</CardDescription>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => exportBookingsToCSV(
+                stats?.recentBookings || [],
+                `bookings-${new Date().toISOString().split('T')[0]}.csv`
+              )}
+              disabled={!stats?.recentBookings || stats.recentBookings.length === 0}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
