@@ -216,32 +216,25 @@ export default function CompanyTripsPage() {
       // Ctrl/Cmd + A: Select all visible trips
       if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
         e.preventDefault()
-        setSelectedTrips((prev) => {
-          const filtered = filteredTrips
-          if (filtered.length > 0) {
-            toast.success(`Selected all ${filtered.length} trip(s)`)
-            return new Set(filtered.map(t => t.id))
-          }
-          return prev
-        })
+        const filtered = filteredTrips
+        if (filtered.length > 0) {
+          setSelectedTrips(new Set(filtered.map(t => t.id)))
+          toast.success(`Selected all ${filtered.length} trip(s)`)
+        }
       }
 
       // Escape: Clear selection
       if (e.key === 'Escape') {
-        e.preventDefault()
-        setSelectedTrips((prev) => {
-          if (prev.size > 0) {
-            toast.success('Selection cleared')
-            return new Set()
-          }
-          return prev
-        })
+        if (selectedTrips.size > 0) {
+          setSelectedTrips(new Set())
+          toast.success('Selection cleared')
+        }
       }
     }
 
     document.addEventListener('keydown', handleKeyboard)
     return () => document.removeEventListener('keydown', handleKeyboard)
-  }, []) // Empty deps - use functional updates instead
+  }, [filteredTrips, selectedTrips]) // Need deps for closure to access current values
 
   // Bulk operations
   const handleBulkPriceUpdate = async () => {
