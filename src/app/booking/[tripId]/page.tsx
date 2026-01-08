@@ -103,6 +103,7 @@ export default function BookingPage() {
   const tripId = params.tripId as string
 
   const [trip, setTrip] = useState<Trip | null>(null)
+  const [originalPrice, setOriginalPrice] = useState<number | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [step, setStep] = useState(1) // 1: passengers, 2: review, 3: payment
@@ -160,22 +161,51 @@ export default function BookingPage() {
     }
   }, [session, tripId])
 
-  const fetchTrip = async () => {
+  const fetchTrip = async (silent = false) => {
     try {
       const response = await fetch(`/api/trips/${tripId}`)
       const data = await response.json()
 
       if (response.ok) {
-        setTrip(data.trip)
+        const newTrip = data.trip
+
+        // P1: Real-time price change detection
+        if (trip && originalPrice !== null && newTrip.price !== originalPrice) {
+          toast.error("Price Changed!", {
+            description: `Trip price updated from ${formatCurrency(originalPrice)} to ${formatCurrency(newTrip.price)}. Please review your booking.`
+          })
+        }
+
+        setTrip(newTrip)
+
+        // Set original price on first load
+        if (originalPrice === null) {
+          setOriginalPrice(newTrip.price)
+        }
       } else {
-        toast.error(data.error || "Trip not found")
+        if (!silent) {
+          toast.error(data.error || "Trip not found")
+        }
       }
     } catch (err) {
-      toast.error("Failed to load trip details")
+      if (!silent) {
+        toast.error("Failed to load trip details")
+      }
     } finally {
       setIsLoading(false)
     }
   }
+
+  // P1: Poll for price changes every 30 seconds
+  useEffect(() => {
+    if (!trip) return
+
+    const interval = setInterval(() => {
+      fetchTrip(true) // Silent fetch to avoid duplicate error toasts
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [trip, tripId, originalPrice])
 
   const addPassenger = () => {
     if (passengers.length < 5 && trip && passengers.length < trip.availableSlots) {
