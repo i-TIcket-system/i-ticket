@@ -55,15 +55,15 @@ function checkLoginRateLimit(identifier: string, type: 'ip' | 'phone'): { allowe
   return { allowed: true }
 }
 
-// Cleanup old entries every hour
-setInterval(() => {
+// Cleanup old entries (called on each check instead of setInterval)
+function cleanupOldAttempts() {
   const now = Date.now()
   for (const [key, value] of Array.from(loginAttempts.entries())) {
     if (now - value.firstAttempt > 60 * 60 * 1000 && (!value.lockedUntil || now > value.lockedUntil)) {
       loginAttempts.delete(key)
     }
   }
-}, 60 * 60 * 1000)
+}
 
 // Validate required environment variables at startup
 function validateEnvVars() {
@@ -125,6 +125,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         // P0-SEC-002: Server-side rate limiting
+        cleanupOldAttempts() // Cleanup on each login attempt
         const phone = credentials.phone
         const phoneLimit = checkLoginRateLimit(`phone:${phone}`, 'phone')
 
