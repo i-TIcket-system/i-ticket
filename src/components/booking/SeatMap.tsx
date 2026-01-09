@@ -13,6 +13,7 @@ interface SeatMapProps {
   className?: string
   busType?: "MINI" | "STANDARD" | "LUXURY"
   orientation?: "landscape" | "portrait"
+  refreshTrigger?: number // Increment to force refresh after sales
 }
 
 type SeatStatus = "available" | "occupied" | "selected"
@@ -123,7 +124,8 @@ export function SeatMap({
   onSeatsSelected,
   className,
   busType = "STANDARD",
-  orientation = "landscape"
+  orientation = "landscape",
+  refreshTrigger = 0
 }: SeatMapProps) {
   const [seats, setSeats] = useState<SeatData[]>([])
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
@@ -132,7 +134,11 @@ export function SeatMap({
 
   useEffect(() => {
     fetchSeatAvailability()
-  }, [tripId])
+    // Clear selection on refresh
+    if (refreshTrigger > 0) {
+      setSelectedSeats([])
+    }
+  }, [tripId, refreshTrigger])
 
   useEffect(() => {
     onSeatsSelected(selectedSeats)

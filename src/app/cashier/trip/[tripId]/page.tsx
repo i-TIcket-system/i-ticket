@@ -67,6 +67,7 @@ export default function CashierTripPage() {
   const [ticketCount, setTicketCount] = useState(1)
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
   const [recentSales, setRecentSales] = useState<RecentSale[]>([])
+  const [seatRefreshTrigger, setSeatRefreshTrigger] = useState(0)
   const [lastSaleResult, setLastSaleResult] = useState<{
     seatNumbers: number[]
     amount: number
@@ -153,8 +154,9 @@ export default function CashierTripPage() {
         setTicketCount(1)
         setSelectedSeats([])
 
-        // Refresh trip data
+        // Refresh trip data and seat map
         fetchTripDetails()
+        setSeatRefreshTrigger(prev => prev + 1)
       } else {
         toast.error(data.error || "Failed to sell tickets")
       }
@@ -271,6 +273,7 @@ export default function CashierTripPage() {
             onSeatsSelected={handleSeatsSelected}
             orientation="portrait"
             busType={trip.busType as "MINI" | "STANDARD" | "LUXURY"}
+            refreshTrigger={seatRefreshTrigger}
           />
         </div>
 
