@@ -22,6 +22,16 @@ This document tracks major features and technical architecture for the i-Ticket 
 ## Recent Development Summary
 
 ### January 2026 - Week 2
+- **GUZO.ET-INSPIRED SEAT MAP REDESIGN** - Complete overhaul of seat selection UI matching industry-standard Ethiopian bus booking experience:
+  - **Horizontal Bus Layout (Customer)** - Landscape orientation with steering wheel on left, seats extending right, column-first numbering (1,2,3,4 per column), 2-2 layout with clear aisle gap
+  - **Portrait Bus Layout (Admin)** - Vertical orientation with driver at top for full seat view without scrolling, smaller seats for compact display
+  - **Custom SVG Seat Icons** - Seat-shaped icons with backrest tab matching guzo.et design, color-coded: green (available), blue (selected), gray (occupied)
+  - **Orientation Prop** - SeatMap component accepts `orientation="landscape"` (default for customers) or `orientation="portrait"` (for admin reference)
+  - **Occupied Seats Fix** - Seats API now derives occupied seats from `totalSlots - availableSlots` when passenger records lack explicit seat numbers, handles legacy/seeded data
+  - **Visual Elements** - Steering wheel icon, landscape/portrait bus indicator, AISLE/DRIVER/BACK labels, smooth hover animations
+  - **Bug Fix** - Fixed infinite loop caused by `validatePassengers()` being called during render in booking page
+  - **Files Modified**: SeatMap.tsx (480 lines), ManualTicketingCard.tsx, booking page, seats API
+  - **Impact**: Professional booking experience matching Ethiopian market leaders, admin can see full bus at a glance
 - **ULTRA-AUDIT REMEDIATION (100% COMPLETE)** - Comprehensive security, UX, and QA audit with complete remediation of all 30 findings:
   - **Ultra-Audit Execution** - World-class expert analysis from three perspectives (Security Expert, UX/UI Designer, QA Tester) identified 30 issues across 3 P0 critical, 7 P1 high, 12 P2 medium, 8 P3 low priority items
   - **P0 Critical Security Fixes (3/3)** - All critical vulnerabilities resolved:
