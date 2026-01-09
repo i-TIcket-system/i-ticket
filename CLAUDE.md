@@ -22,6 +22,33 @@ This document tracks major features and technical architecture for the i-Ticket 
 ## Recent Development Summary
 
 ### January 2026 - Week 2
+- **DEDICATED CASHIER PORTAL & TRIP-BASED MESSAGING** - Complete ticketing system for manual ticketers with internal team communication:
+  - **Cashier Portal (`/cashier`)** - Dedicated dashboard for manual ticketers separate from company admin:
+    - Dashboard showing only trips assigned to the logged-in ticketer
+    - Today's stats (tickets sold, revenue collected, trips worked)
+    - Large portrait seat map for better visibility during sales
+    - Ticket counter with +/- buttons for quick quantity selection
+    - Seat selection capability - cashiers can now assign specific seats
+    - Recent sales list with seat numbers and amounts
+    - Auto-redirect on login for MANUAL_TICKETER role
+  - **Cashier API Endpoints**:
+    - `GET /api/cashier/my-trips` - Fetch trips assigned to ticketer with stats
+    - `GET /api/cashier/trip/[tripId]` - Trip details for ticketing interface
+    - `POST /api/cashier/trip/[tripId]/sell` - Sell tickets with optional seat selection, creates booking + payment records
+  - **Trip-Based Messaging System** - Internal communication scoped to specific trips:
+    - `TripMessage` model - Messages tied to tripId, with sender info, role, and type
+    - `TripMessageReadReceipt` model - Track who has read each message
+    - `GET/POST /api/trips/[tripId]/messages` - Fetch and send messages for a trip
+    - `TripChat` component - Reusable chat UI with role-based avatars (Admin=purple, Driver=blue, Conductor=green, Ticketer=orange)
+    - Auto-polling every 10 seconds for new messages
+    - Collapsible interface to save screen space
+  - **Integration Points**:
+    - Admin trip detail page shows TripChat when staff are assigned
+    - Staff "My Trips" page has TripChat embedded in each trip card
+    - Cashier trip page includes TripChat in sidebar
+  - **Workflow Change** - Removed ManualTicketingCard from company admin trip page (ticket sales now exclusively through cashier portal)
+  - **Files Created**: 8 new files (cashier pages, APIs, TripChat component)
+  - **Impact**: Clear separation of concerns (admin manages, cashier sells), real-time team coordination per trip, professional ticketing interface
 - **GUZO.ET-INSPIRED SEAT MAP REDESIGN** - Complete overhaul of seat selection UI matching industry-standard Ethiopian bus booking experience:
   - **Horizontal Bus Layout (Customer)** - Landscape orientation with steering wheel on left, seats extending right, column-first numbering (1,2,3,4 per column), 2-2 layout with clear aisle gap
   - **Portrait Bus Layout (Admin)** - Vertical orientation with driver at top for full seat view without scrolling, smaller seats for compact display
@@ -239,6 +266,8 @@ This document tracks major features and technical architecture for the i-Ticket 
 - **SalesPayout** - Payout records (Cash/TeleBirr)
 - **ProcessedCallback** - Payment callback idempotency tracking (`transactionId`, `callbackHash`, replay protection)
 - **PasswordReset** - Secure password reset tokens (`tokenHash` bcrypt, `isUsed`, one-time use enforcement)
+- **TripMessage** - Trip-scoped internal messaging (`tripId`, `senderId`, `senderName`, `senderRole`, `message`, `type`)
+- **TripMessageReadReceipt** - Message read tracking (`messageId`, `userId`, `readAt`)
 
 ### External Integrations
 - **TeleBirr** - Payment gateway (web + SMS merchant-initiated payments, HMAC-SHA256 signature verification)
@@ -253,7 +282,9 @@ This document tracks major features and technical architecture for the i-Ticket 
 
 **Company**: `/api/company/trips`, `/api/company/staff`, `/api/company/vehicles`, `/api/company/vehicles/[vehicleId]`, `/api/company/trips/[id]/toggle-booking`, `/api/company/trips/[id]/manual-ticket`, `/api/company/trips/[id]/manifest`
 
-**Staff**: `/api/staff/my-trips`
+**Staff**: `/api/staff/my-trips`, `/api/trips/[tripId]/messages`
+
+**Cashier**: `/api/cashier/my-trips`, `/api/cashier/trip/[tripId]`, `/api/cashier/trip/[tripId]/sell`
 
 **Admin**: `/api/admin/stats`, `/api/admin/companies`, `/api/admin/audit-logs`, `/api/admin/analytics/*`, `/api/admin/reports/platform-revenue`, `/api/admin/support/tickets`, `/api/admin/sales-persons/*`
 
@@ -267,7 +298,8 @@ This document tracks major features and technical architecture for the i-Ticket 
 - `/(auth)` - Login, Register, Password Reset (modern UI with teal gradients)
 - `/(customer)` - Search, Booking, Tickets, Profile, Track
 - `/(company)` - Dashboard, Trips, Staff, Vehicles, Reports, Profile, Verification (collapsible sidebar)
-- `/(staff)` - My Trips (collapsible sidebar)
+- `/(staff)` - My Trips with embedded TripChat (collapsible sidebar)
+- `/(cashier)` - Dedicated ticketer portal with dashboard, trip ticketing, seat selection, TripChat
 - `/(admin)` - Dashboard, Companies, Audit Logs, Support Tickets, Sales Persons (collapsible sidebar)
 - `/(sales)` - Dashboard, Referrals, Commissions, Profile (collapsible sidebar)
 - `/about` - Company information, mission, values, features
@@ -282,6 +314,7 @@ This document tracks major features and technical architecture for the i-Ticket 
 - **Charts**: `recharts` (analytics visualization for revenue charts)
 - **Security**: `src/lib/trip-update-validator.ts` (business rule enforcement), `src/lib/password-reset.ts` (secure token management), `src/lib/error-handler.ts` (safe error responses), `src/lib/optimistic-locking.ts` (P3 version-based concurrency control), `src/lib/db.ts` (P2 transaction timeout utility)
 - **Hooks**: `src/hooks/use-referral-tracking.ts` (client-side referral tracking)
+- **Components**: `src/components/trip/TripChat.tsx` (reusable trip-scoped messaging component)
 - **Utils**: `src/lib/rate-limit.ts` (enhanced multi-layer limiting), `src/lib/validations.ts`, `src/lib/auth-helpers.ts`, `src/lib/city-utils.ts`
 
 ### Security Features
