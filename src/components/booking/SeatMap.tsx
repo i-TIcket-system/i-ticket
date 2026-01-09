@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Loader2, Armchair, XCircle, CheckCircle2, Info } from "lucide-react"
+import { Loader2, CheckCircle2, Info, Bus } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -11,6 +11,7 @@ interface SeatMapProps {
   passengerCount: number
   onSeatsSelected: (seats: number[]) => void
   className?: string
+  busType?: "MINI" | "STANDARD" | "LUXURY"
 }
 
 type SeatStatus = "available" | "occupied" | "selected"
@@ -18,16 +19,100 @@ type SeatStatus = "available" | "occupied" | "selected"
 interface SeatData {
   number: number
   status: SeatStatus
-  row: string
-  position: "window" | "aisle" | "middle"
+  column: number
+  row: number // 0=bottom (driver side), 1=second, 2=third (after aisle), 3=top
 }
 
-export function SeatMap({ tripId, passengerCount, onSeatsSelected, className }: SeatMapProps) {
+// Custom seat icon matching guzo.et style - rounded body with backrest tab
+function SeatIcon({ status, number }: { status: SeatStatus; number: number }) {
+  // Colors: green (available), blue (selected), gray (occupied)
+  const bgColor = status === "selected"
+    ? "#3B82F6" // blue-500 for selected
+    : status === "occupied"
+    ? "#9CA3AF" // gray-400 for occupied
+    : "#22C55E" // green-500 for available
+
+  const textColor = "#FFFFFF"
+  const borderColor = status === "selected"
+    ? "#1D4ED8" // blue-700
+    : status === "occupied"
+    ? "#6B7280" // gray-500
+    : "#16A34A" // green-600
+
+  return (
+    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Main seat body */}
+      <rect x="3" y="6" width="30" height="32" rx="5" fill={bgColor} stroke={borderColor} strokeWidth="2" />
+      {/* Backrest tab on the right */}
+      <path
+        d="M33 12 L38 12 Q41 12 41 15 L41 29 Q41 32 38 32 L33 32"
+        fill={bgColor}
+        stroke={borderColor}
+        strokeWidth="2"
+      />
+      {/* Inner backrest detail */}
+      <rect x="33" y="14" width="6" height="16" rx="2" fill={bgColor} />
+      {/* Seat number */}
+      <text
+        x="18"
+        y="24"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill={textColor}
+        fontSize="14"
+        fontWeight="bold"
+        fontFamily="system-ui, sans-serif"
+      >
+        {number}
+      </text>
+    </svg>
+  )
+}
+
+// Steering wheel icon matching guzo.et
+function SteeringWheelIcon() {
+  return (
+    <svg width="56" height="56" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Outer ring */}
+      <circle cx="28" cy="28" r="22" stroke="#6B7280" strokeWidth="4" fill="none" />
+      {/* Inner hub */}
+      <circle cx="28" cy="28" r="8" stroke="#6B7280" strokeWidth="3" fill="none" />
+      {/* Center dot */}
+      <circle cx="28" cy="28" r="3" fill="#6B7280" />
+      {/* Spokes */}
+      <line x1="28" y1="6" x2="28" y2="20" stroke="#6B7280" strokeWidth="3" />
+      <line x1="28" y1="36" x2="28" y2="50" stroke="#6B7280" strokeWidth="3" />
+      <line x1="6" y1="28" x2="20" y2="28" stroke="#6B7280" strokeWidth="3" />
+      <line x1="36" y1="28" x2="50" y2="28" stroke="#6B7280" strokeWidth="3" />
+    </svg>
+  )
+}
+
+// Small bus icon for landscape indicator
+function LandscapeBusIcon() {
+  return (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <svg width="36" height="18" viewBox="0 0 36 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="2" width="34" height="12" rx="3" fill="#E5E7EB" stroke="#9CA3AF" strokeWidth="1.5" />
+        {/* Windows */}
+        <rect x="4" y="4" width="5" height="5" rx="1" fill="#9CA3AF" />
+        <rect x="11" y="4" width="5" height="5" rx="1" fill="#9CA3AF" />
+        <rect x="18" y="4" width="5" height="5" rx="1" fill="#9CA3AF" />
+        <rect x="25" y="4" width="5" height="5" rx="1" fill="#9CA3AF" />
+        {/* Wheels */}
+        <circle cx="9" cy="14" r="2.5" fill="#4B5563" />
+        <circle cx="27" cy="14" r="2.5" fill="#4B5563" />
+      </svg>
+      <span className="font-medium">Landscape</span>
+    </div>
+  )
+}
+
+export function SeatMap({ tripId, passengerCount, onSeatsSelected, className, busType = "STANDARD" }: SeatMapProps) {
   const [seats, setSeats] = useState<SeatData[]>([])
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
   const [totalSlots, setTotalSlots] = useState(0)
-  const [occupiedSeats, setOccupiedSeats] = useState<number[]>([])
 
   useEffect(() => {
     fetchSeatAvailability()
@@ -45,9 +130,6 @@ export function SeatMap({ tripId, passengerCount, onSeatsSelected, className }: 
 
       if (response.ok) {
         setTotalSlots(data.totalSlots)
-        setOccupiedSeats(data.occupiedSeats)
-
-        // Generate seat layout
         const seatLayout = generateSeatLayout(data.totalSlots, data.occupiedSeats)
         setSeats(seatLayout)
       }
@@ -58,34 +140,38 @@ export function SeatMap({ tripId, passengerCount, onSeatsSelected, className }: 
     }
   }
 
+  // Generate seat layout matching guzo.et pattern
+  // Column numbering: 1,2,3,4 then 5,6,7,8 etc.
+  // Visual arrangement (top to bottom): row3, row2, [aisle], row1, row0
+  // So: seat 3 is at top, seat 4 below it, [aisle], seat 2, seat 1 at bottom (driver side)
   const generateSeatLayout = (total: number, occupied: number[]): SeatData[] => {
     const seatLayout: SeatData[] = []
     const occupiedSet = new Set(occupied)
 
-    // Determine layout: 4 seats per row (2-2 configuration) for standard buses
-    // Adjust for bus types: MINI (2-1), STANDARD (2-2), LUXURY (2-2 with more space)
-    const seatsPerRow = 4
-    const rows = Math.ceil(total / seatsPerRow)
-
     for (let i = 1; i <= total; i++) {
-      const rowIndex = Math.floor((i - 1) / seatsPerRow)
-      const seatInRow = (i - 1) % seatsPerRow
-      const rowLetter = String.fromCharCode(65 + rowIndex) // A, B, C...
+      const columnIndex = Math.floor((i - 1) / 4)
+      const posInColumn = (i - 1) % 4 // 0, 1, 2, 3
 
-      let position: "window" | "aisle" | "middle"
-      if (seatInRow === 0 || seatInRow === 3) {
-        position = "window" // Seats 1 and 4 in each row
-      } else if (seatInRow === 1 || seatInRow === 2) {
-        position = "aisle" // Seats 2 and 3 in each row
-      } else {
-        position = "middle"
+      // guzo.et pattern per column (from their screenshot):
+      // Top row: seat 3 (posInColumn=2)
+      // Second row: seat 4 (posInColumn=3)
+      // [aisle]
+      // Third row: seat 2 (posInColumn=1)
+      // Bottom row: seat 1 (posInColumn=0)
+      let visualRow: number
+      switch (posInColumn) {
+        case 0: visualRow = 0; break // bottom (driver side) - seat 1, 5, 9...
+        case 1: visualRow = 1; break // third from top - seat 2, 6, 10...
+        case 2: visualRow = 3; break // top row - seat 3, 7, 11...
+        case 3: visualRow = 2; break // second from top - seat 4, 8, 12...
+        default: visualRow = 0
       }
 
       seatLayout.push({
         number: i,
         status: occupiedSet.has(i) ? "occupied" : "available",
-        row: rowLetter,
-        position,
+        column: columnIndex,
+        row: visualRow,
       })
     }
 
@@ -97,7 +183,6 @@ export function SeatMap({ tripId, passengerCount, onSeatsSelected, className }: 
     if (!seat || seat.status === "occupied") return
 
     if (selectedSeats.includes(seatNumber)) {
-      // Deselect
       setSelectedSeats((prev) => prev.filter((s) => s !== seatNumber))
       setSeats((prev) =>
         prev.map((s) =>
@@ -105,9 +190,7 @@ export function SeatMap({ tripId, passengerCount, onSeatsSelected, className }: 
         )
       )
     } else {
-      // Check if we can select more
       if (selectedSeats.length >= passengerCount) {
-        // Auto-deselect first selected seat (FIFO)
         const firstSelected = selectedSeats[0]
         setSelectedSeats((prev) => [...prev.slice(1), seatNumber])
         setSeats((prev) =>
@@ -118,7 +201,6 @@ export function SeatMap({ tripId, passengerCount, onSeatsSelected, className }: 
           })
         )
       } else {
-        // Select
         setSelectedSeats((prev) => [...prev, seatNumber])
         setSeats((prev) =>
           prev.map((s) =>
@@ -126,28 +208,6 @@ export function SeatMap({ tripId, passengerCount, onSeatsSelected, className }: 
           )
         )
       }
-    }
-  }
-
-  const getSeatColor = (status: SeatStatus): string => {
-    switch (status) {
-      case "available":
-        return "bg-green-50 border-green-300 hover:bg-green-100 hover:border-green-400 cursor-pointer"
-      case "occupied":
-        return "bg-gray-200 border-gray-400 cursor-not-allowed opacity-60"
-      case "selected":
-        return "bg-blue-500 border-blue-600 text-white cursor-pointer"
-    }
-  }
-
-  const getSeatIcon = (status: SeatStatus) => {
-    switch (status) {
-      case "available":
-        return <Armchair className="h-4 w-4 text-green-600" />
-      case "occupied":
-        return <XCircle className="h-4 w-4 text-gray-500" />
-      case "selected":
-        return <CheckCircle2 className="h-4 w-4 text-white" />
     }
   }
 
@@ -164,167 +224,189 @@ export function SeatMap({ tripId, passengerCount, onSeatsSelected, className }: 
     )
   }
 
-  // Group seats by rows for 2-2 layout
-  const seatsPerRow = 4
-  const rows: SeatData[][] = []
-  for (let i = 0; i < seats.length; i += seatsPerRow) {
-    rows.push(seats.slice(i, i + seatsPerRow))
-  }
+  // Organize seats into columns for horizontal display
+  const columns: Map<number, SeatData[]> = new Map()
+  seats.forEach((seat) => {
+    if (!columns.has(seat.column)) {
+      columns.set(seat.column, [])
+    }
+    columns.get(seat.column)!.push(seat)
+  })
+
+  const numColumns = columns.size > 0 ? Math.max(...Array.from(columns.keys())) + 1 : 0
 
   return (
     <Card className={className}>
-      <CardHeader>
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Armchair className="h-5 w-5 text-primary" />
+              <Bus className="h-5 w-5 text-primary" />
               Select Your Seats
             </CardTitle>
             <CardDescription>
               {selectedSeats.length} of {passengerCount} seat{passengerCount > 1 ? "s" : ""} selected
             </CardDescription>
           </div>
-          {selectedSeats.length === passengerCount && (
-            <Badge className="bg-green-500">
-              <CheckCircle2 className="h-3 w-3 mr-1" />
-              Complete
-            </Badge>
-          )}
+          <div className="flex items-center gap-3">
+            {selectedSeats.length === passengerCount && (
+              <Badge className="bg-green-500">
+                <CheckCircle2 className="h-3 w-3 mr-1" />
+                Complete
+              </Badge>
+            )}
+            <LandscapeBusIcon />
+          </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Info Banner */}
+      <CardContent className="space-y-4">
+        {/* Legend with actual colors */}
+        <div className="flex flex-wrap items-center gap-6 text-sm border-b pb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-green-500 border-2 border-green-600 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">1</span>
+            </div>
+            <span className="text-muted-foreground">Available</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-blue-500 border-2 border-blue-700 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">1</span>
+            </div>
+            <span className="text-muted-foreground">Selected</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-md bg-gray-400 border-2 border-gray-500 flex items-center justify-center opacity-60">
+              <span className="text-white text-xs font-bold">1</span>
+            </div>
+            <span className="text-muted-foreground">Occupied</span>
+          </div>
+        </div>
+
+        {/* Info */}
         <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 border border-blue-200">
           <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
           <div className="text-xs text-blue-700">
-            <p className="font-medium mb-1">Seat Selection Tips:</p>
-            <ul className="space-y-0.5 list-disc list-inside">
-              <li>Click seats to select/deselect</li>
-              <li>First/Last seats in row = Window seats</li>
-              <li>Middle seats = Aisle seats</li>
-              <li>Select {passengerCount} seat{passengerCount > 1 ? "s" : ""} for your passenger{passengerCount > 1 ? "s" : ""}</li>
-            </ul>
+            Click seats to select. Select {passengerCount} seat{passengerCount > 1 ? "s" : ""} for your booking.
+            {selectedSeats.length > 0 && (
+              <span className="font-medium"> Selected: {selectedSeats.sort((a, b) => a - b).join(", ")}</span>
+            )}
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded border-2 bg-green-50 border-green-300 flex items-center justify-center">
-              <Armchair className="h-4 w-4 text-green-600" />
+        {/* Horizontal Bus Seat Map - matching guzo.et layout */}
+        <div className="border-2 border-gray-200 rounded-xl p-4 bg-gray-50/50 overflow-x-auto">
+          <div className="flex items-center gap-4 min-w-max">
+            {/* Steering Wheel Section */}
+            <div className="flex flex-col items-center justify-center px-2">
+              <SteeringWheelIcon />
             </div>
-            <span>Available</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded border-2 bg-blue-500 border-blue-600 flex items-center justify-center">
-              <CheckCircle2 className="h-4 w-4 text-white" />
-            </div>
-            <span>Selected</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded border-2 bg-gray-200 border-gray-400 flex items-center justify-center opacity-60">
-              <XCircle className="h-4 w-4 text-gray-500" />
-            </div>
-            <span>Occupied</span>
-          </div>
-        </div>
 
-        {/* Seat Map */}
-        <div className="space-y-2">
-          {/* Driver indicator */}
-          <div className="flex items-center gap-2 mb-4 pb-4 border-b">
-            <div className="h-10 w-full max-w-[80px] rounded-lg bg-gradient-to-r from-primary to-primary/80 flex items-center justify-center">
-              <span className="text-xs text-white font-medium">🚗 Driver</span>
-            </div>
-            <div className="flex-1 border-t-2 border-dashed border-muted-foreground/30" />
-          </div>
+            {/* Divider */}
+            <div className="w-px h-48 bg-gray-300" />
 
-          {/* Seat Grid */}
-          <div className="space-y-3">
-            {rows.map((row, rowIndex) => (
-              <div key={rowIndex} className="flex items-center gap-2">
-                {/* Row label */}
-                <div className="w-6 text-center text-sm font-medium text-muted-foreground">
-                  {String.fromCharCode(65 + rowIndex)}
-                </div>
+            {/* Seat Grid */}
+            <div className="flex gap-1">
+              {Array.from({ length: numColumns }, (_, colIndex) => {
+                const columnSeats = columns.get(colIndex) || []
+                // Top section: rows 3, 2 (seats 3,4 pattern)
+                const topSection = columnSeats
+                  .filter(s => s.row >= 2)
+                  .sort((a, b) => b.row - a.row) // 3 first, then 2
+                // Bottom section: rows 1, 0 (seats 2,1 pattern)
+                const bottomSection = columnSeats
+                  .filter(s => s.row < 2)
+                  .sort((a, b) => b.row - a.row) // 1 first, then 0
 
-                {/* Seats in row (2-2 layout) */}
-                <div className="flex-1 grid grid-cols-4 gap-2">
-                  {row.map((seat, seatIndex) => (
-                    <div key={seat.number} className={cn(seatIndex === 2 && "col-start-3")}>
-                      <button
-                        onClick={() => toggleSeat(seat.number)}
-                        disabled={seat.status === "occupied"}
-                        className={cn(
-                          "h-12 w-full rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center gap-1",
-                          getSeatColor(seat.status),
-                          seat.status === "selected" && "ring-2 ring-blue-400 ring-offset-2 scale-105"
-                        )}
-                        aria-label={`Seat ${seat.number} - ${seat.status === "occupied" ? "Occupied" : seat.status === "selected" ? "Selected" : "Available"} - ${seat.position} seat`}
-                        aria-pressed={seat.status === "selected"}
-                      >
-                        {getSeatIcon(seat.status)}
-                        <span className={cn(
-                          "text-xs font-bold",
-                          seat.status === "selected" ? "text-white" : "text-foreground"
-                        )}>
-                          {seat.number}
-                        </span>
-                      </button>
-                      {/* Aisle indicator */}
-                      {seatIndex === 1 && (
-                        <div className="absolute left-full ml-2 top-1/2 -translate-y-1/2 h-full w-px" />
+                return (
+                  <div key={colIndex} className="flex flex-col">
+                    {/* Top section (rows 3, 2) */}
+                    <div className="flex flex-col gap-1">
+                      {topSection.map((seat) => (
+                        <button
+                          key={seat.number}
+                          onClick={() => toggleSeat(seat.number)}
+                          disabled={seat.status === "occupied"}
+                          className={cn(
+                            "transition-all duration-150 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-1",
+                            seat.status === "occupied" && "opacity-50 cursor-not-allowed",
+                            seat.status === "selected" && "ring-2 ring-blue-300 scale-105",
+                            seat.status === "available" && "hover:scale-105 focus:ring-green-400",
+                          )}
+                          aria-label={`Seat ${seat.number} - ${seat.status}`}
+                          aria-pressed={seat.status === "selected"}
+                        >
+                          <SeatIcon status={seat.status} number={seat.number} />
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Aisle gap */}
+                    <div className="h-8 flex items-center justify-center">
+                      {colIndex === 0 && (
+                        <span className="text-[10px] text-gray-400 font-medium">AISLE</span>
                       )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
+
+                    {/* Bottom section (rows 1, 0) */}
+                    <div className="flex flex-col gap-1">
+                      {bottomSection.map((seat) => (
+                        <button
+                          key={seat.number}
+                          onClick={() => toggleSeat(seat.number)}
+                          disabled={seat.status === "occupied"}
+                          className={cn(
+                            "transition-all duration-150 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-1",
+                            seat.status === "occupied" && "opacity-50 cursor-not-allowed",
+                            seat.status === "selected" && "ring-2 ring-blue-300 scale-105",
+                            seat.status === "available" && "hover:scale-105 focus:ring-green-400",
+                          )}
+                          aria-label={`Seat ${seat.number} - ${seat.status}`}
+                          aria-pressed={seat.status === "selected"}
+                        >
+                          <SeatIcon status={seat.status} number={seat.number} />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
-
-          {/* Selection summary */}
-          {selectedSeats.length > 0 && (
-            <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/20">
-              <p className="text-sm font-medium mb-2">Your Selected Seats:</p>
-              <div className="flex flex-wrap gap-2">
-                {selectedSeats.map((seatNum) => {
-                  const seat = seats.find((s) => s.number === seatNum)
-                  return (
-                    <Badge key={seatNum} className="bg-blue-500">
-                      Seat {seatNum}
-                      {seat && (
-                        <span className="ml-1 text-xs opacity-80">
-                          ({seat.position === "window" ? "Window" : seat.position === "aisle" ? "Aisle" : "Middle"})
-                        </span>
-                      )}
-                    </Badge>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Warning if not enough seats selected */}
-          {passengerCount > selectedSeats.length && selectedSeats.length > 0 && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-xs text-yellow-800">
-              <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <p>
-                Please select {passengerCount - selectedSeats.length} more seat{passengerCount - selectedSeats.length > 1 ? "s" : ""}.
-                You need {passengerCount} seat{passengerCount > 1 ? "s" : ""} for {passengerCount} passenger{passengerCount > 1 ? "s" : ""}.
-              </p>
-            </div>
-          )}
-
-          {/* Optional: Auto-assignment fallback */}
-          {selectedSeats.length === 0 && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-muted border text-xs text-muted-foreground">
-              <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <p>
-                <span className="font-medium">Optional:</span> If you don't select seats, we'll automatically assign the best available seats for you.
-              </p>
-            </div>
-          )}
         </div>
+
+        {/* Selection summary */}
+        {selectedSeats.length > 0 && (
+          <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
+            <p className="text-sm font-medium mb-2 text-blue-900">Your Selected Seats:</p>
+            <div className="flex flex-wrap gap-2">
+              {selectedSeats.sort((a, b) => a - b).map((seatNum) => (
+                <Badge key={seatNum} className="bg-blue-500 hover:bg-blue-600">
+                  Seat {seatNum}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Warning if not enough seats selected */}
+        {passengerCount > selectedSeats.length && selectedSeats.length > 0 && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-xs text-yellow-800">
+            <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <p>
+              Please select {passengerCount - selectedSeats.length} more seat{passengerCount - selectedSeats.length > 1 ? "s" : ""}.
+            </p>
+          </div>
+        )}
+
+        {/* Auto-assignment fallback */}
+        {selectedSeats.length === 0 && (
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-muted border text-xs text-muted-foreground">
+            <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <p>
+              <span className="font-medium">Optional:</span> If you don't select seats, we'll automatically assign the best available seats for you.
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

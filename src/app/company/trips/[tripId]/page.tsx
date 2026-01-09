@@ -518,6 +518,7 @@ export default function TripDetailPage() {
             tripId={trip.id}
             availableSlots={trip.availableSlots}
             totalSlots={trip.totalSlots}
+            busType={trip.busType}
             onUpdate={fetchTrip}
           />
         )}

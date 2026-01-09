@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
@@ -113,6 +113,11 @@ export default function BookingPage() {
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
+  // Memoize callback to prevent infinite loop in SeatMap useEffect (fix from commit 98ce741)
+  const handleSeatsSelected = useCallback((seats: number[]) => {
+    setSelectedSeats(seats)
+  }, [])
+
   useEffect(() => {
     fetchTrip()
   }, [tripId])
@@ -125,7 +130,8 @@ export default function BookingPage() {
       })
       router.push("/search")
     }
-  }, [status, session, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, session]) // router omitted - it's unstable and causes infinite loops
 
   useEffect(() => {
     // P2-SEC-006: Use sessionStorage instead of localStorage for passenger data (privacy)
@@ -236,7 +242,8 @@ export default function BookingPage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       stopPolling()
     }
-  }, [trip, tripId, originalPrice])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tripId]) // Only depend on tripId, not trip/originalPrice to prevent loop
 
   const addPassenger = () => {
     if (passengers.length < 5 && trip && passengers.length < trip.availableSlots) {
@@ -695,7 +702,7 @@ export default function BookingPage() {
             <SeatMap
               tripId={tripId}
               passengerCount={passengers.length}
-              onSeatsSelected={setSelectedSeats}
+              onSeatsSelected={handleSeatsSelected}
             />
           </div>
 
@@ -780,7 +787,7 @@ export default function BookingPage() {
                 <Button
                   className="w-full"
                   onClick={handleBooking}
-                  disabled={isSubmitting || !validatePassengers()}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? (
                     <>

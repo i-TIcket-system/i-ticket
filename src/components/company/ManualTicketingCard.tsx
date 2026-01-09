@@ -11,6 +11,7 @@ interface ManualTicketingCardProps {
   tripId: string
   availableSlots: number
   totalSlots: number
+  busType?: string
   onUpdate: () => void
 }
 
@@ -18,6 +19,7 @@ export function ManualTicketingCard({
   tripId,
   availableSlots,
   totalSlots,
+  busType,
   onUpdate,
 }: ManualTicketingCardProps) {
   const [count, setCount] = useState(1)
@@ -209,6 +211,7 @@ export function ManualTicketingCard({
                   passengerCount={count}
                   onSeatsSelected={() => {}} // View-only
                   className="shadow-none border-0"
+                  busType={busType as "MINI" | "STANDARD" | "LUXURY" | undefined}
                 />
               </div>
             </div>
