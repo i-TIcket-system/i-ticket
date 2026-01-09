@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { notifyTripStaff, notifyCompanyAdmins } from "@/lib/notifications"
 
 /**
  * GET /api/trips/[tripId]/messages
@@ -205,6 +206,25 @@ export async function POST(
         userId,
       },
     })
+
+    // NOTIFICATIONS: Notify other trip participants about the new message
+    const messagePreview = message.length > 100 ? message.substring(0, 100) + "..." : message
+
+    // Notify trip staff (excluding the sender)
+    notifyTripStaff(tripId, "TRIP_MESSAGE", {
+      tripId,
+      senderName: session.user.name || "Team",
+      messagePreview,
+    }, userId)
+
+    // If sender is staff, also notify company admins
+    if (!isCompanyAdmin && trip.companyId) {
+      notifyCompanyAdmins(trip.companyId, "TRIP_MESSAGE", {
+        tripId,
+        senderName: session.user.name || "Staff",
+        messagePreview,
+      })
+    }
 
     return NextResponse.json({
       message: {

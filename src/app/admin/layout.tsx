@@ -29,6 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { NotificationBell } from "@/components/notifications"
 
 const sidebarItems = [
   {
@@ -295,7 +296,7 @@ export default function AdminLayout({
               <span className="font-bold">i-Ticket</span>
               <span className="font-bold" style={{ color: "#20c4c4" }}>Admin</span>
             </Link>
-            <div className="w-10" />
+            <NotificationBell variant="dark" />
           </div>
         </header>
 

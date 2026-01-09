@@ -9,6 +9,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { useTheme } from "@/components/providers/ThemeProvider"
+import { NotificationBell } from "@/components/notifications"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -119,6 +120,9 @@ export function Navbar() {
                 <Sun className="h-5 w-5" />
               )}
             </Button>
+
+            {/* Notifications - Only for logged in users */}
+            {session && <NotificationBell />}
 
             {status === "loading" ? (
               <div className="h-10 w-24 animate-pulse rounded-lg bg-muted" />

@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useEffect } from "react"
 import { Loader2, Ticket, LogOut, User, LayoutDashboard } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { NotificationBell } from "@/components/notifications"
 
 export default function CashierLayout({
   children,
@@ -81,6 +82,10 @@ export default function CashierLayout({
                   My Trips
                 </Button>
               </Link>
+
+              <div className="w-px h-6 bg-white/20" />
+
+              <NotificationBell variant="dark" />
 
               <div className="w-px h-6 bg-white/20" />
 

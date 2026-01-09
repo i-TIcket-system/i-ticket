@@ -551,3 +551,45 @@ model TripMessageReadReceipt {
   @@index([messageId])
   @@index([userId, readAt])
 }
+
+// ==================== NOTIFICATION SYSTEM ====================
+
+model Notification {
+  id              String    @id @default(cuid())
+
+  // Recipient info
+  recipientId     String    // User ID or SalesPerson ID
+  recipientType   String    // "USER" | "SALES_PERSON"
+
+  // Notification content
+  type            String    // TRIP_ASSIGNMENT, TRIP_MESSAGE, BOOKING_NEW, BOOKING_PAID,
+                            // BOOKING_CANCELLED, SYSTEM_ALERT, COMMISSION_EARNED,
+                            // REFERRAL_NEW, TRIP_HALTED, TRIP_RESUMED, LOW_SLOTS
+  title           String
+  message         String    @db.Text
+
+  // Related entities (nullable - for deep linking)
+  tripId          String?
+  bookingId       String?
+  companyId       String?
+
+  // Metadata for rendering (JSON)
+  metadata        String?   @db.Text // JSON: {route, amount, seatNumbers, etc.}
+
+  // Status tracking
+  isRead          Boolean   @default(false)
+  readAt          DateTime?
+
+  // Priority for display ordering (1=Low, 2=Normal, 3=High, 4=Urgent)
+  priority        Int       @default(2)
+
+  createdAt       DateTime  @default(now())
+  expiresAt       DateTime? // Optional expiration for time-sensitive notifications
+
+  @@index([recipientId, recipientType, isRead])
+  @@index([recipientId, recipientType, createdAt])
+  @@index([type, createdAt])
+  @@index([tripId])
+  @@index([bookingId])
+  @@index([createdAt])
+}

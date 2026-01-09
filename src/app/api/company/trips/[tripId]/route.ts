@@ -4,6 +4,7 @@ import prisma from "@/lib/db"
 import { authOptions } from "@/lib/auth"
 import { createAuditLogTask } from "@/lib/clickup"
 import { validateTripUpdate } from "@/lib/trip-update-validator"
+import { createNotification } from "@/lib/notifications"
 
 export async function GET(
   request: NextRequest,
@@ -324,6 +325,77 @@ export async function PUT(
     })
 
     console.log(`[TRIP UPDATE] ${session.user.name} updated trip ${tripId}: ${changes.join(', ')}`)
+
+    // NOTIFICATIONS: Notify staff of assignment/unassignment changes
+    const tripRoute = `${updatedTrip.origin} → ${updatedTrip.destination}`
+    const departureStr = updatedTrip.departureTime.toLocaleDateString("en-ET", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+
+    // Driver assignment notifications
+    if (driverId !== undefined && driverId !== existingTrip.driverId) {
+      // Notify new driver of assignment
+      if (driverId) {
+        createNotification({
+          recipientId: driverId,
+          recipientType: "USER",
+          type: "TRIP_ASSIGNED",
+          data: { tripId, tripRoute, departureTime: departureStr, role: "Driver" },
+        })
+      }
+      // Notify old driver of unassignment
+      if (existingTrip.driverId) {
+        createNotification({
+          recipientId: existingTrip.driverId,
+          recipientType: "USER",
+          type: "TRIP_UNASSIGNED",
+          data: { tripId, tripRoute, departureTime: departureStr, role: "Driver" },
+        })
+      }
+    }
+
+    // Conductor assignment notifications
+    if (conductorId !== undefined && conductorId !== existingTrip.conductorId) {
+      if (conductorId) {
+        createNotification({
+          recipientId: conductorId,
+          recipientType: "USER",
+          type: "TRIP_ASSIGNED",
+          data: { tripId, tripRoute, departureTime: departureStr, role: "Conductor" },
+        })
+      }
+      if (existingTrip.conductorId) {
+        createNotification({
+          recipientId: existingTrip.conductorId,
+          recipientType: "USER",
+          type: "TRIP_UNASSIGNED",
+          data: { tripId, tripRoute, departureTime: departureStr, role: "Conductor" },
+        })
+      }
+    }
+
+    // Ticketer assignment notifications
+    if (manualTicketerId !== undefined && manualTicketerId !== existingTrip.manualTicketerId) {
+      if (manualTicketerId) {
+        createNotification({
+          recipientId: manualTicketerId,
+          recipientType: "USER",
+          type: "TRIP_ASSIGNED",
+          data: { tripId, tripRoute, departureTime: departureStr, role: "Ticketer" },
+        })
+      }
+      if (existingTrip.manualTicketerId) {
+        createNotification({
+          recipientId: existingTrip.manualTicketerId,
+          recipientType: "USER",
+          type: "TRIP_UNASSIGNED",
+          data: { tripId, tripRoute, departureTime: departureStr, role: "Ticketer" },
+        })
+      }
+    }
 
     return NextResponse.json({ trip: updatedTrip })
   } catch (error) {

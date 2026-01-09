@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
+import { NotificationBell } from "@/components/notifications"
 
 // Navigation items - role-aware
 const getSidebarItems = (staffRole?: string) => {
@@ -207,7 +208,7 @@ export default function StaffLayout({
               </div>
               <span className="font-bold">i-Ticket</span>
             </Link>
-            <div className="w-10" /> {/* Spacer for centering */}
+            <NotificationBell variant="dark" />
           </div>
         </header>
 
