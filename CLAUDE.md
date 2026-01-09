@@ -34,7 +34,7 @@ This document tracks major features and technical architecture for the i-Ticket 
   - **Cashier API Endpoints**:
     - `GET /api/cashier/my-trips` - Fetch trips assigned to ticketer with stats
     - `GET /api/cashier/trip/[tripId]` - Trip details for ticketing interface
-    - `POST /api/cashier/trip/[tripId]/sell` - Sell tickets with optional seat selection, creates booking + payment records
+    - `POST /api/cashier/trip/[tripId]/sell` - Sell tickets with optional seat selection, creates one ticket per passenger with QR codes
   - **Trip-Based Messaging System** - Internal communication scoped to specific trips:
     - `TripMessage` model - Messages tied to tripId, with sender info, role, and type
     - `TripMessageReadReceipt` model - Track who has read each message
@@ -43,9 +43,14 @@ This document tracks major features and technical architecture for the i-Ticket 
     - Auto-polling every 10 seconds for new messages
     - Collapsible interface to save screen space
   - **Integration Points**:
-    - Admin trip detail page shows TripChat when staff are assigned
+    - Admin trip detail page always shows TripChat (for coordinating with any assigned staff)
     - Staff "My Trips" page has TripChat embedded in each trip card
-    - Cashier trip page includes TripChat in sidebar
+    - Cashier trip page includes TripChat in sidebar (non-sticky for proper scrolling)
+  - **Bug Fixes**:
+    - Fixed `generateTicketCode is not a function` error - uses `generateShortCode` and creates one ticket per passenger
+    - Fixed Payment model field name (`method` not `paymentMethod`)
+    - Fixed sticky sell card overlapping Recent Sales and TripChat on cashier page
+    - TripChat now always visible for admin (removed staff assignment condition)
   - **Workflow Change** - Removed ManualTicketingCard from company admin trip page (ticket sales now exclusively through cashier portal)
   - **Files Created**: 8 new files (cashier pages, APIs, TripChat component)
   - **Impact**: Clear separation of concerns (admin manages, cashier sells), real-time team coordination per trip, professional ticketing interface

@@ -277,7 +277,7 @@ export default function CashierTripPage() {
         {/* Right Column - Sell Panel */}
         <div className="space-y-4">
           {/* Quick Sell Card */}
-          <Card className="sticky top-20 border-2 border-teal-500 shadow-lg">
+          <Card className="border-2 border-teal-500 shadow-lg">
             <CardHeader className="bg-gradient-to-r from-teal-500 to-teal-600 text-white rounded-t-lg">
               <CardTitle className="flex items-center gap-2">
                 <Ticket className="h-5 w-5" />

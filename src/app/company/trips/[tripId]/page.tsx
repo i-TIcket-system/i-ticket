@@ -497,13 +497,11 @@ export default function TripDetailPage() {
             />
 
             {/* Trip Chat - Communicate with assigned staff */}
-            {(trip.driver || trip.conductor || trip.manualTicketer) && (
-              <TripChat
-                tripId={trip.id}
-                tripRoute={`${trip.origin} → ${trip.destination}`}
-                defaultExpanded={false}
-              />
-            )}
+            <TripChat
+              tripId={trip.id}
+              tripRoute={`${trip.origin} → ${trip.destination}`}
+              defaultExpanded={false}
+            />
 
             {trip.availableSlots > 0 && lowSlots && !trip.bookingHalted && (
               <Card className="border-yellow-500 bg-yellow-50">

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { transactionWithTimeout } from "@/lib/db"
-import { generateTicketCode, generateShortCode } from "@/lib/utils"
+import { generateShortCode } from "@/lib/utils"
 import QRCode from "qrcode"
 
 /**
@@ -145,56 +145,65 @@ export async function POST(
 
         // Calculate total
         const totalAmount = Number(trip.price) * passengerCount
+        const commission = Math.round(totalAmount * 0.05)
 
-        // Generate ticket codes
-        const ticketCode = generateTicketCode()
-        const shortCode = generateShortCode()
-        const qrData = JSON.stringify({
-          code: ticketCode,
-          tripId: trip.id,
-          origin: trip.origin,
-          destination: trip.destination,
-          departure: trip.departureTime,
-        })
-        const qrCode = await QRCode.toDataURL(qrData)
-
-        // Create booking
+        // Create booking first (without tickets - we'll create them separately)
         const booking = await tx.booking.create({
           data: {
             tripId: trip.id,
-            status: "CONFIRMED",
+            userId: userId, // Assign to the ticketer's user
+            status: "PAID", // Mark as paid immediately (cash payment)
             totalAmount: totalAmount,
+            commission: commission,
             isQuickTicket: true,
             passengers: {
               create: seatsToAssign.map((seatNumber, index) => ({
                 name: `Walk-in Passenger ${index + 1}`,
-                gender: "MALE",
+                nationalId: "",
+                phone: "",
                 seatNumber: seatNumber,
               })),
-            },
-            tickets: {
-              create: {
-                code: ticketCode,
-                shortCode: shortCode,
-                qrCode: qrCode,
-                status: "VALID",
-              },
             },
           },
           include: {
             passengers: true,
-            tickets: true,
           },
         })
+
+        // Generate tickets for each passenger (one ticket per passenger)
+        const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
+        const tickets = await Promise.all(
+          booking.passengers.map(async (passenger) => {
+            const shortCode = generateShortCode()
+            const verificationUrl = `${baseUrl}/verify/${shortCode}`
+            const qrCode = await QRCode.toDataURL(verificationUrl, {
+              width: 300,
+              margin: 2,
+              color: { dark: "#000000", light: "#ffffff" },
+            })
+
+            return await tx.ticket.create({
+              data: {
+                bookingId: booking.id,
+                tripId: trip.id,
+                passengerName: passenger.name,
+                seatNumber: passenger.seatNumber,
+                qrCode,
+                shortCode,
+                isUsed: false,
+              },
+            })
+          })
+        )
 
         // Create payment record (cash payment)
         await tx.payment.create({
           data: {
             bookingId: booking.id,
             amount: totalAmount,
-            status: "COMPLETED",
+            status: "SUCCESS",
             transactionId: `CASH-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            paymentMethod: "CASH",
+            method: "CASH",
             initiatedVia: "WEB",
           },
         })
@@ -211,8 +220,7 @@ export async function POST(
 
         return {
           bookingId: booking.id,
-          ticketCode: ticketCode,
-          shortCode: shortCode,
+          shortCodes: tickets.map((t) => t.shortCode),
           seatNumbers: seatsToAssign,
           totalAmount: totalAmount,
           companyName: trip.company.name,
