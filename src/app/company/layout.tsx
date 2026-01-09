@@ -39,6 +39,11 @@ const sidebarItems = [
     icon: LayoutDashboard,
   },
   {
+    title: "Trips",
+    href: "/company/trips",
+    icon: Bus,
+  },
+  {
     title: "Add Trip",
     href: "/company/trips/new",
     icon: PlusCircle,
