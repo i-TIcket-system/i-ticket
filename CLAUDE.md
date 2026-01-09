@@ -40,10 +40,15 @@ This document tracks major features and technical architecture for the i-Ticket 
     - Tracks previous message count to detect new messages
   - **Duplicate Navbar/Footer Fix** - Main Navbar and Footer now hidden on admin routes:
     - Routes with own layouts: `/admin`, `/company`, `/staff`, `/cashier`, `/sales`
-    - Prevents duplicate notification bells in Cashier Portal
-  - **Files Modified**: NotificationBell.tsx, Navbar.tsx, Footer.tsx, TripChat.tsx
+    - Prevents duplicate notification bells
+  - **Navigation Consistency Fixes** - Ensured all admin layouts have proper sidebar navigation:
+    - Added missing "Trips" link to Company Admin sidebar
+    - Added full collapsible sidebar to Sales layout (was just a wrapper)
+    - Added full collapsible sidebar to Cashier layout (was header-only)
+    - All layouts now consistent: Super Admin, Company Admin, Sales, Staff, Cashier
+  - **Files Modified**: NotificationBell.tsx, Navbar.tsx, Footer.tsx, TripChat.tsx, company/layout.tsx, sales/layout.tsx, cashier/layout.tsx
   - **Files Created**: `src/app/notifications/page.tsx`
-  - **Impact**: Better notification discoverability, cleaner admin layouts, no page jumping in chat
+  - **Impact**: Better notification discoverability, consistent navigation across all admin portals, no page jumping in chat
 - **DEDICATED CASHIER PORTAL & TRIP-BASED MESSAGING** - Complete ticketing system for manual ticketers with internal team communication:
   - **Cashier Portal (`/cashier`)** - Dedicated dashboard for manual ticketers separate from company admin:
     - Dashboard showing only trips assigned to the logged-in ticketer
