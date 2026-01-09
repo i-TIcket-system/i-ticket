@@ -98,7 +98,10 @@ export default function LoginPage() {
         if (callbackUrl !== "/") {
           router.replace(callbackUrl)
         } else if (session?.user?.role === "COMPANY_ADMIN") {
-          if (session.user.staffRole && session.user.staffRole !== "ADMIN") {
+          // Manual ticketers go to dedicated cashier portal
+          if (session.user.staffRole === "MANUAL_TICKETER") {
+            router.replace("/cashier")
+          } else if (session.user.staffRole && session.user.staffRole !== "ADMIN") {
             router.replace("/staff/my-trips")
           } else {
             router.replace("/company/dashboard")

@@ -12,23 +12,39 @@ import {
   Menu,
   X,
   Bus,
+  QrCode,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
 import { cn } from "@/lib/utils"
 
-const sidebarItems = [
-  {
-    title: "My Trips",
-    href: "/staff/my-trips",
-    icon: Bus,
-  },
-  {
+// Navigation items - role-aware
+const getSidebarItems = (staffRole?: string) => {
+  const items = [
+    {
+      title: "My Trips",
+      href: "/staff/my-trips",
+      icon: Bus,
+    },
+  ]
+
+  // Conductors can verify tickets
+  if (staffRole === "CONDUCTOR") {
+    items.push({
+      title: "Verify Tickets",
+      href: "/staff/verify",
+      icon: QrCode,
+    })
+  }
+
+  items.push({
     title: "Profile",
     href: "/profile",
     icon: User,
-  },
-]
+  })
+
+  return items
+}
 
 export default function StaffLayout({
   children,
@@ -130,8 +146,8 @@ export default function StaffLayout({
 
           {/* Navigation */}
           <nav className="flex-1 p-4 space-y-1">
-            {sidebarItems.map((item) => {
-              const isActive = pathname === item.href
+            {getSidebarItems(session.user.staffRole).map((item) => {
+              const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
               return (
                 <Link
                   key={item.href}

@@ -510,3 +510,44 @@ model PasswordReset {
   @@index([tokenHash, isUsed])
   @@index([expiresAt])
 }
+
+// ==================== TRIP-BASED MESSAGING SYSTEM ====================
+
+model TripMessage {
+  id              String   @id @default(cuid())
+  tripId          String   // Messages are scoped to specific trips
+
+  // Sender info
+  senderId        String
+  senderName      String   // Denormalized for display
+  senderRole      String   // ADMIN, DRIVER, CONDUCTOR, MANUAL_TICKETER, MAINTENANCE
+
+  // Message content
+  message         String   @db.Text
+  type            String   @default("CHAT") // CHAT, ALERT, UPDATE, SYSTEM
+
+  // Metadata
+  isEdited        Boolean  @default(false)
+  editedAt        DateTime?
+
+  createdAt       DateTime @default(now())
+
+  // Read receipts
+  readReceipts    TripMessageReadReceipt[]
+
+  @@index([tripId, createdAt])
+  @@index([senderId])
+}
+
+model TripMessageReadReceipt {
+  id              String      @id @default(cuid())
+  messageId       String
+  message         TripMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  userId          String      // Staff member who read the message
+  readAt          DateTime    @default(now())
+
+  @@unique([messageId, userId]) // Each user can only read a message once
+  @@index([messageId])
+  @@index([userId, readAt])
+}

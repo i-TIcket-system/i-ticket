@@ -38,8 +38,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { formatCurrency, formatDate, formatDuration, getSlotsPercentage, isLowSlots, BUS_TYPES } from "@/lib/utils"
-import { ManualTicketingCard } from "@/components/company/ManualTicketingCard"
 import { BookingControlCard } from "@/components/company/BookingControlCard"
+import { TripChat } from "@/components/trip/TripChat"
 
 interface Passenger {
   id: string
@@ -496,6 +496,15 @@ export default function TripDetailPage() {
               onUpdate={fetchTrip}
             />
 
+            {/* Trip Chat - Communicate with assigned staff */}
+            {(trip.driver || trip.conductor || trip.manualTicketer) && (
+              <TripChat
+                tripId={trip.id}
+                tripRoute={`${trip.origin} → ${trip.destination}`}
+                defaultExpanded={false}
+              />
+            )}
+
             {trip.availableSlots > 0 && lowSlots && !trip.bookingHalted && (
               <Card className="border-yellow-500 bg-yellow-50">
                 <CardContent className="pt-6">
@@ -512,16 +521,6 @@ export default function TripDetailPage() {
           </div>
         </div>
 
-        {/* Manual Ticketing Floating Card */}
-        {new Date(trip.departureTime) > new Date() && (
-          <ManualTicketingCard
-            tripId={trip.id}
-            availableSlots={trip.availableSlots}
-            totalSlots={trip.totalSlots}
-            busType={trip.busType}
-            onUpdate={fetchTrip}
-          />
-        )}
       </div>
     </div>
   )

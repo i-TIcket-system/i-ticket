@@ -21,6 +21,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatDate, formatDuration, BUS_TYPES } from "@/lib/utils"
+import { TripChat } from "@/components/trip/TripChat"
 
 interface Trip {
   id: string
@@ -358,6 +359,17 @@ function TripCard({ trip, highlight = false, past = false }: { trip: Trip; highl
             <p className="text-xs text-muted-foreground">per seat</p>
           </div>
         </div>
+
+        {/* Trip Chat - Communicate with team */}
+        {!past && (
+          <div className="mt-4 pt-4 border-t">
+            <TripChat
+              tripId={trip.id}
+              tripRoute={`${trip.origin} → ${trip.destination}`}
+              defaultExpanded={highlight}
+            />
+          </div>
+        )}
       </CardContent>
     </Card>
   )
