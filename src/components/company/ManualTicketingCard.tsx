@@ -205,13 +205,14 @@ export function ManualTicketingCard({
                   </p>
                 </div>
               </div>
-              <div className="max-h-[300px] overflow-y-auto">
+              <div className="max-h-[400px] overflow-y-auto">
                 <SeatMap
                   tripId={tripId}
                   passengerCount={count}
                   onSeatsSelected={() => {}} // View-only
                   className="shadow-none border-0"
                   busType={busType as "MINI" | "STANDARD" | "LUXURY" | undefined}
+                  orientation="portrait"
                 />
               </div>
             </div>
