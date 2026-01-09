@@ -1,5 +1,8 @@
+"use client"
+
 import Link from "next/link"
 import Image from "next/image"
+import { usePathname } from "next/navigation"
 import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Youtube, ArrowUpRight } from "lucide-react"
 
 const footerLinks = {
@@ -31,6 +34,16 @@ const socialLinks = [
 ]
 
 export function Footer() {
+  const pathname = usePathname()
+
+  // Hide footer on routes that have their own layouts
+  const hiddenRoutes = ["/admin", "/company", "/staff", "/cashier", "/sales"]
+  const shouldHide = hiddenRoutes.some((route) => pathname?.startsWith(route))
+
+  if (shouldHide) {
+    return null
+  }
+
   return (
     <footer className="relative text-white overflow-hidden" style={{ background: "#0d4f5c" }}>
       {/* Ethiopian pattern overlay */}

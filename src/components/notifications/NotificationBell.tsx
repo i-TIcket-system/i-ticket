@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { Bell, CheckCheck, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useNotifications } from "@/hooks/use-notifications"
@@ -12,12 +14,89 @@ interface NotificationBellProps {
   className?: string
 }
 
+/**
+ * Get navigation URL based on notification type and user role
+ */
+function getNotificationUrl(
+  type: string,
+  tripId: string | null | undefined,
+  bookingId: string | null | undefined,
+  userRole: string | undefined
+): string | null {
+  // Trip-related notifications
+  if (
+    [
+      "TRIP_ASSIGNED",
+      "TRIP_UNASSIGNED",
+      "TRIP_MESSAGE",
+      "TRIP_HALTED",
+      "TRIP_AUTO_HALTED",
+      "TRIP_RESUMED",
+      "LOW_SLOT_ALERT",
+    ].includes(type) &&
+    tripId
+  ) {
+    // Staff members see their trips page
+    if (userRole === "STAFF") {
+      return "/staff/my-trips"
+    }
+    // Manual ticketers (cashiers) go to cashier page
+    if (userRole === "MANUAL_TICKETER") {
+      return `/cashier/trip/${tripId}`
+    }
+    // Company admin goes to trip detail
+    if (userRole === "COMPANY_ADMIN") {
+      return `/company/trips/${tripId}`
+    }
+    // Super admin can go to company trips overview
+    if (userRole === "SUPER_ADMIN") {
+      return "/admin/dashboard"
+    }
+    return null
+  }
+
+  // Booking-related notifications
+  if (
+    ["BOOKING_NEW", "BOOKING_PAID", "BOOKING_CONFIRMED", "BOOKING_CANCELLED"].includes(
+      type
+    )
+  ) {
+    // For customers, go to their tickets page
+    if (userRole === "CUSTOMER" && bookingId) {
+      return `/tickets/${bookingId}`
+    }
+    // For company admin, go to trip detail if tripId exists
+    if (userRole === "COMPANY_ADMIN" && tripId) {
+      return `/company/trips/${tripId}`
+    }
+    return null
+  }
+
+  // Sales-related notifications
+  if (["COMMISSION_EARNED", "REFERRAL_NEW", "PAYOUT_PROCESSED"].includes(type)) {
+    if (userRole === "SALES_PERSON") {
+      if (type === "COMMISSION_EARNED") {
+        return "/sales/commissions"
+      }
+      if (type === "REFERRAL_NEW") {
+        return "/sales/referrals"
+      }
+      return "/sales/dashboard"
+    }
+    return null
+  }
+
+  return null
+}
+
 export function NotificationBell({
   variant = "light",
   className,
 }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const router = useRouter()
+  const { data: session } = useSession()
 
   const {
     notifications,
@@ -53,11 +132,24 @@ export function NotificationBell({
     }
   }, [isOpen, fetchNotifications])
 
-  const handleNotificationClick = async (notificationId: string, isRead: boolean) => {
+  const handleNotificationClick = async (
+    notificationId: string,
+    isRead: boolean,
+    type: string,
+    tripId?: string | null,
+    bookingId?: string | null
+  ) => {
+    // Mark as read
     if (!isRead) {
       await markAsRead(notificationId)
     }
-    // Could navigate to relevant page based on type/tripId/bookingId
+
+    // Navigate to relevant page
+    const url = getNotificationUrl(type, tripId, bookingId, session?.user?.role)
+    if (url) {
+      setIsOpen(false) // Close dropdown
+      router.push(url)
+    }
   }
 
   return (
@@ -144,7 +236,13 @@ export function NotificationBell({
                     key={notification.id}
                     {...notification}
                     onClick={() =>
-                      handleNotificationClick(notification.id, notification.isRead)
+                      handleNotificationClick(
+                        notification.id,
+                        notification.isRead,
+                        notification.type,
+                        notification.tripId,
+                        notification.bookingId
+                      )
                     }
                   />
                 ))}
@@ -159,7 +257,7 @@ export function NotificationBell({
                 className="w-full text-center text-sm text-teal-600 hover:text-teal-700 dark:text-teal-400 font-medium"
                 onClick={() => {
                   setIsOpen(false)
-                  // Could navigate to /notifications page
+                  router.push("/notifications")
                 }}
               >
                 View all notifications

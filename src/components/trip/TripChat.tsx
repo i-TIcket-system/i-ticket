@@ -68,11 +68,18 @@ export function TripChat({
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [expanded, setExpanded] = useState(defaultExpanded)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const prevMessageCountRef = useRef<number>(0)
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  const scrollToBottom = useCallback((smooth = true) => {
+    const container = messagesContainerRef.current
+    if (container) {
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      })
+    }
   }, [])
 
   const fetchMessages = useCallback(async () => {
@@ -109,10 +116,12 @@ export function TripChat({
   }, [fetchMessages, expanded])
 
   useEffect(() => {
-    if (messages.length > 0) {
+    // Only scroll when new messages are added (not on every re-render)
+    if (messages.length > prevMessageCountRef.current) {
       scrollToBottom()
     }
-  }, [messages, scrollToBottom])
+    prevMessageCountRef.current = messages.length
+  }, [messages.length, scrollToBottom])
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -200,7 +209,10 @@ export function TripChat({
       {expanded && (
         <CardContent className="p-0">
           {/* Messages Container */}
-          <div className="h-64 overflow-y-auto p-3 space-y-3 bg-gray-50">
+          <div
+            ref={messagesContainerRef}
+            className="h-64 overflow-y-auto p-3 space-y-3 bg-gray-50"
+          >
             {loading ? (
               <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-5 w-5 animate-spin text-teal-600" />
@@ -295,7 +307,6 @@ export function TripChat({
                     </div>
                   )
                 })}
-                <div ref={messagesEndRef} />
               </>
             )}
           </div>

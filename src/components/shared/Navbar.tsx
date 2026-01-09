@@ -21,8 +21,13 @@ import {
 export function Navbar() {
   const { data: session, status } = useSession()
   const { theme, toggleTheme } = useTheme()
+  const pathname = usePathname()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+
+  // Hide navbar on routes that have their own layouts
+  const hiddenRoutes = ["/admin", "/company", "/staff", "/cashier", "/sales"]
+  const shouldHide = hiddenRoutes.some((route) => pathname?.startsWith(route))
 
   // Track scroll position for navbar styling
   useEffect(() => {
@@ -32,6 +37,11 @@ export function Navbar() {
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
+
+  // Don't render navbar on admin/dashboard routes
+  if (shouldHide) {
+    return null
+  }
 
   const getDashboardLink = () => {
     if (!session) return "/login"
