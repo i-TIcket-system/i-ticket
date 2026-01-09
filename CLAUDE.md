@@ -22,6 +22,28 @@ This document tracks major features and technical architecture for the i-Ticket 
 ## Recent Development Summary
 
 ### January 2026 - Week 2
+- **NOTIFICATION SYSTEM ENHANCEMENTS** - Improved notification UX with navigation and dedicated page:
+  - **Click-to-Navigate** - Notifications now navigate to relevant pages based on type and user role:
+    - Trip notifications (TRIP_MESSAGE, TRIP_ASSIGNED, etc.) → Trip detail page for role
+    - Booking notifications → Trip page or customer tickets
+    - Sales notifications → Sales dashboard/commissions/referrals
+  - **Dedicated Notifications Page (`/notifications`)** - Full-featured notification management:
+    - Complete notification list with pagination ("Load more")
+    - Filter toggle: All / Unread only
+    - Mark all as read button
+    - Click notification to navigate and mark as read
+    - Priority badges (Low/Normal/High/Urgent)
+    - Type badges and relative timestamps
+  - **TripChat Auto-Scroll Fix** - Fixed page jumping to bottom when chat polls:
+    - Changed from `scrollIntoView()` to container `scrollTo()`
+    - Only scrolls when new messages arrive (not on every poll)
+    - Tracks previous message count to detect new messages
+  - **Duplicate Navbar/Footer Fix** - Main Navbar and Footer now hidden on admin routes:
+    - Routes with own layouts: `/admin`, `/company`, `/staff`, `/cashier`, `/sales`
+    - Prevents duplicate notification bells in Cashier Portal
+  - **Files Modified**: NotificationBell.tsx, Navbar.tsx, Footer.tsx, TripChat.tsx
+  - **Files Created**: `src/app/notifications/page.tsx`
+  - **Impact**: Better notification discoverability, cleaner admin layouts, no page jumping in chat
 - **DEDICATED CASHIER PORTAL & TRIP-BASED MESSAGING** - Complete ticketing system for manual ticketers with internal team communication:
   - **Cashier Portal (`/cashier`)** - Dedicated dashboard for manual ticketers separate from company admin:
     - Dashboard showing only trips assigned to the logged-in ticketer
@@ -308,6 +330,7 @@ This document tracks major features and technical architecture for the i-Ticket 
 - `/(admin)` - Dashboard, Companies, Audit Logs, Support Tickets, Sales Persons (collapsible sidebar)
 - `/(sales)` - Dashboard, Referrals, Commissions, Profile (collapsible sidebar)
 - `/about` - Company information, mission, values, features
+- `/notifications` - Full notification list with filters, pagination, mark-as-read
 - `/contact`, `/track/[code]`, `/terms`, `/privacy`, `/faq`
 
 ### Key Libraries
