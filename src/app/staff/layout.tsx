@@ -128,14 +128,20 @@ export default function StaffLayout({
                 </div>
                 <span className="font-bold text-lg text-white">i-Ticket</span>
               </Link>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="lg:hidden text-white/60 hover:text-white hover:bg-white/10"
-                onClick={() => setSidebarOpen(false)}
-              >
-                <X className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-2">
+                {/* Desktop notification bell */}
+                <div className="hidden lg:block">
+                  <NotificationBell variant="dark" sidebarMode />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="lg:hidden text-white/60 hover:text-white hover:bg-white/10"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
             <p className="text-xs text-white/60 mt-1 truncate">
               {session.user.companyName}

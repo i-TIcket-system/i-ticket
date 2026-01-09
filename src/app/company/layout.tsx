@@ -160,21 +160,29 @@ export default function CompanyLayout({
                     </div>
                   )}
                 </Link>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="lg:hidden text-white/60 hover:text-white hover:bg-white/10"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <X className="h-5 w-5" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  {/* Desktop notification bell */}
+                  <div className="hidden lg:block">
+                    <NotificationBell variant="dark" sidebarMode />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="lg:hidden text-white/60 hover:text-white hover:bg-white/10"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
               {!collapsed && (
-                <div className="mt-3 flex items-center gap-2 px-1">
-                  <Building2 className="h-3 w-3" style={{ color: "#20c4c4" }} />
-                  <p className="text-xs text-white/60 font-medium truncate max-w-[180px]">
-                    {session.user.companyName}
-                  </p>
+                <div className="mt-3 flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-3 w-3" style={{ color: "#20c4c4" }} />
+                    <p className="text-xs text-white/60 font-medium truncate max-w-[180px]">
+                      {session.user.companyName}
+                    </p>
+                  </div>
                 </div>
               )}
             </div>
@@ -182,7 +190,10 @@ export default function CompanyLayout({
             {/* Navigation */}
             <nav className={cn("flex-1 p-4 space-y-1.5", collapsed && "p-2")}>
               {sidebarItems.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href.replace('/new', ''))
+                // Exact match for the href, OR sub-routes (e.g., /company/trips/123)
+                // But NOT sibling routes (e.g., /company/trips/new should not match /company/trips)
+                const isActive = pathname === item.href ||
+                  (pathname.startsWith(item.href + '/') && !item.href.endsWith('/new'))
 
                 const linkContent = (
                   <Link

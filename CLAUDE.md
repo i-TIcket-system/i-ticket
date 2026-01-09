@@ -22,6 +22,30 @@ This document tracks major features and technical architecture for the i-Ticket 
 ## Recent Development Summary
 
 ### January 2026 - Week 2
+- **NOTIFICATION SYSTEM FIXES & IMPROVEMENTS** - Critical fixes for notification routing and display:
+  - **Cross-Role Navigation Fix** - Fixed notifications routing users to unauthorized pages:
+    - Now checks both `role` AND `staffRole` for proper routing
+    - Cashiers (staffRole=MANUAL_TICKETER) → `/cashier/trip/{tripId}` (not company admin page)
+    - Drivers/Conductors → `/staff/my-trips`
+    - Company Admin (manager, no staffRole) → `/company/trips/{tripId}`
+    - Super Admin → `/admin/dashboard` (no access to company trip pages)
+  - **Desktop Notification Bell** - Added NotificationBell to all admin sidebar headers:
+    - Previously only visible in mobile headers after hiding main Navbar
+    - Now visible on desktop in sidebar header for all portals
+    - Uses `sidebarMode` prop for proper dropdown positioning
+  - **Sidebar Dropdown Clipping Fix** - Notification dropdown no longer clipped by sidebar:
+    - Added `sidebarMode` prop to NotificationBell component
+    - Dropdown opens to the right (`left-full`) instead of below (`right-0`)
+    - Increased z-index to `z-[100]` for proper layering
+  - **Trip Halt/Resume Notifications** - Toggle-booking API now creates notifications:
+    - Notifies all assigned staff (driver, conductor, ticketer) when trip is halted/resumed
+    - Notifies all Super Admins for visibility
+    - Uses TRIP_HALTED and TRIP_RESUMED notification types
+  - **Current Page Indicator Fix** - Fixed Company Admin sidebar highlighting both "Trips" and "Add Trip":
+    - Changed `isActive` logic to use proper sub-route detection
+    - Now only exact matches or true sub-routes (with `/` separator) highlight
+  - **Files Modified**: NotificationBell.tsx, notifications/page.tsx, toggle-booking/route.ts, all 5 admin layouts
+  - **Impact**: Users now routed to their own portal pages, notifications visible on desktop, no dropdown clipping
 - **NOTIFICATION SYSTEM ENHANCEMENTS** - Improved notification UX with navigation and dedicated page:
   - **Click-to-Navigate** - Notifications now navigate to relevant pages based on type and user role:
     - Trip notifications (TRIP_MESSAGE, TRIP_ASSIGNED, etc.) → Trip detail page for role

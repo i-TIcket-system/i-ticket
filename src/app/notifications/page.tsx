@@ -83,23 +83,34 @@ function getNotificationUrl(
   type: string,
   tripId: string | null | undefined,
   bookingId: string | null | undefined,
-  userRole: string | undefined
+  userRole: string | undefined,
+  staffRole: string | null | undefined
 ): string | null {
+  // Trip-related notifications - route to user's own trip page
   if (
     ["TRIP_ASSIGNED", "TRIP_UNASSIGNED", "TRIP_MESSAGE", "TRIP_HALTED", "TRIP_AUTO_HALTED", "TRIP_RESUMED", "LOW_SLOT_ALERT"].includes(type) &&
     tripId
   ) {
-    if (userRole === "STAFF") return "/staff/my-trips"
-    if (userRole === "MANUAL_TICKETER") return `/cashier/trip/${tripId}`
-    if (userRole === "COMPANY_ADMIN") return `/company/trips/${tripId}`
+    // Cashiers → their cashier trip page
+    if (staffRole === "MANUAL_TICKETER") return `/cashier/trip/${tripId}`
+    // Drivers/Conductors → staff my-trips
+    if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") return "/staff/my-trips"
+    // Company Admin (manager, no staffRole) → company trip detail
+    if (userRole === "COMPANY_ADMIN" && !staffRole) return `/company/trips/${tripId}`
+    // Super Admin → admin dashboard
     if (userRole === "SUPER_ADMIN") return "/admin/dashboard"
   }
 
+  // Booking-related notifications
   if (["BOOKING_NEW", "BOOKING_PAID", "BOOKING_CONFIRMED", "BOOKING_CANCELLED"].includes(type)) {
     if (userRole === "CUSTOMER" && bookingId) return `/tickets/${bookingId}`
-    if (userRole === "COMPANY_ADMIN" && tripId) return `/company/trips/${tripId}`
+    if (staffRole === "MANUAL_TICKETER") return "/cashier"
+    if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") return "/staff/my-trips"
+    if (userRole === "COMPANY_ADMIN" && !staffRole && tripId) return `/company/trips/${tripId}`
+    if (userRole === "SUPER_ADMIN") return "/admin/dashboard"
   }
 
+  // Sales-related notifications
   if (["COMMISSION_EARNED", "REFERRAL_NEW", "PAYOUT_PROCESSED"].includes(type)) {
     if (userRole === "SALES_PERSON") {
       if (type === "COMMISSION_EARNED") return "/sales/commissions"
@@ -209,7 +220,8 @@ export default function NotificationsPage() {
       notification.type,
       notification.tripId,
       notification.bookingId,
-      session?.user?.role
+      session?.user?.role,
+      session?.user?.staffRole
     )
 
     if (url) {

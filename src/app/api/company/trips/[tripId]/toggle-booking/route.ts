@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { requireCompanyAdmin, handleAuthError } from "@/lib/auth-helpers"
+import { createNotification } from "@/lib/notifications"
 
 /**
  * Toggle booking halt status (admin override)
@@ -33,6 +34,10 @@ export async function POST(
         totalSlots: true,
         origin: true,
         destination: true,
+        departureTime: true,
+        driverId: true,
+        conductorId: true,
+        manualTicketerId: true,
       }
     })
 
@@ -84,6 +89,40 @@ export async function POST(
         }),
       },
     })
+
+    // Create notifications for assigned staff and super admins
+    const tripRoute = `${trip.origin} → ${trip.destination}`
+    const notificationType = shouldHalt ? "TRIP_HALTED" : "TRIP_RESUMED"
+    const notificationData = {
+      tripId: params.tripId,
+      tripRoute,
+      reason: shouldHalt ? "Admin manually halted bookings" : undefined,
+    }
+
+    // Notify assigned staff
+    const staffIds = [trip.driverId, trip.conductorId, trip.manualTicketerId].filter(Boolean) as string[]
+    for (const staffId of staffIds) {
+      createNotification({
+        recipientId: staffId,
+        recipientType: "USER",
+        type: notificationType,
+        data: notificationData,
+      })
+    }
+
+    // Notify super admins
+    const superAdmins = await prisma.user.findMany({
+      where: { role: "SUPER_ADMIN" },
+      select: { id: true },
+    })
+    for (const admin of superAdmins) {
+      createNotification({
+        recipientId: admin.id,
+        recipientType: "USER",
+        type: notificationType,
+        data: notificationData,
+      })
+    }
 
     return NextResponse.json({
       success: true,

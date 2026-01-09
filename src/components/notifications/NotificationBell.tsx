@@ -12,18 +12,22 @@ import { cn } from "@/lib/utils"
 interface NotificationBellProps {
   variant?: "light" | "dark"
   className?: string
+  /** When true, dropdown opens to the right (for sidebar placement) */
+  sidebarMode?: boolean
 }
 
 /**
  * Get navigation URL based on notification type and user role
+ * Routes users to their own portal's trip page, not cross-role pages
  */
 function getNotificationUrl(
   type: string,
   tripId: string | null | undefined,
   bookingId: string | null | undefined,
-  userRole: string | undefined
+  userRole: string | undefined,
+  staffRole: string | null | undefined
 ): string | null {
-  // Trip-related notifications
+  // Trip-related notifications - route to user's own trip page
   if (
     [
       "TRIP_ASSIGNED",
@@ -36,19 +40,19 @@ function getNotificationUrl(
     ].includes(type) &&
     tripId
   ) {
-    // Staff members see their trips page
-    if (userRole === "STAFF") {
-      return "/staff/my-trips"
-    }
-    // Manual ticketers (cashiers) go to cashier page
-    if (userRole === "MANUAL_TICKETER") {
+    // Cashiers (COMPANY_ADMIN with staffRole=MANUAL_TICKETER) → their cashier trip page
+    if (staffRole === "MANUAL_TICKETER") {
       return `/cashier/trip/${tripId}`
     }
-    // Company admin goes to trip detail
-    if (userRole === "COMPANY_ADMIN") {
+    // Drivers/Conductors (COMPANY_ADMIN with staffRole) → staff my-trips
+    if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") {
+      return "/staff/my-trips"
+    }
+    // Company Admin (manager, no staffRole) → company trip detail
+    if (userRole === "COMPANY_ADMIN" && !staffRole) {
       return `/company/trips/${tripId}`
     }
-    // Super admin can go to company trips overview
+    // Super Admin → their admin dashboard (no access to company trip pages)
     if (userRole === "SUPER_ADMIN") {
       return "/admin/dashboard"
     }
@@ -61,13 +65,25 @@ function getNotificationUrl(
       type
     )
   ) {
-    // For customers, go to their tickets page
+    // Customers → their ticket detail
     if (userRole === "CUSTOMER" && bookingId) {
       return `/tickets/${bookingId}`
     }
-    // For company admin, go to trip detail if tripId exists
-    if (userRole === "COMPANY_ADMIN" && tripId) {
+    // Cashiers → their cashier dashboard
+    if (staffRole === "MANUAL_TICKETER") {
+      return "/cashier"
+    }
+    // Drivers/Conductors → staff my-trips
+    if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") {
+      return "/staff/my-trips"
+    }
+    // Company Admin (manager) → company trip detail
+    if (userRole === "COMPANY_ADMIN" && !staffRole && tripId) {
       return `/company/trips/${tripId}`
+    }
+    // Super Admin → admin dashboard
+    if (userRole === "SUPER_ADMIN") {
+      return "/admin/dashboard"
     }
     return null
   }
@@ -92,6 +108,7 @@ function getNotificationUrl(
 export function NotificationBell({
   variant = "light",
   className,
+  sidebarMode = false,
 }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -144,8 +161,8 @@ export function NotificationBell({
       await markAsRead(notificationId)
     }
 
-    // Navigate to relevant page
-    const url = getNotificationUrl(type, tripId, bookingId, session?.user?.role)
+    // Navigate to relevant page based on role and staffRole
+    const url = getNotificationUrl(type, tripId, bookingId, session?.user?.role, session?.user?.staffRole)
     if (url) {
       setIsOpen(false) // Close dropdown
       router.push(url)
@@ -188,8 +205,11 @@ export function NotificationBell({
       {isOpen && (
         <div
           className={cn(
-            "absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-50",
-            "animate-in fade-in-0 zoom-in-95 duration-200"
+            "absolute bg-white dark:bg-gray-900 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden z-[100]",
+            "animate-in fade-in-0 zoom-in-95 duration-200",
+            sidebarMode
+              ? "left-full top-0 ml-2 w-80" // Opens to the right of bell in sidebar
+              : "right-0 mt-2 w-80 sm:w-96" // Opens below bell in navbar
           )}
         >
           {/* Header */}

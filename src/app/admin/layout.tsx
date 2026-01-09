@@ -149,14 +149,20 @@ export default function AdminLayout({
                     </div>
                   )}
                 </Link>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="lg:hidden text-white/60 hover:text-white hover:bg-white/10"
-                  onClick={() => setSidebarOpen(false)}
-                >
-                  <X className="h-5 w-5" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  {/* Desktop notification bell */}
+                  <div className="hidden lg:block">
+                    <NotificationBell variant="dark" sidebarMode />
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="lg:hidden text-white/60 hover:text-white hover:bg-white/10"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
               {!collapsed && (
                 <div className="mt-3 flex items-center gap-2 px-1">
