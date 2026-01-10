@@ -163,8 +163,46 @@ model Vehicle {
   lastServiceDate    DateTime? // Last maintenance/service date
   nextServiceDate    DateTime? // Scheduled next maintenance date
 
+  // Phase 2: Operational data for predictive maintenance
+  currentOdometer       Int?      // Current mileage in kilometers
+  odometerLastUpdated   DateTime? // When odometer was last recorded
+  engineHours           Int?      // Total engine runtime hours
+  fuelCapacity          Int?      // Tank capacity in liters
+  fuelType              String?   // DIESEL, PETROL, CNG, ELECTRIC
+
+  // Phase 2: Performance metrics (calculated/updated periodically)
+  utilizationRate       Float?    // % of time vehicle is on trips
+  avgSpeedKmh           Float?    // Average speed from GPS data
+  idleTimePercentage    Float?    // % of engine time spent idling
+  fuelEfficiencyL100km  Float?    // Liters per 100 km
+
+  // Phase 2: Cost tracking
+  costPerKm             Float?    // Total cost per km (calculated)
+  revenuePerKm          Float?    // Revenue per km (from bookings)
+  fuelCostMTD           Float     @default(0) // Month-to-date fuel cost
+  fuelCostYTD           Float     @default(0) // Year-to-date fuel cost
+  maintenanceCostMTD    Float     @default(0) // Month-to-date maintenance
+  maintenanceCostYTD    Float     @default(0) // Year-to-date maintenance
+
+  // Phase 2: Predictive maintenance AI
+  maintenanceRiskScore  Int?      // 0-100 (AI prediction, 100 = immediate attention)
+  predictedFailureDate  DateTime? // When AI predicts next failure
+  predictedFailureType  String?   // Engine, Brake, Transmission, etc.
+  lastPredictionUpdate  DateTime? // When AI last ran
+
+  // Phase 2: Inspection tracking
+  lastInspectionDate    DateTime? // Last safety inspection
+  inspectionDueDate     DateTime? // Next inspection due
+  defectCount           Int       @default(0) // Open defects
+  criticalDefectCount   Int       @default(0) // Critical defects requiring immediate attention
+
   // Relations
-  trips       Trip[]   @relation("VehicleTrips")
+  trips                 Trip[]                @relation("VehicleTrips")
+  maintenanceSchedules  MaintenanceSchedule[]
+  workOrders            WorkOrder[]
+  fuelEntries           FuelEntry[]
+  inspections           VehicleInspection[]
+  odometerLogs          OdometerLog[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -174,6 +212,10 @@ model Vehicle {
   @@index([status])
   @@index([plateNumber])
   @@index([sideNumber])
+  @@index([maintenanceRiskScore]) // Phase 2: For high-risk vehicle queries
+  @@index([inspectionDueDate])    // Phase 2: For compliance alerts
+  @@index([predictedFailureDate]) // Phase 2: For proactive maintenance
+  @@index([currentOdometer])      // Phase 2: For mileage-based scheduling
   // Unique constraints: plate and side numbers must be unique per company
   @@unique([companyId, plateNumber])
   @@unique([companyId, sideNumber])
@@ -599,4 +641,205 @@ model Notification {
   @@index([tripId])
   @@index([bookingId])
   @@index([createdAt])
+}
+
+// ==================== PHASE 2: PREDICTIVE MAINTENANCE SYSTEM ====================
+
+// Automated maintenance schedules (preventive maintenance)
+model MaintenanceSchedule {
+  id                String   @id @default(cuid())
+  vehicleId         String
+  vehicle           Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  taskName          String   // "Oil Change", "Tire Rotation", "Brake Inspection"
+  taskType          String   // PREVENTIVE, INSPECTION, SERVICE
+  description       String?  @db.Text
+
+  // Trigger conditions (either mileage OR time based)
+  intervalKm        Int?     // Trigger every X km (e.g., 5000 km for oil change)
+  intervalDays      Int?     // Trigger every X days (e.g., 90 days)
+
+  lastCompletedAt   DateTime? // When last completed
+  lastCompletedKm   Int?      // Odometer reading at last completion
+
+  nextDueDate       DateTime? // Calculated next due date
+  nextDueKm         Int?      // Calculated next due mileage
+
+  isActive          Boolean  @default(true)
+  priority          Int      @default(2) // 1=Low, 2=Normal, 3=High, 4=Urgent
+  estimatedCostBirr Float?   // Expected cost in ETB
+  estimatedDuration Int?     // Expected duration in minutes
+
+  // Auto work order creation
+  autoCreateWorkOrder Boolean @default(true)
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([vehicleId, nextDueDate])
+  @@index([vehicleId, nextDueKm])
+  @@index([nextDueDate, isActive])
+}
+
+// Work orders for maintenance tasks
+model WorkOrder {
+  id                String   @id @default(cuid())
+  workOrderNumber   String   @unique // WO-XXXXXX
+
+  vehicleId         String
+  vehicle           Vehicle  @relation(fields: [vehicleId], references: [id])
+
+  companyId         String
+
+  // Work order details
+  title             String
+  description       String?  @db.Text
+  taskType          String   // PREVENTIVE, CORRECTIVE, INSPECTION, EMERGENCY
+  priority          Int      @default(2) // 1=Low, 2=Normal, 3=High, 4=Urgent
+
+  // Assignment
+  assignedToId      String?  // Mechanic user ID
+  assignedToName    String?  // Denormalized name
+  serviceProvider   String?  // External shop name (if outsourced)
+
+  // Status tracking
+  status            String   @default("OPEN") // OPEN, IN_PROGRESS, BLOCKED, COMPLETED, CANCELLED
+
+  // Scheduling
+  scheduledDate     DateTime?
+  startedAt         DateTime?
+  completedAt       DateTime?
+
+  // Odometer at service
+  odometerAtService Int?
+
+  // Cost tracking
+  laborCost         Float    @default(0)
+  partsCost         Float    @default(0)
+  totalCost         Float    @default(0)
+
+  // Parts used
+  partsUsed         WorkOrderPart[]
+
+  // Completion notes
+  completionNotes   String?  @db.Text
+  mechanicSignature String?  // Digital signature or name
+
+  // Linked to schedule (if auto-created)
+  scheduleId        String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([vehicleId, status])
+  @@index([workOrderNumber])
+  @@index([scheduledDate])
+  @@index([companyId])
+  @@index([status, priority])
+}
+
+model WorkOrderPart {
+  id            String     @id @default(cuid())
+  workOrderId   String
+  workOrder     WorkOrder  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  partName      String
+  partNumber    String?
+  quantity      Int
+  unitPrice     Float
+  totalPrice    Float
+  supplier      String?
+
+  @@index([workOrderId])
+}
+
+// Digital vehicle inspections (daily/weekly)
+model VehicleInspection {
+  id                String   @id @default(cuid())
+  vehicleId         String
+  vehicle           Vehicle  @relation(fields: [vehicleId], references: [id])
+
+  inspectionType    String   // DAILY, WEEKLY, PRE_TRIP, POST_TRIP, ANNUAL
+  inspectedByUserId String   // Driver or mechanic
+  inspectedByName   String   // Denormalized
+
+  odometerReading   Int?
+
+  // Inspection results (JSON for flexibility)
+  checklistResults  String   @db.Text // JSON: {tires: "OK", brakes: "DEFECT", lights: "OK"}
+
+  // Overall status
+  status            String   // PASS, FAIL, PASS_WITH_DEFECTS
+  defectsFound      Int      @default(0)
+  criticalDefects   Int      @default(0)
+
+  notes             String?  @db.Text
+
+  // If failed, link to work order
+  workOrderId       String?
+
+  createdAt         DateTime @default(now())
+
+  @@index([vehicleId, createdAt])
+  @@index([status])
+  @@index([inspectedByUserId])
+}
+
+// Fuel consumption tracking
+model FuelEntry {
+  id                String   @id @default(cuid())
+  vehicleId         String
+  vehicle           Vehicle  @relation(fields: [vehicleId], references: [id])
+
+  companyId         String
+
+  // Fuel details
+  fuelType          String   // DIESEL, PETROL, CNG
+  liters            Float
+  costBirr          Float
+  costPerLiter      Float
+
+  // Odometer
+  odometerReading   Int      // Odometer at fill-up
+
+  // Location
+  station           String?  // Gas station name
+  city              String?
+
+  // Payment
+  paymentMethod     String?  // CASH, FUEL_CARD, TELEBIRR
+  receiptNumber     String?
+  receiptPhoto      String?  // URL to receipt image
+
+  // Recorded by
+  recordedByUserId  String?  // Driver or admin
+  recordedByName    String?
+
+  // Calculated fields (from previous entry)
+  kmSinceLastFill   Int?     // Distance traveled since last fill
+  litersPer100Km    Float?   // Fuel efficiency (calculated)
+
+  createdAt         DateTime @default(now())
+
+  @@index([vehicleId, createdAt])
+  @@index([companyId])
+  @@index([odometerReading])
+}
+
+// Odometer tracking (separate from fuel entries for accuracy)
+model OdometerLog {
+  id          String   @id @default(cuid())
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  reading     Int      // Odometer reading in km
+  source      String   // MANUAL, GPS, FUEL_ENTRY, WORK_ORDER
+
+  recordedBy  String?  // User ID
+  notes       String?
+
+  timestamp   DateTime @default(now())
+
+  @@index([vehicleId, timestamp])
+  @@index([timestamp])
 }
