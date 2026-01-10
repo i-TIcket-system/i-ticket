@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
+import prisma from '@/lib/db'
 import { generateTripGPX } from '@/lib/osmand/gpx-generator'
 
 export const runtime = 'nodejs'

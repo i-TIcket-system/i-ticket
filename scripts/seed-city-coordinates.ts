@@ -7,9 +7,7 @@
  * Phase 1: GPS Telematics
  */
 
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import prisma from '../src/lib/db'
 
 // Major Ethiopian cities with GPS coordinates
 const ETHIOPIAN_CITIES = [
@@ -251,8 +249,6 @@ async function main() {
   } catch (error) {
     console.error('Fatal error:', error)
     process.exit(1)
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
