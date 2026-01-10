@@ -22,6 +22,22 @@ This document tracks major features and technical architecture for the i-Ticket 
 ## Recent Development Summary
 
 ### January 2026 - Week 2
+- **FLEET MANAGEMENT SEED DATA** - Enhanced test data generation with complete fleet management features:
+  - **Problem**: Original seed script created basic trips and users, but no vehicles, staff, or maintenance data for testing fleet management features
+  - **Solution**: Enhanced seed.ts to add 6 staff members (drivers, conductors, cashiers), 4 vehicles with complete specs (odometer, fuel capacity, insurance/registration dates), and 12 maintenance schedules (3 per vehicle) while preserving all original test data
+  - **Key Changes**:
+    - Added proper cleanup order for fleet management tables (workOrderPart, workOrder, vehicleInspection, fuelEntry, odometerLog, maintenanceSchedule, vehicle)
+    - Created 6 staff users: 2 drivers, 1 conductor, 1 cashier for Selam Bus; 1 driver, 1 conductor for Sky Bus
+    - Created 4 vehicles: 2 for Selam Bus (Mercedes Sprinter, Isuzu NPR), 1 for Sky Bus (Hino RK8), 1 for Abay Bus (Mercedes O500)
+    - Created 12 maintenance schedules: Oil change (every 5,000km/90 days), brake inspection (20,000km/180 days), tire rotation (10,000km)
+    - Optional vehicle/staff assignments to trips (assigns when matching company and bus type available)
+    - Fixed bus type validation issue: Changed from "VIP" (invalid) to valid schema values (MINI, STANDARD, LUXURY)
+    - All 170 trips now start from current date going forward (prevents past trip issues)
+  - **Test Scripts Created**: check-db.ts (quick counts), check-seed-data.ts (detailed verification), debug-company-mismatch.ts (company ID debugging), test-stats-api.ts (stats endpoint testing), test-vehicles-api.ts (vehicles API testing)
+  - **Test Logins**: Selam Bus Admin (0922345678/demo123), Drivers (0914444444-45/demo123), Conductor (0914444446/demo123), Cashier (0914444447/demo123), Sky Bus Staff (0925555555-56/demo123)
+  - **Database Contents**: 5 companies, 170 trips (all future-dated), 11 users (3 customers, 6 staff, 2 admins), 4 vehicles, 12 maintenance schedules
+  - **Files Modified**: prisma/seed.ts (630+ lines added)
+  - **Impact**: Complete test environment for fleet management features, proper vehicle-trip-staff relationships, realistic maintenance schedules for testing predictive maintenance
 - **SEAT CAPACITY DISPLAY FORMAT FIX** - Clarified confusing seat display across all admin interfaces:
   - **Problem**: Format `12/49 (37 available)` was ambiguous - unclear what 12 vs 49 represented
   - **Solution**: Changed to explicit format with color coding: `12 sold • 37 available` or `37 left / 49`
