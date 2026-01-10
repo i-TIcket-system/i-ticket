@@ -91,7 +91,8 @@
       "WebFetch(domain:osmand.net)",
       "Bash(git diff:*)",
       "Bash(git checkout:*)",
-      "Bash(npx ts-node:*)"
+      "Bash(npx ts-node:*)",
+      "Bash(Select-Object -Last 3)"
     ]
   }
 }

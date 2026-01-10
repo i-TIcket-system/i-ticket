@@ -263,9 +263,16 @@ model City {
   region    String?
   isActive  Boolean  @default(true)
   tripCount Int      @default(0)
+
+  // GPS coordinates for OsmAnd integration (Phase 1)
+  latitude  Float?   // e.g., 9.0220 for Addis Ababa
+  longitude Float?   // e.g., 38.7468 for Addis Ababa
+  timezone  String?  // e.g., "Africa/Addis_Ababa"
+
   createdAt DateTime @default(now())
 
   @@index([name])
+  @@index([latitude, longitude])
 }
 
 model AdminLog {
