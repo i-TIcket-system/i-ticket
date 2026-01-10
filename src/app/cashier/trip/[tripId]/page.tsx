@@ -244,11 +244,10 @@ export default function CashierTripPage() {
                   <Users className="h-4 w-4 text-teal-600" />
                   Seat Capacity
                 </span>
-                <span className="text-lg font-bold">
-                  {soldCount}/{trip.totalSlots}
-                  <span className="text-sm font-normal text-muted-foreground ml-1">
-                    ({trip.availableSlots} available)
-                  </span>
+                <span className="text-lg">
+                  <span className="font-bold text-red-600">{soldCount} sold</span>
+                  <span className="text-muted-foreground mx-2">•</span>
+                  <span className="font-bold text-green-600">{trip.availableSlots} available</span>
                 </span>
               </div>
               <div className="h-3 bg-gray-200 rounded-full overflow-hidden">

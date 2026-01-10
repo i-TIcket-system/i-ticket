@@ -360,10 +360,10 @@ export default function CompanyDashboard() {
                                 lowSlots ? "text-red-500 font-medium" : "text-green-600"
                               }
                             >
-                              {trip.availableSlots}/{trip.totalSlots}
+                              {trip.availableSlots} left
                             </span>
                             <span className="text-xs text-muted-foreground">
-                              ({100 - slotsPercent}% sold)
+                              / {trip.totalSlots}
                             </span>
                           </div>
                         </TableCell>

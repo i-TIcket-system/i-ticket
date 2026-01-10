@@ -90,9 +90,9 @@ export function ManualTicketingCard({
         {/* Slots Display */}
         <div className="p-3 bg-muted rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Available Slots</span>
+            <span className="text-sm font-medium">Seat Availability</span>
             <Badge variant={slotsPercentage > 20 ? "default" : "destructive"}>
-              {availableSlots}/{totalSlots}
+              {availableSlots} of {totalSlots} left
             </Badge>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">

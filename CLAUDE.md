@@ -22,6 +22,11 @@ This document tracks major features and technical architecture for the i-Ticket 
 ## Recent Development Summary
 
 ### January 2026 - Week 2
+- **SEAT CAPACITY DISPLAY FORMAT FIX** - Clarified confusing seat display across all admin interfaces:
+  - **Problem**: Format `12/49 (37 available)` was ambiguous - unclear what 12 vs 49 represented
+  - **Solution**: Changed to explicit format with color coding: `12 sold • 37 available` or `37 left / 49`
+  - **Files Modified**: cashier/trip/[tripId]/page.tsx, cashier/page.tsx, company/trips/[tripId]/page.tsx, company/dashboard/page.tsx, ManualTicketingCard.tsx
+  - **Impact**: Clear at-a-glance understanding of seat availability for cashiers and company admins
 - **NOTIFICATION SYSTEM FIXES & IMPROVEMENTS** - Critical fixes for notification routing and display:
   - **Cross-Role Navigation Fix** - Fixed notifications routing users to unauthorized pages:
     - Now checks both `role` AND `staffRole` for proper routing

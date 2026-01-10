@@ -265,7 +265,10 @@ export default function TripDetailPage() {
                     <div>
                       <p className="text-xs text-muted-foreground">Seats</p>
                       <p className={`font-medium ${lowSlots ? "text-red-500" : "text-green-600"}`}>
-                        {trip.availableSlots}/{trip.totalSlots}
+                        {trip.availableSlots} available
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        of {trip.totalSlots} total
                       </p>
                     </div>
                   </div>

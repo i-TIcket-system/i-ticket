@@ -243,7 +243,9 @@ export default function CashierDashboard() {
                               Capacity
                             </span>
                             <span className="font-medium">
-                              {soldCount}/{trip.totalSlots} sold ({fillPercentage}%)
+                              <span className="text-red-600">{soldCount} sold</span>
+                              <span className="text-muted-foreground"> • </span>
+                              <span className="text-green-600">{trip.availableSlots} left</span>
                             </span>
                           </div>
                           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
