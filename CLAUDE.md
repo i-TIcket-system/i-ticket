@@ -19,6 +19,33 @@ This document tracks major features and technical architecture for the i-Ticket 
 
 ---
 
+## NEXT SESSION TODO LIST (SAVED JAN 11, 2026)
+
+> **Priority items to address when resuming development:**
+
+### CRITICAL BUG - Staff Login Issue
+- **Problem**: Staff members (Berhanu 0914444445, Alemitu 0914444446, etc.) login as customers instead of their assigned roles
+- **Root Cause**: `prisma/seed.ts` creates staff with `role: "STAFF"` but login redirect expects `role: "COMPANY_ADMIN"` + `staffRole`
+- **Fix Required**: Change all staff in seed.ts from `role: "STAFF"` to `role: "COMPANY_ADMIN"` and re-run seed
+- **Affected Users**: All 10 staff members (drivers, conductors, cashiers, mechanics, finance)
+
+### Trip Management Enhancements
+1. **Add "Start Trip" Button** - Admin should be able to start a trip even if not all seats are sold
+2. **Trip Status Tracking** - Add status field (SCHEDULED, STARTED, COMPLETED, CANCELLED)
+3. **Manifest Download Anytime** - Remove "bus full" restriction for manifest download
+4. **Trip Log to Admin Log** - Record trip start/end readings in admin audit log
+5. **Trip Log in Manifest** - Include odometer/fuel readings in the Excel manifest
+
+### Notification Enhancements
+1. **Passenger Trip Reminders** - Notify registered passengers day before and hours before departure
+2. **Current notifications work** - Work order notifications and trip notifications are functional
+
+### Phase 2 Status
+- **Predictive Maintenance**: 100% COMPLETE (see PHASE2-PREDICTIVE-MAINTENANCE-COMPLETE.md)
+- **Remaining work**: Trip lifecycle management, passenger notifications, bug fixes above
+
+---
+
 ## Recent Development Summary
 
 ### January 2026 - Week 2
