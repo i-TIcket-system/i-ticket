@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/db'
 import { z } from 'zod'
+import { notifyWorkOrderStakeholders, notifyWorkOrderUser } from '@/lib/notifications'
 
 /**
  * Work Order API - List & Create
@@ -206,6 +207,32 @@ export async function POST(request: NextRequest) {
         }),
       },
     })
+
+    // Send notifications (fire and forget - don't block response)
+    const notificationType = restData.priority === 4 ? 'WORK_ORDER_URGENT' : 'WORK_ORDER_CREATED'
+    notifyWorkOrderStakeholders(
+      workOrder.id,
+      vehicleId,
+      session.user.companyId!,
+      notificationType,
+      {
+        workOrderNumber: workOrder.workOrderNumber,
+        vehiclePlate: workOrder.vehicle.plateNumber,
+        taskType: restData.taskType,
+      },
+      session.user.id // exclude creator from notification
+    ).catch((err) => console.error('Failed to send work order notifications:', err))
+
+    // If mechanic is assigned, send them a specific assignment notification
+    if (assignedMechanicId) {
+      notifyWorkOrderUser(assignedMechanicId, 'WORK_ORDER_ASSIGNED', {
+        workOrderId: workOrder.id,
+        workOrderNumber: workOrder.workOrderNumber,
+        vehiclePlate: workOrder.vehicle.plateNumber,
+        taskType: restData.taskType,
+        companyId: session.user.companyId!,
+      }).catch((err) => console.error('Failed to send mechanic assignment notification:', err))
+    }
 
     return NextResponse.json(
       {

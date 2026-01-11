@@ -3,11 +3,59 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { notifyWorkOrderStakeholders } from "@/lib/notifications"
 
 const sendMessageSchema = z.object({
   message: z.string().min(1, "Message cannot be empty").max(2000, "Message too long"),
   type: z.enum(["TEXT", "STATUS_UPDATE", "COST_APPROVAL", "URGENT"]).default("TEXT"),
 })
+
+/**
+ * Check if user has access to work order communication
+ * Access granted to:
+ * - Admin (company admin without staff role)
+ * - Assigned mechanic
+ * - Finance staff (can view all work orders)
+ * - Drivers/conductors with upcoming trips using this vehicle
+ */
+async function checkWorkOrderAccess(
+  userId: string,
+  userStaffRole: string | null | undefined,
+  workOrder: { id: string; vehicleId: string; assignedToId: string | null }
+): Promise<boolean> {
+  // Admin (no staff role) has full access
+  if (!userStaffRole) {
+    return true
+  }
+
+  // Finance staff can access all work orders
+  if (userStaffRole === "FINANCE") {
+    return true
+  }
+
+  // Assigned mechanic has access
+  if (userStaffRole === "MECHANIC" && workOrder.assignedToId === userId) {
+    return true
+  }
+
+  // Drivers/conductors with upcoming trips on this vehicle have access
+  if (userStaffRole === "DRIVER" || userStaffRole === "CONDUCTOR") {
+    const now = new Date()
+    const upcomingTrip = await prisma.trip.findFirst({
+      where: {
+        vehicleId: workOrder.vehicleId,
+        departureTime: { gte: now },
+        OR: [
+          { driverId: userId },
+          { conductorId: userId },
+        ],
+      },
+    })
+    return !!upcomingTrip
+  }
+
+  return false
+}
 
 // GET /api/company/work-orders/[workOrderId]/messages - Fetch all messages for a work order
 export async function GET(
@@ -39,6 +87,20 @@ export async function GET(
       return NextResponse.json(
         { error: "Work order not found" },
         { status: 404 }
+      )
+    }
+
+    // Check if user has access to this work order
+    const hasAccess = await checkWorkOrderAccess(
+      session.user.id,
+      session.user.staffRole,
+      workOrder
+    )
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "You don't have access to this work order" },
+        { status: 403 }
       )
     }
 
@@ -106,6 +168,20 @@ export async function POST(
       )
     }
 
+    // Check if user has access to this work order
+    const hasAccess = await checkWorkOrderAccess(
+      session.user.id,
+      session.user.staffRole,
+      workOrder
+    )
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: "You don't have access to this work order" },
+        { status: 403 }
+      )
+    }
+
     const body = await req.json()
     const validation = sendMessageSchema.safeParse(body)
 
@@ -148,6 +224,19 @@ export async function POST(
         type,
       },
     })
+
+    // Notify other stakeholders about the new message (fire and forget)
+    notifyWorkOrderStakeholders(
+      workOrderId,
+      workOrder.vehicleId,
+      session.user.companyId!,
+      "WORK_ORDER_MESSAGE",
+      {
+        senderName: user.name || "Unknown",
+        messagePreview: message.length > 50 ? message.substring(0, 50) + "..." : message,
+      },
+      session.user.id // exclude sender
+    ).catch((err) => console.error("Failed to send message notification:", err))
 
     return NextResponse.json({
       success: true,

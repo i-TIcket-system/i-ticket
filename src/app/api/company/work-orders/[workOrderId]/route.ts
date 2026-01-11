@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/db'
 import { z } from 'zod'
+import { notifyWorkOrderStakeholders, notifyWorkOrderUser } from '@/lib/notifications'
 
 /**
  * Work Order API - Get, Update, Delete individual work order
@@ -244,6 +245,41 @@ export async function PATCH(
         }),
       },
     })
+
+    // Send notifications for significant updates (fire and forget)
+    const notificationData = {
+      workOrderId,
+      workOrderNumber: updatedWorkOrder.workOrderNumber,
+      vehiclePlate: updatedWorkOrder.vehicle.plateNumber,
+      companyId: session.user.companyId!,
+    }
+
+    // Status change notification
+    if (validatedData.status && validatedData.status !== existingWorkOrder.status) {
+      const notificationType = validatedData.status === 'COMPLETED'
+        ? 'WORK_ORDER_COMPLETED'
+        : 'WORK_ORDER_STATUS_CHANGED'
+
+      notifyWorkOrderStakeholders(
+        workOrderId,
+        existingWorkOrder.vehicleId,
+        session.user.companyId!,
+        notificationType,
+        { ...notificationData, workOrderStatus: validatedData.status },
+        session.user.id
+      ).catch((err) => console.error('Failed to send status change notification:', err))
+    }
+
+    // New mechanic assignment notification
+    if (
+      validatedData.assignedMechanicId &&
+      validatedData.assignedMechanicId !== existingWorkOrder.assignedToId
+    ) {
+      notifyWorkOrderUser(validatedData.assignedMechanicId, 'WORK_ORDER_ASSIGNED', {
+        ...notificationData,
+        taskType: existingWorkOrder.taskType,
+      }).catch((err) => console.error('Failed to send mechanic assignment notification:', err))
+    }
 
     return NextResponse.json({
       message: 'Work order updated successfully',

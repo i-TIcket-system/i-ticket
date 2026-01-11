@@ -18,6 +18,13 @@ export type NotificationType =
   | "PAYOUT_PROCESSED"
   | "LOW_SLOT_ALERT"
   | "SYSTEM_ALERT"
+  // Work Order notifications
+  | "WORK_ORDER_CREATED"
+  | "WORK_ORDER_ASSIGNED"
+  | "WORK_ORDER_STATUS_CHANGED"
+  | "WORK_ORDER_MESSAGE"
+  | "WORK_ORDER_COMPLETED"
+  | "WORK_ORDER_URGENT"
 
 export type NotificationPriority = 1 | 2 | 3 | 4 // 1=Low, 2=Normal, 3=High, 4=Urgent
 
@@ -54,6 +61,14 @@ export interface NotificationData {
   // Message-related
   senderName?: string
   messagePreview?: string
+
+  // Work Order-related
+  workOrderId?: string
+  workOrderNumber?: string
+  vehiclePlate?: string
+  taskType?: string
+  workOrderStatus?: string
+  priority?: number
 
   // Generic
   reason?: string
@@ -191,6 +206,55 @@ export function generateNotification(
         type,
         title: "System Alert",
         message: data.messagePreview || "Important system notification.",
+        priority: 4, // Urgent
+      }
+
+    // Work Order Notifications
+    case "WORK_ORDER_CREATED":
+      return {
+        type,
+        title: "New Work Order Created",
+        message: `Work order ${data.workOrderNumber || ""} created for ${data.vehiclePlate || "vehicle"}${data.taskType ? ` - ${data.taskType}` : ""}.`,
+        priority: 2, // Normal
+      }
+
+    case "WORK_ORDER_ASSIGNED":
+      return {
+        type,
+        title: "Work Order Assigned",
+        message: `You have been assigned to work order ${data.workOrderNumber || ""} for ${data.vehiclePlate || "vehicle"}.`,
+        priority: 3, // High
+      }
+
+    case "WORK_ORDER_STATUS_CHANGED":
+      return {
+        type,
+        title: "Work Order Status Updated",
+        message: `Work order ${data.workOrderNumber || ""} status changed to ${data.workOrderStatus || "updated"}.`,
+        priority: 2, // Normal
+      }
+
+    case "WORK_ORDER_MESSAGE":
+      return {
+        type,
+        title: `Work Order Message from ${data.senderName || "Team"}`,
+        message: data.messagePreview || `New message on work order ${data.workOrderNumber || ""}.`,
+        priority: 2, // Normal
+      }
+
+    case "WORK_ORDER_COMPLETED":
+      return {
+        type,
+        title: "Work Order Completed",
+        message: `Work order ${data.workOrderNumber || ""} for ${data.vehiclePlate || "vehicle"} has been completed.`,
+        priority: 2, // Normal
+      }
+
+    case "WORK_ORDER_URGENT":
+      return {
+        type,
+        title: "Urgent Work Order",
+        message: `Urgent work order ${data.workOrderNumber || ""} for ${data.vehiclePlate || "vehicle"}${data.taskType ? ` - ${data.taskType}` : ""}.`,
         priority: 4, // Urgent
       }
 

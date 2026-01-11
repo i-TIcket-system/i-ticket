@@ -243,3 +243,134 @@ export async function notifyCustomer(
     data,
   })
 }
+
+/**
+ * Notify all work order stakeholders:
+ * - Company admins (no staffRole)
+ * - Assigned mechanic
+ * - Drivers/conductors with upcoming trips on the vehicle
+ * - Finance staff
+ */
+export async function notifyWorkOrderStakeholders(
+  workOrderId: string,
+  vehicleId: string,
+  companyId: string,
+  type: NotificationType,
+  data: NotificationData,
+  excludeUserId?: string
+) {
+  try {
+    // Get work order details if not provided in data
+    const workOrder = await prisma.workOrder.findUnique({
+      where: { id: workOrderId },
+      select: {
+        workOrderNumber: true,
+        assignedToId: true,
+        taskType: true,
+        priority: true,
+        vehicle: {
+          select: {
+            plateNumber: true,
+          },
+        },
+      },
+    })
+
+    if (!workOrder) return 0
+
+    // Enrich data with work order info
+    const enrichedData: NotificationData = {
+      ...data,
+      workOrderId,
+      workOrderNumber: workOrder.workOrderNumber,
+      vehiclePlate: workOrder.vehicle.plateNumber,
+      taskType: workOrder.taskType,
+      priority: workOrder.priority,
+      companyId,
+    }
+
+    // Collect all recipient IDs
+    const recipientIds: Set<string> = new Set()
+
+    // 1. Get company admins (users with COMPANY_ADMIN role and no staffRole)
+    const companyAdmins = await prisma.user.findMany({
+      where: {
+        companyId,
+        role: "COMPANY_ADMIN",
+        staffRole: null,
+      },
+      select: { id: true },
+    })
+    companyAdmins.forEach((admin) => recipientIds.add(admin.id))
+
+    // 2. Add assigned mechanic
+    if (workOrder.assignedToId) {
+      recipientIds.add(workOrder.assignedToId)
+    }
+
+    // 3. Get finance staff
+    const financeStaff = await prisma.user.findMany({
+      where: {
+        companyId,
+        role: "COMPANY_ADMIN",
+        staffRole: "FINANCE",
+      },
+      select: { id: true },
+    })
+    financeStaff.forEach((staff) => recipientIds.add(staff.id))
+
+    // 4. Get drivers/conductors with upcoming trips on this vehicle
+    const now = new Date()
+    const upcomingTrips = await prisma.trip.findMany({
+      where: {
+        vehicleId,
+        departureTime: { gte: now },
+      },
+      select: {
+        driverId: true,
+        conductorId: true,
+      },
+    })
+
+    upcomingTrips.forEach((trip) => {
+      if (trip.driverId) recipientIds.add(trip.driverId)
+      if (trip.conductorId) recipientIds.add(trip.conductorId)
+    })
+
+    // Remove the excludeUserId (e.g., the person who triggered the notification)
+    if (excludeUserId) {
+      recipientIds.delete(excludeUserId)
+    }
+
+    if (recipientIds.size === 0) return 0
+
+    // Create notifications for all stakeholders
+    return await createBulkNotifications({
+      recipients: Array.from(recipientIds).map((id) => ({
+        recipientId: id,
+        recipientType: "USER" as RecipientType,
+      })),
+      type,
+      data: enrichedData,
+    })
+  } catch (error) {
+    console.error("Failed to notify work order stakeholders:", error)
+    return 0
+  }
+}
+
+/**
+ * Notify a specific user about work order updates
+ */
+export async function notifyWorkOrderUser(
+  userId: string,
+  type: NotificationType,
+  data: NotificationData
+) {
+  return await createNotification({
+    recipientId: userId,
+    recipientType: "USER",
+    type,
+    data,
+  })
+}

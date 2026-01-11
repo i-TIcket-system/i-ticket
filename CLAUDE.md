@@ -22,6 +22,34 @@ This document tracks major features and technical architecture for the i-Ticket 
 ## Recent Development Summary
 
 ### January 2026 - Week 2
+- **WORK ORDER COMMUNICATION & NOTIFICATIONS** - Multi-role chat system with real-time notifications for work order stakeholders:
+  - **Mechanic Portal** (`/mechanic`) - Dedicated dashboard for mechanics (amber/orange theme):
+    - Dashboard showing only work orders assigned to the logged-in mechanic
+    - Stats cards (pending, in progress, completed this month, urgent)
+    - Quick status updates (Start Work, Complete, Mark Blocked)
+    - Work order detail page with full status management
+    - Embedded chat for communication with admin, drivers, and finance
+  - **Finance Portal** (`/finance`) - Cost tracking interface for finance staff (emerald/green theme):
+    - Dashboard with cost overview (total spent, avg per work order, completed count)
+    - Status breakdown donut visualization
+    - Work orders list with labor/parts/total cost columns
+    - Work order detail page focused on cost summary
+    - Read/write access to all work order messages
+  - **Multi-Role Work Order Messaging** - Updated access control for work order chat:
+    - Admin (company admin without staffRole) has full access
+    - Assigned mechanic can chat on their work orders
+    - Drivers/conductors can chat on work orders for vehicles they have upcoming trips with
+    - Finance staff can view and participate in all work order chats
+    - `checkWorkOrderAccess()` function validates access before GET/POST
+  - **Work Order Notifications** - Real-time notification system for stakeholders:
+    - 6 new notification types: WORK_ORDER_CREATED, WORK_ORDER_ASSIGNED, WORK_ORDER_STATUS_CHANGED, WORK_ORDER_MESSAGE, WORK_ORDER_COMPLETED, WORK_ORDER_URGENT
+    - `notifyWorkOrderStakeholders()` helper notifies all relevant parties
+    - Notifications on: work order creation, status changes, mechanic assignment, new messages
+    - Fire-and-forget pattern (non-blocking API responses)
+    - Excludes the action initiator from receiving notification
+  - **Files Created**: Mechanic portal (layout, pages, APIs), Finance portal (layout, pages, APIs), chat components
+  - **Files Modified**: Notification templates, notification create helpers, work order APIs
+  - **Impact**: Complete team communication system for maintenance workflow, real-time updates across roles
 - **WORK ORDER SYSTEM ENHANCEMENTS** - Complete work order management with detail page and validation fixes:
   - **Work Order Detail Page** (`/company/work-orders/[workOrderId]`) - Full work order management interface:
     - View complete work order details (description, vehicle info, assignment, timeline)
