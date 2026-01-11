@@ -177,10 +177,39 @@ const baseVehicleSchema = z.object({
     .min(4, "Minimum 4 seats")
     .max(100, "Maximum 100 seats"),
   status: z.enum(["ACTIVE", "MAINTENANCE", "INACTIVE"]).default("ACTIVE"),
-  registrationExpiry: z.string().datetime().optional().nullable(),
-  insuranceExpiry: z.string().datetime().optional().nullable(),
-  lastServiceDate: z.string().datetime().optional().nullable(),
-  nextServiceDate: z.string().datetime().optional().nullable(),
+  // Accept both date-only (YYYY-MM-DD) and full datetime (ISO) formats, or null/undefined
+  registrationExpiry: z.union([
+    z.string().refine(
+      (val) => !val || /^\d{4}-\d{2}-\d{2}(T[\d:.Z+-]+)?$/.test(val),
+      "Invalid date format"
+    ),
+    z.null()
+  ]).optional(),
+  insuranceExpiry: z.union([
+    z.string().refine(
+      (val) => !val || /^\d{4}-\d{2}-\d{2}(T[\d:.Z+-]+)?$/.test(val),
+      "Invalid date format"
+    ),
+    z.null()
+  ]).optional(),
+  lastServiceDate: z.union([
+    z.string().refine(
+      (val) => !val || /^\d{4}-\d{2}-\d{2}(T[\d:.Z+-]+)?$/.test(val),
+      "Invalid date format"
+    ),
+    z.null()
+  ]).optional(),
+  nextServiceDate: z.union([
+    z.string().refine(
+      (val) => !val || /^\d{4}-\d{2}-\d{2}(T[\d:.Z+-]+)?$/.test(val),
+      "Invalid date format"
+    ),
+    z.null()
+  ]).optional(),
+  // Operational/Predictive Maintenance fields
+  currentOdometer: z.number().int().nonnegative().optional().nullable(),
+  fuelCapacity: z.number().positive().optional().nullable(),
+  fuelType: z.enum(["DIESEL", "GASOLINE", "ELECTRIC", "HYBRID"]).optional().nullable(),
 });
 
 // Create schema with seat range validation
