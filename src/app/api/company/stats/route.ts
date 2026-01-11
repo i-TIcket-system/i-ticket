@@ -52,11 +52,59 @@ export async function GET(request: NextRequest) {
       },
     })
 
+    // Fleet metrics
+    const vehicleCompanyFilter = session.user.role === "COMPANY_ADMIN" && session.user.companyId
+      ? { companyId: session.user.companyId }
+      : {}
+
+    const [vehicleStats, tripLogStats] = await Promise.all([
+      // Vehicle counts by status
+      prisma.vehicle.groupBy({
+        by: ['status'],
+        where: vehicleCompanyFilter,
+        _count: true,
+      }),
+      // Trip log aggregates (completed trips with logs)
+      prisma.tripLog.aggregate({
+        where: vehicleCompanyFilter,
+        _sum: {
+          distanceTraveled: true,
+          fuelConsumed: true,
+        },
+        _count: true,
+        _avg: {
+          fuelEfficiency: true,
+        },
+      }),
+    ])
+
+    // Transform vehicle stats
+    const vehicleCounts = {
+      total: 0,
+      active: 0,
+      maintenance: 0,
+      inactive: 0,
+    }
+    vehicleStats.forEach((v) => {
+      vehicleCounts.total += v._count
+      if (v.status === 'ACTIVE') vehicleCounts.active = v._count
+      if (v.status === 'MAINTENANCE') vehicleCounts.maintenance = v._count
+      if (v.status === 'INACTIVE') vehicleCounts.inactive = v._count
+    })
+
     const stats = {
       totalTrips,
       activeTrips,
       totalBookings: bookingsData._count,
       totalRevenue: Number(bookingsData._sum.totalAmount) || 0,
+      // Fleet metrics
+      vehicles: vehicleCounts,
+      fleetMetrics: {
+        totalDistance: tripLogStats._sum.distanceTraveled || 0,
+        totalFuelConsumed: tripLogStats._sum.fuelConsumed || 0,
+        avgFuelEfficiency: tripLogStats._avg.fuelEfficiency || 0,
+        completedTripLogs: tripLogStats._count,
+      },
     }
 
     return NextResponse.json({ stats })

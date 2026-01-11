@@ -40,6 +40,7 @@ import {
 import { formatCurrency, formatDate, formatDuration, getSlotsPercentage, isLowSlots, BUS_TYPES } from "@/lib/utils"
 import { BookingControlCard } from "@/components/company/BookingControlCard"
 import { TripChat } from "@/components/trip/TripChat"
+import { TripLogCard } from "@/components/trip/TripLogCard"
 
 interface Passenger {
   id: string
@@ -497,6 +498,13 @@ export default function TripDetailPage() {
               bookingHalted={trip.bookingHalted}
               availableSlots={trip.availableSlots}
               onUpdate={fetchTrip}
+            />
+
+            {/* Trip Log - Odometer & Fuel Tracking */}
+            <TripLogCard
+              tripId={trip.id}
+              vehicleId={trip.vehicle?.id}
+              canEdit={true}
             />
 
             {/* Trip Chat - Communicate with assigned staff */}

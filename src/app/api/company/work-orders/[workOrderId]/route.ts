@@ -12,18 +12,22 @@ import { z } from 'zod'
 // Validation schema for updating work order
 const updateWorkOrderSchema = z.object({
   status: z.enum(['OPEN', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELLED']).optional(),
-  description: z.string().min(5).max(2000).optional(),
-  priority: z.number().int().min(1).max(4).optional(), // 1=Low, 2=Normal, 3=High, 4=Urgent
+  description: z.string().max(2000).optional().nullable(),
+  priority: z.number().int().min(1).max(4).optional(),
   assignedMechanicId: z.string().optional().nullable(),
-  externalShopName: z.string().optional().nullable(),
-  externalShopContact: z.string().optional().nullable(),
-  scheduledDate: z.string().datetime().optional().nullable(),
+  externalShopName: z.string().optional().nullable(), // Maps to serviceProvider
+  // Accept both date-only (YYYY-MM-DD) and full datetime (ISO) formats
+  scheduledDate: z.union([
+    z.string().refine(
+      (val) => !val || /^\d{4}-\d{2}-\d{2}(T[\d:.Z+-]+)?$/.test(val),
+      "Invalid date format"
+    ),
+    z.null()
+  ]).optional(),
   completedAt: z.string().datetime().optional().nullable(),
   laborCost: z.number().nonnegative().optional(),
   partsCost: z.number().nonnegative().optional(),
-  totalCost: z.number().nonnegative().optional(),
-  notes: z.string().optional().nullable(),
-  failureDescription: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(), // Maps to completionNotes
 })
 
 /**
@@ -165,9 +169,29 @@ export async function PATCH(
       }
     }
 
-    // Copy other validated fields
-    const { assignedMechanicId, ...otherFields } = validatedData
-    Object.assign(updateData, otherFields)
+    // Copy validated fields with proper mapping
+    if (validatedData.status !== undefined) {
+      updateData.status = validatedData.status
+    }
+    if (validatedData.description !== undefined) {
+      updateData.description = validatedData.description || null
+    }
+    if (validatedData.priority !== undefined) {
+      updateData.priority = validatedData.priority
+    }
+    if (validatedData.laborCost !== undefined) {
+      updateData.laborCost = validatedData.laborCost
+    }
+    if (validatedData.partsCost !== undefined) {
+      updateData.partsCost = validatedData.partsCost
+    }
+    if (validatedData.externalShopName !== undefined) {
+      updateData.serviceProvider = validatedData.externalShopName
+    }
+    // Map 'notes' to Prisma field 'completionNotes'
+    if (validatedData.notes !== undefined) {
+      updateData.completionNotes = validatedData.notes
+    }
 
     // Convert date strings to Date objects
     if (validatedData.scheduledDate !== undefined) {

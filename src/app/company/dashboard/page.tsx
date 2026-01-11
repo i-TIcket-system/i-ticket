@@ -19,7 +19,11 @@ import {
   Loader2,
   Check,
   X,
-  Bell
+  Bell,
+  Truck,
+  Fuel,
+  Gauge,
+  Wrench,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -64,6 +68,18 @@ interface Stats {
   totalBookings: number
   totalRevenue: number
   activeTrips: number
+  vehicles?: {
+    total: number
+    active: number
+    maintenance: number
+    inactive: number
+  }
+  fleetMetrics?: {
+    totalDistance: number
+    totalFuelConsumed: number
+    avgFuelEfficiency: number
+    completedTripLogs: number
+  }
 }
 
 export default function CompanyDashboard() {
@@ -294,6 +310,80 @@ export default function CompanyDashboard() {
                 <div className="flex items-center text-sm text-muted-foreground">
                   <Users className="h-4 w-4 mr-1" />
                   seat utilization
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Fleet Metrics */}
+        {stats?.vehicles && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Fleet Vehicles</CardDescription>
+                <CardTitle className="text-3xl">{stats.vehicles.total}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="flex items-center text-green-600">
+                    <Truck className="h-3 w-3 mr-1" />
+                    {stats.vehicles.active} active
+                  </span>
+                  {stats.vehicles.maintenance > 0 && (
+                    <span className="flex items-center text-yellow-600">
+                      <Wrench className="h-3 w-3 mr-1" />
+                      {stats.vehicles.maintenance}
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Total Distance</CardDescription>
+                <CardTitle className="text-3xl">
+                  {stats.fleetMetrics?.totalDistance?.toLocaleString() || 0}
+                  <span className="text-lg font-normal ml-1">km</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Gauge className="h-4 w-4 mr-1" />
+                  from {stats.fleetMetrics?.completedTripLogs || 0} logged trips
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Fuel Consumed</CardDescription>
+                <CardTitle className="text-3xl">
+                  {stats.fleetMetrics?.totalFuelConsumed?.toLocaleString() || 0}
+                  <span className="text-lg font-normal ml-1">L</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Fuel className="h-4 w-4 mr-1" />
+                  total fuel usage
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardDescription>Avg. Efficiency</CardDescription>
+                <CardTitle className="text-3xl">
+                  {stats.fleetMetrics?.avgFuelEfficiency?.toFixed(1) || "0.0"}
+                  <span className="text-lg font-normal ml-1">km/L</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  fleet average
                 </div>
               </CardContent>
             </Card>

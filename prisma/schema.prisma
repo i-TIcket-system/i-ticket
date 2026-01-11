@@ -126,6 +126,7 @@ model Trip {
   version           Int       @default(0)  // P3: Optimistic locking version
   bookings          Booking[]
   tickets           Ticket[]
+  tripLog           TripLog?  // Before/after odometer and fuel readings
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -137,6 +138,51 @@ model Trip {
   @@index([conductorId])
   @@index([manualTicketerId])
   @@index([vehicleId])
+}
+
+// Trip odometer and fuel tracking (before/after readings)
+model TripLog {
+  id            String   @id @default(cuid())
+  tripId        String   @unique
+  trip          Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  vehicleId     String
+  vehicle       Vehicle  @relation("VehicleTripLogs", fields: [vehicleId], references: [id])
+
+  companyId     String
+
+  // Start readings (before trip departure)
+  startOdometer Int?           // km reading before trip
+  startFuel     Float?         // Fuel level (liters or %)
+  startFuelUnit String?        // LITERS, PERCENTAGE
+  startedAt     DateTime?      // When readings were recorded
+  startedById   String?        // Driver/staff who recorded
+  startedByName String?        // Denormalized name
+
+  // End readings (after trip arrival)
+  endOdometer   Int?           // km reading after trip
+  endFuel       Float?         // Fuel level after trip
+  endedAt       DateTime?      // When readings were recorded
+  endedById     String?        // Driver/staff who recorded
+  endedByName   String?        // Denormalized name
+
+  // Calculated fields (auto-computed on end entry)
+  distanceTraveled Int?        // endOdometer - startOdometer
+  fuelConsumed     Float?      // startFuel - endFuel (if same unit)
+  fuelEfficiency   Float?      // km per liter
+
+  // Notes
+  startNotes    String?  @db.Text
+  endNotes      String?  @db.Text
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tripId])
+  @@index([vehicleId])
+  @@index([companyId])
+  @@index([startedAt])
+  @@index([endedAt])
 }
 
 model Vehicle {
@@ -203,6 +249,7 @@ model Vehicle {
   fuelEntries           FuelEntry[]
   inspections           VehicleInspection[]
   odometerLogs          OdometerLog[]
+  tripLogs              TripLog[]             @relation("VehicleTripLogs")
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
