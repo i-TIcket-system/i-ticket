@@ -29,6 +29,15 @@ This document tracks major features and technical architecture for the i-Ticket 
 - **Fix Required**: Change all staff in seed.ts from `role: "STAFF"` to `role: "COMPANY_ADMIN"` and re-run seed
 - **Affected Users**: All 10 staff members (drivers, conductors, cashiers, mechanics, finance)
 
+### TypeScript Errors to Fix
+- **`src/app/api/finance/work-orders/route.ts`** (9 errors):
+  - Lines 89, 106, 121: `companyId` can be null - add `!` assertion
+  - Lines 133-136, 141: `costStats._sum` and `_avg` possibly undefined - add null checks
+  - Line 140: `s._count` returns wrong type - fix count access
+- **`src/app/api/mechanic/work-orders/route.ts`** (2 errors):
+  - Line 80: `companyId` null check needed
+  - Line 87: `_count` type mismatch
+
 ### Trip Management Enhancements
 1. **Add "Start Trip" Button** - Admin should be able to start a trip even if not all seats are sold
 2. **Trip Status Tracking** - Add status field (SCHEDULED, STARTED, COMPLETED, CANCELLED)
