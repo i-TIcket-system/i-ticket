@@ -17,6 +17,12 @@ import {
   Mail,
   BadgeCheck,
   CreditCard,
+  Wrench,
+  DollarSign,
+  Search,
+  Filter,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -75,6 +81,8 @@ const STAFF_ROLES: Record<string, { label: string; icon: any; color: string }> =
   DRIVER: { label: "Driver", icon: Car, color: "bg-blue-100 text-blue-800" },
   CONDUCTOR: { label: "Conductor", icon: UserCheck, color: "bg-green-100 text-green-800" },
   MANUAL_TICKETER: { label: "Manual Ticketer", icon: Ticket, color: "bg-orange-100 text-orange-800" },
+  MECHANIC: { label: "Mechanic", icon: Wrench, color: "bg-amber-100 text-amber-800" },
+  FINANCE: { label: "Finance", icon: DollarSign, color: "bg-emerald-100 text-emerald-800" },
 }
 
 // Helper to get role display info (handles custom roles)
@@ -101,6 +109,12 @@ export default function StaffManagementPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [staffToDelete, setStaffToDelete] = useState<string | null>(null)
   const [staffToEdit, setStaffToEdit] = useState<StaffMember | null>(null)
+
+  // Filter & Pagination state
+  const [searchTerm, setSearchTerm] = useState("")
+  const [roleFilter, setRoleFilter] = useState<string>("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 15
 
   // Add staff form
   const [newStaff, setNewStaff] = useState({
@@ -268,15 +282,43 @@ export default function StaffManagementPage() {
   }
 
   // Group staff by role for stats
-  const knownRoles = ["ADMIN", "DRIVER", "CONDUCTOR", "MANUAL_TICKETER"]
+  const knownRoles = ["ADMIN", "DRIVER", "CONDUCTOR", "MANUAL_TICKETER", "MECHANIC", "FINANCE"]
   const stats = {
     total: staff.length,
     admins: staff.filter(s => s.staffRole === "ADMIN").length,
     drivers: staff.filter(s => s.staffRole === "DRIVER").length,
     conductors: staff.filter(s => s.staffRole === "CONDUCTOR").length,
     ticketers: staff.filter(s => s.staffRole === "MANUAL_TICKETER").length,
+    mechanics: staff.filter(s => s.staffRole === "MECHANIC").length,
+    finance: staff.filter(s => s.staffRole === "FINANCE").length,
     others: staff.filter(s => !knownRoles.includes(s.staffRole)).length,
   }
+
+  // Filter staff by search term and role
+  const filteredStaff = staff.filter((member) => {
+    const searchLower = searchTerm.toLowerCase()
+    const matchesSearch = !searchTerm ||
+      member.name.toLowerCase().includes(searchLower) ||
+      member.phone.includes(searchTerm) ||
+      (member.email && member.email.toLowerCase().includes(searchLower)) ||
+      (member.employeeId && member.employeeId.toLowerCase().includes(searchLower))
+
+    const matchesRole = roleFilter === "all" || member.staffRole === roleFilter
+
+    return matchesSearch && matchesRole
+  })
+
+  // Pagination
+  const totalPages = Math.ceil(filteredStaff.length / itemsPerPage)
+  const paginatedStaff = filteredStaff.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, roleFilter])
 
   return (
     <div className="container mx-auto py-12 px-4 max-w-7xl">
@@ -351,6 +393,30 @@ export default function StaffManagementPage() {
           </CardContent>
         </Card>
 
+        {stats.mechanics > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <Wrench className="h-8 w-8 mx-auto mb-2 text-amber-600" />
+                <p className="text-2xl font-bold">{stats.mechanics}</p>
+                <p className="text-xs text-muted-foreground">Mechanics</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {stats.finance > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center">
+                <DollarSign className="h-8 w-8 mx-auto mb-2 text-emerald-600" />
+                <p className="text-2xl font-bold">{stats.finance}</p>
+                <p className="text-xs text-muted-foreground">Finance</p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {stats.others > 0 && (
           <Card>
             <CardContent className="pt-6">
@@ -364,12 +430,73 @@ export default function StaffManagementPage() {
         )}
       </div>
 
+      {/* Search & Filter */}
+      {staff.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Filter className="h-5 w-5" />
+              Filter Staff
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="relative md:col-span-2">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, phone, email, or employee ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Roles" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="ADMIN">Admin</SelectItem>
+                  <SelectItem value="DRIVER">Driver</SelectItem>
+                  <SelectItem value="CONDUCTOR">Conductor</SelectItem>
+                  <SelectItem value="MANUAL_TICKETER">Manual Ticketer</SelectItem>
+                  <SelectItem value="MECHANIC">Mechanic</SelectItem>
+                  <SelectItem value="FINANCE">Finance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(searchTerm || roleFilter !== "all") && (
+              <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                <span>
+                  Showing {filteredStaff.length} of {staff.length} staff members
+                </span>
+                {(searchTerm || roleFilter !== "all") && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm("")
+                      setRoleFilter("all")
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Staff Table */}
       <Card>
         <CardHeader>
           <CardTitle>All Staff Members</CardTitle>
           <CardDescription>
-            {staff.length} staff member{staff.length !== 1 ? "s" : ""} in your company
+            {filteredStaff.length} staff member{filteredStaff.length !== 1 ? "s" : ""}
+            {filteredStaff.length !== staff.length && ` (filtered from ${staff.length})`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -399,83 +526,132 @@ export default function StaffManagementPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {staff.map((member) => {
-                    const roleInfo = getRoleInfo(member.staffRole)
-                    const RoleIcon = roleInfo.icon
+                  {filteredStaff.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="h-32 text-center">
+                        <div className="text-muted-foreground">
+                          <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>No staff members match your search</p>
+                          <Button
+                            variant="link"
+                            onClick={() => {
+                              setSearchTerm("")
+                              setRoleFilter("all")
+                            }}
+                          >
+                            Clear filters
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedStaff.map((member) => {
+                      const roleInfo = getRoleInfo(member.staffRole)
+                      const RoleIcon = roleInfo.icon
 
-                    return (
-                      <TableRow key={member.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{member.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Joined {new Date(member.createdAt).toLocaleDateString()}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={roleInfo.color}>
-                            <RoleIcon className="h-3 w-3 mr-1" />
-                            {roleInfo.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-sm">
-                              <PhoneIcon className="h-3 w-3 text-muted-foreground" />
-                              {member.phone}
+                      return (
+                        <TableRow key={member.id}>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{member.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                Joined {new Date(member.createdAt).toLocaleDateString()}
+                              </p>
                             </div>
-                            {member.email && (
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={roleInfo.color}>
+                              <RoleIcon className="h-3 w-3 mr-1" />
+                              {roleInfo.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
                               <div className="flex items-center gap-2 text-sm">
-                                <Mail className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-xs">{member.email}</span>
+                                <PhoneIcon className="h-3 w-3 text-muted-foreground" />
+                                {member.phone}
                               </div>
+                              {member.email && (
+                                <div className="flex items-center gap-2 text-sm">
+                                  <Mail className="h-3 w-3 text-muted-foreground" />
+                                  <span className="text-xs">{member.email}</span>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {member.employeeId ? (
+                              <div className="flex items-center gap-2">
+                                <BadgeCheck className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-sm font-mono">{member.employeeId}</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">-</span>
                             )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {member.employeeId ? (
-                            <div className="flex items-center gap-2">
-                              <BadgeCheck className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-sm font-mono">{member.employeeId}</span>
+                          </TableCell>
+                          <TableCell>
+                            {member.licenseNumber ? (
+                              <div className="flex items-center gap-2">
+                                <CreditCard className="h-3 w-3 text-muted-foreground" />
+                                <span className="text-sm font-mono">{member.licenseNumber}</span>
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openEditDialog(member)}
+                              >
+                                <Edit className="h-4 w-4 text-primary" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setStaffToDelete(member.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
                             </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {member.licenseNumber ? (
-                            <div className="flex items-center gap-2">
-                              <CreditCard className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-sm font-mono">{member.licenseNumber}</span>
-                            </div>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openEditDialog(member)}
-                            >
-                              <Edit className="h-4 w-4 text-primary" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setStaffToDelete(member.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
+                  )}
                 </TableBody>
               </Table>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                  <p className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages} ({filteredStaff.length} total)
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </CardContent>
@@ -518,6 +694,8 @@ export default function StaffManagementPage() {
                     <SelectItem value="DRIVER">Driver</SelectItem>
                     <SelectItem value="CONDUCTOR">Conductor</SelectItem>
                     <SelectItem value="MANUAL_TICKETER">Manual Ticketer</SelectItem>
+                    <SelectItem value="MECHANIC">Mechanic</SelectItem>
+                    <SelectItem value="FINANCE">Finance</SelectItem>
                     <SelectItem value="CUSTOM">Custom Role...</SelectItem>
                   </SelectContent>
                 </Select>
@@ -574,14 +752,16 @@ export default function StaffManagementPage() {
                 />
               </div>
 
-              {newStaff.staffRole === "DRIVER" && (
+              {(newStaff.staffRole === "DRIVER" || newStaff.staffRole === "MECHANIC") && (
                 <div className="space-y-2">
-                  <Label htmlFor="licenseNumber">License Number (Optional)</Label>
+                  <Label htmlFor="licenseNumber">
+                    {newStaff.staffRole === "DRIVER" ? "License Number" : "Certification ID"} (Optional)
+                  </Label>
                   <Input
                     id="licenseNumber"
                     value={newStaff.licenseNumber}
                     onChange={(e) => setNewStaff({ ...newStaff, licenseNumber: e.target.value })}
-                    placeholder="DL-123456"
+                    placeholder={newStaff.staffRole === "DRIVER" ? "DL-123456" : "CERT-123456"}
                   />
                 </div>
               )}
@@ -690,9 +870,11 @@ export default function StaffManagementPage() {
                   />
                 </div>
 
-                {staffToEdit.staffRole === "DRIVER" && (
+                {(staffToEdit.staffRole === "DRIVER" || staffToEdit.staffRole === "MECHANIC") && (
                   <div className="space-y-2">
-                    <Label htmlFor="editLicenseNumber">License Number (Optional)</Label>
+                    <Label htmlFor="editLicenseNumber">
+                      {staffToEdit.staffRole === "DRIVER" ? "License Number" : "Certification ID"} (Optional)
+                    </Label>
                     <Input
                       id="editLicenseNumber"
                       value={editForm.licenseNumber}

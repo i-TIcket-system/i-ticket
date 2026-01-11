@@ -16,7 +16,7 @@ const createStaffSchema = z.object({
     .regex(/[A-Z]/, "Must contain uppercase letter")
     .regex(/[a-z]/, "Must contain lowercase letter")
     .regex(/[0-9]/, "Must contain number"),
-  staffRole: z.enum(["ADMIN", "DRIVER", "CONDUCTOR", "MANUAL_TICKETER"]),
+  staffRole: z.enum(["ADMIN", "DRIVER", "CONDUCTOR", "MANUAL_TICKETER", "MECHANIC", "FINANCE"]),
   licenseNumber: z.string().optional().or(z.literal("")),
   employeeId: z.string().optional().or(z.literal("")),
 })
@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     const staff = await prisma.user.findMany({
       where: {
         companyId: session.user.companyId,
-        role: "COMPANY_ADMIN", // All staff have COMPANY_ADMIN role
+        role: "STAFF", // Staff members have STAFF role
         staffRole: { not: null } // Only users with a staff role
       },
       select: {
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
         phone,
         email: email || null,
         password: hashedPassword,
-        role: "COMPANY_ADMIN", // All staff are company admins
+        role: "STAFF", // Staff members have STAFF role
         companyId: session.user.companyId,
         staffRole,
         licenseNumber: licenseNumber || null,

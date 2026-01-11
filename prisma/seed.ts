@@ -211,6 +211,57 @@ async function main() {
         companyId: companies[1].id,
       },
     }),
+    // Mechanics for Selam Bus
+    prisma.user.create({
+      data: {
+        name: "Tariku Worku",
+        phone: "0914444448",
+        email: "mechanic1@selambus.et",
+        password: companyPassword,
+        role: "STAFF",
+        staffRole: "MECHANIC",
+        companyId: companies[0].id,
+        employeeId: "MECH-001",
+      },
+    }),
+    prisma.user.create({
+      data: {
+        name: "Girma Kebede",
+        phone: "0914444449",
+        email: "mechanic2@selambus.et",
+        password: companyPassword,
+        role: "STAFF",
+        staffRole: "MECHANIC",
+        companyId: companies[0].id,
+        employeeId: "MECH-002",
+      },
+    }),
+    // Finance for Selam Bus
+    prisma.user.create({
+      data: {
+        name: "Hanna Bekele",
+        phone: "0914444450",
+        email: "finance1@selambus.et",
+        password: companyPassword,
+        role: "STAFF",
+        staffRole: "FINANCE",
+        companyId: companies[0].id,
+        employeeId: "FIN-001",
+      },
+    }),
+    // Mechanic for Sky Bus
+    prisma.user.create({
+      data: {
+        name: "Solomon Tesfaye",
+        phone: "0925555557",
+        email: "mechanic1@skybus.et",
+        password: companyPassword,
+        role: "STAFF",
+        staffRole: "MECHANIC",
+        companyId: companies[1].id,
+        employeeId: "MECH-101",
+      },
+    }),
   ])
 
   console.log(`Created ${staff.length} staff members`)
@@ -237,6 +288,11 @@ async function main() {
         utilizationRate: 82.0,
         registrationExpiry: new Date("2026-12-31"),
         insuranceExpiry: new Date("2026-06-30"),
+        maintenanceRiskScore: 35, // LOW risk - good condition
+        lastInspectionDate: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
+        inspectionDueDate: new Date(Date.now() + 23 * 24 * 60 * 60 * 1000), // 23 days from now
+        criticalDefectCount: 0,
+        defectCount: 1,
       },
     }),
     prisma.vehicle.create({
@@ -258,6 +314,13 @@ async function main() {
         utilizationRate: 75.0,
         registrationExpiry: new Date("2026-10-15"),
         insuranceExpiry: new Date("2026-05-20"),
+        maintenanceRiskScore: 55, // MEDIUM risk - maintenance due soon
+        lastInspectionDate: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000), // 14 days ago
+        inspectionDueDate: new Date(Date.now() + 16 * 24 * 60 * 60 * 1000), // 16 days from now
+        criticalDefectCount: 0,
+        defectCount: 2,
+        predictedFailureType: "Brake wear detected",
+        predictedFailureDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000), // 45 days from now
       },
     }),
     // Sky Bus vehicles
@@ -280,6 +343,11 @@ async function main() {
         utilizationRate: 88.0,
         registrationExpiry: new Date("2027-03-15"),
         insuranceExpiry: new Date("2026-08-10"),
+        maintenanceRiskScore: 22, // LOW risk - new vehicle, good condition
+        lastInspectionDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+        inspectionDueDate: new Date(Date.now() + 27 * 24 * 60 * 60 * 1000), // 27 days from now
+        criticalDefectCount: 0,
+        defectCount: 0,
       },
     }),
     // Abay Bus vehicle
@@ -298,10 +366,17 @@ async function main() {
         engineHours: 5000,
         fuelCapacity: 90,
         fuelType: "DIESEL",
-        fuelEfficiencyL100km: 27.0,
+        fuelEfficiencyL100km: 29.5, // Degraded from baseline 27 -> 29.5 L/100km
         utilizationRate: 70.0,
         registrationExpiry: new Date("2026-07-20"),
         insuranceExpiry: new Date("2026-04-15"),
+        maintenanceRiskScore: 78, // HIGH risk - high odometer, overdue maintenance, fuel degradation
+        lastInspectionDate: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000), // 45 days ago
+        inspectionDueDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), // 15 days overdue!
+        criticalDefectCount: 2,
+        defectCount: 5, // 2 critical + 3 minor = 5 total
+        predictedFailureType: "Engine overhaul needed",
+        predictedFailureDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
       },
     }),
   ])
@@ -321,7 +396,7 @@ async function main() {
           taskType: "OIL_CHANGE",
           intervalKm: 5000,
           intervalDays: 90,
-          nextDueKm: vehicle.currentOdometer + 5000,
+          nextDueKm: (vehicle.currentOdometer || 0) + 5000,
           nextDueDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
           priority: 2, // NORMAL
           estimatedDuration: 60,
@@ -340,7 +415,7 @@ async function main() {
           taskType: "BRAKE_INSPECTION",
           intervalKm: 20000,
           intervalDays: 180,
-          nextDueKm: vehicle.currentOdometer + 20000,
+          nextDueKm: (vehicle.currentOdometer || 0) + 20000,
           nextDueDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
           priority: 3, // HIGH
           estimatedDuration: 120,
@@ -359,7 +434,7 @@ async function main() {
           taskType: "TIRE_ROTATION",
           intervalKm: 10000,
           intervalDays: null,
-          nextDueKm: vehicle.currentOdometer + 10000,
+          nextDueKm: (vehicle.currentOdometer || 0) + 10000,
           nextDueDate: null,
           priority: 2, // NORMAL
           estimatedDuration: 45,
@@ -554,11 +629,15 @@ async function main() {
   console.log("   Driver 1:    0914444444 / demo123 (Mulugeta Assefa)")
   console.log("   Driver 2:    0914444445 / demo123 (Berhanu Tesfaye)")
   console.log("   Conductor:   0914444446 / demo123 (Alemitu Bekele)")
-  console.log("   Cashier:     0914444447 / demo123 (Tigist Hailu)\n")
+  console.log("   Cashier:     0914444447 / demo123 (Tigist Hailu)")
+  console.log("   Mechanic 1:  0914444448 / demo123 (Tariku Worku)")
+  console.log("   Mechanic 2:  0914444449 / demo123 (Girma Kebede)")
+  console.log("   Finance:     0914444450 / demo123 (Hanna Bekele)\n")
 
   console.log("👨‍✈️ STAFF (Sky Bus):")
   console.log("   Driver:      0925555555 / demo123 (Yohannes Negash)")
-  console.log("   Conductor:   0925555556 / demo123 (Meron Tadesse)\n")
+  console.log("   Conductor:   0925555556 / demo123 (Meron Tadesse)")
+  console.log("   Mechanic:    0925555557 / demo123 (Solomon Tesfaye)\n")
 
   console.log("👑 SUPER ADMIN:")
   console.log("   Phone: 0933456789 / Password: admin123\n")

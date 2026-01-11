@@ -8,7 +8,7 @@ import { z } from "zod"
 const updateStaffSchema = z.object({
   name: z.string().min(2, "Name required").optional(),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
-  staffRole: z.enum(["ADMIN", "DRIVER", "CONDUCTOR", "MANUAL_TICKETER"]).optional(),
+  staffRole: z.enum(["ADMIN", "DRIVER", "CONDUCTOR", "MANUAL_TICKETER", "MECHANIC", "FINANCE"]).optional(),
   licenseNumber: z.string().optional().or(z.literal("")),
   employeeId: z.string().optional().or(z.literal("")),
 })

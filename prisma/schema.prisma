@@ -19,7 +19,7 @@ model User {
   company        Company?  @relation(fields: [companyId], references: [id])
 
   // Staff-specific fields (for company employees)
-  staffRole      String?   // ADMIN, DRIVER, CONDUCTOR, MANUAL_TICKETER (only for COMPANY_ADMIN role)
+  staffRole      String?   // ADMIN, DRIVER, CONDUCTOR, MANUAL_TICKETER, MECHANIC, FINANCE (only for COMPANY_ADMIN role)
   licenseNumber  String?   // For drivers
   employeeId     String?   // Company employee ID
 
@@ -728,6 +728,9 @@ model WorkOrder {
   // Linked to schedule (if auto-created)
   scheduleId        String?
 
+  // Internal communication
+  messages          WorkOrderMessage[]
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -842,4 +845,40 @@ model OdometerLog {
 
   @@index([vehicleId, timestamp])
   @@index([timestamp])
+}
+
+// Work order internal messaging (Admin, Mechanic, Driver, Finance communication)
+model WorkOrderMessage {
+  id              String   @id @default(cuid())
+  workOrderId     String
+  workOrder       WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  senderId        String   // User ID who sent the message
+  senderName      String   // Denormalized for display
+  senderRole      String   // ADMIN, MECHANIC, DRIVER, FINANCE, CONDUCTOR
+
+  message         String   @db.Text
+  type            String   @default("TEXT") // TEXT, STATUS_UPDATE, COST_APPROVAL, URGENT
+
+  createdAt       DateTime @default(now())
+
+  // Read receipts
+  readReceipts    WorkOrderMessageReadReceipt[]
+
+  @@index([workOrderId, createdAt])
+  @@index([createdAt])
+}
+
+// Track who has read work order messages
+model WorkOrderMessageReadReceipt {
+  id        String   @id @default(cuid())
+  messageId String
+  message   WorkOrderMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  userId    String
+  readAt    DateTime @default(now())
+
+  @@unique([messageId, userId])
+  @@index([messageId])
+  @@index([userId])
 }

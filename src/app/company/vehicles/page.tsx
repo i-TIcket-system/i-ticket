@@ -12,6 +12,11 @@ import {
   CheckCircle,
   XCircle,
   Wrench,
+  ChevronDown,
+  ChevronUp,
+  Activity,
+  Gauge,
+  Fuel,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -52,6 +57,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { VehicleHealthDashboard } from "@/components/maintenance/VehicleHealthDashboard"
 
 interface Vehicle {
   id: string
@@ -76,6 +82,18 @@ interface Vehicle {
     departureTime: string
   } | null
   createdAt: string
+
+  // Predictive Maintenance fields
+  currentOdometer: number | null
+  fuelCapacity: number | null
+  fuelType: string | null
+  fuelEfficiencyL100km: number | null
+  maintenanceRiskScore: number | null
+  predictedFailureDate: string | null
+  predictedFailureType: string | null
+  lastInspectionDate: string | null
+  criticalDefectCount: number | null
+  defectCount: number | null
 }
 
 const BUS_TYPES = {
@@ -106,6 +124,7 @@ export default function VehiclesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null)
   const [vehicleToEdit, setVehicleToEdit] = useState<Vehicle | null>(null)
+  const [expandedVehicle, setExpandedVehicle] = useState<string | null>(null)
 
   // Add vehicle form
   const [newVehicle, setNewVehicle] = useState({
@@ -122,6 +141,10 @@ export default function VehiclesPage() {
     insuranceExpiry: "",
     lastServiceDate: "",
     nextServiceDate: "",
+    // Operational/Predictive Maintenance fields
+    currentOdometer: "",
+    fuelCapacity: "",
+    fuelType: "DIESEL",
   })
 
   // Edit vehicle form
@@ -138,6 +161,10 @@ export default function VehiclesPage() {
     insuranceExpiry: "",
     lastServiceDate: "",
     nextServiceDate: "",
+    // Operational/Predictive Maintenance fields
+    currentOdometer: "",
+    fuelCapacity: "",
+    fuelType: "DIESEL",
   })
 
   useEffect(() => {
@@ -183,6 +210,9 @@ export default function VehiclesPage() {
           insuranceExpiry: newVehicle.insuranceExpiry || null,
           lastServiceDate: newVehicle.lastServiceDate || null,
           nextServiceDate: newVehicle.nextServiceDate || null,
+          currentOdometer: newVehicle.currentOdometer ? parseInt(newVehicle.currentOdometer) : null,
+          fuelCapacity: newVehicle.fuelCapacity ? parseFloat(newVehicle.fuelCapacity) : null,
+          fuelType: newVehicle.fuelType || null,
         }),
       })
 
@@ -203,6 +233,9 @@ export default function VehiclesPage() {
           insuranceExpiry: "",
           lastServiceDate: "",
           nextServiceDate: "",
+          currentOdometer: "",
+          fuelCapacity: "",
+          fuelType: "DIESEL",
         })
         fetchVehicles()
       } else {
@@ -235,6 +268,9 @@ export default function VehiclesPage() {
         new Date(vehicle.lastServiceDate).toISOString().split('T')[0] : "",
       nextServiceDate: vehicle.nextServiceDate ?
         new Date(vehicle.nextServiceDate).toISOString().split('T')[0] : "",
+      currentOdometer: vehicle.currentOdometer?.toString() || "",
+      fuelCapacity: vehicle.fuelCapacity?.toString() || "",
+      fuelType: vehicle.fuelType || "DIESEL",
     })
     setIsEditDialogOpen(true)
   }
@@ -256,6 +292,9 @@ export default function VehiclesPage() {
           insuranceExpiry: editForm.insuranceExpiry || null,
           lastServiceDate: editForm.lastServiceDate || null,
           nextServiceDate: editForm.nextServiceDate || null,
+          currentOdometer: editForm.currentOdometer ? parseInt(editForm.currentOdometer) : null,
+          fuelCapacity: editForm.fuelCapacity ? parseFloat(editForm.fuelCapacity) : null,
+          fuelType: editForm.fuelType || null,
         }),
       })
 
@@ -413,6 +452,7 @@ export default function VehiclesPage() {
                     <TableHead>Vehicle Details</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Seats</TableHead>
+                    <TableHead>Health</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Next Trip</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
@@ -423,75 +463,157 @@ export default function VehiclesPage() {
                     const typeInfo = BUS_TYPES[vehicle.busType as keyof typeof BUS_TYPES]
                     const statusInfo = STATUS_INFO[vehicle.status as keyof typeof STATUS_INFO]
                     const StatusIcon = statusInfo.icon
+                    const isExpanded = expandedVehicle === vehicle.id
+
+                    // Risk score color
+                    const getRiskColor = (score: number | null) => {
+                      if (score === null) return "bg-gray-100 text-gray-800"
+                      if (score < 50) return "bg-green-100 text-green-800"
+                      if (score < 70) return "bg-yellow-100 text-yellow-800"
+                      if (score < 85) return "bg-orange-100 text-orange-800"
+                      return "bg-red-100 text-red-800"
+                    }
 
                     return (
-                      <TableRow key={vehicle.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium font-mono">{vehicle.plateNumber}</p>
-                            {vehicle.sideNumber && (
+                      <>
+                        <TableRow
+                          key={vehicle.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => setExpandedVehicle(isExpanded ? null : vehicle.id)}
+                        >
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {isExpanded ? (
+                                <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              )}
+                              <div>
+                                <p className="font-medium font-mono">{vehicle.plateNumber}</p>
+                                {vehicle.sideNumber && (
+                                  <p className="text-xs text-muted-foreground">
+                                    Side: {vehicle.sideNumber}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{vehicle.make} {vehicle.model}</p>
                               <p className="text-xs text-muted-foreground">
-                                Side: {vehicle.sideNumber}
-                              </p>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{vehicle.make} {vehicle.model}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {vehicle.year}{vehicle.color && ` • ${vehicle.color}`}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={typeInfo.color}>
-                            {typeInfo.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-medium">{vehicle.totalSeats}</span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={statusInfo.color}>
-                            <StatusIcon className="h-3 w-3 mr-1" />
-                            {statusInfo.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {vehicle.nextTrip ? (
-                            <div className="text-xs">
-                              <p className="font-medium">
-                                {vehicle.nextTrip.origin} → {vehicle.nextTrip.destination}
-                              </p>
-                              <p className="text-muted-foreground">
-                                {new Date(vehicle.nextTrip.departureTime).toLocaleDateString()}
+                                {vehicle.year}{vehicle.color && ` • ${vehicle.color}`}
                               </p>
                             </div>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">No trips</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => openEditDialog(vehicle)}
-                            >
-                              <Edit className="h-4 w-4 text-primary" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setVehicleToDelete(vehicle.id)}
-                              disabled={vehicle.status === "INACTIVE"}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={typeInfo.color}>
+                              {typeInfo.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-medium">{vehicle.totalSeats}</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {vehicle.maintenanceRiskScore !== null ? (
+                                <Badge className={getRiskColor(vehicle.maintenanceRiskScore)}>
+                                  <Gauge className="h-3 w-3 mr-1" />
+                                  Risk: {vehicle.maintenanceRiskScore}
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-gray-100 text-gray-800">
+                                  <Activity className="h-3 w-3 mr-1" />
+                                  No data
+                                </Badge>
+                              )}
+                              <div className="flex gap-1">
+                                {vehicle.currentOdometer !== null && vehicle.currentOdometer !== undefined && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {vehicle.currentOdometer.toLocaleString()} km
+                                  </span>
+                                )}
+                                {vehicle.fuelEfficiencyL100km !== null && vehicle.fuelEfficiencyL100km !== undefined && (
+                                  <span className="text-xs text-muted-foreground">
+                                    • {vehicle.fuelEfficiencyL100km.toFixed(1)} L/100km
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={statusInfo.color}>
+                              <StatusIcon className="h-3 w-3 mr-1" />
+                              {statusInfo.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {vehicle.nextTrip ? (
+                              <div className="text-xs">
+                                <p className="font-medium">
+                                  {vehicle.nextTrip.origin} → {vehicle.nextTrip.destination}
+                                </p>
+                                <p className="text-muted-foreground">
+                                  {new Date(vehicle.nextTrip.departureTime).toLocaleDateString()}
+                                </p>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">No trips</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => openEditDialog(vehicle)}
+                              >
+                                <Edit className="h-4 w-4 text-primary" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setVehicleToDelete(vehicle.id)}
+                                disabled={vehicle.status === "INACTIVE"}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Expanded section with Vehicle Health Dashboard */}
+                        {isExpanded && (
+                          <TableRow>
+                            <TableCell colSpan={8} className="bg-muted/30 p-6">
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between mb-4">
+                                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                                    <Activity className="h-5 w-5 text-primary" />
+                                    Vehicle Health Dashboard
+                                  </h3>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      setExpandedVehicle(null)
+                                    }}
+                                  >
+                                    Close
+                                  </Button>
+                                </div>
+
+                                <VehicleHealthDashboard
+                                  vehicleId={vehicle.id}
+                                  plateNumber={vehicle.plateNumber}
+                                  sideNumber={vehicle.sideNumber}
+                                />
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
                     )
                   })}
                 </TableBody>
@@ -637,6 +759,57 @@ export default function VehiclesPage() {
               </div>
             </div>
 
+            {/* Operational Data Section */}
+            <div className="border-b pb-4">
+              <h3 className="font-medium mb-3">Operational Data (Optional)</h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                Track operational metrics for predictive maintenance
+              </p>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="currentOdometer">Current Odometer (km)</Label>
+                  <Input
+                    id="currentOdometer"
+                    type="number"
+                    value={newVehicle.currentOdometer}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, currentOdometer: e.target.value })}
+                    placeholder="75000"
+                    min={0}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fuelCapacity">Fuel Capacity (liters)</Label>
+                  <Input
+                    id="fuelCapacity"
+                    type="number"
+                    value={newVehicle.fuelCapacity}
+                    onChange={(e) => setNewVehicle({ ...newVehicle, fuelCapacity: e.target.value })}
+                    placeholder="80"
+                    min={0}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="fuelType">Fuel Type</Label>
+                  <Select
+                    value={newVehicle.fuelType}
+                    onValueChange={(value) => setNewVehicle({ ...newVehicle, fuelType: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="DIESEL">Diesel</SelectItem>
+                      <SelectItem value="GASOLINE">Gasoline</SelectItem>
+                      <SelectItem value="ELECTRIC">Electric</SelectItem>
+                      <SelectItem value="HYBRID">Hybrid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
             {/* Compliance Section */}
             <div>
               <h3 className="font-medium mb-3">Compliance & Maintenance</h3>
@@ -747,7 +920,7 @@ export default function VehiclesPage() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[200]">
                         {COMMON_MAKES.map(make => (
                           <SelectItem key={make} value={make}>{make}</SelectItem>
                         ))}
@@ -796,7 +969,7 @@ export default function VehiclesPage() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[200]">
                         <SelectItem value="MINI">Mini Bus</SelectItem>
                         <SelectItem value="STANDARD">Standard Bus</SelectItem>
                         <SelectItem value="LUXURY">Luxury Bus</SelectItem>
@@ -831,12 +1004,63 @@ export default function VehiclesPage() {
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[200]">
                         <SelectItem value="ACTIVE">Active</SelectItem>
                         <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
                         <SelectItem value="INACTIVE">Inactive</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                </div>
+
+                {/* Operational Data fields */}
+                <div className="border-b pb-4 mb-4">
+                  <h3 className="font-medium mb-3">Operational Data (Optional)</h3>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Track operational metrics for predictive maintenance
+                  </p>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="editCurrentOdometer">Current Odometer (km)</Label>
+                      <Input
+                        id="editCurrentOdometer"
+                        type="number"
+                        value={editForm.currentOdometer}
+                        onChange={(e) => setEditForm({ ...editForm, currentOdometer: e.target.value })}
+                        placeholder="75000"
+                        min={0}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="editFuelCapacity">Fuel Capacity (liters)</Label>
+                      <Input
+                        id="editFuelCapacity"
+                        type="number"
+                        value={editForm.fuelCapacity}
+                        onChange={(e) => setEditForm({ ...editForm, fuelCapacity: e.target.value })}
+                        placeholder="80"
+                        min={0}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="editFuelType">Fuel Type</Label>
+                      <Select
+                        value={editForm.fuelType}
+                        onValueChange={(value) => setEditForm({ ...editForm, fuelType: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-[200]">
+                          <SelectItem value="DIESEL">Diesel</SelectItem>
+                          <SelectItem value="GASOLINE">Gasoline</SelectItem>
+                          <SelectItem value="ELECTRIC">Electric</SelectItem>
+                          <SelectItem value="HYBRID">Hybrid</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
 

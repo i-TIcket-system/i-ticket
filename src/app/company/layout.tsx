@@ -16,6 +16,7 @@ import {
   X,
   BarChart3,
   Truck,
+  Wrench,
   Building2,
   ChevronLeft,
   ChevronRight
@@ -62,6 +63,11 @@ const sidebarItems = [
     title: "Vehicles",
     href: "/company/vehicles",
     icon: Truck,
+  },
+  {
+    title: "Work Orders",
+    href: "/company/work-orders",
+    icon: Wrench,
   },
   {
     title: "Settings",
