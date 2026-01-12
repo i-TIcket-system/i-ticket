@@ -63,6 +63,9 @@ export default function NewTripPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
   const [staffConflictWarning, setStaffConflictWarning] = useState("")
+  const [vehicleConflictWarning, setVehicleConflictWarning] = useState("")
+  const [overrideVehicleConflict, setOverrideVehicleConflict] = useState(false)
+  const [vehicleOverrideReason, setVehicleOverrideReason] = useState("")
   const [cities, setCities] = useState<string[]>([])
   const [staff, setStaff] = useState<{
     drivers: Array<{ id: string; name: string; licenseNumber?: string }>;
@@ -177,6 +180,25 @@ export default function NewTripPage() {
         return
       }
 
+      // Validate required staff and vehicle
+      if (!formData.driverId) {
+        setError("Driver is required for all trips")
+        setIsSubmitting(false)
+        return
+      }
+
+      if (!formData.conductorId) {
+        setError("Conductor is required for all trips")
+        setIsSubmitting(false)
+        return
+      }
+
+      if (!formData.vehicleId) {
+        setError("Vehicle is required for all trips")
+        setIsSubmitting(false)
+        return
+      }
+
       // Build route string with intermediate stops
       const route = intermediateStops.length > 0
         ? `${finalOrigin} → ${intermediateStops.join(" → ")} → ${finalDestination}`
@@ -204,6 +226,8 @@ export default function NewTripPage() {
           manualTicketerId: formData.manualTicketerId,
           vehicleId: formData.vehicleId,
           overrideStaffConflict: formData.overrideStaffConflict,
+          overrideVehicleConflict: overrideVehicleConflict,
+          vehicleOverrideReason: vehicleOverrideReason,
         }),
       })
 
@@ -215,10 +239,18 @@ export default function NewTripPage() {
         // Handle staff conflict with override option
         if (data.canOverride && data.conflicts) {
           setStaffConflictWarning(data.conflicts.join(". "))
+          setVehicleConflictWarning("")
+          setError("")
+        }
+        // Handle vehicle conflict with override option
+        else if (data.canOverride && data.vehicleConflict) {
+          setVehicleConflictWarning(data.error)
+          setStaffConflictWarning("")
           setError("")
         } else {
           setError(data.error || "Failed to create trip")
           setStaffConflictWarning("")
+          setVehicleConflictWarning("")
         }
       }
     } catch (err) {
@@ -547,11 +579,11 @@ export default function NewTripPage() {
               {/* Staff Assignment */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base">Trip Staff Assignment</Label>
-                  <span className="text-xs text-muted-foreground">Optional</span>
+                  <Label className="text-base">Trip Staff Assignment *</Label>
+                  <span className="text-xs text-destructive">Required</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Assign driver, conductor, and ticketing staff to this trip
+                  Driver and conductor are required for all trips
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -559,19 +591,18 @@ export default function NewTripPage() {
                   <div className="space-y-2">
                     <Label htmlFor="driver" className="flex items-center gap-2">
                       <Car className="h-4 w-4 text-blue-500" />
-                      Driver
+                      Driver *
                     </Label>
                     <Select
-                      value={formData.driverId || "__none__"}
+                      value={formData.driverId || ""}
                       onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, driverId: value === "__none__" ? null : value }))
+                        setFormData((prev) => ({ ...prev, driverId: value || null }))
                       }
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select driver" />
+                      <SelectTrigger className={!formData.driverId ? "border-destructive" : ""}>
+                        <SelectValue placeholder="Select driver (required)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__">None assigned</SelectItem>
                         {staff.drivers.map((driver) => (
                           <SelectItem key={driver.id} value={driver.id}>
                             {driver.name}
@@ -581,10 +612,10 @@ export default function NewTripPage() {
                       </SelectContent>
                     </Select>
                     {staff.drivers.length === 0 && (
-                      <p className="text-xs text-amber-600">
-                        No drivers added yet.{" "}
+                      <p className="text-xs text-destructive">
+                        No drivers available.{" "}
                         <Link href="/company/staff" className="underline">
-                          Add staff
+                          Add staff first
                         </Link>
                       </p>
                     )}
@@ -594,19 +625,18 @@ export default function NewTripPage() {
                   <div className="space-y-2">
                     <Label htmlFor="conductor" className="flex items-center gap-2">
                       <UserCheck className="h-4 w-4 text-green-500" />
-                      Conductor
+                      Conductor *
                     </Label>
                     <Select
-                      value={formData.conductorId || "__none__"}
+                      value={formData.conductorId || ""}
                       onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, conductorId: value === "__none__" ? null : value }))
+                        setFormData((prev) => ({ ...prev, conductorId: value || null }))
                       }
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select conductor" />
+                      <SelectTrigger className={!formData.conductorId ? "border-destructive" : ""}>
+                        <SelectValue placeholder="Select conductor (required)" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="__none__">None assigned</SelectItem>
                         {staff.conductors.map((conductor) => (
                           <SelectItem key={conductor.id} value={conductor.id}>
                             {conductor.name}
@@ -615,10 +645,10 @@ export default function NewTripPage() {
                       </SelectContent>
                     </Select>
                     {staff.conductors.length === 0 && (
-                      <p className="text-xs text-amber-600">
-                        No conductors added yet.{" "}
+                      <p className="text-xs text-destructive">
+                        No conductors available.{" "}
                         <Link href="/company/staff" className="underline">
-                          Add staff
+                          Add staff first
                         </Link>
                       </p>
                     )}
@@ -663,29 +693,28 @@ export default function NewTripPage() {
               {/* Vehicle Assignment */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <Label className="text-base">Vehicle Assignment</Label>
-                  <span className="text-xs text-muted-foreground">Optional</span>
+                  <Label className="text-base">Vehicle Assignment *</Label>
+                  <span className="text-xs text-destructive">Required</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Assign a vehicle to this trip
+                  A vehicle is required for all trips (24hr availability enforced)
                 </p>
 
                 <div className="space-y-2">
                   <Label htmlFor="vehicle" className="flex items-center gap-2">
                     <Truck className="h-4 w-4 text-purple-500" />
-                    Vehicle
+                    Vehicle *
                   </Label>
                   <Select
-                    value={formData.vehicleId || "__none__"}
+                    value={formData.vehicleId || ""}
                     onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, vehicleId: value === "__none__" ? null : value }))
+                      setFormData((prev) => ({ ...prev, vehicleId: value || null }))
                     }
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select vehicle" />
+                    <SelectTrigger className={!formData.vehicleId ? "border-destructive" : ""}>
+                      <SelectValue placeholder="Select vehicle (required)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="__none__">None assigned</SelectItem>
                       {vehicles.map((vehicle) => (
                         <SelectItem key={vehicle.id} value={vehicle.id}>
                           {vehicle.plateNumber}
@@ -697,10 +726,10 @@ export default function NewTripPage() {
                     </SelectContent>
                   </Select>
                   {vehicles.length === 0 && (
-                    <p className="text-xs text-amber-600">
-                      No active vehicles found.{" "}
+                    <p className="text-xs text-destructive">
+                      No active vehicles available.{" "}
                       <Link href="/company/vehicles" className="underline">
-                        Add vehicles
+                        Add vehicles first
                       </Link>
                     </p>
                   )}
@@ -732,6 +761,54 @@ export default function NewTripPage() {
                       I understand and want to override this conflict
                     </label>
                   </div>
+                </div>
+              )}
+
+              {/* Vehicle Conflict Warning */}
+              {vehicleConflictWarning && (
+                <div className="border border-orange-500 bg-orange-50 p-4 rounded-lg space-y-3">
+                  <div className="flex items-start gap-2">
+                    <Truck className="h-5 w-5 text-orange-600 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-orange-900">Vehicle Availability Conflict</h4>
+                      <p className="text-sm text-orange-800 mt-1">{vehicleConflictWarning}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 pl-7">
+                    <Checkbox
+                      id="overrideVehicleConflict"
+                      checked={overrideVehicleConflict}
+                      onCheckedChange={(checked) => {
+                        setOverrideVehicleConflict(checked as boolean)
+                        if (!checked) setVehicleOverrideReason("")
+                      }}
+                    />
+                    <label
+                      htmlFor="overrideVehicleConflict"
+                      className="text-sm text-orange-900 cursor-pointer"
+                    >
+                      I want to override this 24-hour availability constraint
+                    </label>
+                  </div>
+                  {overrideVehicleConflict && (
+                    <div className="pl-7 space-y-2">
+                      <Label htmlFor="vehicleOverrideReason" className="text-sm text-orange-900">
+                        Override Reason (required, min 10 characters) *
+                      </Label>
+                      <textarea
+                        id="vehicleOverrideReason"
+                        className="w-full p-2 border border-orange-300 rounded-md text-sm min-h-[80px] focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="Explain why this vehicle must be used despite the 24-hour constraint..."
+                        value={vehicleOverrideReason}
+                        onChange={(e) => setVehicleOverrideReason(e.target.value)}
+                      />
+                      {vehicleOverrideReason.length > 0 && vehicleOverrideReason.length < 10 && (
+                        <p className="text-xs text-orange-600">
+                          {10 - vehicleOverrideReason.length} more characters required
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 

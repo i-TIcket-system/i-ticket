@@ -227,8 +227,7 @@ export async function POST(request: NextRequest) {
     }
 
     // If conflicts exist and not overridden, return warning
-    const body = await request.json()
-    if (staffConflicts.length > 0 && !body.overrideStaffConflict) {
+    if (staffConflicts.length > 0 && !data.overrideStaffConflict) {
       return NextResponse.json(
         {
           error: "Staff scheduling conflict detected",
@@ -302,7 +301,7 @@ export async function POST(request: NextRequest) {
       })
 
       // If vehicle conflict exists and not overridden, return warning
-      if (vehicleConflict && !body.overrideVehicleConflict) {
+      if (vehicleConflict && !data.overrideVehicleConflict) {
         return NextResponse.json(
           {
             error: `Vehicle ${vehicle.plateNumber}${vehicle.sideNumber ? ` (${vehicle.sideNumber})` : ''} already has a trip within 24 hours: ${vehicleConflict.origin} → ${vehicleConflict.destination} on ${vehicleConflict.departureTime.toLocaleString()}. Vehicles require 24 hours between trips.`,
@@ -319,8 +318,8 @@ export async function POST(request: NextRequest) {
       }
 
       // If overriding, require a reason
-      if (vehicleConflict && body.overrideVehicleConflict) {
-        if (!body.vehicleOverrideReason || body.vehicleOverrideReason.length < 10) {
+      if (vehicleConflict && data.overrideVehicleConflict) {
+        if (!data.vehicleOverrideReason || data.vehicleOverrideReason.length < 10) {
           return NextResponse.json(
             { error: "Override reason must be at least 10 characters" },
             { status: 400 }
@@ -400,19 +399,19 @@ export async function POST(request: NextRequest) {
       let logDetails = `Trip created: ${session.user.name} (${trip.company.name}) created trip from ${trip.origin} to ${trip.destination}. Departure: ${trip.departureTime.toISOString()}, Price: ${trip.price} ETB, Capacity: ${trip.totalSlots} seats, Bus Type: ${trip.busType}.`
 
       // Log vehicle override if used
-      if (body.overrideVehicleConflict && body.vehicleOverrideReason) {
-        logDetails += ` [VEHICLE OVERRIDE] Reason: ${body.vehicleOverrideReason}`
+      if (data.overrideVehicleConflict && data.vehicleOverrideReason) {
+        logDetails += ` [VEHICLE OVERRIDE] Reason: ${data.vehicleOverrideReason}`
       }
 
       // Log staff override if used
-      if (body.overrideStaffConflict) {
+      if (data.overrideStaffConflict) {
         logDetails += ` [STAFF OVERRIDE] Admin overrode staff scheduling conflict.`
       }
 
       await prisma.adminLog.create({
         data: {
           userId: session.user.id,
-          action: body.overrideVehicleConflict ? "TRIP_CREATED_WITH_OVERRIDE" : "TRIP_CREATED",
+          action: data.overrideVehicleConflict ? "TRIP_CREATED_WITH_OVERRIDE" : "TRIP_CREATED",
           tripId: trip.id,
           details: logDetails,
         },
