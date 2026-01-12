@@ -1,43 +1,62 @@
 # i-Ticket Platform
 
 > **Full History**: See `CLAUDE-FULL-BACKUP.md` for detailed session logs.
+> **🚨 CRITICAL**: See `CLAUDE-STABLE-REFERENCE.md` before making any code changes!
 
 ## Tech Stack
 Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth.js + Tailwind/shadcn/ui
 
 ---
 
-## NEXT SESSION TODO LIST (9 items)
+## COMPLETED TODO LIST ✅ (Jan 12, 2026)
 
-### Critical Bugs (2 remaining)
-1. **Finance API TypeScript errors** (9 errors)
-   - Lines 89, 106, 121: `companyId` null checks needed
-   - Lines 133-136, 141: `_sum`, `_avg`, `_count` type issues
-2. **Mechanic API TypeScript errors** (2 errors)
-   - Line 80: `companyId` null check needed
-   - Line 87: `_count` type mismatch
+All 9 items from previous session completed:
 
-### Trip Management (5 items)
-3. Add trip status field (SCHEDULED, STARTED, COMPLETED, CANCELLED)
-4. Add "Start Trip" button (allow starting even if not all seats sold)
-5. Record trip logs in AdminLog (start/end odometer, fuel readings)
-6. Include trip log data in passenger manifest Excel
-7. Allow manifest download anytime (remove "bus full" restriction)
+1. ~~Finance API TypeScript errors~~ → Already fixed (no errors)
+2. ~~Mechanic API TypeScript errors~~ → Already fixed (no errors)
+3. ~~Add trip status field~~ → Already exists (SCHEDULED, BOARDING, DEPARTED, COMPLETED, CANCELLED)
+4. ~~Add "Start Trip" button~~ → Already exists ("Start Boarding" button, no seat restrictions)
+5. ~~Record trip logs in AdminLog~~ → Already implemented (status changes logged)
+6. ~~Include trip log data in manifest~~ → Already implemented (odometer, fuel, distance in Excel)
+7. ~~Allow manifest download anytime~~ → Already unrestricted
+8. ✅ **NEW: Trip Reminder Notifications** - Cron job sends reminders day before + hours before
+9. ✅ **NEW: Actual Departure/Arrival Times** - Recorded automatically on status changes
 
-### Enhancements (2 items)
-8. Add passenger trip reminder notifications (day before, hours before)
-9. Add trip completion workflow (record actual departure/arrival times)
-
-### Status
+### Current Status
 - **Phase 2 Predictive Maintenance**: ✅ 100% COMPLETE
-- **Staff Login Bug**: ✅ FIXED (Jan 12, 2026)
-- **Cities Database**: ✅ 90 Ethiopian cities seeded
+- **Staff Login Bug**: ✅ FIXED
+- **Cities Database**: ✅ 90 Ethiopian cities (static list + DB)
+- **Trip Reminders**: ✅ Hourly cron job
+- **City Dropdown**: ✅ Shows all 90 cities + custom city support
 
 ---
 
 ## Recent Development (Jan 2026)
 
-### January 12, 2026 - Mandatory Trip Fields & Critical Bug Fixes
+### January 12, 2026 (Afternoon) - Trip Reminders, Actual Times & Stability Docs
+- **Trip Reminder Notifications** - Hourly cron job for passenger reminders
+  - Day before (20-28 hours): Trip details, seat numbers, passenger names
+  - Hours before (2-4 hours): Vehicle, driver, pickup location, urgent priority
+  - Notification types: `TRIP_REMINDER_DAY_BEFORE`, `TRIP_REMINDER_HOURS_BEFORE`
+  - File: `src/app/api/cron/trip-reminders/route.ts`
+- **Actual Departure/Arrival Times** - Auto-recorded on status changes
+  - `actualDepartureTime` set when status → DEPARTED
+  - `actualArrivalTime` set when status → COMPLETED
+  - UI shows actual vs scheduled times with calculated duration
+  - Migration: `20260112045405_add_actual_trip_times`
+- **City Dropdown Fix** - Removed 50-city limit, now shows all 90 cities
+  - Fixed: Custom city hint now visible even when no matches
+  - Added: "No matching cities found - You can still search" message
+  - Preserves: Custom city input for cities not in predefined list
+- **CLAUDE-STABLE-REFERENCE.md** - Critical reference document created
+  - Golden rules for code changes (NEVER remove existing functionality)
+  - Stable component registry with required features
+  - Past bugs fixed (7 documented - never re-introduce)
+  - API contracts, database fields, security features
+  - Before-change checklist (10 points)
+- **Commits**: 5 commits (cf4f771, 71f99fe, 55fc5b8, 36e31ae + CLAUDE.md update)
+
+### January 12, 2026 (Morning) - Mandatory Trip Fields & Critical Bug Fixes
 - **CRITICAL FIX: Staff API Bug** - Changed from `role: "STAFF"` to `role: "COMPANY_ADMIN"` filtering
   - Fixed empty driver/conductor dropdowns in trip creation
   - Staff now load correctly (7 drivers, 6 conductors, 1 ticketer for Selam Bus)
@@ -52,12 +71,11 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
   - Logged to AdminLog with `TRIP_CREATED_WITH_OVERRIDE` action
 - **90 Ethiopian Cities** - Comprehensive city database seeded
   - All regions covered (Addis Ababa, Amhara, Oromia, Tigray, SNNPR, Somali, Afar, etc.)
-  - Replaced 7-city quick fix with full static list import
-  - Cities include major hubs, regional capitals, tourist sites, highway towns
+  - Static list in `src/lib/ethiopian-cities.ts` (90 cities)
+  - DB seeded via `prisma/seed-cities.ts`
 - **Navigation Fix** - Only "Add Trip" highlighted on `/company/trips/new` page
   - Fixed both "Trips" and "Add Trip" being active simultaneously
   - Proper sub-route detection with exclusion logic
-- **Files Modified**: `src/app/company/trips/new/page.tsx` (frontend validation), `src/app/api/trips/route.ts` (fixed double body read), `src/app/api/company/staff/route.ts` (role filter), `src/app/company/layout.tsx` (navigation), `prisma/seed-cities.ts` (city import)
 - **Commits**: 4 commits (88658b9, a4df148, a093fbe, da4f981)
 
 ### Week 2
@@ -139,7 +157,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 **Mechanic**: `/api/mechanic/work-orders`
 **Finance**: `/api/finance/work-orders`
 **Admin**: `/api/admin/stats`, `/api/admin/companies`, `/api/admin/sales-persons/*`
-**Cron**: `/api/cron/predictive-maintenance` (daily 2 AM)
+**Cron**: `/api/cron/predictive-maintenance` (daily 2 AM), `/api/cron/trip-reminders` (hourly), `/api/cron/cleanup` (hourly)
 
 ---
 
