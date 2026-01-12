@@ -44,8 +44,8 @@ export async function GET(req: NextRequest) {
     const staff = await prisma.user.findMany({
       where: {
         companyId: session.user.companyId,
-        role: "STAFF", // Staff members have STAFF role
-        staffRole: { not: null } // Only users with a staff role
+        role: "COMPANY_ADMIN", // Staff have COMPANY_ADMIN role with staffRole set
+        staffRole: { not: null } // Only users with a staff role (excludes company admin manager)
       },
       select: {
         id: true,
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
         phone,
         email: email || null,
         password: hashedPassword,
-        role: "STAFF", // Staff members have STAFF role
+        role: "COMPANY_ADMIN", // Staff have COMPANY_ADMIN role with staffRole set
         companyId: session.user.companyId,
         staffRole,
         licenseNumber: licenseNumber || null,
