@@ -3,6 +3,20 @@
 > **Full History**: See `CLAUDE-FULL-BACKUP.md` for detailed session logs.
 > **🚨 CRITICAL**: See `CLAUDE-STABLE-REFERENCE.md` before making any code changes!
 
+---
+
+## 🚨 ULTRA-CRITICAL BUSINESS RULES (NEVER FORGET)
+
+### 1. GUEST BOOKING = FEATURE (NOT A BUG)
+- Phone payment IS the verification - no OTP/SMS verification needed
+- Guests can book without registration - this is BY DESIGN
+
+### 2. COMPANY SEGREGATION = ULTRA CRITICAL
+- **Complete data isolation between bus companies**
+- Selam Bus must NEVER see Sky Bus data (and vice versa)
+- **ONLY shared resource: Organic City database**
+- Every API MUST filter by `companyId`
+
 ## Tech Stack
 Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth.js + Tailwind/shadcn/ui
 

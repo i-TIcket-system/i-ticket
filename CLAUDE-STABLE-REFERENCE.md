@@ -7,6 +7,26 @@
 
 ---
 
+## 🚨🚨🚨 ULTRA-CRITICAL BUSINESS RULES 🚨🚨🚨
+
+### 1. GUEST BOOKING = FEATURE (NOT A BUG)
+- **Phone payment IS the verification** - no OTP needed
+- Guests CAN book without registration
+- As long as they pay with their phone, booking is valid
+- DO NOT add SMS/OTP verification for guest checkout
+- DO NOT treat this as a security vulnerability
+
+### 2. COMPANY SEGREGATION = ULTRA CRITICAL
+- **Complete data isolation between bus companies**
+- Selam Bus must NEVER see data from Sky Bus, Abay Bus, etc.
+- **The ONLY shared resource is the organic City database**
+- Every API must filter by `companyId`
+- Every query must include company isolation
+- This applies to: Trips, Bookings, Staff, Vehicles, Work Orders, Reports, Notifications
+- **VIOLATION = CRITICAL BUG**
+
+---
+
 ## 🔴 GOLDEN RULES (TOP PRIORITY)
 
 ### Before Changing ANY Code:

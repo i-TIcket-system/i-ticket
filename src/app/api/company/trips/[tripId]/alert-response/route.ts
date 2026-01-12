@@ -27,6 +27,24 @@ export async function POST(
     const body = await request.json()
     const { allowContinue } = body
 
+    // CRITICAL: Verify trip belongs to this company (company segregation)
+    const existingTrip = await prisma.trip.findUnique({
+      where: { id: params.tripId },
+      select: { id: true, companyId: true }
+    })
+
+    if (!existingTrip) {
+      return NextResponse.json({ error: "Trip not found" }, { status: 404 })
+    }
+
+    // Super admin can access any trip, company admin only their own
+    if (session.user.role === "COMPANY_ADMIN" && existingTrip.companyId !== session.user.companyId) {
+      return NextResponse.json(
+        { error: "Access denied - Trip belongs to another company" },
+        { status: 403 }
+      )
+    }
+
     // Update trip
     const trip = await prisma.trip.update({
       where: { id: params.tripId },

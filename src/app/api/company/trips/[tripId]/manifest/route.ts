@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { requireCompanyAdmin, handleAuthError } from "@/lib/auth-helpers"
 import { generatePassengerManifest } from "@/lib/report-generator"
+import prisma from "@/lib/db"
 
 /**
  * Download passenger manifest for a trip
  * Available when bus is full or for past trips
+ * SECURITY: Verifies trip belongs to requesting company
  */
 export async function GET(
   request: NextRequest,
@@ -13,7 +15,23 @@ export async function GET(
   try {
     const { companyId } = await requireCompanyAdmin()
 
-    // Verify trip belongs to company (security check in manifest generator)
+    // CRITICAL: Verify trip belongs to this company (company segregation)
+    const trip = await prisma.trip.findUnique({
+      where: { id: params.tripId },
+      select: { id: true, companyId: true }
+    })
+
+    if (!trip) {
+      return NextResponse.json({ error: "Trip not found" }, { status: 404 })
+    }
+
+    if (trip.companyId !== companyId) {
+      return NextResponse.json(
+        { error: "Access denied - Trip belongs to another company" },
+        { status: 403 }
+      )
+    }
+
     const buffer = await generatePassengerManifest(params.tripId)
 
     // Return Excel file
