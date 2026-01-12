@@ -7,30 +7,58 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ---
 
-## NEXT SESSION TODO LIST
+## NEXT SESSION TODO LIST (9 items)
 
-### CRITICAL BUG - Staff Login Issue
-- **Problem**: Staff login as customers instead of their assigned roles
-- **Root Cause**: `prisma/seed.ts` creates staff with `role: "STAFF"` but login expects `role: "COMPANY_ADMIN"` + `staffRole`
-- **Fix**: Change all staff in seed.ts from `role: "STAFF"` to `role: "COMPANY_ADMIN"` and re-run seed
+### Critical Bugs (2 remaining)
+1. **Finance API TypeScript errors** (9 errors)
+   - Lines 89, 106, 121: `companyId` null checks needed
+   - Lines 133-136, 141: `_sum`, `_avg`, `_count` type issues
+2. **Mechanic API TypeScript errors** (2 errors)
+   - Line 80: `companyId` null check needed
+   - Line 87: `_count` type mismatch
 
-### TypeScript Errors
-- `src/app/api/finance/work-orders/route.ts` - 9 errors (companyId null, _sum/_avg undefined)
-- `src/app/api/mechanic/work-orders/route.ts` - 2 errors (companyId null, _count type)
+### Trip Management (5 items)
+3. Add trip status field (SCHEDULED, STARTED, COMPLETED, CANCELLED)
+4. Add "Start Trip" button (allow starting even if not all seats sold)
+5. Record trip logs in AdminLog (start/end odometer, fuel readings)
+6. Include trip log data in passenger manifest Excel
+7. Allow manifest download anytime (remove "bus full" restriction)
 
-### Trip Management Enhancements
-1. Add "Start Trip" button (start even if not all seats sold)
-2. Trip status tracking (SCHEDULED, STARTED, COMPLETED, CANCELLED)
-3. Manifest download anytime (remove "bus full" restriction)
-4. Trip log in admin audit log and Excel manifest
+### Enhancements (2 items)
+8. Add passenger trip reminder notifications (day before, hours before)
+9. Add trip completion workflow (record actual departure/arrival times)
 
-### Phase 2 Status
-- **Predictive Maintenance**: 100% COMPLETE (see PHASE2-PREDICTIVE-MAINTENANCE-COMPLETE.md)
-- **Remaining**: Trip lifecycle, passenger notifications, bug fixes above
+### Status
+- **Phase 2 Predictive Maintenance**: ✅ 100% COMPLETE
+- **Staff Login Bug**: ✅ FIXED (Jan 12, 2026)
+- **Cities Database**: ✅ 90 Ethiopian cities seeded
 
 ---
 
 ## Recent Development (Jan 2026)
+
+### January 12, 2026 - Mandatory Trip Fields & Critical Bug Fixes
+- **CRITICAL FIX: Staff API Bug** - Changed from `role: "STAFF"` to `role: "COMPANY_ADMIN"` filtering
+  - Fixed empty driver/conductor dropdowns in trip creation
+  - Staff now load correctly (7 drivers, 6 conductors, 1 ticketer for Selam Bus)
+  - Resolves staff login redirect issue
+- **Mandatory Trip Fields** - Vehicle, driver, conductor now required for all trips
+  - Frontend validation with red border indicators
+  - Backend schema validation (vehicleId, driverId, conductorId required)
+  - Removed "None assigned" options from dropdowns
+- **Vehicle Conflict Override** - 24-hour availability constraint with admin override
+  - Orange warning card when vehicle has trip within 24 hours
+  - Override checkbox + reason textarea (minimum 10 characters)
+  - Logged to AdminLog with `TRIP_CREATED_WITH_OVERRIDE` action
+- **90 Ethiopian Cities** - Comprehensive city database seeded
+  - All regions covered (Addis Ababa, Amhara, Oromia, Tigray, SNNPR, Somali, Afar, etc.)
+  - Replaced 7-city quick fix with full static list import
+  - Cities include major hubs, regional capitals, tourist sites, highway towns
+- **Navigation Fix** - Only "Add Trip" highlighted on `/company/trips/new` page
+  - Fixed both "Trips" and "Add Trip" being active simultaneously
+  - Proper sub-route detection with exclusion logic
+- **Files Modified**: `src/app/company/trips/new/page.tsx` (frontend validation), `src/app/api/trips/route.ts` (fixed double body read), `src/app/api/company/staff/route.ts` (role filter), `src/app/company/layout.tsx` (navigation), `prisma/seed-cities.ts` (city import)
+- **Commits**: 4 commits (88658b9, a4df148, a093fbe, da4f981)
 
 ### Week 2
 - **Work Order Communication** - Multi-role chat + notifications for mechanic/finance/admin/driver
