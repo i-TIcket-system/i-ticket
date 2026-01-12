@@ -121,24 +121,36 @@ export async function POST(req: NextRequest) {
 // GET /api/support/tickets - Get all tickets (admin only)
 export async function GET(req: NextRequest) {
   try {
-    // Require authentication - admin/company admin only
+    // Require authentication - SUPER_ADMIN only
+    // Support tickets are platform-level and should not be visible to company admins
+    // (Company segregation: company admins should not see cross-company customer issues)
     const session = await getServerSession(authOptions)
-    if (!session?.user || session.user.role === "CUSTOMER") {
+    if (!session?.user || session.user.role !== "SUPER_ADMIN") {
       return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 401 }
+        { error: "Unauthorized - Super Admin access required" },
+        { status: 403 }
       )
     }
 
     const { searchParams } = new URL(req.url)
     const status = searchParams.get("status")
     const priority = searchParams.get("priority")
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "20")
+
+    // Validate pagination params to prevent NaN issues
+    const parsedPage = parseInt(searchParams.get("page") || "1")
+    const parsedLimit = parseInt(searchParams.get("limit") || "20")
+    const page = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage
+    const limit = isNaN(parsedLimit) || parsedLimit < 1 ? 20 : Math.min(parsedLimit, 100)
 
     const where: any = {}
     if (status) where.status = status
-    if (priority) where.priority = parseInt(priority)
+    // Validate priority is a valid integer before using
+    if (priority) {
+      const parsedPriority = parseInt(priority)
+      if (!isNaN(parsedPriority)) {
+        where.priority = parsedPriority
+      }
+    }
 
     const [tickets, total] = await Promise.all([
       prisma.supportTicket.findMany({

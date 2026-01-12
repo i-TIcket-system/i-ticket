@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
     // Calculate summary stats
     const totalRevenue = dailyRevenue.reduce((sum, row) => sum + row.revenue, 0)
     const totalCommission = dailyRevenue.reduce((sum, row) => sum + row.commission, 0)
-    const avgDailyRevenue = totalRevenue / (dailyRevenue.length || 1)
+    // Return null if no data to clearly indicate "no data" vs "zero revenue"
+    const avgDailyRevenue = dailyRevenue.length > 0 ? totalRevenue / dailyRevenue.length : null
 
     return NextResponse.json({
       chartData,

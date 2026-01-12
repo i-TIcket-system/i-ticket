@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
             totalScans: sp._count.qrScans,
             uniqueVisitors: uniqueScans.length,
             conversions: sp._count.referrals,
-            conversionRate: sp._count.qrScans > 0
+            conversionRate: uniqueScans.length > 0
               ? Math.round((sp._count.referrals / uniqueScans.length) * 100)
               : 0,
             totalCommission: commissionStats._sum.salesCommission || 0,

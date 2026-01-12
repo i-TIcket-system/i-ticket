@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { Prisma } from "@prisma/client"
 
 /**
  * Get all work orders for finance staff - focused on cost tracking
@@ -39,8 +40,8 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate")
     const endDate = searchParams.get("endDate")
 
-    // Build where clause
-    const where: any = {
+    // Build where clause with proper Prisma types
+    const where: Prisma.WorkOrderWhereInput = {
       companyId,
     }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { Prisma } from "@prisma/client"
 
 /**
  * Get work orders assigned to the authenticated mechanic
@@ -37,8 +38,8 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
 
-    // Build where clause
-    const where: any = {
+    // Build where clause with proper Prisma types
+    const where: Prisma.WorkOrderWhereInput = {
       companyId,
       assignedToId: session.user.id,
     }

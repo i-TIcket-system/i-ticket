@@ -24,7 +24,8 @@ import {
   Accessibility,
   Users,
   Baby,
-  CheckCircle2
+  CheckCircle2,
+  Info
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -104,6 +105,7 @@ export default function BookingPage() {
 
   const [trip, setTrip] = useState<Trip | null>(null)
   const [originalPrice, setOriginalPrice] = useState<number | null>(null)
+  const [priceChanged, setPriceChanged] = useState(false) // UX-2: Block submission on price change
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [step, setStep] = useState(1) // 1: passengers, 2: review, 3: payment
@@ -175,8 +177,9 @@ export default function BookingPage() {
       if (response.ok) {
         const newTrip = data.trip
 
-        // P1: Real-time price change detection
+        // P1: Real-time price change detection - UX-2: Block submission on price change
         if (trip && originalPrice !== null && newTrip.price !== originalPrice) {
+          setPriceChanged(true)
           toast.error("Price Changed!", {
             description: `Trip price updated from ${formatCurrency(originalPrice)} to ${formatCurrency(newTrip.price)}. Please review your booking.`
           })
@@ -704,6 +707,22 @@ export default function BookingPage() {
               passengerCount={passengers.length}
               onSeatsSelected={handleSeatsSelected}
             />
+
+            {/* UX-1: Show auto-assign notice when no seats selected */}
+            {selectedSeats.length === 0 && passengers.length > 0 && (
+              <div className="p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-3">
+                <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-sm text-blue-800 dark:text-blue-200 font-medium">
+                    No seats selected
+                  </p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300">
+                    Seats will be automatically assigned for your {passengers.length} passenger{passengers.length > 1 ? 's' : ''}.
+                    Click seats above to choose specific ones.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Price Summary Sidebar */}
@@ -784,15 +803,45 @@ export default function BookingPage() {
                   </div>
                 )}
 
+                {/* UX-2: Show warning banner when price changed */}
+                {priceChanged && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg space-y-2">
+                    <p className="text-sm text-amber-800 dark:text-amber-200 font-medium flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4" />
+                      Price has changed
+                    </p>
+                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                      The trip price was updated while you were booking. Please review the new total above.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => {
+                        setPriceChanged(false)
+                        setOriginalPrice(trip?.price || null)
+                        toast.success("New price confirmed")
+                      }}
+                    >
+                      Accept New Price
+                    </Button>
+                  </div>
+                )}
+
                 <Button
                   className="w-full"
                   onClick={handleBooking}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || priceChanged}
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Processing...
+                    </>
+                  ) : priceChanged ? (
+                    <>
+                      <AlertCircle className="mr-2 h-4 w-4" />
+                      Accept Price Change First
                     </>
                   ) : (
                     <>
