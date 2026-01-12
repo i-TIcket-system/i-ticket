@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatDate, formatDuration, BUS_TYPES } from "@/lib/utils"
 import { TripChat } from "@/components/trip/TripChat"
+import { TripLogCard } from "@/components/trip/TripLogCard"
 
 interface Trip {
   id: string
@@ -51,6 +52,14 @@ interface Trip {
     id: string
     name: string
     phone: string
+  } | null
+  vehicle?: {
+    id: string
+    plateNumber: string
+    sideNumber: string | null
+    make: string | null
+    model: string | null
+    currentOdometer: number | null
   } | null
   bookings: Array<{
     id: string
@@ -325,9 +334,9 @@ function TripCard({ trip, highlight = false, past = false }: { trip: Trip; highl
               </div>
             </div>
 
-            {/* Crew Information */}
+            {/* Crew & Vehicle Information */}
             <div className="mt-4 pt-4 border-t">
-              <p className="text-xs text-muted-foreground mb-2">Crew for this trip:</p>
+              <p className="text-xs text-muted-foreground mb-2">Crew & Vehicle:</p>
               <div className="flex flex-wrap gap-2">
                 {trip.driver && (
                   <Badge variant="outline" className="bg-blue-50">
@@ -347,6 +356,13 @@ function TripCard({ trip, highlight = false, past = false }: { trip: Trip; highl
                     Ticketer: {trip.manualTicketer.name}
                   </Badge>
                 )}
+                {trip.vehicle && (
+                  <Badge variant="outline" className="bg-purple-50">
+                    <Bus className="h-3 w-3 mr-1" />
+                    {trip.vehicle.plateNumber}
+                    {trip.vehicle.sideNumber && ` (${trip.vehicle.sideNumber})`}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -359,6 +375,16 @@ function TripCard({ trip, highlight = false, past = false }: { trip: Trip; highl
             <p className="text-xs text-muted-foreground">per seat</p>
           </div>
         </div>
+
+        {/* Trip Log - Odometer & Fuel (visible for all, editable by driver/admin) */}
+        {!past && trip.vehicle && (
+          <div className="mt-4 pt-4 border-t">
+            <TripLogCard
+              tripId={trip.id}
+              vehicleId={trip.vehicle.id}
+            />
+          </div>
+        )}
 
         {/* Trip Chat - Communicate with team */}
         {!past && (

@@ -61,12 +61,13 @@ export async function GET(
       return NextResponse.json({ error: 'Trip not found' }, { status: 404 })
     }
 
-    // Check access - company admin or assigned staff
+    // Check access - company admin or assigned staff can VIEW
     const isCompanyAdmin =
       session.user.role === 'COMPANY_ADMIN' &&
       session.user.companyId === trip.companyId
+    const isAssignedDriver = session.user.id === trip.driverId
     const isAssignedStaff =
-      session.user.id === trip.driverId ||
+      isAssignedDriver ||
       session.user.id === trip.conductorId ||
       session.user.id === trip.manualTicketerId
 
@@ -74,10 +75,14 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
+    // Only admin (without staff role) or assigned driver can EDIT
+    const canEdit = (isCompanyAdmin && !session.user.staffRole) || isAssignedDriver
+
     return NextResponse.json({
       tripLog: trip.tripLog,
       vehicle: trip.vehicle,
       tripId: trip.id,
+      canEdit,
     })
   } catch (error) {
     console.error('Error fetching trip log:', error)
@@ -126,16 +131,18 @@ export async function POST(
       )
     }
 
-    // Check access
+    // Check access - Only admin and driver can edit trip logs
     const isCompanyAdmin =
       session.user.role === 'COMPANY_ADMIN' &&
-      session.user.companyId === trip.companyId
-    const isAssignedStaff =
-      session.user.id === trip.driverId ||
-      session.user.id === trip.conductorId
+      session.user.companyId === trip.companyId &&
+      !session.user.staffRole // Pure admin, not staff with admin role
+    const isDriver = session.user.id === trip.driverId
 
-    if (!isCompanyAdmin && !isAssignedStaff) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    if (!isCompanyAdmin && !isDriver) {
+      return NextResponse.json(
+        { error: 'Only admin or assigned driver can record trip logs' },
+        { status: 403 }
+      )
     }
 
     const body = await request.json()
@@ -174,6 +181,26 @@ export async function POST(
       await prisma.vehicle.update({
         where: { id: trip.vehicleId },
         data: { currentOdometer: validatedData.startOdometer },
+      })
+
+      // Create admin log entry
+      await prisma.adminLog.create({
+        data: {
+          userId: session.user.id,
+          action: 'TRIP_LOG_START',
+          details: JSON.stringify({
+            tripId,
+            route: `${trip.origin} → ${trip.destination}`,
+            vehiclePlate: trip.vehicle.plateNumber,
+            startOdometer: validatedData.startOdometer,
+            startFuel: validatedData.startFuel,
+            startFuelUnit: validatedData.startFuelUnit,
+            notes: validatedData.startNotes,
+            recordedBy: session.user.name,
+          }),
+          tripId,
+          companyId: trip.companyId,
+        },
       })
 
       return NextResponse.json({
@@ -243,6 +270,28 @@ export async function POST(
           source: 'TRIP_END',
           recordedBy: session.user.id,
           notes: `Trip ${tripId} - ${trip.origin} to ${trip.destination}`,
+        },
+      })
+
+      // Create admin log entry for trip end
+      await prisma.adminLog.create({
+        data: {
+          userId: session.user.id,
+          action: 'TRIP_LOG_END',
+          details: JSON.stringify({
+            tripId,
+            route: `${trip.origin} → ${trip.destination}`,
+            vehiclePlate: trip.vehicle?.plateNumber,
+            startOdometer: trip.tripLog.startOdometer,
+            endOdometer: validatedData.endOdometer,
+            distanceTraveled,
+            fuelConsumed,
+            fuelEfficiency: fuelEfficiency ? `${fuelEfficiency.toFixed(2)} km/L` : null,
+            notes: validatedData.endNotes,
+            recordedBy: session.user.name,
+          }),
+          tripId,
+          companyId: trip.companyId,
         },
       })
 

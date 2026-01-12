@@ -79,6 +79,16 @@ export async function GET(request: NextRequest) {
             phone: true,
           },
         },
+        vehicle: {
+          select: {
+            id: true,
+            plateNumber: true,
+            sideNumber: true,
+            make: true,
+            model: true,
+            currentOdometer: true,
+          },
+        },
         bookings: {
           where: { status: "PAID" },
           select: {

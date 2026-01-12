@@ -19,7 +19,8 @@ import {
   Wrench,
   Building2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FileText,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
@@ -68,6 +69,11 @@ const sidebarItems = [
     title: "Work Orders",
     href: "/company/work-orders",
     icon: Wrench,
+  },
+  {
+    title: "Audit Logs",
+    href: "/company/audit-logs",
+    icon: FileText,
   },
   {
     title: "Settings",

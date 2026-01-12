@@ -7,7 +7,7 @@ import { formatCurrency, formatDate } from "./utils"
  * Optimized for landscape A4 printing with letterhead and color theme
  */
 export async function generatePassengerManifest(tripId: string): Promise<Buffer> {
-  // Fetch all trip data with paid bookings
+  // Fetch all trip data with paid bookings and trip log
   const trip = await prisma.trip.findUnique({
     where: { id: tripId },
     include: {
@@ -25,6 +25,15 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
           phone: true
         }
       },
+      vehicle: {
+        select: {
+          plateNumber: true,
+          sideNumber: true,
+          make: true,
+          model: true
+        }
+      },
+      tripLog: true,
       bookings: {
         where: { status: "PAID" },
         include: {
@@ -170,7 +179,98 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   sheet.getCell(`C${currentRow}`).font = { bold: true }
   sheet.getCell(`D${currentRow}`).value = formatCurrency(Number(trip.price))
 
-  currentRow += 2
+  currentRow++
+
+  // Vehicle info
+  if (trip.vehicle) {
+    sheet.getCell(`A${currentRow}`).value = "Vehicle:"
+    sheet.getCell(`A${currentRow}`).font = { bold: true }
+    sheet.getCell(`B${currentRow}`).value = `${trip.vehicle.plateNumber}${trip.vehicle.sideNumber ? ` (${trip.vehicle.sideNumber})` : ''}`
+
+    sheet.getCell(`C${currentRow}`).value = "Make/Model:"
+    sheet.getCell(`C${currentRow}`).font = { bold: true }
+    sheet.getCell(`D${currentRow}`).value = `${trip.vehicle.make} ${trip.vehicle.model}`
+    currentRow++
+  }
+
+  // Trip Log - Odometer & Fuel Readings
+  if (trip.tripLog) {
+    currentRow++
+    sheet.mergeCells(`A${currentRow}:K${currentRow}`)
+    const tripLogHeader = sheet.getCell(`A${currentRow}`)
+    tripLogHeader.value = "TRIP LOG - ODOMETER & FUEL READINGS"
+    tripLogHeader.font = { bold: true, size: 11, color: { argb: colors.white } }
+    tripLogHeader.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.primaryDark } }
+    tripLogHeader.alignment = { horizontal: "center", vertical: "middle" }
+    sheet.getRow(currentRow).height = 22
+    currentRow++
+
+    // Start readings
+    if (trip.tripLog.startOdometer) {
+      sheet.getCell(`A${currentRow}`).value = "Start Odometer:"
+      sheet.getCell(`A${currentRow}`).font = { bold: true }
+      sheet.getCell(`B${currentRow}`).value = `${trip.tripLog.startOdometer.toLocaleString()} km`
+      sheet.getCell(`B${currentRow}`).font = { color: { argb: colors.primary } }
+
+      if (trip.tripLog.startFuel !== null && trip.tripLog.startFuel !== undefined) {
+        sheet.getCell(`C${currentRow}`).value = "Start Fuel:"
+        sheet.getCell(`C${currentRow}`).font = { bold: true }
+        sheet.getCell(`D${currentRow}`).value = `${trip.tripLog.startFuel} ${trip.tripLog.startFuelUnit || 'L'}`
+      }
+
+      if (trip.tripLog.startedByName) {
+        sheet.getCell(`E${currentRow}`).value = "Recorded by:"
+        sheet.getCell(`E${currentRow}`).font = { bold: true }
+        sheet.getCell(`F${currentRow}`).value = trip.tripLog.startedByName
+      }
+      currentRow++
+    }
+
+    // End readings
+    if (trip.tripLog.endOdometer) {
+      sheet.getCell(`A${currentRow}`).value = "End Odometer:"
+      sheet.getCell(`A${currentRow}`).font = { bold: true }
+      sheet.getCell(`B${currentRow}`).value = `${trip.tripLog.endOdometer.toLocaleString()} km`
+      sheet.getCell(`B${currentRow}`).font = { color: { argb: colors.primary } }
+
+      if (trip.tripLog.endFuel !== null && trip.tripLog.endFuel !== undefined) {
+        sheet.getCell(`C${currentRow}`).value = "End Fuel:"
+        sheet.getCell(`C${currentRow}`).font = { bold: true }
+        sheet.getCell(`D${currentRow}`).value = `${trip.tripLog.endFuel} ${trip.tripLog.startFuelUnit || 'L'}`
+      }
+
+      if (trip.tripLog.endedByName) {
+        sheet.getCell(`E${currentRow}`).value = "Recorded by:"
+        sheet.getCell(`E${currentRow}`).font = { bold: true }
+        sheet.getCell(`F${currentRow}`).value = trip.tripLog.endedByName
+      }
+      currentRow++
+    }
+
+    // Calculated metrics
+    if (trip.tripLog.distanceTraveled) {
+      sheet.getCell(`A${currentRow}`).value = "Distance Traveled:"
+      sheet.getCell(`A${currentRow}`).font = { bold: true }
+      sheet.getCell(`B${currentRow}`).value = `${trip.tripLog.distanceTraveled.toLocaleString()} km`
+      sheet.getCell(`B${currentRow}`).font = { bold: true, color: { argb: colors.success } }
+
+      if (trip.tripLog.fuelConsumed) {
+        sheet.getCell(`C${currentRow}`).value = "Fuel Consumed:"
+        sheet.getCell(`C${currentRow}`).font = { bold: true }
+        sheet.getCell(`D${currentRow}`).value = `${trip.tripLog.fuelConsumed.toFixed(1)} L`
+      }
+
+      if (trip.tripLog.fuelEfficiency) {
+        sheet.getCell(`E${currentRow}`).value = "Fuel Efficiency:"
+        sheet.getCell(`E${currentRow}`).font = { bold: true }
+        sheet.getCell(`F${currentRow}`).value = `${trip.tripLog.fuelEfficiency.toFixed(2)} km/L`
+        sheet.getCell(`F${currentRow}`).font = { color: { argb: colors.success } }
+      }
+      currentRow++
+    }
+  }
+
+  currentRow++
   sheet.addRow([]) // Spacing
   currentRow++
 

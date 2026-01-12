@@ -25,6 +25,15 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Ensure companyId exists
+    if (!session.user.companyId) {
+      return NextResponse.json(
+        { error: "Company association required" },
+        { status: 403 }
+      )
+    }
+
+    const companyId = session.user.companyId
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
     const startDate = searchParams.get("startDate")
@@ -32,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     // Build where clause
     const where: any = {
-      companyId: session.user.companyId,
+      companyId,
     }
 
     if (status && status !== "ALL") {
@@ -86,7 +95,7 @@ export async function GET(request: NextRequest) {
     // Calculate cost statistics
     const costStats = await prisma.workOrder.aggregate({
       where: {
-        companyId: session.user.companyId,
+        companyId,
       },
       _sum: {
         laborCost: true,
@@ -103,12 +112,14 @@ export async function GET(request: NextRequest) {
     const statusStats = await prisma.workOrder.groupBy({
       by: ["status"],
       where: {
-        companyId: session.user.companyId,
+        companyId,
       },
       _sum: {
         totalCost: true,
       },
-      _count: true,
+      _count: {
+        _all: true,
+      },
     })
 
     // Get monthly spending (last 6 months)
@@ -118,7 +129,7 @@ export async function GET(request: NextRequest) {
     const monthlySpending = await prisma.workOrder.groupBy({
       by: ["createdAt"],
       where: {
-        companyId: session.user.companyId,
+        companyId,
         status: "COMPLETED",
         createdAt: { gte: sixMonthsAgo },
       },
@@ -130,15 +141,15 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       workOrders,
       stats: {
-        totalLaborCost: costStats._sum.laborCost || 0,
-        totalPartsCost: costStats._sum.partsCost || 0,
-        totalCost: costStats._sum.totalCost || 0,
-        averageCost: costStats._avg.totalCost || 0,
+        totalLaborCost: costStats._sum?.laborCost ?? 0,
+        totalPartsCost: costStats._sum?.partsCost ?? 0,
+        totalCost: costStats._sum?.totalCost ?? 0,
+        averageCost: costStats._avg?.totalCost ?? 0,
         totalWorkOrders: costStats._count,
         byStatus: statusStats.reduce((acc, s) => {
           acc[s.status] = {
-            count: s._count,
-            totalCost: s._sum.totalCost || 0,
+            count: s._count._all,
+            totalCost: s._sum?.totalCost ?? 0,
           }
           return acc
         }, {} as Record<string, { count: number; totalCost: number }>),

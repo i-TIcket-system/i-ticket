@@ -23,8 +23,13 @@ import {
   XCircle,
   Car,
   UserCheck,
-  Truck
+  Truck,
+  Play,
+  Square,
+  Flag,
+  Ban
 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -83,6 +88,7 @@ interface Trip {
   hasWater: boolean
   hasFood: boolean
   bookingHalted: boolean
+  status: string
   company: {
     name: string
   }
@@ -124,6 +130,7 @@ export default function TripDetailPage() {
   const [trip, setTrip] = useState<Trip | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -149,6 +156,69 @@ export default function TripDetailPage() {
       setError("Failed to load trip details")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const updateTripStatus = async (newStatus: string) => {
+    setIsUpdatingStatus(true)
+    try {
+      const response = await fetch(`/api/company/trips/${tripId}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success(`Trip status updated to ${newStatus}`)
+        fetchTrip() // Refresh trip data
+      } else {
+        toast.error(data.error || "Failed to update status")
+      }
+    } catch (err) {
+      toast.error("Failed to update trip status")
+    } finally {
+      setIsUpdatingStatus(false)
+    }
+  }
+
+  // Get status badge color and label
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "SCHEDULED":
+        return { variant: "secondary" as const, label: "Scheduled" }
+      case "BOARDING":
+        return { variant: "warning" as const, label: "Boarding" }
+      case "DEPARTED":
+        return { variant: "default" as const, label: "Departed" }
+      case "COMPLETED":
+        return { variant: "success" as const, label: "Completed" }
+      case "CANCELLED":
+        return { variant: "destructive" as const, label: "Cancelled" }
+      default:
+        return { variant: "secondary" as const, label: status }
+    }
+  }
+
+  // Get available status actions
+  const getStatusActions = (status: string) => {
+    switch (status) {
+      case "SCHEDULED":
+        return [
+          { status: "BOARDING", label: "Start Boarding", icon: Play, variant: "default" as const },
+          { status: "CANCELLED", label: "Cancel Trip", icon: Ban, variant: "destructive" as const },
+        ]
+      case "BOARDING":
+        return [
+          { status: "DEPARTED", label: "Depart", icon: Flag, variant: "default" as const },
+          { status: "CANCELLED", label: "Cancel Trip", icon: Ban, variant: "destructive" as const },
+        ]
+      case "DEPARTED":
+        return [
+          { status: "COMPLETED", label: "Complete Trip", icon: Square, variant: "default" as const },
+        ]
+      default:
+        return []
     }
   }
 
@@ -219,12 +289,11 @@ export default function TripDetailPage() {
                     <Badge>
                       {BUS_TYPES.find((t) => t.value === trip.busType)?.label || trip.busType}
                     </Badge>
-                    {trip.bookingHalted ? (
+                    <Badge variant={getStatusBadge(trip.status || "SCHEDULED").variant}>
+                      {getStatusBadge(trip.status || "SCHEDULED").label}
+                    </Badge>
+                    {trip.bookingHalted && (
                       <Badge variant="warning">Booking Halted</Badge>
-                    ) : new Date(trip.departureTime) > new Date() ? (
-                      <Badge variant="success">Active</Badge>
-                    ) : (
-                      <Badge variant="secondary">Completed</Badge>
                     )}
                   </div>
                 </div>
@@ -475,7 +544,7 @@ export default function TripDetailPage() {
                   <span className="font-bold text-primary">{formatCurrency(totalRevenue)}</span>
                 </div>
 
-                {trip.availableSlots === 0 && (
+                {paidBookings.length > 0 && (
                   <>
                     <Separator />
                     <a href={`/api/company/trips/${trip.id}/manifest`} download>
@@ -485,9 +554,52 @@ export default function TripDetailPage() {
                       </Button>
                     </a>
                     <p className="text-xs text-center text-muted-foreground">
-                      Bus is full! Download Excel report with all passenger details.
+                      Download Excel report with all {totalPassengers} passenger details.
                     </p>
                   </>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Trip Status Control */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Flag className="h-5 w-5" />
+                  Trip Status
+                </CardTitle>
+                <CardDescription>
+                  Current: <Badge variant={getStatusBadge(trip.status || "SCHEDULED").variant}>
+                    {getStatusBadge(trip.status || "SCHEDULED").label}
+                  </Badge>
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {getStatusActions(trip.status || "SCHEDULED").length > 0 ? (
+                  getStatusActions(trip.status || "SCHEDULED").map((action) => (
+                    <Button
+                      key={action.status}
+                      className="w-full"
+                      variant={action.variant}
+                      onClick={() => updateTripStatus(action.status)}
+                      disabled={isUpdatingStatus}
+                    >
+                      {isUpdatingStatus ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <action.icon className="h-4 w-4 mr-2" />
+                      )}
+                      {action.label}
+                    </Button>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-2">
+                    {trip.status === "COMPLETED"
+                      ? "Trip has been completed."
+                      : trip.status === "CANCELLED"
+                        ? "Trip has been cancelled."
+                        : "No actions available."}
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -504,7 +616,6 @@ export default function TripDetailPage() {
             <TripLogCard
               tripId={trip.id}
               vehicleId={trip.vehicle?.id}
-              canEdit={true}
             />
 
             {/* Trip Chat - Communicate with assigned staff */}

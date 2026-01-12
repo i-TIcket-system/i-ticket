@@ -56,7 +56,7 @@ interface VehicleHealthData {
 interface VehicleHealthDashboardProps {
   vehicleId: string
   plateNumber: string
-  sideNumber: string
+  sideNumber?: string | null
 }
 
 export function VehicleHealthDashboard({

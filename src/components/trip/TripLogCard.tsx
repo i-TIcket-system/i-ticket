@@ -62,16 +62,15 @@ interface Vehicle {
 interface TripLogCardProps {
   tripId: string
   vehicleId?: string | null
-  canEdit?: boolean
 }
 
 export function TripLogCard({
   tripId,
   vehicleId,
-  canEdit = false,
 }: TripLogCardProps) {
   const [tripLog, setTripLog] = useState<TripLog | null>(null)
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
+  const [canEdit, setCanEdit] = useState(false) // From API based on user role
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -98,6 +97,7 @@ export function TripLogCard({
         const data = await response.json()
         setTripLog(data.tripLog)
         setVehicle(data.vehicle)
+        setCanEdit(data.canEdit || false) // Set edit permission from API
       }
     } catch (error) {
       console.error("Failed to fetch trip log:", error)
@@ -109,18 +109,20 @@ export function TripLogCard({
   const openDialog = (mode: "start" | "end") => {
     setDialogMode(mode)
     if (mode === "start") {
+      // Pre-fill with existing values if editing, otherwise use vehicle's current odometer
       setForm({
-        odometer: vehicle?.currentOdometer?.toString() || "",
-        fuel: "",
-        fuelUnit: "LITERS",
-        notes: "",
+        odometer: tripLog?.startOdometer?.toString() || vehicle?.currentOdometer?.toString() || "",
+        fuel: tripLog?.startFuel?.toString() || "",
+        fuelUnit: tripLog?.startFuelUnit || "LITERS",
+        notes: tripLog?.startNotes || "",
       })
     } else {
+      // Pre-fill with existing values if editing
       setForm({
-        odometer: "",
-        fuel: "",
+        odometer: tripLog?.endOdometer?.toString() || "",
+        fuel: tripLog?.endFuel?.toString() || "",
         fuelUnit: tripLog?.startFuelUnit || "LITERS",
-        notes: "",
+        notes: tripLog?.endNotes || "",
       })
     }
     setDialogOpen(true)
@@ -216,8 +218,10 @@ export function TripLogCard({
     )
   }
 
-  const hasStarted = tripLog?.startOdometer !== null
-  const hasEnded = tripLog?.endOdometer !== null
+  // Check for actual readings (not just record existence)
+  // Treat 0 or null as "no reading"
+  const hasStarted = tripLog?.startOdometer != null && tripLog.startOdometer > 0
+  const hasEnded = tripLog?.endOdometer != null && tripLog.endOdometer > 0
 
   return (
     <>
@@ -227,10 +231,18 @@ export function TripLogCard({
             <Gauge className="h-5 w-5" />
             Trip Log
           </CardTitle>
-          {hasEnded && (
+          {hasStarted && hasEnded ? (
             <Badge variant="outline" className="bg-green-50 text-green-700">
               <CheckCircle className="h-3 w-3 mr-1" />
               Complete
+            </Badge>
+          ) : hasStarted ? (
+            <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+              In Progress
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="bg-gray-50 text-gray-600">
+              Not Started
             </Badge>
           )}
         </CardHeader>
@@ -250,9 +262,13 @@ export function TripLogCard({
                 <Play className="h-4 w-4 text-green-600" />
                 Start Readings
               </h4>
-              {canEdit && !hasStarted && (
-                <Button size="sm" onClick={() => openDialog("start")}>
-                  Record Start
+              {canEdit && (
+                <Button
+                  size="sm"
+                  variant={hasStarted ? "outline" : "default"}
+                  onClick={() => openDialog("start")}
+                >
+                  {hasStarted ? "Edit" : "Record Start"}
                 </Button>
               )}
             </div>
@@ -303,9 +319,13 @@ export function TripLogCard({
                 <CheckCircle className="h-4 w-4 text-blue-600" />
                 End Readings
               </h4>
-              {canEdit && hasStarted && !hasEnded && (
-                <Button size="sm" onClick={() => openDialog("end")}>
-                  Record End
+              {canEdit && hasStarted && (
+                <Button
+                  size="sm"
+                  variant={hasEnded ? "outline" : "default"}
+                  onClick={() => openDialog("end")}
+                >
+                  {hasEnded ? "Edit" : "Record End"}
                 </Button>
               )}
             </div>

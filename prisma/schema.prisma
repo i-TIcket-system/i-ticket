@@ -119,6 +119,7 @@ model Trip {
   hasWater          Boolean   @default(false)
   hasFood           Boolean   @default(false)
   isActive          Boolean   @default(true)
+  status            String    @default("SCHEDULED") // SCHEDULED, BOARDING, DEPARTED, COMPLETED, CANCELLED
   lowSlotAlertSent         Boolean   @default(false)
   bookingHalted            Boolean   @default(false)
   adminResumedFromAutoHalt Boolean   @default(false)
@@ -138,6 +139,8 @@ model Trip {
   @@index([conductorId])
   @@index([manualTicketerId])
   @@index([vehicleId])
+  @@index([status])
+  @@index([companyId, status])
 }
 
 // Trip odometer and fuel tracking (before/after readings)

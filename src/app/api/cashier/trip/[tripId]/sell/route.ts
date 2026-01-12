@@ -112,8 +112,8 @@ export async function POST(
 
         const occupiedSeats = new Set(
           occupiedPassengers
-            .map((p) => p.seatNumber)
-            .filter((s): s is number => s !== null)
+            .map((p: { seatNumber: number | null }) => p.seatNumber)
+            .filter((s: number | null): s is number => s !== null)
         )
 
         // Determine seat numbers to assign
@@ -173,7 +173,7 @@ export async function POST(
         // Generate tickets for each passenger (one ticket per passenger)
         const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000"
         const tickets = await Promise.all(
-          booking.passengers.map(async (passenger) => {
+          booking.passengers.map(async (passenger: { id: string; name: string; seatNumber: number | null }) => {
             const shortCode = generateShortCode()
             const verificationUrl = `${baseUrl}/verify/${shortCode}`
             const qrCode = await QRCode.toDataURL(verificationUrl, {

@@ -607,7 +607,7 @@ export default function VehiclesPage() {
                                 <VehicleHealthDashboard
                                   vehicleId={vehicle.id}
                                   plateNumber={vehicle.plateNumber}
-                                  sideNumber={vehicle.sideNumber}
+                                  sideNumber={vehicle.sideNumber || undefined}
                                 />
                               </div>
                             </TableCell>

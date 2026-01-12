@@ -25,12 +25,21 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Ensure companyId exists
+    if (!session.user.companyId) {
+      return NextResponse.json(
+        { error: "Company association required" },
+        { status: 403 }
+      )
+    }
+
+    const companyId = session.user.companyId
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
 
     // Build where clause
     const where: any = {
-      companyId: session.user.companyId,
+      companyId,
       assignedToId: session.user.id,
     }
 
@@ -77,14 +86,16 @@ export async function GET(request: NextRequest) {
     const stats = await prisma.workOrder.groupBy({
       by: ["status"],
       where: {
-        companyId: session.user.companyId,
+        companyId,
         assignedToId: session.user.id,
       },
-      _count: true,
+      _count: {
+        _all: true,
+      },
     })
 
     const statsMap = stats.reduce((acc, s) => {
-      acc[s.status] = s._count
+      acc[s.status] = s._count._all
       return acc
     }, {} as Record<string, number>)
 
