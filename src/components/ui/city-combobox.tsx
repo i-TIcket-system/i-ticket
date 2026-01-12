@@ -121,42 +121,60 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
           )}
         </div>
 
-        {/* Autocomplete Dropdown */}
-        {isOpen && filteredSuggestions.length > 0 && !disabled && (
+        {/* Autocomplete Dropdown - shows suggestions OR custom city hint */}
+        {isOpen && !disabled && (filteredSuggestions.length > 0 || inputValue) && (
           <div
             ref={dropdownRef}
             className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-50 max-h-64 overflow-y-auto"
           >
-            <div className="p-1">
-              {filteredSuggestions.map((city, index) => (
-                <button
-                  key={`${city}-${index}`}
-                  type="button"
-                  onClick={() => handleSuggestionClick(city)}
-                  className={cn(
-                    "w-full text-left px-3 py-2 rounded-sm transition-colors",
-                    "flex items-center gap-2",
-                    "text-foreground hover:bg-primary/10 hover:text-primary",
-                    city === inputValue && "bg-primary/20 text-primary font-medium"
-                  )}
-                >
-                  <MapPin className={cn(
-                    "h-3 w-3 flex-shrink-0",
-                    city === inputValue ? "text-primary" : "text-muted-foreground"
-                  )} />
-                  <span className="text-sm flex-1 text-inherit">
-                    {city || "[Empty]"}
-                  </span>
-                </button>
-              ))}
-            </div>
+            {/* City suggestions list */}
+            {filteredSuggestions.length > 0 && (
+              <div className="p-1">
+                {filteredSuggestions.map((city, index) => (
+                  <button
+                    key={`${city}-${index}`}
+                    type="button"
+                    onClick={() => handleSuggestionClick(city)}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-sm transition-colors",
+                      "flex items-center gap-2",
+                      "text-foreground hover:bg-primary/10 hover:text-primary",
+                      city === inputValue && "bg-primary/20 text-primary font-medium"
+                    )}
+                  >
+                    <MapPin className={cn(
+                      "h-3 w-3 flex-shrink-0",
+                      city === inputValue ? "text-primary" : "text-muted-foreground"
+                    )} />
+                    <span className="text-sm flex-1 text-inherit">
+                      {city || "[Empty]"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
 
-            {/* Show hint if user is typing custom city */}
+            {/* Show hint if user is typing custom city not in suggestions */}
             {inputValue && !filteredSuggestions.includes(inputValue) && (
-              <div className="border-t p-2 bg-muted/30">
+              <div className={cn(
+                "p-2 bg-muted/30",
+                filteredSuggestions.length > 0 && "border-t"
+              )}>
                 <p className="text-xs text-muted-foreground flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
                   Press Enter to search for "{inputValue}"
+                </p>
+              </div>
+            )}
+
+            {/* Show message when no matches found */}
+            {inputValue && filteredSuggestions.length === 0 && (
+              <div className="p-3 text-center">
+                <p className="text-sm text-muted-foreground">
+                  No matching cities found
+                </p>
+                <p className="text-xs text-primary mt-1">
+                  You can still search for "{inputValue}"
                 </p>
               </div>
             )}
