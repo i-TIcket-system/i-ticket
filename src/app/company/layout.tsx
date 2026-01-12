@@ -203,9 +203,12 @@ export default function CompanyLayout({
             <nav className={cn("flex-1 p-4 space-y-1.5", collapsed && "p-2")}>
               {sidebarItems.map((item) => {
                 // Exact match for the href, OR sub-routes (e.g., /company/trips/123)
-                // But NOT sibling routes (e.g., /company/trips/new should not match /company/trips)
-                const isActive = pathname === item.href ||
-                  (pathname.startsWith(item.href + '/') && !item.href.endsWith('/new'))
+                // Special handling: /company/trips should NOT match /company/trips/new
+                const isExactMatch = pathname === item.href
+                const isSubRoute = pathname.startsWith(item.href + '/') &&
+                  !item.href.endsWith('/new') &&
+                  !(item.href === '/company/trips' && pathname === '/company/trips/new')
+                const isActive = isExactMatch || isSubRoute
 
                 const linkContent = (
                   <Link
