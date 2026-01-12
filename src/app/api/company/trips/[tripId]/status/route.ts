@@ -88,12 +88,25 @@ export async function PATCH(
       )
     }
 
+    // Prepare update data
+    const updateData: any = {
+      status: validatedData.status,
+    }
+
+    // Record actual departure time when status changes to DEPARTED
+    if (validatedData.status === "DEPARTED") {
+      updateData.actualDepartureTime = new Date()
+    }
+
+    // Record actual arrival time when status changes to COMPLETED
+    if (validatedData.status === "COMPLETED") {
+      updateData.actualArrivalTime = new Date()
+    }
+
     // Update the trip status
     const updatedTrip = await prisma.trip.update({
       where: { id: tripId },
-      data: {
-        status: validatedData.status,
-      },
+      data: updateData,
     })
 
     // Create admin log entry
@@ -107,6 +120,8 @@ export async function PATCH(
           newStatus: validatedData.status,
           route: `${trip.origin} → ${trip.destination}`,
           departureTime: trip.departureTime,
+          actualDepartureTime: updateData.actualDepartureTime,
+          actualArrivalTime: updateData.actualArrivalTime,
           notes: validatedData.notes,
           vehiclePlate: trip.vehicle?.plateNumber,
           driverName: trip.driver?.name,

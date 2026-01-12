@@ -111,6 +111,8 @@ model Trip {
   intermediateStops String?
   departureTime     DateTime
   estimatedDuration Int      // Duration in hours
+  actualDepartureTime DateTime?  // Actual departure time (recorded when status → DEPARTED)
+  actualArrivalTime   DateTime?  // Actual arrival time (recorded when status → COMPLETED)
   distance          Int?     // Distance in kilometers (optional)
   price             Float
   busType           String

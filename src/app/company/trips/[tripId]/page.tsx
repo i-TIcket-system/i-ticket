@@ -80,6 +80,8 @@ interface Trip {
   intermediateStops: string | null
   departureTime: string
   estimatedDuration: number
+  actualDepartureTime: string | null
+  actualArrivalTime: string | null
   distance: number | null
   price: number
   busType: string
@@ -303,8 +305,18 @@ export default function TripDetailPage() {
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-xs text-muted-foreground">Departure</p>
+                      <p className="text-xs text-muted-foreground">
+                        {trip.actualDepartureTime ? "Scheduled Departure" : "Departure"}
+                      </p>
                       <p className="font-medium">{formatDate(trip.departureTime)}</p>
+                      {trip.actualDepartureTime && (
+                        <>
+                          <p className="text-xs text-primary font-semibold mt-1">Actual Departure</p>
+                          <p className="font-medium text-sm text-primary">
+                            {formatDate(trip.actualDepartureTime)}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -312,6 +324,14 @@ export default function TripDetailPage() {
                     <div>
                       <p className="text-xs text-muted-foreground">Duration</p>
                       <p className="font-medium">{formatDuration(trip.estimatedDuration)}</p>
+                      {trip.actualArrivalTime && trip.actualDepartureTime && (
+                        <>
+                          <p className="text-xs text-success font-semibold mt-1">Actual Duration</p>
+                          <p className="font-medium text-sm text-success">
+                            {Math.round((new Date(trip.actualArrivalTime).getTime() - new Date(trip.actualDepartureTime).getTime()) / (1000 * 60 * 60))}h
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                   {trip.distance && (
