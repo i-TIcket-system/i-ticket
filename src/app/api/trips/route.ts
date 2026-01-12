@@ -282,16 +282,15 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Check for conflicting trips (vehicle already assigned to active trip at same time)
-      const departureTime = new Date(data.departureTime)
-      const conflictingTrip = await prisma.trip.findFirst({
+      // Check for conflicting trips (vehicle already assigned to active trip within 24 hours)
+      const vehicleConflict = await prisma.trip.findFirst({
         where: {
           vehicleId: data.vehicleId,
           isActive: true,
           departureTime: {
-            // Check if there's any trip within ±12 hours (rough estimate for trip conflict)
-            gte: new Date(departureTime.getTime() - 12 * 60 * 60 * 1000),
-            lte: new Date(departureTime.getTime() + 12 * 60 * 60 * 1000)
+            // Check if there's any trip within ±24 hours (vehicle availability constraint)
+            gte: new Date(departureTime.getTime() - 24 * 60 * 60 * 1000),
+            lte: new Date(departureTime.getTime() + 24 * 60 * 60 * 1000)
           }
         },
         select: {
@@ -302,13 +301,31 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      if (conflictingTrip) {
+      // If vehicle conflict exists and not overridden, return warning
+      if (vehicleConflict && !body.overrideVehicleConflict) {
         return NextResponse.json(
           {
-            error: `Vehicle ${vehicle.plateNumber}${vehicle.sideNumber ? ` (${vehicle.sideNumber})` : ''} already has an active trip at this time: ${conflictingTrip.origin} → ${conflictingTrip.destination} on ${conflictingTrip.departureTime.toLocaleString()}`
+            error: `Vehicle ${vehicle.plateNumber}${vehicle.sideNumber ? ` (${vehicle.sideNumber})` : ''} already has a trip within 24 hours: ${vehicleConflict.origin} → ${vehicleConflict.destination} on ${vehicleConflict.departureTime.toLocaleString()}. Vehicles require 24 hours between trips.`,
+            vehicleConflict: {
+              tripId: vehicleConflict.id,
+              route: `${vehicleConflict.origin} → ${vehicleConflict.destination}`,
+              departureTime: vehicleConflict.departureTime
+            },
+            canOverride: true,
+            requiresReason: true
           },
           { status: 409 }
         )
+      }
+
+      // If overriding, require a reason
+      if (vehicleConflict && body.overrideVehicleConflict) {
+        if (!body.vehicleOverrideReason || body.vehicleOverrideReason.length < 10) {
+          return NextResponse.json(
+            { error: "Override reason must be at least 10 characters" },
+            { status: 400 }
+          )
+        }
       }
     }
 
@@ -379,12 +396,25 @@ export async function POST(request: NextRequest) {
 
     // Log trip creation for dispute management
     if (session?.user) {
+      // Build details with override info if applicable
+      let logDetails = `Trip created: ${session.user.name} (${trip.company.name}) created trip from ${trip.origin} to ${trip.destination}. Departure: ${trip.departureTime.toISOString()}, Price: ${trip.price} ETB, Capacity: ${trip.totalSlots} seats, Bus Type: ${trip.busType}.`
+
+      // Log vehicle override if used
+      if (body.overrideVehicleConflict && body.vehicleOverrideReason) {
+        logDetails += ` [VEHICLE OVERRIDE] Reason: ${body.vehicleOverrideReason}`
+      }
+
+      // Log staff override if used
+      if (body.overrideStaffConflict) {
+        logDetails += ` [STAFF OVERRIDE] Admin overrode staff scheduling conflict.`
+      }
+
       await prisma.adminLog.create({
         data: {
           userId: session.user.id,
-          action: "TRIP_CREATED",
+          action: body.overrideVehicleConflict ? "TRIP_CREATED_WITH_OVERRIDE" : "TRIP_CREATED",
           tripId: trip.id,
-          details: `Trip created: ${session.user.name} (${trip.company.name}) created trip from ${trip.origin} to ${trip.destination}. Departure: ${trip.departureTime.toISOString()}, Price: ${trip.price} ETB, Capacity: ${trip.totalSlots} seats, Bus Type: ${trip.busType}.`,
+          details: logDetails,
         },
       })
 
