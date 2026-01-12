@@ -39,7 +39,7 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
       const validSuggestions = suggestions.filter(s => s && typeof s === 'string' && s.trim().length > 0)
 
       if (!inputValue) {
-        const result = validSuggestions.filter(s => s !== excludeCity).slice(0, 8)
+        const result = validSuggestions.filter(s => s !== excludeCity).slice(0, 50)
         console.log('[CityCombobox] Showing', result.length, 'suggestions:', result)
         return result
       }
@@ -49,7 +49,7 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
           city !== excludeCity &&
           city.toLowerCase().includes(inputValue.toLowerCase())
         )
-        .slice(0, 8) // Limit to 8 suggestions for performance
+        .slice(0, 50) // Show up to 50 matching cities
 
       console.log('[CityCombobox] Filtered suggestions for "' + inputValue + '":', result)
       return result
