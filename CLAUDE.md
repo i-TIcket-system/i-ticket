@@ -22,6 +22,27 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ---
 
+## NEXT SESSION TODO LIST (7 items remaining)
+
+From comprehensive audit (47 issues found, 4 P0, 14 P1, 21 P2, 8 P3):
+
+### Already Fixed ✅
+- Company segregation: manifest + alert-response routes secured
+
+### Remaining Fixes
+1. **QA-1 (P0)**: Division by zero in sales conversion rate (`/api/admin/sales-persons/route.ts` line 80)
+2. **QA-4 (P1)**: Null reference in trip status update (`session!.user.id`)
+3. **SEC-7 (P1)**: Support tickets missing company filtering
+4. **QA-6/7 (P1)**: Unsafe `any` types in finance/mechanic APIs
+5. **QA-2 (P1)**: Division by zero in revenue analytics
+6. **QA-10 (P2)**: Add parseInt validation across APIs
+7. **UX-1/2 (P1)**: Booking flow - seat selection & price change feedback
+
+### Full Audit Report
+See: `C:\Users\EVAD\.claude\plans\ancient-percolating-biscuit.md`
+
+---
+
 ## COMPLETED TODO LIST ✅ (Jan 12, 2026)
 
 All 9 items from previous session completed:
