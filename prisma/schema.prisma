@@ -464,6 +464,12 @@ model SalesPerson {
   referralCode   String    @unique // e.g., "ABEL23" - permanent unique code
   status         String    @default("ACTIVE") // ACTIVE, INACTIVE
 
+  // Multi-tier sales (pyramid structure)
+  recruiterId    String?   // Sales person who recruited this person (null for Tier 1)
+  recruiter      SalesPerson?  @relation("SalesHierarchy", fields: [recruiterId], references: [id], onDelete: SetNull)
+  recruits       SalesPerson[] @relation("SalesHierarchy") // Sales persons recruited by this person
+  tier           Int       @default(1) // 1 = Admin-created, 2+ = Recruited by another sales person
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   lastLoginAt    DateTime?
@@ -472,11 +478,14 @@ model SalesPerson {
   qrScans        SalesQrScan[]
   referrals      SalesReferral[]
   commissions    SalesCommission[]
+  recruiterCommissions SalesCommission[] @relation("RecruiterCommissions") // Commissions earned from recruits
   payouts        SalesPayout[]
 
   @@index([referralCode])
   @@index([phone])
   @@index([status])
+  @@index([recruiterId])
+  @@index([tier])
 }
 
 model SalesQrScan {
@@ -535,6 +544,12 @@ model SalesCommission {
   platformCommission  Float        // Platform's 5% (stored for reference)
   salesCommission     Float        // Sales person's 5% of platform's 5% = 0.25% of ticket
 
+  // Multi-tier commission tracking (70/30 split)
+  recruiterCommissionAmount Float  @default(0) // Amount that went to recruiter (30% of salesCommission)
+  recruiterId                String? // Recruiter who earned the 30%
+  recruiter                  SalesPerson? @relation("RecruiterCommissions", fields: [recruiterId], references: [id], onDelete: SetNull)
+  isRecruiterCommission     Boolean @default(false) // True if this is a recruiter's 30% commission
+
   // Status tracking
   status              String       @default("PENDING") // PENDING, APPROVED, PAID
 
@@ -549,6 +564,8 @@ model SalesCommission {
   @@index([bookingId])
   @@index([status, createdAt])
   @@index([payoutId])
+  @@index([recruiterId, status])
+  @@index([isRecruiterCommission])
 }
 
 model SalesPayout {
