@@ -192,7 +192,11 @@ export default function PaymentPage() {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Service Fee (5%)</span>
-                  <span>{formatCurrency(Number(booking.commission))}</span>
+                  <span>{formatCurrency(Number(booking.commission) / 1.15)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">VAT (15%)</span>
+                  <span>{formatCurrency(Number(booking.commission) - (Number(booking.commission) / 1.15))}</span>
                 </div>
 
                 <Separator />
