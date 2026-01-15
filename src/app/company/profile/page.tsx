@@ -26,7 +26,9 @@ import {
   CreditCard,
   UserCog,
   HeadphonesIcon,
-  Mailbox
+  Mailbox,
+  Wrench,
+  DollarSign
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -93,11 +95,26 @@ interface StaffMember {
   employeeId: string | null
 }
 
-const STAFF_ROLES = {
+const STAFF_ROLES: Record<string, { label: string; icon: any; color: string }> = {
   ADMIN: { label: "Admin", icon: Shield, color: "bg-purple-100 text-purple-800" },
   DRIVER: { label: "Driver", icon: Car, color: "bg-blue-100 text-blue-800" },
   CONDUCTOR: { label: "Conductor", icon: UserCheck, color: "bg-green-100 text-green-800" },
   MANUAL_TICKETER: { label: "Manual Ticketer", icon: Ticket, color: "bg-orange-100 text-orange-800" },
+  MECHANIC: { label: "Mechanic", icon: Wrench, color: "bg-amber-100 text-amber-800" },
+  FINANCE: { label: "Finance", icon: DollarSign, color: "bg-emerald-100 text-emerald-800" },
+}
+
+// Helper to get role display info (handles custom roles)
+const getRoleInfo = (role: string) => {
+  if (STAFF_ROLES[role]) {
+    return STAFF_ROLES[role]
+  }
+  // Custom role fallback
+  return {
+    label: role.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
+    icon: Users,
+    color: "bg-gray-100 text-gray-800"
+  }
 }
 
 export default function CompanyProfilePage() {
@@ -661,7 +678,7 @@ export default function CompanyProfilePage() {
                 </TableRow>
               ) : (
                 staff.map((member) => {
-                  const roleInfo = STAFF_ROLES[member.staffRole as keyof typeof STAFF_ROLES]
+                  const roleInfo = getRoleInfo(member.staffRole)
                   const RoleIcon = roleInfo.icon
 
                   return (
