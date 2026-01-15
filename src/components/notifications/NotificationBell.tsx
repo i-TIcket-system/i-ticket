@@ -45,8 +45,12 @@ function getNotificationUrl(
     if (staffRole === "MANUAL_TICKETER") {
       return `/cashier/trip/${tripId}`
     }
-    // Drivers/Conductors (COMPANY_ADMIN with staffRole) → staff my-trips
+    // Drivers/Conductors (COMPANY_ADMIN with staffRole) → staff my-trips with tripId to auto-expand
     if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") {
+      // For trip messages, include tripId so the page can auto-expand that trip's chat
+      if (type === "TRIP_MESSAGE") {
+        return `/staff/my-trips?tripId=${tripId}`
+      }
       return "/staff/my-trips"
     }
     // Company Admin (manager, no staffRole) → company trip detail

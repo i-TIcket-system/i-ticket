@@ -104,7 +104,10 @@
       "Bash(npm run lint)",
       "Bash(tasklist:*)",
       "Bash(psql:*)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(gh:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)"
     ]
   }
 }

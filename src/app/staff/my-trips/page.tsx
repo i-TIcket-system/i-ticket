@@ -1,8 +1,8 @@
 "use client"
 
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState, useRef } from "react"
 import { cn } from "@/lib/utils"
 import {
   Loader2,
@@ -75,8 +75,12 @@ interface Trip {
 export default function MyTripsPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [trips, setTrips] = useState<Trip[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Get tripId from URL query parameter (for auto-expanding specific trip from notification)
+  const highlightTripId = searchParams?.get('tripId')
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -210,7 +214,12 @@ export default function MyTripsPage() {
           </h2>
           <div className="grid grid-cols-1 gap-4">
             {todaysTrips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} highlight />
+              <TripCard
+                key={trip.id}
+                trip={trip}
+                highlight={true}
+                forceExpand={trip.id === highlightTripId}
+              />
             ))}
           </div>
         </div>
@@ -222,7 +231,11 @@ export default function MyTripsPage() {
           <h2 className="text-xl font-semibold mb-4">Upcoming Trips</h2>
           <div className="grid grid-cols-1 gap-4">
             {upcomingTrips.filter(t => !todaysTrips.includes(t)).map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
+              <TripCard
+                key={trip.id}
+                trip={trip}
+                forceExpand={trip.id === highlightTripId}
+              />
             ))}
           </div>
         </div>
@@ -234,7 +247,12 @@ export default function MyTripsPage() {
           <h2 className="text-xl font-semibold mb-4">Completed Trips</h2>
           <div className="grid grid-cols-1 gap-4">
             {pastTrips.slice(0, 5).map((trip) => (
-              <TripCard key={trip.id} trip={trip} past />
+              <TripCard
+                key={trip.id}
+                trip={trip}
+                past
+                forceExpand={trip.id === highlightTripId}
+              />
             ))}
           </div>
           {pastTrips.length > 5 && (
@@ -261,20 +279,35 @@ export default function MyTripsPage() {
   )
 }
 
-function TripCard({ trip, highlight = false, past = false }: { trip: Trip; highlight?: boolean; past?: boolean }) {
+function TripCard({ trip, highlight = false, past = false, forceExpand = false }: { trip: Trip; highlight?: boolean; past?: boolean; forceExpand?: boolean }) {
   const bookingCount = trip._count.bookings
   const totalRevenue = trip.bookings.reduce((sum, b) => sum + b.totalAmount, 0)
   const occupancy = ((trip.totalSlots - trip.availableSlots) / trip.totalSlots) * 100
+  const tripCardRef = useRef<HTMLDivElement>(null)
 
-  // Auto-expand active trips (today's trips), collapse others by default
-  const [expanded, setExpanded] = useState(highlight)
+  // Auto-expand active trips (today's trips) or trips from notifications, collapse others by default
+  const [expanded, setExpanded] = useState(highlight || forceExpand)
+
+  // Scroll to and expand this trip if it's the highlighted one from notification
+  useEffect(() => {
+    if (forceExpand && tripCardRef.current) {
+      // Scroll to this trip after a short delay to ensure rendering is complete
+      setTimeout(() => {
+        tripCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 300)
+    }
+  }, [forceExpand])
 
   return (
-    <Card className={cn(
-      "hover:shadow-lg transition-all",
-      highlight && "border-orange-400 border-2 shadow-md",
-      past && "opacity-60"
-    )}>
+    <Card
+      ref={tripCardRef}
+      className={cn(
+        "hover:shadow-lg transition-all",
+        highlight && "border-orange-400 border-2 shadow-md",
+        forceExpand && "ring-2 ring-primary ring-offset-2",
+        past && "opacity-60"
+      )}
+    >
       <CardHeader
         className="cursor-pointer hover:bg-muted/50 transition-colors"
         onClick={() => setExpanded(!expanded)}
