@@ -190,12 +190,19 @@ export async function PUT(
     } = body
 
     // SECURITY: Validate update based on business rules
-    const validation = await validateTripUpdate(tripId, {
-      price,
-      totalSlots,
-      busType,
-      departureTime,
-    })
+    // Only validate fields that are actually being changed
+    const changedFields: Record<string, any> = {}
+    if (price !== undefined && price !== existingTrip.price) changedFields.price = price
+    if (totalSlots !== undefined && totalSlots !== existingTrip.totalSlots) changedFields.totalSlots = totalSlots
+    if (busType !== undefined && busType !== existingTrip.busType) changedFields.busType = busType
+    if (departureTime !== undefined) {
+      const newDepartureTime = new Date(departureTime)
+      if (newDepartureTime.getTime() !== existingTrip.departureTime.getTime()) {
+        changedFields.departureTime = departureTime
+      }
+    }
+
+    const validation = await validateTripUpdate(tripId, changedFields)
 
     if (!validation.allowed) {
       return NextResponse.json(

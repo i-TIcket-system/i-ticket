@@ -430,6 +430,24 @@ export async function POST(request: NextRequest) {
       console.log(`[TRIP CREATE] ${session.user.name} created trip ${trip.id}: ${trip.origin} to ${trip.destination}`)
     }
 
+    // Notify assigned staff about the new trip
+    const { notifyTripStaff } = await import("@/lib/notifications")
+
+    // Send notifications to driver, conductor, and manual ticketer
+    if (trip.driverId || trip.conductorId || trip.manualTicketerId) {
+      await notifyTripStaff(trip.id, "TRIP_ASSIGNED", {
+        tripId: trip.id,
+        tripRoute: `${trip.origin} → ${trip.destination}`,
+        departureTime: trip.departureTime.toLocaleDateString("en-ET", {
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        assignedBy: session?.user.name || "Admin",
+      })
+    }
+
     return NextResponse.json({ trip }, { status: 201 })
   } catch (error) {
     console.error("Trip creation error:", error)

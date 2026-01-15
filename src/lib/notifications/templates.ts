@@ -53,6 +53,7 @@ export interface NotificationData {
   // Staff-related
   staffName?: string
   role?: string
+  assignedBy?: string
 
   // Sales-related
   referralCode?: string
