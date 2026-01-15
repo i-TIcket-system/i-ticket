@@ -156,11 +156,15 @@ export async function notifyCompanyAdmins(
   data: NotificationData
 ) {
   try {
-    // Get all company admins
+    // Get all company admins (actual admins, not regular staff)
     const admins = await prisma.user.findMany({
       where: {
         companyId,
         role: "COMPANY_ADMIN",
+        OR: [
+          { staffRole: null },
+          { staffRole: "ADMIN" },
+        ],
       },
       select: { id: true },
     })

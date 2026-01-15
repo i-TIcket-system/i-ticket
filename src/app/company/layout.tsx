@@ -95,8 +95,32 @@ export default function CompanyLayout({
 
   useEffect(() => {
     if (status === "authenticated") {
-      if (session.user.role !== "COMPANY_ADMIN" && session.user.role !== "SUPER_ADMIN") {
-        router.push("/")
+      // Check if user is authorized for company portal
+      const isCompanyAdmin = session.user.role === "COMPANY_ADMIN" &&
+        (!session.user.staffRole || session.user.staffRole === "ADMIN")
+      const isSuperAdmin = session.user.role === "SUPER_ADMIN"
+
+      if (!isCompanyAdmin && !isSuperAdmin) {
+        // Redirect staff members to their specific portals
+        if (session.user.role === "COMPANY_ADMIN" && session.user.staffRole) {
+          switch (session.user.staffRole) {
+            case "DRIVER":
+            case "CONDUCTOR":
+            case "MANUAL_TICKETER":
+              router.push("/staff/my-trips")
+              break
+            case "MECHANIC":
+              router.push("/mechanic")
+              break
+            case "FINANCE":
+              router.push("/finance")
+              break
+            default:
+              router.push("/")
+          }
+        } else {
+          router.push("/")
+        }
       }
     } else if (status === "unauthenticated") {
       router.replace("/login")
@@ -119,7 +143,12 @@ export default function CompanyLayout({
     )
   }
 
-  if (!session || (session.user.role !== "COMPANY_ADMIN" && session.user.role !== "SUPER_ADMIN")) {
+  // Check authorization - only allow company admins and super admins
+  const isCompanyAdmin = session?.user.role === "COMPANY_ADMIN" &&
+    (!session.user.staffRole || session.user.staffRole === "ADMIN")
+  const isSuperAdmin = session?.user.role === "SUPER_ADMIN"
+
+  if (!session || (!isCompanyAdmin && !isSuperAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
         <div className="text-center">
