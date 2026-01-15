@@ -239,6 +239,8 @@ export default function CompanyProfilePage() {
         fetchCompanyProfile()
         // Refresh session to update company name across the app
         await updateSession()
+        // Force page reload to ensure all components see the updated session
+        router.refresh()
       } else {
         const data = await response.json()
         toast.error(data.error || "Failed to update profile")
