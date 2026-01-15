@@ -288,15 +288,22 @@ function TripCard({ trip, highlight = false, past = false, forceExpand = false }
   // Auto-expand active trips (today's trips) or trips from notifications, collapse others by default
   const [expanded, setExpanded] = useState(highlight || forceExpand)
 
-  // Scroll to and expand this trip if it's the highlighted one from notification
+  // Force expand when forceExpand prop changes (from notification)
   useEffect(() => {
-    if (forceExpand && tripCardRef.current) {
-      // Scroll to this trip after a short delay to ensure rendering is complete
-      setTimeout(() => {
-        tripCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 300)
+    if (forceExpand) {
+      setExpanded(true)
     }
   }, [forceExpand])
+
+  // Scroll to and expand this trip if it's the highlighted one from notification
+  useEffect(() => {
+    if (forceExpand && expanded && tripCardRef.current) {
+      // Scroll to this trip after a short delay to ensure rendering is complete
+      setTimeout(() => {
+        tripCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 500)
+    }
+  }, [forceExpand, expanded])
 
   return (
     <Card
