@@ -35,8 +35,8 @@ export async function GET(request: NextRequest) {
       where: { salesPersonId },
     })
 
-    // Get commission aggregates
-    const [totalCommission, pendingCommission, paidCommission] = await Promise.all([
+    // Get commission aggregates (both direct and team commissions)
+    const [totalCommission, pendingCommission, paidCommission, directCommissions, teamCommissions] = await Promise.all([
       prisma.salesCommission.aggregate({
         where: { salesPersonId },
         _sum: { salesCommission: true },
@@ -49,7 +49,22 @@ export async function GET(request: NextRequest) {
         where: { salesPersonId, status: 'PAID' },
         _sum: { salesCommission: true },
       }),
+      // Direct commissions from customer referrals (70% or 100%)
+      prisma.salesCommission.aggregate({
+        where: { salesPersonId, isRecruiterCommission: false },
+        _sum: { salesCommission: true },
+      }),
+      // Team commissions (30% from recruited sales persons)
+      prisma.salesCommission.aggregate({
+        where: { salesPersonId, isRecruiterCommission: true },
+        _sum: { salesCommission: true },
+      }),
     ])
+
+    // Get team stats
+    const recruitsCount = await prisma.salesPerson.count({
+      where: { recruiterId: salesPersonId }
+    })
 
     // Get time-based stats
     const today = new Date()
@@ -129,6 +144,12 @@ export async function GET(request: NextRequest) {
           paid: paidCommission._sum.salesCommission || 0,
           thisMonth: commissionThisMonth._sum.salesCommission || 0,
           lastMonth: commissionLastMonth._sum.salesCommission || 0,
+          direct: directCommissions._sum.salesCommission || 0, // From customer referrals
+          team: teamCommissions._sum.salesCommission || 0, // From recruited team (30%)
+        },
+        team: {
+          recruitsCount,
+          teamEarnings: teamCommissions._sum.salesCommission || 0,
         },
         recentActivity: {
           scansToday,

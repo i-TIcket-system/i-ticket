@@ -39,8 +39,12 @@ export async function GET(request: NextRequest) {
     const priority = searchParams.get('priority')
     const vehicleId = searchParams.get('vehicleId')
     const workType = searchParams.get('workType')
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+
+    // Validate pagination params to prevent NaN issues
+    const parsedPage = parseInt(searchParams.get('page') || '1')
+    const parsedLimit = parseInt(searchParams.get('limit') || '20')
+    const page = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage
+    const limit = isNaN(parsedLimit) || parsedLimit < 1 ? 20 : Math.min(parsedLimit, 100)
     const skip = (page - 1) * limit
 
     // Build where clause

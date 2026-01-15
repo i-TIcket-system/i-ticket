@@ -185,6 +185,10 @@ export async function GET(request: NextRequest) {
       .slice(0, 3)
       .map(([hour, count]) => {
         const hourNum = parseInt(hour)
+        // Validate hourNum to prevent NaN issues (should always be valid from DB, but defensive)
+        if (isNaN(hourNum) || hourNum < 0 || hourNum > 23) {
+          return { hour: 0, count: count as number, label: '12:00 AM' }
+        }
         const ampm = hourNum >= 12 ? 'PM' : 'AM'
         const hour12 = hourNum % 12 || 12
 

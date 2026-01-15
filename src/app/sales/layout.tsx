@@ -50,6 +50,11 @@ const sidebarItems = [
     icon: QrCode,
   },
   {
+    title: "My Team",
+    href: "/sales/team",
+    icon: Users,
+  },
+  {
     title: "Profile",
     href: "/sales/profile",
     icon: User,

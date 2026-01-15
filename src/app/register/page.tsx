@@ -1,19 +1,21 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { User, Lock, Mail, Loader2, Check, ArrowRight, Ticket, MapPin, Smartphone, Eye, EyeOff } from "lucide-react"
+import { User, Lock, Mail, Loader2, Check, ArrowRight, Ticket, MapPin, Smartphone, Eye, EyeOff, Users, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PhoneInput } from "@/components/ui/phone-input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
 import { getReferralCode } from "@/hooks/use-referral-tracking"
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [formData, setFormData] = useState({
     name: "",
@@ -25,6 +27,26 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [registerAsSales, setRegisterAsSales] = useState(false)
+  const [recruiterInfo, setRecruiterInfo] = useState<{ name: string; referralCode: string } | null>(null)
+
+  // Check for recruiter info on mount
+  useEffect(() => {
+    const refCode = searchParams.get('ref') || getReferralCode()
+    if (refCode) {
+      // Fetch recruiter info to show recruitment banner
+      fetch(`/api/sales/recruiter-info?code=${refCode}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.recruiter) {
+            setRecruiterInfo(data.recruiter)
+          }
+        })
+        .catch(() => {
+          // Silently fail - not critical
+        })
+    }
+  }, [searchParams])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -73,6 +95,7 @@ export default function RegisterPage() {
           email: formData.email || undefined,
           password: formData.password,
           referralCode: referralCode || undefined,
+          registerAsSalesPerson: registerAsSales, // Flag for sales person registration
         }),
       })
 
@@ -82,10 +105,17 @@ export default function RegisterPage() {
         throw new Error(data.error || "Registration failed")
       }
 
-      toast.success("Account created successfully! Redirecting to login...")
-      setTimeout(() => {
-        router.push("/login?registered=true")
-      }, 1000)
+      if (registerAsSales) {
+        toast.success("Sales account created! Redirecting to sales dashboard...")
+        setTimeout(() => {
+          router.push("/sales")
+        }, 1000)
+      } else {
+        toast.success("Account created successfully! Redirecting to login...")
+        setTimeout(() => {
+          router.push("/login?registered=true")
+        }, 1000)
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "An unexpected error occurred")
     } finally {
@@ -176,6 +206,25 @@ export default function RegisterPage() {
             <h2 className="text-2xl sm:text-3xl font-display mb-2" style={{ color: "#0d4f5c" }}>Create account</h2>
             <p className="text-sm" style={{ color: "#0e9494" }}>Join i-Ticket to start booking trips</p>
           </div>
+
+          {/* Recruitment Banner */}
+          {recruiterInfo && (
+            <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
+                  <Users className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                    You were invited by {recruiterInfo.name}
+                  </p>
+                  <p className="text-xs text-purple-700 dark:text-purple-300 mt-1">
+                    Register to start earning commissions on ticket sales
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
@@ -297,6 +346,29 @@ export default function RegisterPage() {
                     {req.text}
                   </div>
                 ))}
+              </div>
+            )}
+
+            {/* Sales Person Registration Option */}
+            {recruiterInfo && (
+              <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <Checkbox
+                  id="registerAsSales"
+                  checked={registerAsSales}
+                  onCheckedChange={(checked) => setRegisterAsSales(checked as boolean)}
+                  className="mt-0.5"
+                />
+                <div className="flex-1">
+                  <Label
+                    htmlFor="registerAsSales"
+                    className="text-sm font-medium cursor-pointer text-blue-900 dark:text-blue-100"
+                  >
+                    Register as Sales Person
+                  </Label>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                    Earn 5% commission on every ticket sold through your referral link
+                  </p>
+                </div>
               </div>
             )}
 

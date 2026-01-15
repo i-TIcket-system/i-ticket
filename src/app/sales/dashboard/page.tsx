@@ -44,6 +44,12 @@ interface DashboardData {
       paid: number
       thisMonth: number
       lastMonth: number
+      direct: number
+      team: number
+    }
+    team: {
+      recruitsCount: number
+      teamEarnings: number
     }
     recentActivity: {
       scansToday: number
@@ -216,6 +222,62 @@ export default function SalesDashboardPage() {
                   <span>{formatCurrency(data.stats.commission.lastMonth)}</span>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Commission Breakdown */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Commission Breakdown
+              </CardTitle>
+              <CardDescription>
+                Direct vs Team earnings
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-muted-foreground">Direct Sales</span>
+                  <span className="font-semibold">{formatCurrency(data.stats.commission.direct)}</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div
+                    className="h-2 rounded-full"
+                    style={{
+                      width: `${data.stats.commission.total > 0 ? (data.stats.commission.direct / data.stats.commission.total) * 100 : 0}%`,
+                      background: "#0e9494"
+                    }}
+                  />
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm text-muted-foreground">
+                    Team Earnings (30%)
+                  </span>
+                  <span className="font-semibold">{formatCurrency(data.stats.commission.team)}</span>
+                </div>
+                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                  <div
+                    className="h-2 rounded-full bg-purple-500"
+                    style={{
+                      width: `${data.stats.commission.total > 0 ? (data.stats.commission.team / data.stats.commission.total) * 100 : 0}%`
+                    }}
+                  />
+                </div>
+              </div>
+              {data.stats.team.recruitsCount > 0 && (
+                <div className="pt-3 border-t">
+                  <Link href="/sales/team">
+                    <Button variant="outline" className="w-full">
+                      <Users className="h-4 w-4 mr-2" />
+                      View My Team ({data.stats.team.recruitsCount})
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

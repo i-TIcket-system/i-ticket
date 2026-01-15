@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { PhoneInput } from "@/components/ui/phone-input"
 import { toast } from "sonner"
+import { ProfilePictureUpload } from "@/components/profile/ProfilePictureUpload"
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession()
@@ -155,6 +156,20 @@ export default function ProfilePage() {
             <Label>Role</Label>
             <Input value={session.user.role} disabled className="bg-gray-50" />
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Profile Picture */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Profile Picture</CardTitle>
+          <CardDescription>Upload or change your profile picture</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center py-6">
+          <ProfilePictureUpload
+            currentPicture={session.user.profilePicture}
+            size="lg"
+          />
         </CardContent>
       </Card>
 

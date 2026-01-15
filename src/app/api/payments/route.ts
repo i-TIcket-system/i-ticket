@@ -182,26 +182,75 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      // INTERNAL: Create sales commission if user was referred (not shown on ticket)
+      // INTERNAL: Create sales commission if user was referred (with 70/30 split)
       const salesReferral = await tx.salesReferral.findUnique({
         where: { userId: booking.userId },
-        include: { salesPerson: true }
+        include: {
+          salesPerson: {
+            include: {
+              recruiter: true // Include recruiter for 70/30 split
+            }
+          }
+        }
       })
 
       if (salesReferral && salesReferral.salesPerson.status === 'ACTIVE') {
         const platformCommission = Number(booking.commission)
         const salesCommission = platformCommission * 0.05 // 5% of platform's 5%
 
-        await tx.salesCommission.create({
-          data: {
-            salesPersonId: salesReferral.salesPersonId,
-            bookingId: booking.id,
-            ticketAmount: Number(booking.totalAmount),
-            platformCommission,
-            salesCommission,
-            status: 'PENDING',
-          }
-        })
+        // Multi-tier commission: Check if sales person has a recruiter
+        const hasRecruiter = salesReferral.salesPerson.recruiterId && salesReferral.salesPerson.recruiter?.status === 'ACTIVE'
+
+        if (hasRecruiter) {
+          // 70/30 SPLIT: Sales person gets 70%, recruiter gets 30%
+          const salesPersonShare = salesCommission * 0.70 // 70% to sales person
+          const recruiterShare = salesCommission * 0.30   // 30% to recruiter
+
+          // Create commission for sales person (70%)
+          await tx.salesCommission.create({
+            data: {
+              salesPersonId: salesReferral.salesPersonId,
+              bookingId: booking.id,
+              ticketAmount: Number(booking.totalAmount),
+              platformCommission,
+              salesCommission: salesPersonShare,
+              recruiterCommissionAmount: recruiterShare,
+              recruiterId: salesReferral.salesPerson.recruiterId,
+              isRecruiterCommission: false,
+              status: 'PENDING',
+            }
+          })
+
+          // Create commission for recruiter (30%)
+          await tx.salesCommission.create({
+            data: {
+              salesPersonId: salesReferral.salesPerson.recruiterId!,
+              bookingId: booking.id,
+              ticketAmount: Number(booking.totalAmount),
+              platformCommission,
+              salesCommission: recruiterShare,
+              recruiterCommissionAmount: 0,
+              recruiterId: null,
+              isRecruiterCommission: true,
+              status: 'PENDING',
+            }
+          })
+        } else {
+          // No recruiter: Sales person gets 100% (Tier 1)
+          await tx.salesCommission.create({
+            data: {
+              salesPersonId: salesReferral.salesPersonId,
+              bookingId: booking.id,
+              ticketAmount: Number(booking.totalAmount),
+              platformCommission,
+              salesCommission, // Full 100%
+              recruiterCommissionAmount: 0,
+              recruiterId: null,
+              isRecruiterCommission: false,
+              status: 'PENDING',
+            }
+          })
+        }
       }
 
       // Log SMS notification (in production, actually send SMS)

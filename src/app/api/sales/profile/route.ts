@@ -24,6 +24,11 @@ export async function GET(request: NextRequest) {
         referralCode: true,
         createdAt: true,
         lastLoginAt: true,
+        bankAccountName: true,
+        bankAccountNumber: true,
+        bankName: true,
+        alternativePhone: true,
+        profilePicture: true,
       }
     })
 

@@ -10,8 +10,12 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status') // PENDING, PAID, or null for all
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+
+    // Validate pagination params to prevent NaN issues
+    const parsedPage = parseInt(searchParams.get('page') || '1')
+    const parsedLimit = parseInt(searchParams.get('limit') || '20')
+    const page = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage
+    const limit = isNaN(parsedLimit) || parsedLimit < 1 ? 20 : Math.min(parsedLimit, 100)
 
     const where: any = { salesPersonId }
     if (status) {

@@ -25,6 +25,7 @@ model User {
 
   nextOfKinName  String?
   nextOfKinPhone String?
+  profilePicture String?   // URL/path to profile picture
   isGuestUser    Boolean   @default(false) // True for SMS users without full registration
   bookings       Booking[]
 
@@ -469,6 +470,13 @@ model SalesPerson {
   recruiter      SalesPerson?  @relation("SalesHierarchy", fields: [recruiterId], references: [id], onDelete: SetNull)
   recruits       SalesPerson[] @relation("SalesHierarchy") // Sales persons recruited by this person
   tier           Int       @default(1) // 1 = Admin-created, 2+ = Recruited by another sales person
+
+  // Payment/Contact settings
+  bankAccountName    String?  // Name on bank account for payouts
+  bankAccountNumber  String?  // Bank account number
+  bankName           String?  // Bank name (e.g., "CBE", "Abyssinia Bank")
+  alternativePhone   String?  // Alternative contact number
+  profilePicture     String?  // URL/path to profile picture
 
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt

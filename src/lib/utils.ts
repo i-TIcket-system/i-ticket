@@ -46,7 +46,10 @@ export function generateShortCode(): string {
 }
 
 export function calculateCommission(amount: number): number {
-  return Math.round(amount * 0.05) // 5% commission, rounded to match backend validation
+  // 5% platform commission + 15% VAT on commission
+  // Formula: amount × 0.05 × 1.15 = amount × 0.0575
+  // Example: 100 Birr → 5 Birr commission + 0.75 Birr VAT = 5.75 Birr
+  return Math.round(amount * 0.0575) // 5% commission + 15% VAT
 }
 
 export function getSlotsPercentage(available: number, total: number): number {

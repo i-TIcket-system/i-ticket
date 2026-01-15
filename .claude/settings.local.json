@@ -92,7 +92,19 @@
       "Bash(git diff:*)",
       "Bash(git checkout:*)",
       "Bash(npx ts-node:*)",
-      "Bash(Select-Object -Last 3)"
+      "Bash(Select-Object -Last 3)",
+      "Bash(SELECT 'Test this URL: http://localhost:3000/api/trips/')",
+      "Bash('/export-gpx' as test_url)",
+      "Bash(FROM \"Trip\")",
+      "Bash(LIMIT 1)",
+      "Bash(__NEW_LINE_97c2d826b2a1c8b8__ SQL)",
+      "Bash(npm run ts-node:*)",
+      "Bash(npm run db:reset:*)",
+      "Bash(\"C:\\\\Users\\\\EVAD\\\\.claude\\\\projects\\\\I-Ticket\\\\src\\\\app\\\\api\\\\company\\\\work-orders\\\\[workOrderId]\\\\parts\\\\route.ts\")",
+      "Bash(npm run lint)",
+      "Bash(tasklist:*)",
+      "Bash(psql:*)",
+      "Bash(wc:*)"
     ]
   }
 }

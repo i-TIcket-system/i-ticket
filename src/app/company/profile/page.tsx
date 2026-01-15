@@ -61,10 +61,12 @@ import {
 } from "@/components/ui/dialog"
 import { PhoneInput } from "@/components/ui/phone-input"
 import { toast } from "sonner"
+import { CompanyLogoUpload } from "@/components/company/CompanyLogoUpload"
 
 interface Company {
   id: string
   name: string
+  logo: string | null
   email: string
   phones: string[]
   fax: string | null
@@ -322,6 +324,20 @@ export default function CompanyProfilePage() {
         <h1 className="text-3xl font-bold">Company Profile</h1>
         <p className="text-muted-foreground">Manage your company information and staff members</p>
       </div>
+
+      {/* Company Logo */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Company Logo</CardTitle>
+          <CardDescription>Upload or change your company logo</CardDescription>
+        </CardHeader>
+        <CardContent className="flex justify-center py-6">
+          <CompanyLogoUpload
+            currentLogo={company?.logo}
+            size="lg"
+          />
+        </CardContent>
+      </Card>
 
       {/* Company Information */}
       <Card className="mb-6">

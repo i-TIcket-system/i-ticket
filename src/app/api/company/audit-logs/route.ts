@@ -26,7 +26,10 @@ export async function GET(request: NextRequest) {
     const action = searchParams.get("action")
     const startDate = searchParams.get("startDate")
     const endDate = searchParams.get("endDate")
-    const page = parseInt(searchParams.get("page") || "1")
+
+    // Validate pagination param to prevent NaN issues
+    const parsedPage = parseInt(searchParams.get("page") || "1")
+    const page = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage
     const limit = 20
 
     // Always filter by company
