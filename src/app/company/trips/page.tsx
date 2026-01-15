@@ -66,6 +66,7 @@ interface Trip {
   availableSlots: number
   bookingHalted: boolean
   isActive: boolean
+  status: string // SCHEDULED, BOARDING, DEPARTED, COMPLETED, CANCELLED
   _count: {
     bookings: number
   }
@@ -505,13 +506,31 @@ export default function CompanyTripsPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredTrips.map((trip) => {
+                filteredTrips
+                  .sort((a, b) => {
+                    // Sort trips: SCHEDULED and BOARDING first, then DEPARTED, then COMPLETED/CANCELLED
+                    const statusOrder: Record<string, number> = {
+                      SCHEDULED: 0,
+                      BOARDING: 1,
+                      DEPARTED: 2,
+                      COMPLETED: 3,
+                      CANCELLED: 4,
+                    }
+                    return (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0)
+                  })
+                  .map((trip) => {
                   const slotsPercentage = getSlotsPercentage(trip.availableSlots, trip.totalSlots)
                   const lowSlots = isLowSlots(trip.availableSlots, trip.totalSlots)
                   const isSelected = selectedTrips.has(trip.id)
+                  const isDeparted = trip.status === "DEPARTED" || trip.status === "COMPLETED"
 
                   return (
-                    <TableRow key={trip.id} className={isSelected ? "bg-muted/50" : ""}>
+                    <TableRow
+                      key={trip.id}
+                      className={`${isSelected ? "bg-muted/50" : ""} ${
+                        isDeparted ? "opacity-60 bg-muted/30" : ""
+                      }`}
+                    >
                       <TableCell>
                         <Checkbox
                           checked={isSelected}
@@ -558,6 +577,18 @@ export default function CompanyTripsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1">
+                          {/* Trip Status Badge */}
+                          <Badge className={`w-fit ${
+                            trip.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
+                            trip.status === 'BOARDING' ? 'bg-yellow-100 text-yellow-800' :
+                            trip.status === 'DEPARTED' ? 'bg-purple-100 text-purple-800' :
+                            trip.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
+                            trip.status === 'CANCELLED' ? 'bg-red-100 text-red-800' : ''
+                          }`}>
+                            {trip.status}
+                          </Badge>
+
+                          {/* Booking Status Badges */}
                           {trip.bookingHalted ? (
                             <Badge variant="destructive" className="w-fit">
                               <X className="h-3 w-3 mr-1" />

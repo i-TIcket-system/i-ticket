@@ -3,6 +3,7 @@
 import { useSession, signOut } from "next-auth/react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { useEffect, useState } from "react"
 import {
   Loader2,
@@ -121,7 +122,7 @@ export default function FinanceLayout({
           <div className="flex flex-col h-[calc(100%-4px)]">
             {/* Header */}
             <div className={cn("p-5", collapsed && "px-3")} style={{ borderBottom: "1px solid rgba(16, 185, 129, 0.3)" }}>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-3">
                 <Link href="/finance" className="flex items-center gap-3 group">
                   <div className="relative">
                     <div className="absolute inset-0 rounded-xl blur-lg transition-colors" style={{ background: "rgba(16, 185, 129, 0.2)" }} />
@@ -152,10 +153,28 @@ export default function FinanceLayout({
                 </div>
               </div>
               {!collapsed && (
-                <div className="mt-3 px-1">
-                  <p className="text-xs text-white/60 font-medium truncate">
-                    {session.user.companyName}
-                  </p>
+                <div className="flex items-center gap-3 p-3 bg-white/10 rounded-lg">
+                  {/* Profile Picture */}
+                  {session.user.profilePicture ? (
+                    <Image
+                      src={session.user.profilePicture}
+                      alt={session.user.name || "Profile"}
+                      width={48}
+                      height={48}
+                      className="rounded-full border-2 border-emerald-400"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-emerald-400" style={{ background: "linear-gradient(135deg, #059669 0%, #10b981 100%)" }}>
+                      <User className="h-6 w-6 text-white" />
+                    </div>
+                  )}
+                  {/* User Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-white truncate">{session.user.name}</div>
+                    <div className="text-xs text-white/70 truncate">
+                      {session.user.companyName} • Finance
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -229,13 +248,7 @@ export default function FinanceLayout({
             </div>
 
             {/* Footer */}
-            <div className={cn("p-4 space-y-3", collapsed && "p-2")} style={{ borderTop: "1px solid rgba(16, 185, 129, 0.3)" }}>
-              {!collapsed && (
-                <div className="px-3 py-2 bg-white/10 rounded-xl">
-                  <p className="text-sm font-semibold truncate text-white">{session.user.name}</p>
-                  <p className="text-xs text-white/60">Finance</p>
-                </div>
-              )}
+            <div className={cn("p-4", collapsed && "p-2")} style={{ borderTop: "1px solid rgba(16, 185, 129, 0.3)" }}>
               {collapsed ? (
                 <Tooltip>
                   <TooltipTrigger asChild>

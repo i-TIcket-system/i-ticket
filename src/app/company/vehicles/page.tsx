@@ -17,6 +17,8 @@ import {
   Activity,
   Gauge,
   Fuel,
+  Search,
+  Filter,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -125,6 +127,10 @@ export default function VehiclesPage() {
   const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null)
   const [vehicleToEdit, setVehicleToEdit] = useState<Vehicle | null>(null)
   const [expandedVehicle, setExpandedVehicle] = useState<string | null>(null)
+
+  // Filter state
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
 
   // Add vehicle form
   const [newVehicle, setNewVehicle] = useState({
@@ -358,6 +364,20 @@ export default function VehiclesPage() {
     inactive: vehicles.filter(v => v.status === "INACTIVE").length,
   }
 
+  // Filter vehicles by search term and status
+  const filteredVehicles = vehicles.filter((vehicle) => {
+    const searchLower = searchTerm.toLowerCase()
+    const matchesSearch = !searchTerm ||
+      vehicle.plateNumber.toLowerCase().includes(searchLower) ||
+      vehicle.sideNumber?.toLowerCase().includes(searchLower) ||
+      vehicle.make.toLowerCase().includes(searchLower) ||
+      vehicle.model.toLowerCase().includes(searchLower)
+
+    const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter
+
+    return matchesSearch && matchesStatus
+  })
+
   return (
     <div className="container mx-auto py-12 px-4 max-w-7xl">
       {/* Header */}
@@ -422,12 +442,70 @@ export default function VehiclesPage() {
         </Card>
       </div>
 
+      {/* Search & Filter */}
+      {vehicles.length > 0 && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <Filter className="h-5 w-5" />
+              Filter Vehicles
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="relative md:col-span-2">
+                <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by plate number, side number, make, or model..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="MAINTENANCE">In Maintenance</SelectItem>
+                  <SelectItem value="INACTIVE">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {(searchTerm || statusFilter !== "all") && (
+              <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
+                <span>
+                  Showing {filteredVehicles.length} of {vehicles.length} vehicles
+                </span>
+                {(searchTerm || statusFilter !== "all") && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setSearchTerm("")
+                      setStatusFilter("all")
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* Vehicles Table */}
       <Card>
         <CardHeader>
           <CardTitle>All Vehicles</CardTitle>
           <CardDescription>
-            {vehicles.length} vehicle{vehicles.length !== 1 ? "s" : ""} in your fleet
+            {filteredVehicles.length} vehicle{filteredVehicles.length !== 1 ? "s" : ""}
+            {filteredVehicles.length !== vehicles.length && ` (filtered from ${vehicles.length})`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -459,7 +537,32 @@ export default function VehiclesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {vehicles.map((vehicle) => {
+                  {filteredVehicles.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="h-32 text-center">
+                        <div className="text-muted-foreground">
+                          {searchTerm || statusFilter !== "all" ? (
+                            <>
+                              <p>No vehicles found matching your filters</p>
+                              <Button
+                                variant="link"
+                                onClick={() => {
+                                  setSearchTerm("")
+                                  setStatusFilter("all")
+                                }}
+                                className="mt-2"
+                              >
+                                Clear filters
+                              </Button>
+                            </>
+                          ) : (
+                            "No vehicles found"
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredVehicles.map((vehicle) => {
                     const typeInfo = BUS_TYPES[vehicle.busType as keyof typeof BUS_TYPES]
                     const statusInfo = STATUS_INFO[vehicle.status as keyof typeof STATUS_INFO]
                     const StatusIcon = statusInfo.icon
@@ -615,7 +718,8 @@ export default function VehiclesPage() {
                         )}
                       </>
                     )
-                  })}
+                  })
+                  )}
                 </TableBody>
               </Table>
             </div>

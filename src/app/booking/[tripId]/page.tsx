@@ -346,6 +346,8 @@ export default function BookingPage() {
 
       if (response.ok) {
         toast.success("Booking created! Redirecting to payment...")
+        // Clear sessionStorage since booking is successful
+        sessionStorage.removeItem(`booking-${tripId}-passengers`)
         // Redirect to payment page
         router.push(`/payment/${data.booking.id}`)
       } else {

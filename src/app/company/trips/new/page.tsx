@@ -79,8 +79,21 @@ export default function NewTripPage() {
     make: string;
     model: string;
     status: string;
+    totalSeats: number;
   }>>([])
 
+  // Auto-fill totalSlots when vehicle is selected
+  useEffect(() => {
+    if (formData.vehicleId) {
+      const selectedVehicle = vehicles.find(v => v.id === formData.vehicleId)
+      if (selectedVehicle && selectedVehicle.totalSeats) {
+        setFormData(prev => ({
+          ...prev,
+          totalSlots: selectedVehicle.totalSeats.toString()
+        }))
+      }
+    }
+  }, [formData.vehicleId, vehicles])
 
   // Fetch cities from API
   useEffect(() => {
@@ -547,6 +560,22 @@ export default function NewTripPage() {
                     required
                   />
                 </div>
+                {/* Capacity Mismatch Warning */}
+                {(() => {
+                  const selectedVehicle = vehicles.find(v => v.id === formData.vehicleId)
+                  const totalSlots = parseInt(formData.totalSlots)
+                  return selectedVehicle && selectedVehicle.totalSeats && totalSlots && totalSlots !== selectedVehicle.totalSeats ? (
+                    <div className="flex items-start gap-2 p-3 bg-orange-50 border border-orange-200 rounded-md">
+                      <AlertCircle className="h-5 w-5 text-orange-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm">
+                        <p className="font-medium text-orange-900">Capacity Mismatch</p>
+                        <p className="text-orange-700">
+                          Trip capacity ({totalSlots} seats) doesn't match vehicle capacity ({selectedVehicle.totalSeats} seats)
+                        </p>
+                      </div>
+                    </div>
+                  ) : null
+                })()}
               </div>
 
               {/* Amenities */}

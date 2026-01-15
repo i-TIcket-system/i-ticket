@@ -51,6 +51,7 @@ interface Trip {
   availableSlots: number
   hasWater: boolean
   hasFood: boolean
+  status: string // SCHEDULED, BOARDING, DEPARTED, COMPLETED, CANCELLED
   company: {
     id: string
     name: string
@@ -330,8 +331,28 @@ function SearchContent() {
           </Card>
         ) : (
           <div className="space-y-4">
-            {trips.map((trip) => (
-              <Card key={trip.id} className="card-hover overflow-hidden relative">
+            {trips
+              .sort((a, b) => {
+                // Sort trips: SCHEDULED and BOARDING first, then DEPARTED, then COMPLETED/CANCELLED
+                const statusOrder: Record<string, number> = {
+                  SCHEDULED: 0,
+                  BOARDING: 1,
+                  DEPARTED: 2,
+                  COMPLETED: 3,
+                  CANCELLED: 4,
+                }
+                return (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0)
+              })
+              .map((trip) => {
+                const isDeparted = trip.status === "DEPARTED" || trip.status === "COMPLETED"
+
+                return (
+              <Card
+                key={trip.id}
+                className={`card-hover overflow-hidden relative ${
+                  isDeparted ? "opacity-60 bg-muted" : ""
+                }`}
+              >
                 {/* Compare Checkbox */}
                 <div className="absolute top-4 left-4 z-10">
                   <Checkbox
@@ -365,6 +386,11 @@ function SearchContent() {
                         {trip.distance && (
                           <Badge variant="outline" className="text-primary border-primary/30">
                             {trip.distance} km journey
+                          </Badge>
+                        )}
+                        {isDeparted && (
+                          <Badge variant="outline" className="text-orange-600 border-orange-600/50 bg-orange-50">
+                            {trip.status === "DEPARTED" ? "Departed" : "Completed"}
                           </Badge>
                         )}
                       </div>
@@ -500,7 +526,13 @@ function SearchContent() {
                                 View Only
                               </Button>
                             ) : (
-                              <Link href={`/booking/${trip.id}`}>
+                              <Link
+                                href={`/booking/${trip.id}`}
+                                onClick={() => {
+                                  // Clear any previous booking data for this trip (prevents guest data persistence)
+                                  sessionStorage.removeItem(`booking-${trip.id}-passengers`)
+                                }}
+                              >
                                 <Button disabled={trip.availableSlots === 0}>
                                   {trip.availableSlots === 0 ? "Sold Out" : "Select"}
                                 </Button>
@@ -513,7 +545,8 @@ function SearchContent() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+                )
+              })}
 
             {/* Load More Button */}
             {pagination.page < pagination.pages && (

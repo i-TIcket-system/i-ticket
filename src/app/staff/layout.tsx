@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { useEffect, useState } from "react"
 import {
   LayoutDashboard,
@@ -121,7 +122,7 @@ export default function StaffLayout({
         <div className="flex flex-col h-[calc(100%-4px)]">
           {/* Header */}
           <div className="p-4" style={{ borderBottom: "1px solid rgba(32, 196, 196, 0.2)" }}>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-3">
               <Link href="/staff/my-trips" className="flex items-center gap-2">
                 <div className="p-1.5 rounded-lg" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
                   <Bus className="h-5 w-5 text-white" />
@@ -143,12 +144,30 @@ export default function StaffLayout({
                 </Button>
               </div>
             </div>
-            <p className="text-xs text-white/60 mt-1 truncate">
-              {session.user.companyName}
-            </p>
-            <p className="text-xs font-medium" style={{ color: "#20c4c4" }}>
-              {getRoleLabel()}
-            </p>
+            {/* Enhanced User Profile Section */}
+            <div className="flex items-center gap-3 p-3 bg-white/10 rounded-lg">
+              {/* Profile Picture */}
+              {session.user.profilePicture ? (
+                <Image
+                  src={session.user.profilePicture}
+                  alt={session.user.name || "Profile"}
+                  width={48}
+                  height={48}
+                  className="rounded-full border-2 border-teal-400"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full flex items-center justify-center border-2 border-teal-400" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
+                  <User className="h-6 w-6 text-white" />
+                </div>
+              )}
+              {/* User Info */}
+              <div className="flex-1 min-w-0">
+                <div className="font-semibold text-white truncate">{session.user.name}</div>
+                <div className="text-xs text-white/70 truncate">
+                  {session.user.companyName} • {getRoleLabel()}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Navigation */}
@@ -176,11 +195,7 @@ export default function StaffLayout({
           </nav>
 
           {/* Footer */}
-          <div className="p-4 space-y-2" style={{ borderTop: "1px solid rgba(32, 196, 196, 0.2)" }}>
-            <div className="px-3 py-2 bg-white/10 rounded-lg">
-              <p className="text-sm font-medium truncate text-white">{session.user.name}</p>
-              <p className="text-xs text-white/60">{getRoleLabel()}</p>
-            </div>
+          <div className="p-4" style={{ borderTop: "1px solid rgba(32, 196, 196, 0.2)" }}>
             <Button
               variant="ghost"
               className="w-full justify-start text-white/60 hover:text-red-400 hover:bg-red-950/30"

@@ -93,9 +93,10 @@ export async function PATCH(
       status: validatedData.status,
     }
 
-    // Record actual departure time when status changes to DEPARTED
+    // Record actual departure time and auto-halt booking when status changes to DEPARTED
     if (validatedData.status === "DEPARTED") {
       updateData.actualDepartureTime = new Date()
+      updateData.bookingHalted = true
     }
 
     // Record actual arrival time when status changes to COMPLETED
@@ -131,6 +132,25 @@ export async function PATCH(
       },
     })
 
+    // Create additional log for auto-halt when trip departs
+    if (validatedData.status === "DEPARTED") {
+      await prisma.adminLog.create({
+        data: {
+          userId: session.user.id,
+          action: "AUTO_HALT_TRIP_DEPARTED",
+          details: JSON.stringify({
+            tripId,
+            route: `${trip.origin} → ${trip.destination}`,
+            departureTime: trip.departureTime,
+            actualDepartureTime: updateData.actualDepartureTime,
+            reason: "Trip departed - booking automatically halted",
+          }),
+          tripId,
+          companyId: trip.companyId,
+        },
+      })
+    }
+
     // If trip is completed or cancelled, update vehicle availability if assigned
     if ((validatedData.status === "COMPLETED" || validatedData.status === "CANCELLED") && trip.vehicleId) {
       // Mark vehicle as available (could add more logic here)
@@ -143,7 +163,11 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
       trip: updatedTrip,
-      message: `Trip status updated to ${validatedData.status}`,
+      message: `Trip status updated to ${validatedData.status}${
+        validatedData.status === "DEPARTED"
+          ? ". Booking has been automatically halted as trip has departed."
+          : ""
+      }`,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {

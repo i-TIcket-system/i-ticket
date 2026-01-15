@@ -26,7 +26,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
 
   // Hide navbar on routes that have their own layouts
-  const hiddenRoutes = ["/admin", "/company", "/staff", "/cashier", "/sales"]
+  const hiddenRoutes = ["/admin", "/company", "/staff", "/cashier", "/mechanic", "/finance", "/sales"]
   const shouldHide = hiddenRoutes.some((route) => pathname?.startsWith(route))
 
   // Track scroll position for navbar styling
@@ -203,12 +203,12 @@ export function Navbar() {
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost" className="h-10 px-4 font-medium">
+                  <Button variant={pathname === "/login" ? "default" : "ghost"} className="h-10 px-4 font-medium">
                     Log in
                   </Button>
                 </Link>
                 <Link href="/register">
-                  <Button className="h-10 px-5 font-medium btn-glow">
+                  <Button variant={pathname === "/register" ? "default" : "ghost"} className="h-10 px-5 font-medium">
                     Sign up
                   </Button>
                 </Link>
@@ -303,10 +303,10 @@ export function Navbar() {
               ) : (
                 <div className="flex gap-2 pt-2 px-1">
                   <Link href="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="outline" className="w-full h-11 font-medium">Log in</Button>
+                    <Button variant={pathname === "/login" ? "default" : "outline"} className="w-full h-11 font-medium">Log in</Button>
                   </Link>
                   <Link href="/register" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
-                    <Button className="w-full h-11 font-medium">Sign up</Button>
+                    <Button variant={pathname === "/register" ? "default" : "outline"} className="w-full h-11 font-medium">Sign up</Button>
                   </Link>
                 </div>
               )}

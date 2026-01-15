@@ -145,7 +145,8 @@ export default function StaffManagementPage() {
       }
       fetchStaff()
     }
-  }, [status, session, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, session])
 
   const fetchStaff = async () => {
     try {
@@ -270,6 +271,11 @@ export default function StaffManagementPage() {
     }
   }
 
+  // Reset to page 1 when filters change (must be before early return)
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, roleFilter])
+
   if (status === "loading" || isLoading) {
     return (
       <div className="container mx-auto py-12">
@@ -314,11 +320,6 @@ export default function StaffManagementPage() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
-
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm, roleFilter])
 
   return (
     <div className="container mx-auto py-12 px-4 max-w-7xl">

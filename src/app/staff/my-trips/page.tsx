@@ -17,6 +17,8 @@ import {
   Car,
   UserCheck,
   Ticket,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -264,29 +266,62 @@ function TripCard({ trip, highlight = false, past = false }: { trip: Trip; highl
   const totalRevenue = trip.bookings.reduce((sum, b) => sum + b.totalAmount, 0)
   const occupancy = ((trip.totalSlots - trip.availableSlots) / trip.totalSlots) * 100
 
+  // Auto-expand active trips (today's trips), collapse others by default
+  const [expanded, setExpanded] = useState(highlight)
+
   return (
     <Card className={cn(
       "hover:shadow-lg transition-all",
       highlight && "border-orange-400 border-2 shadow-md",
       past && "opacity-60"
     )}>
-      <CardContent className="pt-6">
-        <div className="flex items-start justify-between gap-4">
+      <CardHeader
+        className="cursor-pointer hover:bg-muted/50 transition-colors"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center justify-between">
           <div className="flex-1">
-            {highlight && (
-              <Badge className="mb-2 bg-orange-500">
-                Departing Today
-              </Badge>
-            )}
-            {past && (
-              <Badge variant="secondary" className="mb-2">
-                Completed
-              </Badge>
-            )}
-
-            <h3 className="text-lg font-semibold mb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
               {trip.origin} → {trip.destination}
-            </h3>
+              {highlight && (
+                <Badge className="bg-orange-500">
+                  Departing Today
+                </Badge>
+              )}
+              {past && (
+                <Badge variant="secondary">
+                  Completed
+                </Badge>
+              )}
+            </CardTitle>
+            <CardDescription className="mt-1 flex items-center gap-4 text-sm">
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {formatDate(trip.departureTime)}
+              </span>
+              <span className="flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                {trip.totalSlots - trip.availableSlots}/{trip.totalSlots} passengers
+              </span>
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge>
+              {BUS_TYPES.find(b => b.value === trip.busType)?.label || trip.busType}
+            </Badge>
+            {expanded ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </div>
+        </div>
+      </CardHeader>
+
+      {expanded && (
+        <CardContent className="pt-0">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1">
 
             {trip.route && (
               <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
@@ -397,6 +432,7 @@ function TripCard({ trip, highlight = false, past = false }: { trip: Trip; highl
           </div>
         )}
       </CardContent>
+    )}
     </Card>
   )
 }

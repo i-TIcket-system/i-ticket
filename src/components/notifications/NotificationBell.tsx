@@ -24,6 +24,7 @@ function getNotificationUrl(
   type: string,
   tripId: string | null | undefined,
   bookingId: string | null | undefined,
+  workOrderId: string | null | undefined,
   userRole: string | undefined,
   staffRole: string | null | undefined
 ): string | null {
@@ -84,6 +85,37 @@ function getNotificationUrl(
     // Super Admin → admin dashboard
     if (userRole === "SUPER_ADMIN") {
       return "/admin/dashboard"
+    }
+    return null
+  }
+
+  // Work Order notifications
+  if (
+    [
+      "WORK_ORDER_CREATED",
+      "WORK_ORDER_ASSIGNED",
+      "WORK_ORDER_STATUS_CHANGED",
+      "WORK_ORDER_MESSAGE",
+      "WORK_ORDER_COMPLETED",
+      "WORK_ORDER_URGENT",
+    ].includes(type) &&
+    workOrderId
+  ) {
+    // Mechanic → mechanic work order detail
+    if (staffRole === "MECHANIC") {
+      return `/mechanic/work-order/${workOrderId}`
+    }
+    // Finance staff → finance work order detail
+    if (staffRole === "FINANCE") {
+      return `/finance/work-orders/${workOrderId}`
+    }
+    // Company Admin (manager, no staffRole) → company work order detail
+    if (userRole === "COMPANY_ADMIN" && !staffRole) {
+      return `/company/work-orders/${workOrderId}`
+    }
+    // Driver/Conductor → company work order (they can view but not assigned portal-specific page)
+    if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") {
+      return `/company/work-orders/${workOrderId}`
     }
     return null
   }
@@ -154,15 +186,26 @@ export function NotificationBell({
     isRead: boolean,
     type: string,
     tripId?: string | null,
-    bookingId?: string | null
+    bookingId?: string | null,
+    metadata?: Record<string, unknown> | null
   ) => {
     // Mark as read
     if (!isRead) {
       await markAsRead(notificationId)
     }
 
+    // Extract workOrderId from metadata if present
+    const workOrderId = metadata?.workOrderId as string | undefined
+
     // Navigate to relevant page based on role and staffRole
-    const url = getNotificationUrl(type, tripId, bookingId, session?.user?.role, session?.user?.staffRole)
+    const url = getNotificationUrl(
+      type,
+      tripId,
+      bookingId,
+      workOrderId,
+      session?.user?.role,
+      session?.user?.staffRole
+    )
     if (url) {
       setIsOpen(false) // Close dropdown
       router.push(url)
@@ -261,7 +304,8 @@ export function NotificationBell({
                         notification.isRead,
                         notification.type,
                         notification.tripId,
-                        notification.bookingId
+                        notification.bookingId,
+                        notification.metadata
                       )
                     }
                   />

@@ -12,6 +12,7 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Wrench,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -44,6 +45,12 @@ const typeIcons: Record<string, React.ElementType> = {
   PAYOUT_PROCESSED: DollarSign,
   LOW_SLOT_ALERT: AlertCircle,
   SYSTEM_ALERT: Bell,
+  WORK_ORDER_CREATED: Wrench,
+  WORK_ORDER_ASSIGNED: Wrench,
+  WORK_ORDER_STATUS_CHANGED: Wrench,
+  WORK_ORDER_MESSAGE: MessageSquare,
+  WORK_ORDER_COMPLETED: CheckCircle,
+  WORK_ORDER_URGENT: AlertTriangle,
 }
 
 const priorityColors: Record<number, string> = {
