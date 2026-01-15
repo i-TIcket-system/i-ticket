@@ -118,7 +118,7 @@ const getRoleInfo = (role: string) => {
 }
 
 export default function CompanyProfilePage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update: updateSession } = useSession()
   const router = useRouter()
 
   const [company, setCompany] = useState<Company | null>(null)
@@ -237,6 +237,8 @@ export default function CompanyProfilePage() {
       if (response.ok) {
         toast.success("Company profile updated successfully")
         fetchCompanyProfile()
+        // Refresh session to update company name across the app
+        await updateSession()
       } else {
         const data = await response.json()
         toast.error(data.error || "Failed to update profile")

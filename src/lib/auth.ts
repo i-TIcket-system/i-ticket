@@ -205,7 +205,7 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id
         token.role = user.role
@@ -214,6 +214,22 @@ export const authOptions: NextAuthOptions = {
         token.companyName = user.companyName
         token.staffRole = user.staffRole
       }
+
+      // Refresh company name when session is manually updated
+      if (trigger === 'update' && token.companyId) {
+        try {
+          const freshUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            include: { company: true }
+          })
+          if (freshUser?.company) {
+            token.companyName = freshUser.company.name
+          }
+        } catch (error) {
+          console.error('Failed to refresh company name in token:', error)
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
