@@ -41,7 +41,7 @@ export const createTripSchema = z.object({
   departureTime: z.string().datetime().refine((date) => new Date(date) > new Date(), {
     message: "Departure time must be in the future",
   }),
-  estimatedDuration: z.number().int().positive("Duration must be positive").max(48, "Duration cannot exceed 48 hours"),
+  estimatedDuration: z.number().int().min(30, "Duration must be at least 30 minutes").max(2880, "Duration cannot exceed 2880 minutes (48 hours)"),
   distance: z.number().int().positive("Distance must be positive").max(5000, "Distance seems too far"),
   price: z.number().positive("Price must be positive").max(100000, "Price seems too high"),
   busType: z.string().min(2, "Bus type is required"),
