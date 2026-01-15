@@ -526,17 +526,25 @@ function SearchContent() {
                                 View Only
                               </Button>
                             ) : (
-                              <Link
-                                href={`/booking/${trip.id}`}
-                                onClick={() => {
-                                  // Clear any previous booking data for this trip (prevents guest data persistence)
-                                  sessionStorage.removeItem(`booking-${trip.id}-passengers`)
-                                }}
-                              >
-                                <Button disabled={trip.availableSlots === 0}>
-                                  {trip.availableSlots === 0 ? "Sold Out" : "Select"}
-                                </Button>
-                              </Link>
+                              <>
+                                {trip.status === "COMPLETED" || trip.status === "CANCELLED" ? (
+                                  <Button disabled variant="secondary" size="sm">
+                                    {trip.status === "COMPLETED" ? "Trip Completed" : "Cancelled"}
+                                  </Button>
+                                ) : (
+                                  <Link
+                                    href={`/booking/${trip.id}`}
+                                    onClick={() => {
+                                      // Clear any previous booking data for this trip (prevents guest data persistence)
+                                      sessionStorage.removeItem(`booking-${trip.id}-passengers`)
+                                    }}
+                                  >
+                                    <Button disabled={trip.availableSlots === 0 || trip.status === "DEPARTED"}>
+                                      {trip.availableSlots === 0 ? "Sold Out" : trip.status === "DEPARTED" ? "Departed" : "Select"}
+                                    </Button>
+                                  </Link>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
