@@ -91,9 +91,9 @@ export default function PaymentPage() {
         setPaymentStatus("success")
         toast.success("Payment successful! Generating your tickets...")
 
-        // Clean up localStorage (remove saved passenger data for this trip)
+        // Clean up sessionStorage (remove saved passenger data for this trip)
         if (booking?.trip?.id) {
-          localStorage.removeItem(`booking-${booking.trip.id}-passengers`)
+          sessionStorage.removeItem(`booking-${booking.trip.id}-passengers`)
         }
 
         // Wait a moment then redirect to tickets
