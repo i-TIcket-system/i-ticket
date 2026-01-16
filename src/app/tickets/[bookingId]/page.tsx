@@ -341,7 +341,7 @@ export default function TicketsPage() {
 
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                           <span>
                             {new Date(booking.trip.departureTime).toLocaleDateString("en-ET", {
                               weekday: "short",
@@ -351,7 +351,7 @@ export default function TicketsPage() {
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                           <span>
                             {formatDuration(booking.trip.estimatedDuration)}
                             {booking.trip.distance && ` • ${booking.trip.distance} km`}
@@ -395,23 +395,25 @@ export default function TicketsPage() {
                             <div className="flex items-center gap-2 text-xs flex-wrap">
                               {booking.trip.driver && (
                                 <span className="flex items-center gap-1">
-                                  <Car className="h-3 w-3" />
-                                  {booking.trip.driver.name} ({booking.trip.driver.phone})
+                                  <Car className="h-3 w-3 flex-shrink-0" />
+                                  <span>{booking.trip.driver.name} ({booking.trip.driver.phone})</span>
                                 </span>
                               )}
-                              {booking.trip.driver && booking.trip.conductor && <span>•</span>}
+                              {booking.trip.driver && booking.trip.conductor && <span className="text-muted-foreground">•</span>}
                               {booking.trip.conductor && (
                                 <span className="flex items-center gap-1">
-                                  <UserCheck className="h-3 w-3" />
-                                  {booking.trip.conductor.name} ({booking.trip.conductor.phone})
+                                  <UserCheck className="h-3 w-3 flex-shrink-0" />
+                                  <span>{booking.trip.conductor.name} ({booking.trip.conductor.phone})</span>
                                 </span>
                               )}
-                              {(booking.trip.driver || booking.trip.conductor) && booking.trip.vehicle && <span>•</span>}
+                              {(booking.trip.driver || booking.trip.conductor) && booking.trip.vehicle && <span className="text-muted-foreground">•</span>}
                               {booking.trip.vehicle && (
                                 <span className="flex items-center gap-1 font-mono">
-                                  <Truck className="h-3 w-3" />
-                                  {booking.trip.vehicle.plateNumber}
-                                  {booking.trip.vehicle.sideNumber && ` (${booking.trip.vehicle.sideNumber})`}
+                                  <Truck className="h-3 w-3 flex-shrink-0" />
+                                  <span>
+                                    {booking.trip.vehicle.plateNumber}
+                                    {booking.trip.vehicle.sideNumber && ` (${booking.trip.vehicle.sideNumber})`}
+                                  </span>
                                 </span>
                               )}
                             </div>
@@ -426,8 +428,8 @@ export default function TicketsPage() {
                         className="w-full mb-2"
                         onClick={addToCalendar}
                       >
-                        <Calendar className="h-4 w-4 mr-2" />
-                        Add to Calendar
+                        <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                        <span>Add to Calendar</span>
                       </Button>
 
                       <div className="flex gap-2">
@@ -439,13 +441,13 @@ export default function TicketsPage() {
                         >
                           {isDownloading ? (
                             <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              Preparing...
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin flex-shrink-0" />
+                              <span>Preparing...</span>
                             </>
                           ) : (
                             <>
-                              <Download className="h-4 w-4 mr-2" />
-                              Download
+                              <Download className="h-4 w-4 mr-2 flex-shrink-0" />
+                              <span>Download</span>
                             </>
                           )}
                         </Button>
@@ -454,8 +456,8 @@ export default function TicketsPage() {
                           className="flex-1"
                           onClick={() => shareTicket(selectedTicket)}
                         >
-                          <Share2 className="h-4 w-4 mr-2" />
-                          Share
+                          <Share2 className="h-4 w-4 mr-2 flex-shrink-0" />
+                          <span>Share</span>
                         </Button>
                       </div>
                     </div>
@@ -513,21 +515,21 @@ export default function TicketsPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-primary mt-0.5" />
+                  <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium">From</p>
                     <p className="text-muted-foreground">{booking.trip.origin}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-accent mt-0.5" />
+                  <MapPin className="h-5 w-5 text-accent mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium">To</p>
                     <p className="text-muted-foreground">{booking.trip.destination}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-secondary mt-0.5" />
+                  <Calendar className="h-5 w-5 text-secondary mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium">Departure</p>
                     <p className="text-muted-foreground">
@@ -543,8 +545,8 @@ export default function TicketsPage() {
               <Card className="border-primary/20">
                 <CardHeader>
                   <CardTitle className="text-lg flex items-center gap-2">
-                    <Phone className="h-5 w-5 text-primary" />
-                    Trip Staff Contact
+                    <Phone className="h-5 w-5 text-primary flex-shrink-0" />
+                    <span>Trip Staff Contact</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -555,7 +557,7 @@ export default function TicketsPage() {
                   {booking.trip.driver && (
                     <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
                       <div className="flex items-center gap-2 mb-2">
-                        <Car className="h-4 w-4 text-blue-600" />
+                        <Car className="h-4 w-4 text-blue-600 flex-shrink-0" />
                         <span className="text-sm font-semibold text-blue-900">Driver</span>
                       </div>
                       <p className="font-medium text-blue-900">{booking.trip.driver.name}</p>
@@ -568,8 +570,8 @@ export default function TicketsPage() {
                         href={`tel:${booking.trip.driver.phone}`}
                         className="flex items-center gap-2 text-blue-700 hover:text-blue-900 hover:underline text-sm font-medium mt-1"
                       >
-                        <Phone className="h-3 w-3" />
-                        {booking.trip.driver.phone}
+                        <Phone className="h-3 w-3 flex-shrink-0" />
+                        <span>{booking.trip.driver.phone}</span>
                       </a>
                     </div>
                   )}
@@ -577,7 +579,7 @@ export default function TicketsPage() {
                   {booking.trip.conductor && (
                     <div className="p-3 rounded-lg bg-green-50 border border-green-200">
                       <div className="flex items-center gap-2 mb-2">
-                        <UserCheck className="h-4 w-4 text-green-600" />
+                        <UserCheck className="h-4 w-4 text-green-600 flex-shrink-0" />
                         <span className="text-sm font-semibold text-green-900">Conductor</span>
                       </div>
                       <p className="font-medium text-green-900">{booking.trip.conductor.name}</p>
@@ -585,8 +587,8 @@ export default function TicketsPage() {
                         href={`tel:${booking.trip.conductor.phone}`}
                         className="flex items-center gap-2 text-green-700 hover:text-green-900 hover:underline text-sm font-medium mt-1"
                       >
-                        <Phone className="h-3 w-3" />
-                        {booking.trip.conductor.phone}
+                        <Phone className="h-3 w-3 flex-shrink-0" />
+                        <span>{booking.trip.conductor.phone}</span>
                       </a>
                     </div>
                   )}
@@ -594,7 +596,7 @@ export default function TicketsPage() {
                   {booking.trip.vehicle && (
                     <div className="p-3 rounded-lg bg-purple-50 border border-purple-200">
                       <div className="flex items-center gap-2 mb-2">
-                        <Truck className="h-4 w-4 text-purple-600" />
+                        <Truck className="h-4 w-4 text-purple-600 flex-shrink-0" />
                         <span className="text-sm font-semibold text-purple-900">Assigned Vehicle</span>
                       </div>
                       <p className="font-medium text-purple-900 font-mono">
@@ -632,8 +634,8 @@ export default function TicketsPage() {
                     href={`tel:${phone}`}
                     className="flex items-center gap-2 text-primary hover:underline"
                   >
-                    <Phone className="h-4 w-4" />
-                    {phone}
+                    <Phone className="h-4 w-4 flex-shrink-0" />
+                    <span>{phone}</span>
                   </a>
                 ))}
               </CardContent>
