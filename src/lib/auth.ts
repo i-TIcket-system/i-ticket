@@ -164,6 +164,7 @@ export const authOptions: NextAuthOptions = {
             companyId: user.companyId,
             companyName: user.company?.name || null,
             staffRole: user.staffRole,
+            profilePicture: user.profilePicture,
           }
         }
 
@@ -213,20 +214,26 @@ export const authOptions: NextAuthOptions = {
         token.companyId = user.companyId
         token.companyName = user.companyName
         token.staffRole = user.staffRole
+        token.profilePicture = user.profilePicture
       }
 
-      // Refresh company name when session is manually updated
-      if (trigger === 'update' && token.companyId) {
+      // Refresh user data when session is manually updated
+      if (trigger === 'update' && token.id) {
         try {
           const freshUser = await prisma.user.findUnique({
             where: { id: token.id as string },
             include: { company: true }
           })
-          if (freshUser?.company) {
-            token.companyName = freshUser.company.name
+          if (freshUser) {
+            // Update profile picture
+            token.profilePicture = freshUser.profilePicture
+            // Update company name if user is associated with a company
+            if (token.companyId && freshUser.company) {
+              token.companyName = freshUser.company.name
+            }
           }
         } catch (error) {
-          console.error('Failed to refresh company name in token:', error)
+          console.error('Failed to refresh user data in token:', error)
         }
       }
 
@@ -240,6 +247,7 @@ export const authOptions: NextAuthOptions = {
         session.user.companyId = token.companyId as string | null
         session.user.companyName = token.companyName as string | null
         session.user.staffRole = token.staffRole as string | null
+        session.user.profilePicture = token.profilePicture as string | null
       }
       return session
     }
