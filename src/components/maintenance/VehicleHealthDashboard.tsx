@@ -281,7 +281,7 @@ export function VehicleHealthDashboard({
             {(data.costSummary.maintenanceCostMTD + data.costSummary.fuelCostMTD).toLocaleString()} Birr
           </p>
           <p className="text-sm text-gray-600">
-            {data.costSummary.costPerKm?.toFixed(2) || 0} Birr/km
+            {data.costSummary.costPerKm?.toFixed(2) || 'N/A'} {data.costSummary.costPerKm ? 'Birr/km' : ''}
           </p>
         </Card>
       </div>
