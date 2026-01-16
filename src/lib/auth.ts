@@ -198,6 +198,7 @@ export const authOptions: NextAuthOptions = {
             companyId: null,
             companyName: null,
             staffRole: null,
+            profilePicture: null,
           }
         }
 
