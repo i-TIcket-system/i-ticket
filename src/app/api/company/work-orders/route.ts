@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/db'
+import { Prisma } from '@prisma/client'
 import { z } from 'zod'
 import { notifyWorkOrderStakeholders, notifyWorkOrderUser } from '@/lib/notifications'
 
@@ -30,7 +31,7 @@ const createWorkOrderSchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || session.user.role !== 'COMPANY_ADMIN') {
+    if (!session || session.user.role !== 'COMPANY_ADMIN' || !session.user.companyId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -47,27 +48,15 @@ export async function GET(request: NextRequest) {
     const limit = isNaN(parsedLimit) || parsedLimit < 1 ? 20 : Math.min(parsedLimit, 100)
     const skip = (page - 1) * limit
 
-    // Build where clause
-    const where: any = {
+    // Build where clause with proper typing (now companyId is guaranteed to be non-null)
+    const where: Prisma.WorkOrderWhereInput = {
       vehicle: {
         companyId: session.user.companyId,
       },
-    }
-
-    if (vehicleId) {
-      where.vehicleId = vehicleId
-    }
-
-    if (status) {
-      where.status = status
-    }
-
-    if (priority) {
-      where.priority = priority
-    }
-
-    if (workType) {
-      where.taskType = workType
+      ...(vehicleId && { vehicleId }),
+      ...(status && { status }),
+      ...(priority && { priority: parseInt(priority) }),
+      ...(workType && { taskType: workType }),
     }
 
     // Get work orders

@@ -34,58 +34,76 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Get aggregated stats for each sales person
-    const salesPersonsWithStats = await Promise.all(
-      salesPersons.map(async (sp) => {
-        // Get unique scans count
-        const uniqueScans = await prisma.salesQrScan.groupBy({
-          by: ['visitorHash'],
-          where: { salesPersonId: sp.id },
-          _count: true,
-        })
+    // OPTIMIZATION: Batch fetch all stats in 3 queries instead of 3N queries
+    // Fetch unique visitors for all sales persons at once
+    const allUniqueScans = await prisma.salesQrScan.groupBy({
+      by: ['salesPersonId', 'visitorHash'],
+      _count: true,
+    })
 
-        // Get commission totals
-        const commissionStats = await prisma.salesCommission.aggregate({
-          where: { salesPersonId: sp.id },
-          _sum: {
-            salesCommission: true,
-          },
-          _count: true,
-        })
+    // Count unique visitors per sales person
+    const uniqueVisitorsBySalesPerson = allUniqueScans.reduce((acc, scan) => {
+      if (!acc[scan.salesPersonId]) {
+        acc[scan.salesPersonId] = new Set()
+      }
+      acc[scan.salesPersonId].add(scan.visitorHash)
+      return acc
+    }, {} as Record<string, Set<string>>)
 
-        const pendingCommissions = await prisma.salesCommission.aggregate({
-          where: {
-            salesPersonId: sp.id,
-            status: 'PENDING',
-          },
-          _sum: {
-            salesCommission: true,
-          },
-        })
+    // Fetch all commission stats at once
+    const allCommissionStats = await prisma.salesCommission.groupBy({
+      by: ['salesPersonId'],
+      _sum: {
+        salesCommission: true,
+      },
+      _count: true,
+    })
 
-        return {
-          id: sp.id,
-          name: sp.name,
-          phone: sp.phone,
-          email: sp.email,
-          referralCode: sp.referralCode,
-          status: sp.status,
-          createdAt: sp.createdAt,
-          lastLoginAt: sp.lastLoginAt,
-          stats: {
-            totalScans: sp._count.qrScans,
-            uniqueVisitors: uniqueScans.length,
-            conversions: sp._count.referrals,
-            conversionRate: uniqueScans.length > 0
-              ? Math.round((sp._count.referrals / uniqueScans.length) * 100)
-              : 0,
-            totalCommission: commissionStats._sum.salesCommission || 0,
-            pendingCommission: pendingCommissions._sum.salesCommission || 0,
-            bookingsGenerated: commissionStats._count || 0,
-          }
-        }
-      })
+    // Fetch pending commissions at once
+    const allPendingCommissions = await prisma.salesCommission.groupBy({
+      by: ['salesPersonId'],
+      where: { status: 'PENDING' },
+      _sum: {
+        salesCommission: true,
+      },
+    })
+
+    // Create lookup maps for O(1) access
+    const commissionStatsMap = new Map(
+      allCommissionStats.map(stat => [stat.salesPersonId, stat])
     )
+    const pendingCommissionsMap = new Map(
+      allPendingCommissions.map(stat => [stat.salesPersonId, stat])
+    )
+
+    // Map results in JavaScript (no more database queries)
+    const salesPersonsWithStats = salesPersons.map((sp) => {
+      const uniqueVisitors = uniqueVisitorsBySalesPerson[sp.id]?.size || 0
+      const commissionStats = commissionStatsMap.get(sp.id)
+      const pendingCommissions = pendingCommissionsMap.get(sp.id)
+
+      return {
+        id: sp.id,
+        name: sp.name,
+        phone: sp.phone,
+        email: sp.email,
+        referralCode: sp.referralCode,
+        status: sp.status,
+        createdAt: sp.createdAt,
+        lastLoginAt: sp.lastLoginAt,
+        stats: {
+          totalScans: sp._count.qrScans,
+          uniqueVisitors,
+          conversions: sp._count.referrals,
+          conversionRate: uniqueVisitors > 0
+            ? Math.round((sp._count.referrals / uniqueVisitors) * 100)
+            : 0,
+          totalCommission: commissionStats?._sum.salesCommission || 0,
+          pendingCommission: pendingCommissions?._sum.salesCommission || 0,
+          bookingsGenerated: commissionStats?._count || 0,
+        }
+      }
+    })
 
     return NextResponse.json({ salesPersons: salesPersonsWithStats })
   } catch (error) {

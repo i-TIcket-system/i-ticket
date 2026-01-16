@@ -32,6 +32,12 @@ export async function POST(request: NextRequest) {
 
     const isDemoMode = process.env.DEMO_MODE === 'true';
 
+    // CRITICAL SECURITY: Prevent DEMO_MODE in production
+    if (isDemoMode && process.env.NODE_ENV === 'production') {
+      console.error('[TeleBirr Callback] CRITICAL: DEMO_MODE cannot be enabled in production');
+      throw new Error('DEMO_MODE cannot be enabled in production environment');
+    }
+
     // SECURITY CHECK 1: Generate callback hash for idempotency
     const callbackHash = generateCallbackHash(body);
 

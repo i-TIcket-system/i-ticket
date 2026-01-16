@@ -94,7 +94,6 @@ export async function POST(request: NextRequest) {
       data: {
         userId: session.user.id,
         action: "COMPANY_LOGO_UPDATED",
-        category: "COMPANY",
         details: `Company logo updated: ${filename}`,
         companyId: session.user.companyId,
       },
@@ -155,7 +154,6 @@ export async function DELETE(request: NextRequest) {
       data: {
         userId: session.user.id,
         action: "COMPANY_LOGO_REMOVED",
-        category: "COMPANY",
         details: "Company logo removed",
         companyId: session.user.companyId,
       },

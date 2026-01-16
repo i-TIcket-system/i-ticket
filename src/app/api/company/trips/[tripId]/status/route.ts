@@ -102,8 +102,15 @@ export async function PATCH(
       )
     }
 
-    // Prepare update data
-    const updateData: any = {
+    // Prepare update data with proper typing
+    interface TripStatusUpdate {
+      status: string
+      actualDepartureTime?: Date
+      actualArrivalTime?: Date
+      bookingHalted?: boolean
+    }
+
+    const updateData: TripStatusUpdate = {
       status: validatedData.status,
     }
 

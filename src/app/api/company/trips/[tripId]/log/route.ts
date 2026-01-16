@@ -228,7 +228,8 @@ export async function POST(
         if (companyAdmins.length > 0) {
           await prisma.notification.createMany({
             data: companyAdmins.map((admin) => ({
-              userId: admin.id,
+              recipientId: admin.id,
+              recipientType: 'USER',
               type: 'TRIP_LOG_RECORDED',
               title: 'Trip Log Recorded',
               message: `Driver ${session.user.name} recorded start odometer (${validatedData.startOdometer.toLocaleString()} km) for trip ${trip.origin} → ${trip.destination}`,
