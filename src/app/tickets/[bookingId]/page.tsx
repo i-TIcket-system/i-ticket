@@ -353,11 +353,14 @@ export default function TicketsPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <span>
-                            {formatDuration(booking.trip.estimatedDuration)}
-                            {booking.trip.distance && ` • ${booking.trip.distance} km`}
-                          </span>
+                          <span>{formatDuration(booking.trip.estimatedDuration)}</span>
                         </div>
+                        {booking.trip.distance && (
+                          <div className="flex items-center gap-2 col-span-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <span>Distance: {booking.trip.distance} km</span>
+                          </div>
+                        )}
                       </div>
 
                       <Separator />

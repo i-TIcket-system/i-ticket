@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   Bus,
@@ -36,15 +37,19 @@ interface BookingWithTrip {
 }
 
 export default function MyTicketsPage() {
+  const router = useRouter()
   const { data: session, status: authStatus } = useSession()
   const [bookings, setBookings] = useState<BookingWithTrip[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (authStatus === "authenticated") {
+    if (authStatus === "unauthenticated") {
+      // Redirect guests to homepage
+      router.push("/")
+    } else if (authStatus === "authenticated") {
       fetchBookings()
     }
-  }, [authStatus])
+  }, [authStatus, router])
 
   const fetchBookings = async () => {
     try {

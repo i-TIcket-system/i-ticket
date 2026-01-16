@@ -623,12 +623,12 @@ export default function BookingPage() {
 
                       <div className="space-y-2">
                         <Label>
-                          National ID / Passport {passenger.isChild ? "(Optional)" : "*"}
+                          ID Number/Passport {passenger.isChild ? "(Optional)" : "*"}
                         </Label>
                         <div className="relative">
                           <BadgeCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
-                            placeholder={passenger.isChild ? "Not required for children" : "ID number"}
+                            placeholder={passenger.isChild ? "Not required for children" : "Kebele, National, Regional, or Passport"}
                             value={passenger.nationalId}
                             onChange={(e) => updatePassenger(index, "nationalId", e.target.value)}
                             className="pl-10"

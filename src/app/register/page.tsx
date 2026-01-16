@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { signIn } from "next-auth/react"
 import Link from "next/link"
 import Image from "next/image"
 import { User, Lock, Mail, Loader2, Check, ArrowRight, Ticket, MapPin, Smartphone, Eye, EyeOff, Users, Info } from "lucide-react"
@@ -106,15 +107,23 @@ export default function RegisterPage() {
       }
 
       if (registerAsSales) {
-        toast.success("Sales account created! Redirecting to sales dashboard...")
-        setTimeout(() => {
-          router.push("/sales")
-        }, 1000)
+        toast.success("Sales account created! Signing you in...")
+        // Auto-login for sales person
+        await signIn("credentials", {
+          phone: formData.phone,
+          password: formData.password,
+          redirect: false,
+        })
+        router.push("/sales")
       } else {
-        toast.success("Account created successfully! Redirecting to login...")
-        setTimeout(() => {
-          router.push("/login?registered=true")
-        }, 1000)
+        toast.success("Account created successfully! Signing you in...")
+        // Auto-login for regular customer
+        await signIn("credentials", {
+          phone: formData.phone,
+          password: formData.password,
+          redirect: false,
+        })
+        router.push("/tickets")
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "An unexpected error occurred")
