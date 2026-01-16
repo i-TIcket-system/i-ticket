@@ -638,6 +638,11 @@ export default function BookingPage() {
                             disabled={passenger.isChild}
                             required={!passenger.isChild}
                           />
+                          {passenger.isChild && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Children under 12 don't need ID verification
+                            </p>
+                          )}
                         </div>
                       </div>
 

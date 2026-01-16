@@ -23,6 +23,12 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -449,10 +455,20 @@ function SearchContent() {
                                     if (trip.intermediateStops) {
                                       const stops = JSON.parse(trip.intermediateStops);
                                       if (Array.isArray(stops) && stops.length > 0) {
+                                        const stopsText = stops.join(', ');
                                         return (
-                                          <span className="text-xs text-primary font-medium mt-1">
-                                            via {stops.join(', ')}
-                                          </span>
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <span className="text-xs text-primary font-medium mt-1 cursor-help truncate max-w-xs">
+                                                  via {stopsText}
+                                                </span>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <p className="max-w-sm">Stops: {stopsText}</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
                                         );
                                       }
                                     }
@@ -462,10 +478,20 @@ function SearchContent() {
                                       // Get intermediate stops (exclude first and last)
                                       if (parts.length > 2) {
                                         const intermediates = parts.slice(1, -1);
+                                        const stopsText = intermediates.join(', ');
                                         return (
-                                          <span className="text-xs text-primary font-medium mt-1">
-                                            via {intermediates.join(', ')}
-                                          </span>
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <span className="text-xs text-primary font-medium mt-1 cursor-help truncate max-w-xs">
+                                                  via {stopsText}
+                                                </span>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <p className="max-w-sm">Stops: {stopsText}</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
                                         );
                                       }
                                     }
