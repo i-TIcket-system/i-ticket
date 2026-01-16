@@ -22,6 +22,7 @@ import { formatCurrency, formatDate } from "@/lib/utils"
 import { TripCountdown } from "@/components/ui/trip-countdown"
 import { SuccessAnimation } from "@/components/animations/SuccessAnimation"
 import { paymentSuccessConfetti } from "@/lib/confetti"
+import { PaymentPageSkeleton } from "@/components/skeletons/TripCardSkeleton"
 
 interface Booking {
   id: string
@@ -120,11 +121,7 @@ export default function PaymentPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <PaymentPageSkeleton />
   }
 
   if (!booking) {

@@ -56,6 +56,7 @@ import { toast } from "sonner"
 import { formatCurrency, formatDuration, formatDate, BUS_TYPES } from "@/lib/utils"
 import { calculateBookingAmounts } from "@/lib/commission"
 import { SeatMap } from "@/components/booking/SeatMap"
+import { BookingPageSkeleton } from "@/components/skeletons/TripCardSkeleton"
 
 interface Trip {
   id: string
@@ -368,11 +369,7 @@ export default function BookingPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    )
+    return <BookingPageSkeleton />
   }
 
   if (!trip) {
