@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth"
 import { getAvailableSeatNumbers } from "@/lib/utils"
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
 import { createLowSlotAlertTask } from "@/lib/clickup"
-import { calculateCommission } from "@/lib/commission"
+import { calculateCommission, calculateBookingAmounts } from "@/lib/commission"
 
 export async function POST(request: NextRequest) {
   try {
@@ -269,17 +269,19 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Calculate commission with VAT (recalculate on server for accuracy)
-      const commissionBreakdown = calculateCommission(totalAmount);
+      // Calculate booking amounts (passenger pays ticket + commission + VAT)
+      // Recalculate on server for accuracy - don't trust client values
+      const passengerCount = passengers.length;
+      const amounts = calculateBookingAmounts(lockedTrip.price, passengerCount);
 
       // Create booking with seat assignments
       const newBooking = await tx.booking.create({
         data: {
           tripId,
           userId, // Use determined userId (web or SMS guest)
-          totalAmount,
-          commission: commissionBreakdown.baseCommission,
-          commissionVAT: commissionBreakdown.vat,
+          totalAmount: amounts.totalAmount, // Passenger pays: ticket + commission + VAT
+          commission: amounts.commission.baseCommission,
+          commissionVAT: amounts.commission.vat,
           status: "PENDING",
           passengers: {
             create: passengers.map((p: any, index: number) => ({

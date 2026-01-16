@@ -20,11 +20,11 @@ export interface CommissionBreakdown {
 
 /**
  * Calculate commission breakdown for a booking
- * @param totalAmount - Total booking amount (price * passengers)
+ * @param ticketPrice - Base ticket price (price * passengers) - what company receives
  * @returns Commission breakdown with base commission, VAT, and total
  */
-export function calculateCommission(totalAmount: number): CommissionBreakdown {
-  const baseCommission = Math.round(totalAmount * COMMISSION_RATE)
+export function calculateCommission(ticketPrice: number): CommissionBreakdown {
+  const baseCommission = Math.round(ticketPrice * COMMISSION_RATE)
   const vat = Math.round(baseCommission * VAT_RATE)
   const totalCommission = baseCommission + vat
 
@@ -36,46 +36,48 @@ export function calculateCommission(totalAmount: number): CommissionBreakdown {
 }
 
 /**
- * Calculate total amount customer pays (ticket price + commission with VAT)
- * Use this when platform fee is passed to customer
- * @param ticketPrice - Base ticket price
+ * Calculate booking amounts for passenger payment
+ * Passengers pay: ticket price + commission + VAT
+ * @param ticketPrice - Base ticket price per passenger
  * @param passengerCount - Number of passengers
- * @returns Total amount including commission and VAT
+ * @returns Complete breakdown of what passenger pays
  */
-export function calculateTotalWithCommission(
+export function calculateBookingAmounts(
   ticketPrice: number,
   passengerCount: number
 ): {
-  ticketTotal: number
-  commission: CommissionBreakdown
-  grandTotal: number
+  ticketTotal: number // What company receives (ticket price × passengers)
+  commission: CommissionBreakdown // Platform commission + VAT
+  totalAmount: number // What passenger pays (ticket + commission + VAT)
 } {
   const ticketTotal = ticketPrice * passengerCount
   const commission = calculateCommission(ticketTotal)
+  const totalAmount = ticketTotal + commission.totalCommission
 
   return {
     ticketTotal,
     commission,
-    grandTotal: ticketTotal + commission.totalCommission,
+    totalAmount, // Passenger pays this (ticket + commission + VAT)
   }
 }
 
 /**
- * Calculate net revenue for bus company (after platform commission + VAT)
- * @param totalAmount - Total booking amount
- * @returns Net amount company receives
+ * Calculate company revenue from a booking
+ * Company receives the ticket price; platform receives commission + VAT
+ * @param ticketPrice - Base ticket price (what company gets)
+ * @param totalAmount - Total amount passenger paid (ticket + commission + VAT)
+ * @returns Revenue breakdown
  */
-export function calculateCompanyRevenue(totalAmount: number): {
-  totalAmount: number
-  commission: CommissionBreakdown
-  netToCompany: number
+export function calculateCompanyRevenue(ticketPrice: number, totalAmount: number): {
+  ticketPrice: number // What company receives
+  totalAmount: number // What passenger paid
+  commission: CommissionBreakdown // What platform receives
 } {
-  const commission = calculateCommission(totalAmount)
-  const netToCompany = totalAmount - commission.totalCommission
+  const commission = calculateCommission(ticketPrice)
 
   return {
-    totalAmount,
-    commission,
-    netToCompany,
+    ticketPrice, // Company gets the full ticket price
+    totalAmount, // Passenger paid ticket + commission + VAT
+    commission, // Platform gets commission + VAT
   }
 }

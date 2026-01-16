@@ -206,11 +206,15 @@ export async function generatePlatformRevenueReport(options: ReportOptions): Pro
   const totalBookings = filteredBookings.length
   const totalPassengers = filteredBookings.reduce((sum, b) => sum + b.passengers.length, 0)
   const uniqueCompanies = new Set(filteredBookings.map(b => b.trip.company.id)).size
-  const totalGrossRevenue = filteredBookings.reduce((sum, b) => sum + Number(b.totalAmount), 0)
+
+  // totalAmount = what passengers paid (ticket + commission + VAT)
+  const totalAmountPaid = filteredBookings.reduce((sum, b) => sum + Number(b.totalAmount), 0)
   const totalBaseCommission = filteredBookings.reduce((sum, b) => sum + Number(b.commission), 0)
   const totalCommissionVAT = filteredBookings.reduce((sum, b) => sum + (Number(b.commissionVAT) || 0), 0)
-  const totalPlatformCommission = totalBaseCommission + totalCommissionVAT
-  const totalNetToCompanies = totalGrossRevenue - totalPlatformCommission
+  const totalPlatformRevenue = totalBaseCommission + totalCommissionVAT
+
+  // Company receives: totalAmountPaid - platform commission (base + VAT)
+  const totalCompanyRevenue = totalAmountPaid - totalPlatformRevenue
 
   const webBookings = filteredBookings.filter(b => b.payment?.initiatedVia === 'WEB').length
   const smsBookings = filteredBookings.filter(b => b.payment?.initiatedVia === 'SMS').length
@@ -219,11 +223,11 @@ export async function generatePlatformRevenueReport(options: ReportOptions): Pro
 
   // Summary table
   const summaryData = [
-    ["Total Bookings:", totalBookings, "", "Total Gross Revenue:", formatCurrency(totalGrossRevenue)],
-    ["Total Passengers:", totalPassengers, "", "Base Commission (5%):", formatCurrency(totalBaseCommission)],
-    ["Companies:", uniqueCompanies, "", "VAT on Commission (15%):", formatCurrency(totalCommissionVAT)],
-    ["", "", "", "Total Commission:", formatCurrency(totalPlatformCommission)],
-    ["", "", "", "Net to Companies:", formatCurrency(totalNetToCompanies)],
+    ["Total Bookings:", totalBookings, "", "Total Paid by Passengers:", formatCurrency(totalAmountPaid)],
+    ["Total Passengers:", totalPassengers, "", "Revenue to Companies:", formatCurrency(totalCompanyRevenue)],
+    ["Companies:", uniqueCompanies, "", "Base Commission (5%):", formatCurrency(totalBaseCommission)],
+    ["", "", "", "VAT on Commission (15%):", formatCurrency(totalCommissionVAT)],
+    ["", "", "", "Platform Revenue:", formatCurrency(totalPlatformRevenue)],
     ["", "", "", "", ""],
     ["Web Bookings:", `${webBookings} (${Math.round(webBookings/totalBookings*100)}%)`, "", "TeleBirr Payments:", `${telebirrPayments} (${Math.round(telebirrPayments/totalBookings*100)}%)`],
     ["SMS Bookings:", `${smsBookings} (${Math.round(smsBookings/totalBookings*100)}%)`, "", "Demo Payments:", `${demoPayments} (${Math.round(demoPayments/totalBookings*100)}%)`],
@@ -474,11 +478,11 @@ export async function generatePlatformRevenueReport(options: ReportOptions): Pro
   currentRow++
 
   const grandTotalsData = [
-    ["Total Gross Revenue:", formatCurrency(totalGrossRevenue)],
+    ["Total Paid by Passengers:", formatCurrency(totalAmountPaid)],
+    ["Revenue to Companies:", formatCurrency(totalCompanyRevenue)],
     ["Base Commission (5%):", formatCurrency(totalBaseCommission)],
     ["VAT on Commission (15%):", formatCurrency(totalCommissionVAT)],
-    ["Total Platform Commission:", formatCurrency(totalPlatformCommission)],
-    ["Total Net to Companies:", formatCurrency(totalNetToCompanies)]
+    ["Total Platform Revenue:", formatCurrency(totalPlatformRevenue)]
   ]
 
   grandTotalsData.forEach((rowData, index) => {
