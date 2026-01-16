@@ -178,10 +178,10 @@ export default function RegisterPage() {
       </div>
 
       {/* Right Panel - Registration Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative overflow-hidden overflow-y-auto" style={{ background: "linear-gradient(180deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
-        {/* Subtle teal accent elements - z-0 and pointer-events-none to stay behind form */}
-        <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #20c4c4 0%, transparent 70%)" }} />
-        <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-10 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #0e9494 0%, transparent 70%)" }} />
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative overflow-hidden overflow-y-auto" style={{ background: "linear-gradient(135deg, #b8e6e6 0%, #a8dede 50%, #b5e5e5 100%)" }}>
+        {/* Teal accent elements - z-0 and pointer-events-none to stay behind form */}
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-30 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #20c4c4 0%, transparent 70%)" }} />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-30 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #0e9494 0%, transparent 70%)" }} />
 
         {/* Teal accent line on left edge */}
         <div className="hidden lg:block absolute left-0 top-1/4 bottom-1/4 w-1 z-0 pointer-events-none" style={{ background: "linear-gradient(180deg, #20c4c4 0%, #0e9494 50%, #0d4f5c 100%)" }} />
@@ -202,10 +202,12 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="mb-6">
-            <h2 className="text-2xl sm:text-3xl font-display mb-2" style={{ color: "#0d4f5c" }}>Create account</h2>
-            <p className="text-sm" style={{ color: "#0e9494" }}>Join i-Ticket to start booking trips</p>
-          </div>
+          {/* Glassmorphism Container */}
+          <div className="backdrop-blur-xl bg-white/70 border border-white/30 rounded-2xl shadow-2xl shadow-black/10 p-8">
+            <div className="mb-6">
+              <h2 className="text-2xl sm:text-3xl font-display mb-2" style={{ color: "#0d4f5c" }}>Create account</h2>
+              <p className="text-sm" style={{ color: "#0e9494" }}>Join i-Ticket to start booking trips</p>
+            </div>
 
           {/* Recruitment Banner */}
           {recruiterInfo && (
@@ -394,12 +396,14 @@ export default function RegisterPage() {
             </p>
           </form>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
-            <Link href="/login" className="text-primary font-medium hover:text-primary/80 transition-colors">
-              Sign in
-            </Link>
-          </p>
+            <p className="mt-6 text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link href="/login" className="text-primary font-medium hover:text-primary/80 transition-colors">
+                Sign in
+              </Link>
+            </p>
+          </div>
+          {/* End Glassmorphism Container */}
         </div>
       </div>
     </div>

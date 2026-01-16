@@ -61,8 +61,8 @@ export function Navbar() {
     <nav
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${
         scrolled
-          ? "bg-background/95 backdrop-blur-xl border-b shadow-sm"
-          : "bg-transparent border-b border-transparent"
+          ? "bg-white/70 dark:bg-background/70 backdrop-blur-2xl border-b border-white/20 dark:border-white/10 shadow-lg shadow-black/5"
+          : "bg-white/30 dark:bg-transparent backdrop-blur-md border-b border-white/10 dark:border-transparent"
       }`}
     >
       <div className="container mx-auto px-4">
@@ -229,7 +229,7 @@ export function Navbar() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden py-4 border-t animate-fade-in">
+          <div className="md:hidden py-4 border-t backdrop-blur-2xl bg-white/80 dark:bg-background/80 animate-fade-in rounded-b-2xl shadow-lg">
             <div className="flex flex-col gap-1">
               {session?.user?.role === "SUPER_ADMIN" ? (
                 <>

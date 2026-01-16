@@ -107,7 +107,8 @@
       "Bash(wc:*)",
       "Bash(gh:*)",
       "Bash(git remote:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git clean:*)"
     ]
   }
 }

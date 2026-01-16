@@ -326,5 +326,201 @@ IDLE → SEARCH → SELECT_TRIP → ASK_PASSENGER_COUNT
 
 ---
 
-**Last Updated:** January 12, 2026
+## 🎨 UI/UX STABLE STATE (January 16, 2026 - Pre-Enhancement Baseline)
+
+> **CHECKPOINT CREATED:** Before implementing 71 UI/UX enhancements
+> All features below are WORKING and must remain functional after enhancements
+
+### Current Visual System
+
+**Color Palette:**
+```css
+/* Primary Teal Gradient */
+--gradient-primary: linear-gradient(135deg, #0e9494 0%, #0d4f5c 100%)
+--gradient-hero: linear-gradient(160deg, #0d4f5c 0%, #0e9494 50%, #20c4c4 100%)
+
+/* Teal Colors */
+--teal-dark: #0d4f5c
+--teal-primary: #0e9494
+--teal-light: #20c4c4
+```
+
+**Typography:**
+- Font family: System fonts (Inter on web)
+- Headings: `font-display` class
+- Body: Base font-size with responsive scaling
+
+**Spacing:**
+- Container: `container mx-auto px-4`
+- Section padding: `py-20 md:py-28`
+- Card padding: `p-6` to `p-8`
+
+### Glassmorphism Implementation (Current)
+
+**Login/Register Pages** (`src/app/login/page.tsx`, `src/app/register/page.tsx`):
+```tsx
+// Form container glassmorphism
+className="backdrop-blur-xl bg-white/70 border border-white/30 rounded-2xl shadow-2xl shadow-black/10 p-8"
+
+// Background gradient
+style={{ background: "linear-gradient(135deg, #b8e6e6 0%, #a8dede 50%, #b5e5e5 100%)" }}
+
+// Accent bubbles
+className="absolute opacity-30 z-0 pointer-events-none"
+```
+
+**Navbar** (`src/components/shared/Navbar.tsx`):
+```tsx
+// When scrolled
+className="bg-white/70 dark:bg-background/70 backdrop-blur-2xl border-b border-white/20 dark:border-white/10 shadow-lg shadow-black/5"
+
+// When not scrolled
+className="bg-white/30 dark:bg-transparent backdrop-blur-md border-b border-white/10 dark:border-transparent"
+
+// Mobile menu
+className="backdrop-blur-2xl bg-white/80 dark:bg-background/80 rounded-b-2xl shadow-lg"
+```
+
+### Current Components (Stable)
+
+**Navbar** (`src/components/shared/Navbar.tsx`):
+- ✅ Sticky positioning with scroll detection
+- ✅ Glassmorphism on scroll
+- ✅ Role-based navigation links
+- ✅ User dropdown menu
+- ✅ Theme toggle (light/dark)
+- ✅ Notification bell
+- ✅ Mobile responsive menu
+- ✅ Ethiopian flag bar on mobile
+
+**Home Page** (`src/app/page.tsx`):
+- ✅ Hero section with gradient background
+- ✅ Search form (origin, destination, date)
+- ✅ City autocomplete with 90 cities
+- ✅ Popular routes quick links
+- ✅ Track booking widget
+- ✅ Stats section (1K+ travelers, 100+ trips, etc.)
+- ✅ Partner company logos
+- ✅ Feature cards (3 columns)
+- ✅ How it works (3 steps)
+- ✅ CTA section
+
+**Search Page** (`src/app/search/page.tsx`):
+- ✅ Trip cards with company info
+- ✅ Filter sidebar (price, time, company, bus type)
+- ✅ Compare checkbox for trips
+- ✅ Empty state with suggestions
+- ✅ Intermediate stops display with tooltip
+- ✅ Sorting options
+
+**Booking Page** (`src/app/booking/[tripId]/page.tsx`):
+- ✅ Seat selection map (2-2 layout)
+- ✅ Passenger form (multiple passengers)
+- ✅ Price breakdown sidebar
+- ✅ Terms acceptance checkbox
+- ✅ Sticky sidebar on desktop
+- ✅ Mobile responsive layout
+- ✅ Child passenger ID exemption with helper text
+
+**Ticket Page** (`src/app/tickets/[bookingId]/page.tsx`):
+- ✅ QR code display
+- ✅ Booking details
+- ✅ Passenger list
+- ✅ Trip information
+- ✅ Company contact
+- ✅ Icon alignment (all icons have `flex-shrink-0`)
+
+**Company Dashboard** (`src/app/company/trips/page.tsx`):
+- ✅ Trip table with status badges
+- ✅ Compact status column (horizontal badges)
+- ✅ Vehicle ON_TRIP vs AVAILABLE status
+- ✅ Trip log auto-popup on DEPARTED status
+- ✅ Back button navigates to /company/trips
+
+### Current Animations (Existing)
+
+**Fade In** (`animate-fade-in`):
+- Used in mobile menu
+- Used in modals/dropdowns
+
+**Fade Up** (`animate-fade-up`):
+- Used in home page hero elements
+- Staggered with `animationDelay`
+
+**Pulse** (`animate-pulse`):
+- Loading states
+- Live indicators
+
+**Spin** (`animate-spin`):
+- Loading spinners (Loader2 icon)
+
+### Current User Flows (Working)
+
+**Guest Booking Flow:**
+1. Search trips → 2. Select trip → 3. Select seats (optional) → 4. Enter passenger details → 5. Agree to terms → 6. Pay with TeleBirr → 7. Receive QR ticket
+
+**Registered User Flow:**
+1. Login → 2. Search → 3. Book (same as guest) → 4. View tickets in dashboard
+
+**Company Admin Flow:**
+1. Login → 2. Company Dashboard → 3. Manage trips/staff/vehicles → 4. View manifests
+
+**Staff Flow:**
+1. Login → 2. My Trips → 3. View assigned trips → 4. Record trip logs
+
+### What NOT to Break During Enhancements
+
+**Critical Interactions:**
+- ✅ City search autocomplete must show all 90 cities
+- ✅ Custom city input must still work (not just list)
+- ✅ Seat selection must remain optional for guests
+- ✅ Price change notification must appear if price updates
+- ✅ Remember me checkbox must persist for 30 days
+- ✅ Guest checkout must work without registration
+- ✅ Company data segregation must remain absolute
+
+**Critical Styling:**
+- ✅ Ethiopian flag colors (green, yellow, red)
+- ✅ Teal brand colors (#0e9494, #0d4f5c, #20c4c4)
+- ✅ Dark mode support across all pages
+- ✅ Mobile responsiveness (breakpoints: sm, md, lg, xl)
+- ✅ Tailwind utility classes
+- ✅ shadcn/ui component library
+
+**Critical Components:**
+- ✅ All components in `/src/components/ui/` (shadcn base)
+- ✅ PhoneInput with Ethiopian format validation
+- ✅ CityCombobox with custom input
+- ✅ SeatMap with color coding
+- ✅ NotificationBell with real-time updates
+- ✅ TripChat with polling
+
+### Enhancement Guidelines
+
+**When adding new animations:**
+- Use Tailwind's built-in animations first
+- Keep animations under 300ms for micro-interactions
+- Use `transition-all duration-300` for smooth transitions
+- Add `prefers-reduced-motion` respect
+
+**When adding glassmorphism:**
+- Maintain readability (text contrast ratio ≥ 4.5:1)
+- Use `backdrop-blur-xl` or `backdrop-blur-2xl`
+- Semi-transparent backgrounds: 60-80% opacity
+- Add subtle borders with transparency
+
+**When adding skeletons:**
+- Match the exact layout of loaded content
+- Use `animate-pulse` for shimmer effect
+- Gray background: `bg-muted` or `bg-gray-200`
+
+**When adding new components:**
+- Place in `/src/components/` with appropriate subfolder
+- Use TypeScript with proper types
+- Follow existing naming conventions
+- Add to this document when stable
+
+---
+
+**Last Updated:** January 16, 2026 (UI/UX Baseline Checkpoint)
 **Author:** Claude AI (preserving institutional knowledge)

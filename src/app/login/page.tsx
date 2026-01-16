@@ -181,10 +181,10 @@ export default function LoginPage() {
       </div>
 
       {/* Right Panel - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative overflow-hidden" style={{ background: "linear-gradient(180deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
-        {/* Subtle teal accent elements - z-0 and pointer-events-none to stay behind form */}
-        <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #20c4c4 0%, transparent 70%)" }} />
-        <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-10 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #0e9494 0%, transparent 70%)" }} />
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #b8e6e6 0%, #a8dede 50%, #b5e5e5 100%)" }}>
+        {/* Teal accent elements - z-0 and pointer-events-none to stay behind form */}
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-30 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #20c4c4 0%, transparent 70%)" }} />
+        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-30 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #0e9494 0%, transparent 70%)" }} />
 
         {/* Teal accent line on left edge */}
         <div className="hidden lg:block absolute left-0 top-1/4 bottom-1/4 w-1 z-0 pointer-events-none" style={{ background: "linear-gradient(180deg, #20c4c4 0%, #0e9494 50%, #0d4f5c 100%)" }} />
@@ -205,12 +205,14 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="mb-8">
-            <h2 className="text-2xl sm:text-3xl font-display mb-2" style={{ color: "#0d4f5c" }}>Welcome back</h2>
-            <p className="text-sm" style={{ color: "#0e9494" }}>Sign in to continue to i-Ticket</p>
-          </div>
+          {/* Glassmorphism Container */}
+          <div className="backdrop-blur-xl bg-white/70 border border-white/30 rounded-2xl shadow-2xl shadow-black/10 p-8">
+            <div className="mb-8">
+              <h2 className="text-2xl sm:text-3xl font-display mb-2" style={{ color: "#0d4f5c" }}>Welcome back</h2>
+              <p className="text-sm" style={{ color: "#0e9494" }}>Sign in to continue to i-Ticket</p>
+            </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
               <div
                 role="alert"
@@ -305,14 +307,16 @@ export default function LoginPage() {
                 </div>
               </div>
             )}
-          </form>
+            </form>
 
-          <p className="mt-8 text-center text-sm text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-primary font-medium hover:text-primary/80 transition-colors">
-              Create account
-            </Link>
-          </p>
+            <p className="mt-8 text-center text-sm text-muted-foreground">
+              Don&apos;t have an account?{" "}
+              <Link href="/register" className="text-primary font-medium hover:text-primary/80 transition-colors">
+                Create account
+              </Link>
+            </p>
+          </div>
+          {/* End Glassmorphism Container */}
         </div>
       </div>
     </div>
