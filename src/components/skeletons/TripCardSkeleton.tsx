@@ -235,3 +235,108 @@ export function TableSkeleton({ rows = 5, columns = 4 }: { rows?: number; column
     </Card>
   )
 }
+
+/**
+ * Booking Page Skeleton
+ * Full booking page loading state
+ */
+export function BookingPageSkeleton() {
+  return (
+    <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8">
+      <div className="container mx-auto px-4">
+        <div className="mb-6 animate-pulse">
+          <div className="h-4 bg-muted rounded w-32 mb-4" />
+          <div className="h-8 bg-muted rounded w-64" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main content */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Trip summary */}
+            <Card className="p-6 animate-pulse">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="h-6 bg-muted rounded w-32" />
+                  <div className="h-6 bg-muted rounded-full w-20" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="h-8 bg-muted rounded w-24" />
+                  <div className="h-8 bg-muted rounded w-24" />
+                </div>
+              </div>
+            </Card>
+
+            {/* Passenger form */}
+            <BookingFormSkeleton />
+
+            {/* Seat map */}
+            <SeatMapSkeleton />
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <Card className="p-6 animate-pulse space-y-4">
+              <div className="h-6 bg-muted rounded w-32" />
+              <div className="space-y-3">
+                <div className="h-4 bg-muted rounded" />
+                <div className="h-4 bg-muted rounded" />
+                <div className="h-4 bg-muted rounded" />
+              </div>
+              <div className="h-10 bg-muted rounded" />
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Payment Page Skeleton
+ * Payment page loading state
+ */
+export function PaymentPageSkeleton() {
+  return (
+    <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8">
+      <div className="container mx-auto px-4 max-w-2xl">
+        <div className="mb-6 animate-pulse">
+          <div className="h-4 bg-muted rounded w-32" />
+        </div>
+
+        <div className="space-y-6">
+          {/* Booking summary */}
+          <Card className="p-6 animate-pulse space-y-4">
+            <div className="h-6 bg-muted rounded w-40" />
+            <div className="space-y-3">
+              <div className="flex justify-between">
+                <div className="h-4 bg-muted rounded w-24" />
+                <div className="h-4 bg-muted rounded w-32" />
+              </div>
+              <div className="flex justify-between">
+                <div className="h-4 bg-muted rounded w-24" />
+                <div className="h-4 bg-muted rounded w-24" />
+              </div>
+              <div className="flex justify-between">
+                <div className="h-4 bg-muted rounded w-24" />
+                <div className="h-4 bg-muted rounded w-16" />
+              </div>
+            </div>
+          </Card>
+
+          {/* Payment method */}
+          <Card className="p-6 animate-pulse space-y-4">
+            <div className="h-6 bg-muted rounded w-40" />
+            <div className="space-y-3">
+              <div className="h-20 bg-muted rounded" />
+            </div>
+          </Card>
+
+          {/* Action button */}
+          <div className="animate-pulse">
+            <div className="h-12 bg-muted rounded" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
