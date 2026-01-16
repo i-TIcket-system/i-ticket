@@ -325,6 +325,11 @@ function SearchContent() {
             <p className="text-muted-foreground mb-4">
               Try adjusting your search criteria or check back later.
             </p>
+            <div className="text-sm text-muted-foreground space-y-1 mb-4">
+              <p>• Try different dates (tomorrow or next week)</p>
+              <p>• Check for nearby cities or alternative routes</p>
+              <p>• Some routes may not operate daily</p>
+            </div>
             <Button onClick={() => { setOrigin(""); setDestination(""); setDate(""); }}>
               Clear Filters
             </Button>
@@ -354,7 +359,7 @@ function SearchContent() {
                 }`}
               >
                 {/* Compare Checkbox */}
-                <div className="absolute top-4 left-4 z-10">
+                <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
                   <Checkbox
                     id={`compare-${trip.id}`}
                     checked={selectedTripsForComparison.includes(trip.id)}

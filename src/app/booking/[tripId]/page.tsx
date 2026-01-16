@@ -736,7 +736,7 @@ export default function BookingPage() {
 
           {/* Price Summary Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-24">
+            <Card className="sticky top-0 md:top-24">
               <CardHeader>
                 <CardTitle>Price Summary</CardTitle>
               </CardHeader>
