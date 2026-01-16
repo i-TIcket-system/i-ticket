@@ -45,36 +45,57 @@ export async function GET(request: NextRequest) {
       orderBy: { name: "asc" },
     })
 
-    // Get all messages grouped by company
-    const conversations = await Promise.all(
-      companies.map(async (company) => {
-        const messages = await prisma.companyMessage.findMany({
-          where: {
-            companyId: company.id,
-          },
-          orderBy: {
-            createdAt: "desc",
-          },
-          take: 100, // Last 100 messages per company
-        })
+    // OPTIMIZATION: Batch fetch all messages and counts in 2 queries instead of 2N queries
+    // Fetch all messages for all companies at once
+    const allMessages = await prisma.companyMessage.findMany({
+      where: {
+        companyId: { in: companies.map(c => c.id) },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    })
 
-        // Count unread messages (from company, not read by admin)
-        const unreadCount = await prisma.companyMessage.count({
-          where: {
-            companyId: company.id,
-            isReadByAdmin: false,
-            senderRole: "COMPANY_ADMIN",
-          },
-        })
+    // Group messages by company
+    const messagesByCompany = allMessages.reduce((acc, message) => {
+      if (!acc[message.companyId]) {
+        acc[message.companyId] = []
+      }
+      // Take only last 100 messages per company
+      if (acc[message.companyId].length < 100) {
+        acc[message.companyId].push(message)
+      }
+      return acc
+    }, {} as Record<string, typeof allMessages>)
 
-        return {
-          company,
-          messages: messages.reverse(), // Reverse to show oldest first
-          unreadCount,
-          lastMessage: messages[0] || null, // Most recent message
-        }
-      })
+    // Fetch unread counts for all companies at once
+    const unreadCounts = await prisma.companyMessage.groupBy({
+      by: ['companyId'],
+      where: {
+        companyId: { in: companies.map(c => c.id) },
+        isReadByAdmin: false,
+        senderRole: "COMPANY_ADMIN",
+      },
+      _count: true,
+    })
+
+    // Create lookup map for O(1) access
+    const unreadCountMap = new Map(
+      unreadCounts.map(item => [item.companyId, item._count])
     )
+
+    // Build conversations in JavaScript (no more database queries)
+    const conversations = companies.map((company) => {
+      const messages = messagesByCompany[company.id] || []
+      const reversedMessages = messages.slice().reverse() // Show oldest first
+
+      return {
+        company,
+        messages: reversedMessages,
+        unreadCount: unreadCountMap.get(company.id) || 0,
+        lastMessage: messages[0] || null, // Most recent message (desc order)
+      }
+    })
 
     // Sort conversations by most recent message first
     conversations.sort((a, b) => {

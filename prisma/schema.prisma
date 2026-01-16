@@ -148,6 +148,7 @@ model Trip {
   @@index([vehicleId])
   @@index([status])
   @@index([companyId, status])
+  @@index([companyId, status, departureTime]) // Compound index for filtered company trip queries
 }
 
 // Trip odometer and fuel tracking (before/after readings)

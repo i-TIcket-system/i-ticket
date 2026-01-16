@@ -24,6 +24,16 @@ const createWorkOrderSchema = z.object({
   scheduledDate: z.string().datetime().optional(),
 })
 
+// Validation schema for query parameters
+const workOrderQuerySchema = z.object({
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELLED']).optional(),
+  priority: z.coerce.number().int().min(1).max(4).optional(),
+  vehicleId: z.string().optional(),
+  workType: z.enum(['PREVENTIVE', 'CORRECTIVE', 'INSPECTION', 'EMERGENCY']).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+})
+
 /**
  * GET /api/company/work-orders
  * List all work orders for company (with filters)
@@ -36,26 +46,35 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get('status')
-    const priority = searchParams.get('priority')
-    const vehicleId = searchParams.get('vehicleId')
-    const workType = searchParams.get('workType')
 
-    // Validate pagination params to prevent NaN issues
-    const parsedPage = parseInt(searchParams.get('page') || '1')
-    const parsedLimit = parseInt(searchParams.get('limit') || '20')
-    const page = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage
-    const limit = isNaN(parsedLimit) || parsedLimit < 1 ? 20 : Math.min(parsedLimit, 100)
+    // Validate query parameters with Zod
+    const validationResult = workOrderQuerySchema.safeParse({
+      status: searchParams.get('status'),
+      priority: searchParams.get('priority'),
+      vehicleId: searchParams.get('vehicleId'),
+      workType: searchParams.get('workType'),
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit'),
+    })
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid query parameters', details: validationResult.error.format() },
+        { status: 400 }
+      )
+    }
+
+    const { status, priority, vehicleId, workType, page, limit } = validationResult.data
     const skip = (page - 1) * limit
 
-    // Build where clause with proper typing (now companyId is guaranteed to be non-null)
+    // Build where clause with validated and typed parameters
     const where: Prisma.WorkOrderWhereInput = {
       vehicle: {
         companyId: session.user.companyId,
       },
       ...(vehicleId && { vehicleId }),
       ...(status && { status }),
-      ...(priority && { priority: parseInt(priority) }),
+      ...(priority && { priority }), // Already a number from Zod coercion
       ...(workType && { taskType: workType }),
     }
 
