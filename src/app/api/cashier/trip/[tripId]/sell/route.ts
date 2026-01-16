@@ -201,7 +201,7 @@ export async function POST(
         await tx.payment.create({
           data: {
             bookingId: booking.id,
-            amount: totalAmount,
+            amount: amounts.totalAmount, // Total passenger pays (ticket + commission + VAT)
             status: "SUCCESS",
             transactionId: `CASH-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             method: "CASH",
@@ -223,7 +223,10 @@ export async function POST(
           bookingId: booking.id,
           shortCodes: tickets.map((t) => t.shortCode),
           seatNumbers: seatsToAssign,
-          totalAmount: totalAmount,
+          totalAmount: amounts.totalAmount, // Total passenger paid
+          ticketPrice: amounts.ticketTotal, // What company receives
+          commission: amounts.commission.baseCommission,
+          commissionVAT: amounts.commission.vat,
           companyName: trip.company.name,
           route: `${trip.origin} → ${trip.destination}`,
           departureTime: trip.departureTime,

@@ -578,7 +578,7 @@ async function handleConfirmBookingState(
     // Calculate amounts (passenger pays ticket + commission + VAT)
     const amounts = calculateBookingAmounts(trip.price, passengers.length);
 
-    // Create booking via API
+    // Create booking via API (API will calculate totalAmount and commission server-side)
     const bookingResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/bookings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -589,9 +589,8 @@ async function handleConfirmBookingState(
           nationalId: p.id,
           phone: session.phone,
         })),
-        totalAmount,
-        commission: commission * passengers.length,
         smsSessionId: session.sessionId
+        // Note: totalAmount and commission are calculated server-side from trip price
       })
     });
 
