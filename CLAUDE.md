@@ -24,12 +24,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ## NEXT SESSION TODO LIST (7 items remaining)
 
-From comprehensive audit (47 issues found, 4 P0, 14 P1, 21 P2, 8 P3):
-
-### Already Fixed ✅
-- Company segregation: manifest + alert-response routes secured
-
-### Remaining Fixes
+### From Comprehensive Audit (7 items)
 1. **QA-1 (P0)**: Division by zero in sales conversion rate (`/api/admin/sales-persons/route.ts` line 80)
 2. **QA-4 (P1)**: Null reference in trip status update (`session!.user.id`)
 3. **SEC-7 (P1)**: Support tickets missing company filtering
@@ -37,6 +32,12 @@ From comprehensive audit (47 issues found, 4 P0, 14 P1, 21 P2, 8 P3):
 5. **QA-2 (P1)**: Division by zero in revenue analytics
 6. **QA-10 (P2)**: Add parseInt validation across APIs
 7. **UX-1/2 (P1)**: Booking flow - seat selection & price change feedback
+
+### Already Fixed ✅
+- Company segregation: manifest + alert-response routes secured
+- **Vehicle change comprehensive fix** (Jan 16) - Syncs all properties (capacity, busType, seats)
+- **Commission + VAT business logic** (Jan 16) - CRITICAL FIX: Passengers now pay ticket+commission+VAT
+- **All Jan 16 bug reports** (Jan 16 afternoon) - 9 UI/UX bugs fixed (see below)
 
 ### Full Audit Report
 See: `C:\Users\EVAD\.claude\plans\ancient-percolating-biscuit.md`
@@ -67,6 +68,87 @@ All 9 items from previous session completed:
 ---
 
 ## Recent Development (Jan 2026)
+
+### January 16, 2026 (Afternoon) - UI/UX Bug Fixes & Improvements
+- **Trip Log Auto-Popup** - Trip log dialog now auto-opens when status changes to DEPARTED
+  - Added `autoOpenStart` and `onDialogClose` props to TripLogCard component
+  - Shows toast notification: "Please record starting odometer reading"
+  - File: `src/app/company/trips/[tripId]/page.tsx`, `src/components/trip/TripLogCard.tsx`
+- **Driver Odometer Recording Restrictions** - Drivers can only record odometer after trip DEPARTED
+  - Added status validation: only DEPARTED or COMPLETED trips allow start readings
+  - Admin notification when driver records odometer
+  - Error message: "Trip must depart before recording odometer"
+  - File: `src/app/api/company/trips/[tripId]/log/route.ts` (lines 151-158, 216-246)
+- **Back Button Navigation Fix** - All trip pages now navigate back to trips list (not dashboard)
+  - Fixed in: `trips/[tripId]/page.tsx`, `trips/[tripId]/edit/page.tsx`, `trips/new/page.tsx`
+  - Changed from `/company/dashboard` to `/company/trips`
+- **Vehicle Status Enhancement** - Added ON_TRIP status to distinguish active trips from available vehicles
+  - New `effectiveStatus` field: ON_TRIP, ACTIVE (Available), MAINTENANCE, INACTIVE
+  - API tracks vehicles on DEPARTED trips separately
+  - UI shows "On Trip" (blue) when vehicle is active, "Available" (green) when ready
+  - File: `src/app/api/company/vehicles/route.ts` (lines 78-117), `src/app/company/vehicles/page.tsx`
+- **Session Duration Extension** - "Remember me" now works for 30 days
+  - Extended session maxAge from 24 hours to 30 days
+  - Cookie persistence set to 30 days
+  - File: `src/lib/auth.ts` (lines 260-275)
+- **Icon/Text Alignment Fix** - All icons throughout ticket page now properly aligned
+  - Added `flex-shrink-0` to all icons (Calendar, Clock, Car, UserCheck, Truck, Phone, MapPin, etc.)
+  - Wrapped text in `<span>` elements for better flex control
+  - Fixed separator dots with `text-muted-foreground` styling
+  - File: `src/app/tickets/[bookingId]/page.tsx`
+- **Status Column UI Cleanup** - Reduced visual congestion in trips table
+  - Made primary status badge smaller (`text-xs`)
+  - Secondary badges (Halted/Active/Low) now display horizontally
+  - Compact badges: 10px text, reduced padding, fixed height (5px)
+  - "Low Slots" shortened to "Low"
+  - File: `src/app/company/trips/page.tsx` (lines 578-614)
+- **Login/Register UI Fix** - Fixed teal accent elements covering buttons
+  - Added `z-0` and `pointer-events-none` to decorative gradients
+  - Ensures form elements stay above and clickable
+  - Files: `src/app/login/page.tsx`, `src/app/register/page.tsx`
+- **Commission Calculation Refinement** - Improved rounding logic
+  - Only round final total if decimal > 0.5 (not intermediate values)
+  - Shows exact commission and VAT values (e.g., 42.5, 6.375)
+  - Fixed double-charging bug in payment/track pages
+  - File: `src/lib/commission.ts`
+- **24-Hour Validation Clarification** - Confirmed working as designed
+  - Driver, Conductor, Manual Ticketer, and Vehicle all enforced
+  - ±24 hour window check before allowing trip creation
+  - Override option with reason required for vehicles
+  - Seeded data bypassed validation (created directly in DB)
+  - File: `src/app/api/trips/route.ts` (lines 150-328)
+- **Commits**: 3 commits (27e1c73, 86f8603, b82e52c)
+
+### January 16, 2026 (Morning) - Vehicle Change Fix & Commission VAT Business Logic Correction
+- **🚨 CRITICAL FIX: Commission + VAT Business Logic** - Fundamental calculation error corrected
+  - **Before (WRONG)**: Passenger pays 100 ETB, Company receives 94.25 ETB (commission deducted from company)
+  - **After (CORRECT)**: Passenger pays 106 ETB, Company receives 100 ETB (commission added to passenger bill)
+  - Formula: `totalAmount = ticketPrice + (5% commission) + (15% VAT on commission)`
+  - Example: 100 ETB ticket → 5 ETB commission → 1 ETB VAT → 106 ETB total
+  - Created `src/lib/commission.ts` - Central utility for all commission calculations
+  - Updated all booking creation points: web API, SMS bot, cashier manual ticketing
+  - Revenue reports now show correct breakdown: "Total Paid by Passengers" vs "Revenue to Companies"
+  - Added `commissionVAT` field to Booking model (15% VAT on platform commission)
+- **Vehicle Change Comprehensive Fix** - When trip vehicle changes, ALL properties sync
+  - Syncs trip's `totalSlots` to new vehicle's `totalSeats`
+  - Syncs trip's `busType` to new vehicle's `busType`
+  - Recalculates `availableSlots` based on current bookings
+  - Clears ALL seat assignments (new vehicle may have different layout)
+  - Logs all changes to AdminLog for audit trail
+  - File: `src/app/api/company/trips/[tripId]/route.ts` (lines 218-287)
+- **Data Migration** - Fixed 11 existing bookings with incorrect VAT calculations
+  - Script: `scripts/migrate-commission-vat-simple.ts` (raw SQL approach)
+  - Added `commissionVAT` column to all existing bookings
+  - Recalculated `totalAmount` to include VAT
+  - Example: Booking cmkfpjkg updated to 3,426 ETB (170 commission + 26 VAT)
+- **Test Suite** - Created `test-commission.ts` for commission calculation verification
+  - Test Case 1: Single passenger (100 ETB → 106 ETB) ✅ PASS
+  - Test Case 2: Multiple passengers (300 ETB → 317 ETB) ✅ PASS
+  - Revenue breakdown validation ✅ PASS
+- **Server-Side Security** - All booking amounts recalculated server-side (don't trust client)
+  - Web API, SMS bot, cashier all use `calculateBookingAmounts()` utility
+  - Client-submitted amounts ignored for security
+- **Commits**: 5 commits (bc37ff3, a93c908, 2a6c4fc, f305d91, 42d5197)
 
 ### January 12, 2026 (Afternoon) - Trip Reminders, Actual Times & Stability Docs
 - **Trip Reminder Notifications** - Hourly cron job for passenger reminders
