@@ -62,12 +62,20 @@ interface Vehicle {
 interface TripLogCardProps {
   tripId: string
   vehicleId?: string | null
+  tripStatus?: string  // Trip status to control when odometer can be recorded
+  autoOpenStart?: boolean  // Auto-open start readings dialog when true
+  onDialogClose?: () => void  // Callback when dialog closes
 }
 
 export function TripLogCard({
   tripId,
   vehicleId,
+  tripStatus = "SCHEDULED",
+  autoOpenStart = false,
+  onDialogClose,
 }: TripLogCardProps) {
+  // Check if trip has departed (can record odometer)
+  const canRecordOdometer = ["DEPARTED", "COMPLETED"].includes(tripStatus)
   const [tripLog, setTripLog] = useState<TripLog | null>(null)
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [canEdit, setCanEdit] = useState(false) // From API based on user role
@@ -89,6 +97,17 @@ export function TripLogCard({
   useEffect(() => {
     fetchTripLog()
   }, [tripId])
+
+  // Auto-open start dialog when autoOpenStart prop becomes true
+  useEffect(() => {
+    if (autoOpenStart && !isLoading && canEdit && vehicleId) {
+      // Only auto-open if start readings haven't been recorded yet
+      const hasStarted = tripLog?.startOdometer != null && tripLog.startOdometer > 0
+      if (!hasStarted) {
+        openDialog("start")
+      }
+    }
+  }, [autoOpenStart, isLoading, canEdit, vehicleId, tripLog])
 
   const fetchTripLog = async () => {
     try {
@@ -262,7 +281,7 @@ export function TripLogCard({
                 <Play className="h-4 w-4 text-green-600" />
                 Start Readings
               </h4>
-              {canEdit && (
+              {canEdit && canRecordOdometer && (
                 <Button
                   size="sm"
                   variant={hasStarted ? "outline" : "default"}
@@ -304,6 +323,11 @@ export function TripLogCard({
                     <p className="text-xs">{tripLog.startNotes}</p>
                   </div>
                 )}
+              </div>
+            ) : !canRecordOdometer ? (
+              <div className="text-sm text-muted-foreground">
+                <AlertCircle className="h-4 w-4 inline mr-1 text-orange-500" />
+                Trip must depart before recording odometer
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
@@ -408,7 +432,12 @@ export function TripLogCard({
       </Card>
 
       {/* Record Readings Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open)
+        if (!open && onDialogClose) {
+          onDialogClose()
+        }
+      }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>

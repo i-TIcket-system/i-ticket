@@ -38,30 +38,35 @@ export async function GET(req: NextRequest) {
       whereClause.status = status
     }
 
-    // Fetch vehicles with trip count
+    // Fetch vehicles with trip count and active trip info
     const vehicles = await prisma.vehicle.findMany({
       where: whereClause,
       include: {
         _count: {
           select: { trips: true }
         },
+        // Get next upcoming trip
         trips: {
           where: {
             departureTime: {
-              gte: new Date() // Only upcoming trips
+              gte: new Date()
             },
-            isActive: true
+            isActive: true,
+            status: {
+              in: ['SCHEDULED', 'BOARDING'] // Not yet departed
+            }
           },
           select: {
             id: true,
             origin: true,
             destination: true,
-            departureTime: true
+            departureTime: true,
+            status: true
           },
           orderBy: {
             departureTime: 'asc'
           },
-          take: 1 // Next upcoming trip
+          take: 1
         }
       },
       orderBy: [
@@ -70,14 +75,45 @@ export async function GET(req: NextRequest) {
       ]
     })
 
+    // Also fetch vehicles currently on active trips (DEPARTED but not COMPLETED)
+    const vehiclesOnTrip = await prisma.trip.findMany({
+      where: {
+        companyId: session.user.companyId,
+        status: 'DEPARTED',
+        isActive: true,
+        vehicleId: { not: null }
+      },
+      select: {
+        vehicleId: true,
+        id: true,
+        origin: true,
+        destination: true,
+        departureTime: true,
+        status: true
+      }
+    })
+
+    // Create a map of vehicleId to active trip
+    const activeTripsMap = new Map(
+      vehiclesOnTrip.map(trip => [trip.vehicleId, trip])
+    )
+
     return NextResponse.json({
-      vehicles: vehicles.map(v => ({
-        ...v,
-        tripCount: v._count.trips,
-        nextTrip: v.trips[0] || null,
-        _count: undefined,
-        trips: undefined
-      }))
+      vehicles: vehicles.map(v => {
+        const activeTrip = activeTripsMap.get(v.id)
+        // If vehicle is on an active trip, show "ON_TRIP" as effective status
+        const effectiveStatus = activeTrip ? 'ON_TRIP' : v.status
+
+        return {
+          ...v,
+          tripCount: v._count.trips,
+          nextTrip: v.trips[0] || null,
+          activeTrip: activeTrip || null, // Current in-progress trip
+          effectiveStatus, // ON_TRIP, ACTIVE, MAINTENANCE, or INACTIVE
+          _count: undefined,
+          trips: undefined
+        }
+      })
     })
 
   } catch (error) {

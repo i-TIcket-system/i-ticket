@@ -23,14 +23,16 @@ import { TripCountdown } from "@/components/ui/trip-countdown"
 
 interface Booking {
   id: string
-  totalAmount: number
-  commission: number
+  totalAmount: number  // Final amount passenger pays (ticket + commission + VAT)
+  commission: number   // Base commission (5%)
+  commissionVAT: number  // VAT on commission (15% of commission)
   status: string
   trip: {
     id: string
     origin: string
     destination: string
     departureTime: string
+    price: number  // Base ticket price per passenger
     company: { name: string }
   }
   passengers: { name: string }[]
@@ -135,7 +137,12 @@ export default function PaymentPage() {
     )
   }
 
-  const total = Number(booking.totalAmount) + Number(booking.commission)
+  // Calculate display values
+  // totalAmount in DB = ticket price + commission + VAT (ALREADY the final amount!)
+  const commission = Number(booking.commission)
+  const commissionVAT = Number(booking.commissionVAT) || (commission * 0.15) // fallback calculation
+  const total = Number(booking.totalAmount)  // This IS the final amount - don't add anything!
+  const ticketPrice = total - commission - commissionVAT  // What company receives
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8">
@@ -187,16 +194,18 @@ export default function PaymentPage() {
                 <Separator />
 
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Ticket Price</span>
-                  <span>{formatCurrency(Number(booking.totalAmount))}</span>
+                  <span className="text-muted-foreground">
+                    Ticket Price ({booking.passengers.length} passenger{booking.passengers.length > 1 ? "s" : ""})
+                  </span>
+                  <span>{formatCurrency(ticketPrice)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Service Fee (5%)</span>
-                  <span>{formatCurrency(Number(booking.commission) / 1.15)}</span>
+                  <span className="text-muted-foreground">i-Ticket Commission (5%)</span>
+                  <span>{formatCurrency(commission)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">VAT (15%)</span>
-                  <span>{formatCurrency(Number(booking.commission) - (Number(booking.commission) / 1.15))}</span>
+                  <span className="text-muted-foreground">VAT on Commission (15%)</span>
+                  <span>{formatCurrency(commissionVAT)}</span>
                 </div>
 
                 <Separator />

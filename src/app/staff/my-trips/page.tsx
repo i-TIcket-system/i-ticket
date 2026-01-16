@@ -37,6 +37,7 @@ interface Trip {
   busType: string
   totalSlots: number
   availableSlots: number
+  status: string  // Trip status (SCHEDULED, BOARDING, DEPARTED, etc.)
   company: {
     name: string
   }
@@ -457,6 +458,7 @@ function TripCard({ trip, highlight = false, past = false, forceExpand = false }
             <TripLogCard
               tripId={trip.id}
               vehicleId={trip.vehicle.id}
+              tripStatus={trip.status}
             />
           </div>
         )}

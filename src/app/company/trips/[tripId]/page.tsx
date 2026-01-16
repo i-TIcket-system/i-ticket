@@ -133,6 +133,7 @@ export default function TripDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState("")
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
+  const [showTripLogPopup, setShowTripLogPopup] = useState(false)  // Auto-show trip log on DEPARTED
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -174,6 +175,14 @@ export default function TripDetailPage() {
       if (response.ok) {
         toast.success(`Trip status updated to ${newStatus}`)
         fetchTrip() // Refresh trip data
+
+        // Auto-open trip log popup when trip departs
+        if (newStatus === "DEPARTED") {
+          setShowTripLogPopup(true)
+          toast.info("Please record starting odometer reading", {
+            duration: 5000,
+          })
+        }
       } else {
         toast.error(data.error || "Failed to update status")
       }
@@ -239,8 +248,8 @@ export default function TripDetailPage() {
           <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-semibold mb-2">Trip Not Found</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
-          <Link href="/company/dashboard">
-            <Button variant="outline">Back to Dashboard</Button>
+          <Link href="/company/trips">
+            <Button variant="outline">Back to Trips</Button>
           </Link>
         </Card>
       </div>
@@ -258,11 +267,11 @@ export default function TripDetailPage() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between mb-6">
           <Link
-            href="/company/dashboard"
+            href="/company/trips"
             className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to Dashboard
+            Back to Trips
           </Link>
           <Link href={`/company/trips/${tripId}/edit`}>
             <Button variant="outline">
@@ -636,6 +645,9 @@ export default function TripDetailPage() {
             <TripLogCard
               tripId={trip.id}
               vehicleId={trip.vehicle?.id}
+              tripStatus={trip.status}
+              autoOpenStart={showTripLogPopup}
+              onDialogClose={() => setShowTripLogPopup(false)}
             />
 
             {/* Trip Chat - Communicate with assigned staff */}

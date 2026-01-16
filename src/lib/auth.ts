@@ -259,7 +259,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60, // 24 hours (for JWT expiration, not cookie)
+    maxAge: 30 * 24 * 60 * 60, // 30 days - for "Remember me" functionality
   },
   cookies: {
     sessionToken: {
@@ -269,7 +269,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: 'lax',
         path: '/',
         secure: process.env.NODE_ENV === 'production',
-        // No maxAge = session cookie (cleared on browser close)
+        maxAge: 30 * 24 * 60 * 60, // 30 days - persistent cookie for "Remember me"
       }
     }
   },

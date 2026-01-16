@@ -22,16 +22,23 @@ export interface CommissionBreakdown {
  * Calculate commission breakdown for a booking
  * @param ticketPrice - Base ticket price (price * passengers) - what company receives
  * @returns Commission breakdown with base commission, VAT, and total
+ *
+ * Example: For 850 ETB ticket
+ * - baseCommission = 850 * 0.05 = 42.5 ETB (exact)
+ * - vat = 42.5 * 0.15 = 6.375 ETB (exact)
+ * - totalCommission = 48.875 ETB (exact)
+ * - Passenger pays = 850 + 48.875 = 898.875 ETB
  */
 export function calculateCommission(ticketPrice: number): CommissionBreakdown {
-  const baseCommission = Math.round(ticketPrice * COMMISSION_RATE)
-  const vat = Math.round(baseCommission * VAT_RATE)
+  // Don't round intermediate calculations - keep exact values for accuracy
+  const baseCommission = ticketPrice * COMMISSION_RATE
+  const vat = baseCommission * VAT_RATE
   const totalCommission = baseCommission + vat
 
   return {
-    baseCommission,
-    vat,
-    totalCommission,
+    baseCommission,  // e.g., 42.5 (exact)
+    vat,  // e.g., 6.375 (exact)
+    totalCommission,  // e.g., 48.875 (exact)
   }
 }
 
@@ -48,16 +55,19 @@ export function calculateBookingAmounts(
 ): {
   ticketTotal: number // What company receives (ticket price × passengers)
   commission: CommissionBreakdown // Platform commission + VAT
-  totalAmount: number // What passenger pays (ticket + commission + VAT)
+  totalAmount: number // What passenger pays (ticket + commission + VAT) - ROUNDED for easy payment
 } {
   const ticketTotal = ticketPrice * passengerCount
   const commission = calculateCommission(ticketTotal)
-  const totalAmount = ticketTotal + commission.totalCommission
+  // Round final amount for easy payment - only round up if decimal > 0.5
+  // e.g., 898.875 → 899 (rounds up), 898.5 → 898 (stays), 898.4 → 898 (stays)
+  const rawTotal = ticketTotal + commission.totalCommission
+  const totalAmount = (rawTotal % 1) > 0.5 ? Math.ceil(rawTotal) : Math.floor(rawTotal)
 
   return {
     ticketTotal,
     commission,
-    totalAmount, // Passenger pays this (ticket + commission + VAT)
+    totalAmount, // Passenger pays this - rounded for easy payment
   }
 }
 

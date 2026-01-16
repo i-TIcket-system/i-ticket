@@ -44,8 +44,9 @@ interface Trip {
 interface Booking {
   id: string
   status: string
-  totalAmount: number
-  commission: number
+  totalAmount: number  // Final amount passenger paid (ticket + commission + VAT)
+  commission: number   // Base commission (5%)
+  commissionVAT: number  // VAT on commission (15% of commission)
   createdAt: string
   passengers: Passenger[]
   trip: Trip
@@ -138,7 +139,11 @@ export default function TrackBookingPage() {
     )
   }
 
-  const totalPaid = Number(booking.totalAmount) + Number(booking.commission)
+  // totalAmount in DB = ticket + commission + VAT (ALREADY the final amount!)
+  const commission = Number(booking.commission)
+  const commissionVAT = Number(booking.commissionVAT) || (commission * 0.15) // fallback
+  const totalPaid = Number(booking.totalAmount)  // This IS the final amount - don't add again!
+  const ticketPrice = totalPaid - commission - commissionVAT  // What company received
   const isPaid = booking.status === "PAID"
 
   return (
@@ -275,12 +280,18 @@ export default function TrackBookingPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Booking Amount</span>
-              <span>{formatCurrency(Number(booking.totalAmount))}</span>
+              <span className="text-muted-foreground">
+                Ticket Price ({booking.passengers.length} passenger{booking.passengers.length > 1 ? "s" : ""})
+              </span>
+              <span>{formatCurrency(ticketPrice)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Service Fee (5%)</span>
-              <span>{formatCurrency(Number(booking.commission))}</span>
+              <span className="text-muted-foreground">i-Ticket Commission (5%)</span>
+              <span>{formatCurrency(commission)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">VAT on Commission (15%)</span>
+              <span>{formatCurrency(commissionVAT)}</span>
             </div>
             <Separator />
             <div className="flex justify-between text-lg font-bold">

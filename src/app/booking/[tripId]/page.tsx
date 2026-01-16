@@ -53,7 +53,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
-import { formatCurrency, formatDuration, formatDate, calculateCommission, BUS_TYPES } from "@/lib/utils"
+import { formatCurrency, formatDuration, formatDate, BUS_TYPES } from "@/lib/utils"
+import { calculateBookingAmounts } from "@/lib/commission"
 import { SeatMap } from "@/components/booking/SeatMap"
 
 interface Trip {
@@ -301,13 +302,22 @@ export default function BookingPage() {
   }
 
   const calculateTotal = () => {
-    if (!trip) return { subtotal: 0, commission: 0, total: 0 }
-    const subtotal = Number(trip.price) * passengers.length
-    const commission = calculateCommission(subtotal)
+    if (!trip) return {
+      ticketTotal: 0,
+      baseCommission: 0,
+      commissionVAT: 0,
+      totalCommission: 0,
+      total: 0
+    }
+
+    const amounts = calculateBookingAmounts(Number(trip.price), passengers.length)
+
     return {
-      subtotal,
-      commission,
-      total: subtotal + commission,
+      ticketTotal: amounts.ticketTotal,  // e.g., 850 ETB
+      baseCommission: amounts.commission.baseCommission,  // e.g., 42.5 ETB
+      commissionVAT: amounts.commission.vat,  // e.g., 6.375 ETB
+      totalCommission: amounts.commission.totalCommission,  // e.g., 48.875 ETB
+      total: amounts.totalAmount,  // e.g., 898.875 ETB
     }
   }
 
@@ -328,16 +338,13 @@ export default function BookingPage() {
     setIsSubmitting(true)
 
     try {
-      const { subtotal, commission, total } = calculateTotal()
-
       const response = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tripId,
           passengers,
-          totalAmount: subtotal,
-          commission,
+          // Note: totalAmount and commission are calculated server-side for security
           selectedSeats: selectedSeats.length > 0 ? selectedSeats : undefined, // Optional: auto-assign if not selected
         }),
       })
@@ -383,7 +390,7 @@ export default function BookingPage() {
     )
   }
 
-  const { subtotal, commission, total } = calculateTotal()
+  const { ticketTotal, baseCommission, commissionVAT, totalCommission, total } = calculateTotal()
   const maxPassengers = Math.min(5, trip.availableSlots)
 
   return (
@@ -738,12 +745,17 @@ export default function BookingPage() {
                   <span className="text-muted-foreground">
                     {formatCurrency(Number(trip.price))} x {passengers.length} passenger{passengers.length > 1 ? "s" : ""}
                   </span>
-                  <span>{formatCurrency(subtotal)}</span>
+                  <span>{formatCurrency(ticketTotal)}</span>
                 </div>
 
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Service fee (5%)</span>
-                  <span>{formatCurrency(commission)}</span>
+                  <span className="text-muted-foreground">i-Ticket commission (5%)</span>
+                  <span>{formatCurrency(baseCommission)}</span>
+                </div>
+
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">VAT on commission (15%)</span>
+                  <span>{formatCurrency(commissionVAT)}</span>
                 </div>
 
                 <Separator />

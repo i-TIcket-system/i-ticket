@@ -179,12 +179,12 @@ export default function RegisterPage() {
 
       {/* Right Panel - Registration Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative overflow-hidden overflow-y-auto" style={{ background: "linear-gradient(180deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
-        {/* Subtle teal accent elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #20c4c4 0%, transparent 70%)" }} />
-        <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-10" style={{ background: "radial-gradient(circle, #0e9494 0%, transparent 70%)" }} />
+        {/* Subtle teal accent elements - z-0 and pointer-events-none to stay behind form */}
+        <div className="absolute top-0 right-0 w-64 h-64 rounded-full opacity-10 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #20c4c4 0%, transparent 70%)" }} />
+        <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full opacity-10 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #0e9494 0%, transparent 70%)" }} />
 
         {/* Teal accent line on left edge */}
-        <div className="hidden lg:block absolute left-0 top-1/4 bottom-1/4 w-1" style={{ background: "linear-gradient(180deg, #20c4c4 0%, #0e9494 50%, #0d4f5c 100%)" }} />
+        <div className="hidden lg:block absolute left-0 top-1/4 bottom-1/4 w-1 z-0 pointer-events-none" style={{ background: "linear-gradient(180deg, #20c4c4 0%, #0e9494 50%, #0d4f5c 100%)" }} />
 
         <div className="w-full max-w-md py-4 relative z-10">
           {/* Mobile Header */}

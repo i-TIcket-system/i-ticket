@@ -309,7 +309,7 @@ export default function EditTripPage() {
       const data = await response.json()
 
       if (response.ok) {
-        router.push("/company/dashboard")
+        router.push("/company/trips")
       } else {
         setError(data.error || "Failed to delete trip")
       }
@@ -339,8 +339,8 @@ export default function EditTripPage() {
           <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-semibold mb-2">Trip Not Found</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
-          <Link href="/company/dashboard">
-            <Button variant="outline">Back to Dashboard</Button>
+          <Link href="/company/trips">
+            <Button variant="outline">Back to Trips</Button>
           </Link>
         </Card>
       </div>

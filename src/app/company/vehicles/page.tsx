@@ -72,12 +72,19 @@ interface Vehicle {
   color: string | null
   totalSeats: number
   status: string
+  effectiveStatus: string // ON_TRIP, ACTIVE, MAINTENANCE, INACTIVE
   registrationExpiry: string | null
   insuranceExpiry: string | null
   lastServiceDate: string | null
   nextServiceDate: string | null
   tripCount: number
   nextTrip: {
+    id: string
+    origin: string
+    destination: string
+    departureTime: string
+  } | null
+  activeTrip: {
     id: string
     origin: string
     destination: string
@@ -104,8 +111,9 @@ const BUS_TYPES = {
   LUXURY: { label: "Luxury Bus", color: "bg-purple-100 text-purple-800" },
 }
 
-const STATUS_INFO = {
-  ACTIVE: { label: "Active", color: "bg-green-100 text-green-800", icon: CheckCircle },
+const STATUS_INFO: Record<string, { label: string; color: string; icon: any }> = {
+  ON_TRIP: { label: "On Trip", color: "bg-blue-100 text-blue-800", icon: Truck },
+  ACTIVE: { label: "Available", color: "bg-green-100 text-green-800", icon: CheckCircle },
   MAINTENANCE: { label: "Maintenance", color: "bg-orange-100 text-orange-800", icon: Wrench },
   INACTIVE: { label: "Inactive", color: "bg-gray-100 text-gray-800", icon: XCircle },
 }
@@ -373,7 +381,8 @@ export default function VehiclesPage() {
       vehicle.make.toLowerCase().includes(searchLower) ||
       vehicle.model.toLowerCase().includes(searchLower)
 
-    const matchesStatus = statusFilter === "all" || vehicle.status === statusFilter
+    // Use effectiveStatus for filtering so ON_TRIP vehicles can be filtered
+    const matchesStatus = statusFilter === "all" || (vehicle.effectiveStatus || vehicle.status) === statusFilter
 
     return matchesSearch && matchesStatus
   })
@@ -469,7 +478,8 @@ export default function VehiclesPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
+                  <SelectItem value="ON_TRIP">On Trip</SelectItem>
+                  <SelectItem value="ACTIVE">Available</SelectItem>
                   <SelectItem value="MAINTENANCE">In Maintenance</SelectItem>
                   <SelectItem value="INACTIVE">Inactive</SelectItem>
                 </SelectContent>
@@ -564,7 +574,9 @@ export default function VehiclesPage() {
                   ) : (
                     filteredVehicles.map((vehicle) => {
                     const typeInfo = BUS_TYPES[vehicle.busType as keyof typeof BUS_TYPES]
-                    const statusInfo = STATUS_INFO[vehicle.status as keyof typeof STATUS_INFO]
+                    // Use effectiveStatus to show ON_TRIP when vehicle is on an active trip
+                    const displayStatus = vehicle.effectiveStatus || vehicle.status
+                    const statusInfo = STATUS_INFO[displayStatus] || STATUS_INFO.ACTIVE
                     const StatusIcon = statusInfo.icon
                     const isExpanded = expandedVehicle === vehicle.id
 

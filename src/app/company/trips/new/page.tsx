@@ -247,7 +247,7 @@ export default function NewTripPage() {
       const data = await response.json()
 
       if (response.ok) {
-        router.push("/company/dashboard")
+        router.push("/company/trips")
       } else {
         // Handle staff conflict with override option
         if (data.canOverride && data.conflicts) {
@@ -290,11 +290,11 @@ export default function NewTripPage() {
     <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8">
       <div className="container mx-auto px-4 max-w-2xl">
         <Link
-          href="/company/dashboard"
+          href="/company/trips"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Dashboard
+          Back to Trips
         </Link>
 
         <Card>

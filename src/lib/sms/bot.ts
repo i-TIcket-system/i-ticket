@@ -620,13 +620,14 @@ async function handleConfirmBookingState(
     // Create payment record and initiate TeleBirr payment
     const { initiateTelebirrPayment } = await import("@/lib/payments/telebirr");
 
-    const totalWithCommission = Number(booking.totalAmount) + Number(booking.commission);
+    // totalAmount in DB = ticket + commission + VAT (ALREADY the final amount!)
+    const totalAmount = Number(booking.totalAmount);  // Don't add commission again!
 
     try {
       // Initiate TeleBirr merchant payment
       const { transactionId } = await initiateTelebirrPayment({
         phone: session.phone,
-        amount: totalWithCommission,
+        amount: totalAmount,
         reference: booking.id,
         description: `Bus ticket ${trip.origin}-${trip.destination}`
       });
@@ -635,7 +636,7 @@ async function handleConfirmBookingState(
       await prisma.payment.create({
         data: {
           bookingId: booking.id,
-          amount: totalWithCommission,
+          amount: totalAmount,
           method: 'TELEBIRR',
           transactionId,
           status: 'PENDING',

@@ -148,6 +148,15 @@ export async function POST(
     const body = await request.json()
 
     if (action === 'start') {
+      // Only allow start readings when trip is DEPARTED or later
+      // This prevents premature odometer recording
+      if (!['DEPARTED', 'COMPLETED'].includes(trip.status || 'SCHEDULED')) {
+        return NextResponse.json(
+          { error: 'Can only record start readings after trip has departed. Please start the trip first.' },
+          { status: 400 }
+        )
+      }
+
       // Validate start readings
       const validatedData = startReadingsSchema.parse(body)
 
@@ -202,6 +211,39 @@ export async function POST(
           companyId: trip.companyId,
         },
       })
+
+      // If driver recorded (not admin), notify company admins
+      if (isDriver) {
+        // Find company admins to notify
+        const companyAdmins = await prisma.user.findMany({
+          where: {
+            companyId: trip.companyId,
+            role: 'COMPANY_ADMIN',
+            staffRole: null, // Pure admins, not staff
+          },
+          select: { id: true },
+        })
+
+        // Create notification for each admin
+        if (companyAdmins.length > 0) {
+          await prisma.notification.createMany({
+            data: companyAdmins.map((admin) => ({
+              userId: admin.id,
+              type: 'TRIP_LOG_RECORDED',
+              title: 'Trip Log Recorded',
+              message: `Driver ${session.user.name} recorded start odometer (${validatedData.startOdometer.toLocaleString()} km) for trip ${trip.origin} → ${trip.destination}`,
+              metadata: JSON.stringify({
+                tripId,
+                route: `${trip.origin} → ${trip.destination}`,
+                vehiclePlate: trip.vehicle?.plateNumber,
+                startOdometer: validatedData.startOdometer,
+                recordedBy: session.user.name,
+                recordedById: session.user.id,
+              }),
+            })),
+          })
+        }
+      }
 
       return NextResponse.json({
         message: 'Start readings recorded',
