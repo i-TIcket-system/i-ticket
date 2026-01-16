@@ -250,9 +250,19 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60, // 24 hours (reduced from 7 days for security)
-    // For admin/company roles, consider even shorter duration (8-12 hours)
-    // Users can use "Remember Me" feature if needed (future enhancement)
+    maxAge: 24 * 60 * 60, // 24 hours (for JWT expiration, not cookie)
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        // No maxAge = session cookie (cleared on browser close)
+      }
+    }
   },
   secret: process.env.NEXTAUTH_SECRET,
 }

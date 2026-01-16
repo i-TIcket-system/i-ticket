@@ -17,8 +17,11 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50)
-    const offset = parseInt(searchParams.get("offset") || "0")
+    // Validate parseInt results to prevent NaN issues
+    const parsedLimit = parseInt(searchParams.get("limit") || "20")
+    const parsedOffset = parseInt(searchParams.get("offset") || "0")
+    const limit = Math.min(isNaN(parsedLimit) ? 20 : parsedLimit, 50)
+    const offset = isNaN(parsedOffset) || parsedOffset < 0 ? 0 : parsedOffset
     const unreadOnly = searchParams.get("unreadOnly") === "true"
 
     // Determine recipient type based on user role

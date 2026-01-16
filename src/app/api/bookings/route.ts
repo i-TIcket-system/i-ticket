@@ -192,8 +192,9 @@ export async function POST(request: NextRequest) {
         bookingHalted: boolean
         totalSlots: number
         price: number
+        status: string
       }>>`
-        SELECT id, "companyId", "availableSlots", "bookingHalted", "totalSlots", price
+        SELECT id, "companyId", "availableSlots", "bookingHalted", "totalSlots", price, status
         FROM "Trip"
         WHERE id = ${tripId}
         FOR UPDATE NOWAIT
@@ -204,6 +205,11 @@ export async function POST(request: NextRequest) {
       }
 
       const lockedTrip = trip[0]
+
+      // CRITICAL: Block booking on completed, cancelled, or departed trips
+      if (lockedTrip.status === "COMPLETED" || lockedTrip.status === "CANCELLED" || lockedTrip.status === "DEPARTED") {
+        throw new Error(`Cannot book this trip. Trip status: ${lockedTrip.status}`)
+      }
 
       if (lockedTrip.bookingHalted) {
         throw new Error("Booking is currently halted for this trip")
