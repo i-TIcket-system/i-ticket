@@ -78,32 +78,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // SECURITY: Recalculate amount server-side (never trust client)
+    // SECURITY: Recalculate amount server-side using correct commission logic
+    const { calculateBookingAmounts } = await import("@/lib/commission")
     const passengerCount = booking.passengers.length
     const tripPrice = Number(booking.trip.price)
-    const expectedTicketAmount = tripPrice * passengerCount
-    const expectedCommission = Math.round(expectedTicketAmount * 0.05)
-    const expectedTotal = expectedTicketAmount + expectedCommission
+
+    // Use central commission calculation utility
+    const expected = calculateBookingAmounts(tripPrice, passengerCount)
 
     // Verify booking amounts match expected calculation
-    if (Math.abs(Number(booking.totalAmount) - expectedTicketAmount) > 0.01) {
-      console.error(`[Payment] Amount mismatch: Expected ${expectedTicketAmount}, got ${booking.totalAmount}`)
+    // totalAmount = ticket + commission + VAT (rounded)
+    if (Math.abs(Number(booking.totalAmount) - expected.totalAmount) > 1) {
+      console.error(`[Payment] Amount mismatch: Expected ${expected.totalAmount}, got ${booking.totalAmount}`)
       return NextResponse.json(
         { error: "Booking amount mismatch. Please create a new booking." },
         { status: 400 }
       )
     }
 
-    if (Math.abs(Number(booking.commission) - expectedCommission) > 0.01) {
-      console.error(`[Payment] Commission mismatch: Expected ${expectedCommission}, got ${booking.commission}`)
+    // Verify commission (base commission only, not including VAT)
+    if (Math.abs(Number(booking.commission) - expected.commission.baseCommission) > 0.01) {
+      console.error(`[Payment] Commission mismatch: Expected ${expected.commission.baseCommission}, got ${booking.commission}`)
       return NextResponse.json(
         { error: "Commission calculation error. Please create a new booking." },
         { status: 400 }
       )
     }
 
-    // Customer pays: ticket price + 5% commission
-    const totalAmount = expectedTotal
+    // Customer pays: ticket price + commission + VAT
+    const totalAmount = expected.totalAmount
 
     // In demo mode, simulate successful payment
     // In production, integrate with TeleBirr API
