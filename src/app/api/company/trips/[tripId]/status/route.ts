@@ -74,6 +74,20 @@ export async function PATCH(
       )
     }
 
+    // SECURITY: For DEPARTED status, only pure admin or assigned driver can change
+    if (validatedData.status === "DEPARTED") {
+      const isPureAdmin = session.user.role === "COMPANY_ADMIN" && !session.user.staffRole
+      const isAssignedDriver = session.user.id === trip.driverId
+      const isSuperAdmin = session.user.role === "SUPER_ADMIN"
+
+      if (!isPureAdmin && !isAssignedDriver && !isSuperAdmin) {
+        return NextResponse.json(
+          { error: "Only admin or the assigned driver can start the trip" },
+          { status: 403 }
+        )
+      }
+    }
+
     // Check valid status transition
     const currentStatus = trip.status || "SCHEDULED"
     const allowedTransitions = validTransitions[currentStatus] || []
