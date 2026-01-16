@@ -371,7 +371,7 @@ export default function TicketsPage() {
                           <span className="text-muted-foreground">Service Fee (5%)</span>
                           <span className="font-medium">{formatCurrency(Number(booking.commission) / booking.passengers.length)}</span>
                         </div>
-                        {booking.commissionVAT && (
+                        {booking.commissionVAT !== undefined && booking.commissionVAT !== null && (
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">VAT on Service Fee (15%)</span>
                             <span className="font-medium">{formatCurrency(Number(booking.commissionVAT) / booking.passengers.length)}</span>
