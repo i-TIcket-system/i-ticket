@@ -215,11 +215,78 @@ export async function PUT(
       )
     }
 
+    // Track changes for audit logging
+    const changes: string[] = []
+
     // Calculate new available slots if total slots changed
     let newAvailableSlots = existingTrip.availableSlots
     if (totalSlots && totalSlots !== existingTrip.totalSlots) {
       const slotsDifference = totalSlots - existingTrip.totalSlots
       newAvailableSlots = Math.max(0, existingTrip.availableSlots + slotsDifference)
+    }
+
+    // CRITICAL: If vehicle changes, synchronize ALL vehicle-related trip properties
+    let vehicleUpdateData: any = {}
+    if (vehicleId !== undefined && vehicleId !== existingTrip.vehicleId) {
+      if (vehicleId) {
+        // Fetch new vehicle details
+        const newVehicle = await prisma.vehicle.findUnique({
+          where: { id: vehicleId },
+          select: {
+            totalSeats: true,
+            busType: true,
+          },
+        })
+
+        if (!newVehicle) {
+          return NextResponse.json(
+            { error: "Selected vehicle not found" },
+            { status: 400 }
+          )
+        }
+
+        // Count current bookings to calculate available slots
+        const bookedSeats = await prisma.passenger.count({
+          where: {
+            booking: {
+              tripId: tripId,
+              status: "PAID",
+            },
+          },
+        })
+
+        // Update trip to match new vehicle specifications
+        vehicleUpdateData = {
+          totalSlots: newVehicle.totalSeats,
+          availableSlots: Math.max(0, newVehicle.totalSeats - bookedSeats),
+          busType: newVehicle.busType,
+        }
+
+        // Override user-provided totalSlots and busType with vehicle values
+        newAvailableSlots = vehicleUpdateData.availableSlots
+
+        // Clear all seat assignments (new vehicle may have different layout)
+        const clearedSeats = await prisma.passenger.updateMany({
+          where: {
+            booking: {
+              tripId: tripId,
+            },
+            seatNumber: {
+              not: null,
+            },
+          },
+          data: {
+            seatNumber: null,
+          },
+        })
+
+        console.log(`[VEHICLE CHANGE] Trip ${tripId}: Synced to vehicle ${vehicleId}. Capacity: ${newVehicle.totalSeats}, Type: ${newVehicle.busType}, Cleared ${clearedSeats.count} seat assignments`)
+        changes.push(`Vehicle changed - Updated capacity (${newVehicle.totalSeats} seats), bus type (${newVehicle.busType}), cleared ${clearedSeats.count} seat assignments`)
+      } else {
+        // Vehicle removed (set to null)
+        console.log(`[VEHICLE CHANGE] Trip ${tripId}: Vehicle removed`)
+        changes.push('Vehicle removed from trip')
+      }
     }
 
     // P3: OPTIMISTIC LOCKING - Update with version check to prevent concurrent modifications
@@ -238,8 +305,12 @@ export async function PUT(
         ...(estimatedDuration && { estimatedDuration }),
         ...(distance !== undefined && { distance: distance || null }),
         ...(price && { price }),
-        ...(busType && { busType }),
-        ...(totalSlots && { totalSlots, availableSlots: newAvailableSlots }),
+        // If vehicle changed, use vehicle's busType; otherwise use provided value
+        ...(vehicleUpdateData.busType ? { busType: vehicleUpdateData.busType } : busType && { busType }),
+        // If vehicle changed, use vehicle's capacity; otherwise use provided value
+        ...(vehicleUpdateData.totalSlots
+          ? { totalSlots: vehicleUpdateData.totalSlots, availableSlots: vehicleUpdateData.availableSlots }
+          : totalSlots && { totalSlots, availableSlots: newAvailableSlots }),
         ...(hasWater !== undefined && { hasWater }),
         ...(hasFood !== undefined && { hasFood }),
         ...(bookingHalted !== undefined && { bookingHalted }),
@@ -315,7 +386,6 @@ export async function PUT(
     }
 
     // Log trip update for dispute management (track what changed)
-    const changes: string[] = []
     if (price && price !== existingTrip.price) changes.push(`Price: ${existingTrip.price} → ${price} ETB`)
     if (totalSlots && totalSlots !== existingTrip.totalSlots) changes.push(`Capacity: ${existingTrip.totalSlots} → ${totalSlots} seats`)
     if (departureTime) changes.push(`Departure: ${existingTrip.departureTime.toISOString()} → ${new Date(departureTime).toISOString()}`)
