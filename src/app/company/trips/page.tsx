@@ -576,9 +576,9 @@ export default function CompanyTripsPage() {
                         <Badge variant="secondary">{trip._count.bookings}</Badge>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col gap-1">
-                          {/* Trip Status Badge */}
-                          <Badge className={`w-fit ${
+                        <div className="flex flex-col gap-1.5">
+                          {/* Trip Status Badge - Primary */}
+                          <Badge className={`w-fit text-xs ${
                             trip.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
                             trip.status === 'BOARDING' ? 'bg-yellow-100 text-yellow-800' :
                             trip.status === 'DEPARTED' ? 'bg-purple-100 text-purple-800' :
@@ -588,26 +588,28 @@ export default function CompanyTripsPage() {
                             {trip.status}
                           </Badge>
 
-                          {/* Booking Status Badges */}
-                          {trip.bookingHalted ? (
-                            <Badge variant="destructive" className="w-fit">
-                              <X className="h-3 w-3 mr-1" />
-                              Halted
-                            </Badge>
-                          ) : trip.isActive ? (
-                            <Badge variant="default" className="w-fit">
-                              <Check className="h-3 w-3 mr-1" />
-                              Active
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="w-fit">Inactive</Badge>
-                          )}
-                          {lowSlots && !trip.bookingHalted && (
-                            <Badge variant="destructive" className="w-fit text-xs">
-                              <AlertTriangle className="h-3 w-3 mr-1" />
-                              Low Slots
-                            </Badge>
-                          )}
+                          {/* Secondary Status - Horizontal compact badges */}
+                          <div className="flex items-center gap-1">
+                            {trip.bookingHalted ? (
+                              <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5">
+                                <X className="h-2.5 w-2.5 mr-0.5" />
+                                Halted
+                              </Badge>
+                            ) : trip.isActive ? (
+                              <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">
+                                <Check className="h-2.5 w-2.5 mr-0.5" />
+                                Active
+                              </Badge>
+                            ) : (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">Inactive</Badge>
+                            )}
+                            {lowSlots && !trip.bookingHalted && (
+                              <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5">
+                                <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
+                                Low
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
