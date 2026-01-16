@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { transactionWithTimeout } from "@/lib/db"
 import { generateShortCode } from "@/lib/utils"
+import { calculateCommission } from "@/lib/commission"
 import QRCode from "qrcode"
 
 /**
@@ -143,9 +144,9 @@ export async function POST(
           }
         }
 
-        // Calculate total
+        // Calculate total with commission and VAT
         const totalAmount = Number(trip.price) * passengerCount
-        const commission = Math.round(totalAmount * 0.05)
+        const commissionBreakdown = calculateCommission(totalAmount)
 
         // Create booking first (without tickets - we'll create them separately)
         const booking = await tx.booking.create({
@@ -154,7 +155,8 @@ export async function POST(
             userId: userId, // Assign to the ticketer's user
             status: "PAID", // Mark as paid immediately (cash payment)
             totalAmount: totalAmount,
-            commission: commission,
+            commission: commissionBreakdown.baseCommission,
+            commissionVAT: commissionBreakdown.vat,
             isQuickTicket: true,
             passengers: {
               create: seatsToAssign.map((seatNumber, index) => ({

@@ -207,7 +207,9 @@ export async function generatePlatformRevenueReport(options: ReportOptions): Pro
   const totalPassengers = filteredBookings.reduce((sum, b) => sum + b.passengers.length, 0)
   const uniqueCompanies = new Set(filteredBookings.map(b => b.trip.company.id)).size
   const totalGrossRevenue = filteredBookings.reduce((sum, b) => sum + Number(b.totalAmount), 0)
-  const totalPlatformCommission = filteredBookings.reduce((sum, b) => sum + Number(b.commission), 0)
+  const totalBaseCommission = filteredBookings.reduce((sum, b) => sum + Number(b.commission), 0)
+  const totalCommissionVAT = filteredBookings.reduce((sum, b) => sum + (Number(b.commissionVAT) || 0), 0)
+  const totalPlatformCommission = totalBaseCommission + totalCommissionVAT
   const totalNetToCompanies = totalGrossRevenue - totalPlatformCommission
 
   const webBookings = filteredBookings.filter(b => b.payment?.initiatedVia === 'WEB').length
@@ -218,8 +220,10 @@ export async function generatePlatformRevenueReport(options: ReportOptions): Pro
   // Summary table
   const summaryData = [
     ["Total Bookings:", totalBookings, "", "Total Gross Revenue:", formatCurrency(totalGrossRevenue)],
-    ["Total Passengers:", totalPassengers, "", "Platform Commission (5%):", formatCurrency(totalPlatformCommission)],
-    ["Companies:", uniqueCompanies, "", "Net to Companies (95%):", formatCurrency(totalNetToCompanies)],
+    ["Total Passengers:", totalPassengers, "", "Base Commission (5%):", formatCurrency(totalBaseCommission)],
+    ["Companies:", uniqueCompanies, "", "VAT on Commission (15%):", formatCurrency(totalCommissionVAT)],
+    ["", "", "", "Total Commission:", formatCurrency(totalPlatformCommission)],
+    ["", "", "", "Net to Companies:", formatCurrency(totalNetToCompanies)],
     ["", "", "", "", ""],
     ["Web Bookings:", `${webBookings} (${Math.round(webBookings/totalBookings*100)}%)`, "", "TeleBirr Payments:", `${telebirrPayments} (${Math.round(telebirrPayments/totalBookings*100)}%)`],
     ["SMS Bookings:", `${smsBookings} (${Math.round(smsBookings/totalBookings*100)}%)`, "", "Demo Payments:", `${demoPayments} (${Math.round(demoPayments/totalBookings*100)}%)`],
@@ -471,8 +475,10 @@ export async function generatePlatformRevenueReport(options: ReportOptions): Pro
 
   const grandTotalsData = [
     ["Total Gross Revenue:", formatCurrency(totalGrossRevenue)],
-    ["Total Platform Commission (5%):", formatCurrency(totalPlatformCommission)],
-    ["Total Net to Companies (95%):", formatCurrency(totalNetToCompanies)]
+    ["Base Commission (5%):", formatCurrency(totalBaseCommission)],
+    ["VAT on Commission (15%):", formatCurrency(totalCommissionVAT)],
+    ["Total Platform Commission:", formatCurrency(totalPlatformCommission)],
+    ["Total Net to Companies:", formatCurrency(totalNetToCompanies)]
   ]
 
   grandTotalsData.forEach((rowData, index) => {

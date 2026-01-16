@@ -282,7 +282,8 @@ model Booking {
   user          User        @relation(fields: [userId], references: [id])
   passengers    Passenger[]
   totalAmount   Float
-  commission    Float
+  commission    Float       // Base platform commission (5% of totalAmount)
+  commissionVAT Float       @default(0) // VAT on commission (15% of commission)
   status        String      @default("PENDING") // PENDING, PAID, CANCELLED, COMPLETED
   isQuickTicket Boolean     @default(false)
   payment       Payment?

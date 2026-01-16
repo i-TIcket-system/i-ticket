@@ -8,6 +8,7 @@ import {
   allPassengersCollected
 } from "./session";
 import { getMessage, detectLanguage, type Language } from "./messages";
+import { calculateCommission } from "@/lib/commission";
 
 /**
  * SMS Bot State Machine
@@ -370,7 +371,8 @@ async function handleSelectTripState(
     selectedTripId: selectedTrip.id
   });
 
-  const commission = selectedTrip.price * 0.05;
+  const commissionBreakdown = calculateCommission(selectedTrip.price);
+  const commission = commissionBreakdown.totalCommission; // Show total (base + VAT)
   const response = getMessage(
     'tripSelected',
     lang,
@@ -519,7 +521,10 @@ async function handlePassengerIdState(
     };
   }
 
-  const totalPrice = (trip.price + trip.price * 0.05) * passengers.length;
+  // Calculate total price including commission with VAT
+  const ticketTotal = trip.price * passengers.length;
+  const commissionBreakdown = calculateCommission(ticketTotal);
+  const totalPrice = ticketTotal + commissionBreakdown.totalCommission;
 
   return {
     nextState: 'CONFIRM_BOOKING',
@@ -570,8 +575,8 @@ async function handleConfirmBookingState(
     }
 
     const passengers = getPassengerData(session);
-    const commission = trip.price * 0.05;
     const totalAmount = trip.price * passengers.length;
+    const commissionBreakdown = calculateCommission(totalAmount);
 
     // Create booking via API
     const bookingResponse = await fetch(`${process.env.NEXTAUTH_URL}/api/bookings`, {
