@@ -17,9 +17,11 @@ import {
   Shield,
   ChevronLeft,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  MessageSquare
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { signOut } from "next-auth/react"
 import { useState } from "react"
 import { cn } from "@/lib/utils"
@@ -53,6 +55,11 @@ const sidebarItems = [
     icon: HeadphonesIcon,
   },
   {
+    title: "Company Support",
+    href: "/admin/company-support",
+    icon: MessageSquare,
+  },
+  {
     title: "Audit Logs",
     href: "/admin/audit-logs",
     icon: FileText,
@@ -69,6 +76,20 @@ export default function AdminLayout({
   const pathname = usePathname()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [collapsed, setCollapsed] = useState(false)
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0)
+
+  // Fetch unread messages count
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await fetch("/api/admin/company-messages/unread-count")
+      if (response.ok) {
+        const data = await response.json()
+        setUnreadMessagesCount(data.unreadCount)
+      }
+    } catch (error) {
+      console.error("Failed to fetch unread count:", error)
+    }
+  }
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -79,6 +100,21 @@ export default function AdminLayout({
       router.replace("/login")
     }
   }, [status, session, router])
+
+  // Poll for unread messages every 30 seconds
+  useEffect(() => {
+    if (status === "authenticated" && session?.user.role === "SUPER_ADMIN") {
+      fetchUnreadCount()
+
+      const interval = setInterval(() => {
+        if (document.visibilityState === "visible") {
+          fetchUnreadCount()
+        }
+      }, 30000) // Poll every 30 seconds
+
+      return () => clearInterval(interval)
+    }
+  }, [status, session])
 
   if (status === "loading" || status === "unauthenticated") {
     return (
@@ -178,6 +214,7 @@ export default function AdminLayout({
             <nav className={cn("flex-1 p-4 space-y-1.5", collapsed && "p-2")}>
               {sidebarItems.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+                const showBadge = item.href === "/admin/company-support" && unreadMessagesCount > 0
 
                 const linkContent = (
                   <Link
@@ -193,11 +230,25 @@ export default function AdminLayout({
                     )}
                     style={isActive ? { background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" } : undefined}
                   >
-                    <item.icon className={cn(
-                      "h-5 w-5 flex-shrink-0 transition-transform duration-200",
-                      !isActive && "group-hover:scale-110"
-                    )} />
-                    {!collapsed && item.title}
+                    <div className="relative">
+                      <item.icon className={cn(
+                        "h-5 w-5 flex-shrink-0 transition-transform duration-200",
+                        !isActive && "group-hover:scale-110"
+                      )} />
+                      {showBadge && collapsed && (
+                        <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-xs" variant="destructive">
+                          {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
+                        </Badge>
+                      )}
+                    </div>
+                    {!collapsed && (
+                      <span className="flex-1">{item.title}</span>
+                    )}
+                    {!collapsed && showBadge && (
+                      <Badge variant="destructive" className="ml-auto">
+                        {unreadMessagesCount > 9 ? "9+" : unreadMessagesCount}
+                      </Badge>
+                    )}
                   </Link>
                 )
 

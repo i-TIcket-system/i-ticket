@@ -40,6 +40,9 @@ model User {
   tripsAsConductor      Trip[] @relation("TripConductor")
   tripsAsManualTicketer Trip[] @relation("TripManualTicketer")
 
+  // Company-platform messages
+  companyMessages CompanyMessage[]
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -85,6 +88,7 @@ model Company {
   users     User[]
   trips     Trip[]
   vehicles  Vehicle[]
+  companyMessages CompanyMessage[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -973,4 +977,40 @@ model WorkOrderMessageReadReceipt {
   @@unique([messageId, userId])
   @@index([messageId])
   @@index([userId])
+}
+
+// ==================== COMPANY-PLATFORM COMMUNICATION ====================
+
+// Dedicated chat between bus companies and i-Ticket platform (Super Admin)
+model CompanyMessage {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Message content
+  message   String   @db.Text
+
+  // Attachments (JSON array of file objects)
+  // [{name: "invoice.pdf", url: "/uploads/...", size: 12345, type: "application/pdf"}]
+  attachments String? @db.Text
+
+  // Sender info (denormalized for performance)
+  senderId     String
+  senderName   String
+  senderRole   String  // COMPANY_ADMIN or SUPER_ADMIN
+
+  // Company context (for segregation)
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Read tracking
+  isReadByAdmin   Boolean @default(false)  // Has admin read this message?
+  isReadByCompany Boolean @default(false)  // Has company read this message?
+
+  // Foreign key to sender
+  sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([companyId, isReadByAdmin])
+  @@index([companyId, isReadByCompany])
 }

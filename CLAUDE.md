@@ -69,6 +69,21 @@ All 9 items from previous session completed:
 
 ## Recent Development (Jan 2026)
 
+### January 16, 2026 (Evening) - Company Contact/Chat Feature with File Attachments
+- **Company-Platform Communication System** - Dedicated chat between companies and i-Ticket support
+  - New CompanyMessage model with bidirectional read tracking
+  - Supports file attachments (images, PDFs, documents) - max 5 files, 10MB each
+  - Company portal: "Contact i-Ticket" page with chat interface
+  - Admin portal: "Company Support" page with two-column layout (company list + conversation)
+  - Real-time updates via 10-second polling (pauses when tab inactive)
+  - Company segregation enforced (each company only sees their own messages)
+  - Rate limiting: 10 messages per hour to prevent spam
+  - Files stored in `/public/uploads/company-messages/`
+  - Database: CompanyMessage model with sender info denormalization for performance
+  - Components: `ContactChat.tsx` (company), `CompanySupportChat.tsx` (admin with search/filter)
+  - API Routes: `/api/company/messages`, `/api/admin/company-messages`
+  - Navigation items added to both company and admin layouts
+
 ### January 16, 2026 (Afternoon) - UI/UX Bug Fixes & Improvements
 - **Trip Log Auto-Popup** - Trip log dialog now auto-opens when status changes to DEPARTED
   - Added `autoOpenStart` and `onDialogClose` props to TripLogCard component
@@ -241,13 +256,19 @@ All 9 items from previous session completed:
 - VehicleHealthDashboard with real-time gauge
 
 ### Admin Portals
-- **Super Admin**: Stats, revenue analytics, companies, audit logs, support tickets
-- **Company Admin**: Trips, staff, vehicles, work orders, manifests
+- **Super Admin**: Stats, revenue analytics, companies, audit logs, support tickets, company support chat
+- **Company Admin**: Trips, staff, vehicles, work orders, manifests, contact i-Ticket support
 - **Staff Portal**: My Trips with TripChat
 - **Cashier**: Ticketing dashboard with seat map
 - **Mechanic**: Work orders assigned to me
 - **Finance**: Cost tracking, work order oversight
 - **Sales**: Referrals, commissions, QR flyers
+
+### Company-Platform Communication
+- Dedicated chat between bus companies and i-Ticket platform support
+- File attachments support (images, PDFs, documents)
+- Company segregation enforced, bidirectional read tracking
+- Real-time updates via polling, rate limiting for spam prevention
 
 ### Integrations
 - TeleBirr (HMAC-SHA256), ClickUp (one-way sync), Africa's Talking SMS
@@ -258,7 +279,7 @@ All 9 items from previous session completed:
 
 **Core**: User, Company, Trip, Booking, Passenger, Ticket, Payment, City
 **Fleet**: Vehicle, MaintenanceSchedule, WorkOrder, WorkOrderPart, VehicleInspection, FuelEntry, OdometerLog
-**Communication**: TripMessage, TripMessageReadReceipt, Notification, SupportTicket
+**Communication**: TripMessage, TripMessageReadReceipt, Notification, SupportTicket, CompanyMessage, WorkOrderMessage, WorkOrderMessageReadReceipt
 **Sales**: SalesPerson, SalesQrScan, SalesReferral, SalesCommission, SalesPayout
 **Security**: ProcessedCallback, PasswordReset, AdminLog
 **SMS**: SmsSession
@@ -268,12 +289,12 @@ All 9 items from previous session completed:
 ## Key API Routes
 
 **Public**: `/api/trips`, `/api/track/[code]`, `/api/tickets/verify/public`
-**Company**: `/api/company/trips`, `/api/company/staff`, `/api/company/vehicles`, `/api/company/work-orders`
+**Company**: `/api/company/trips`, `/api/company/staff`, `/api/company/vehicles`, `/api/company/work-orders`, `/api/company/messages`
 **Staff**: `/api/staff/my-trips`, `/api/trips/[tripId]/messages`
 **Cashier**: `/api/cashier/my-trips`, `/api/cashier/trip/[tripId]/sell`
 **Mechanic**: `/api/mechanic/work-orders`
 **Finance**: `/api/finance/work-orders`
-**Admin**: `/api/admin/stats`, `/api/admin/companies`, `/api/admin/sales-persons/*`
+**Admin**: `/api/admin/stats`, `/api/admin/companies`, `/api/admin/sales-persons/*`, `/api/admin/company-messages`
 **Cron**: `/api/cron/predictive-maintenance` (daily 2 AM), `/api/cron/trip-reminders` (hourly), `/api/cron/cleanup` (hourly)
 
 ---
@@ -282,12 +303,12 @@ All 9 items from previous session completed:
 
 - `/(auth)` - Login, Register, Password Reset
 - `/(customer)` - Search, Booking, Tickets, Profile
-- `/(company)` - Dashboard, Trips, Staff, Vehicles, Work Orders
+- `/(company)` - Dashboard, Trips, Staff, Vehicles, Work Orders, Contact i-Ticket
 - `/(staff)` - My Trips with TripChat
 - `/(cashier)` - Ticketing portal
 - `/(mechanic)` - Work order management
 - `/(finance)` - Cost tracking
-- `/(admin)` - Super Admin dashboard
+- `/(admin)` - Super Admin dashboard, Company Support
 - `/(sales)` - Sales person portal
 
 ---
