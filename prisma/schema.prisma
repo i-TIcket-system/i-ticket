@@ -709,15 +709,29 @@ model Notification {
   // Priority for display ordering (1=Low, 2=Normal, 3=High, 4=Urgent)
   priority        Int       @default(2)
 
+  // Notification Grouping System (Phase 2.5)
+  groupKey        String?   // e.g., "trip-abc123" or "workorder-456"
+  groupType       String?   // "TRIP", "WORK_ORDER", "STAFF", "SYSTEM"
+  parentId        String?   // For nested notifications
+  isGroupHeader   Boolean   @default(false) // This is the summary notification
+  childCount      Int       @default(0) // Number of grouped notifications
+
+  parent          Notification?   @relation("NotificationHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children        Notification[]  @relation("NotificationHierarchy")
+
   createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @default(now()) @updatedAt // Auto-updated when group changes
   expiresAt       DateTime? // Optional expiration for time-sensitive notifications
 
   @@index([recipientId, recipientType, isRead])
   @@index([recipientId, recipientType, createdAt])
+  @@index([recipientId, isGroupHeader, isRead])
+  @@index([groupKey, createdAt])
   @@index([type, createdAt])
   @@index([tripId])
   @@index([bookingId])
   @@index([createdAt])
+  @@index([parentId])
 }
 
 // ==================== PHASE 2: PREDICTIVE MAINTENANCE SYSTEM ====================
