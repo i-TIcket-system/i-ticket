@@ -47,6 +47,7 @@ interface Booking {
   status: string
   totalAmount: number
   commission: number
+  commissionVAT?: number
   createdAt: string
   trip: {
     id: string
@@ -367,13 +368,23 @@ export default function TicketsPage() {
                           <span className="font-medium">{formatCurrency(booking.trip.price)}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Service Fee</span>
+                          <span className="text-muted-foreground">Service Fee (5%)</span>
                           <span className="font-medium">{formatCurrency(Number(booking.commission) / booking.passengers.length)}</span>
                         </div>
+                        {booking.commissionVAT && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">VAT on Service Fee (15%)</span>
+                            <span className="font-medium">{formatCurrency(Number(booking.commissionVAT) / booking.passengers.length)}</span>
+                          </div>
+                        )}
                         <Separator />
                         <div className="flex justify-between font-bold">
                           <span>Total Paid</span>
-                          <span className="text-primary">{formatCurrency(booking.trip.price + (Number(booking.commission) / booking.passengers.length))}</span>
+                          <span className="text-primary">{formatCurrency(
+                            booking.trip.price +
+                            (Number(booking.commission) / booking.passengers.length) +
+                            (Number(booking.commissionVAT || 0) / booking.passengers.length)
+                          )}</span>
                         </div>
                       </div>
 
