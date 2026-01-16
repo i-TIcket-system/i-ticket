@@ -202,9 +202,10 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <Label htmlFor="nationalId">National ID (Optional)</Label>
+              <Label htmlFor="nationalId">ID Number/Passport (Optional)</Label>
               <Input
                 id="nationalId"
+                placeholder="Kebele, National, Regional, or Passport"
                 value={formData.nationalId}
                 onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
               />

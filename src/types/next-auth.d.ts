@@ -10,6 +10,7 @@ declare module "next-auth" {
       companyName: string | null
       staffRole: string | null
       profilePicture: string | null
+      nationalId: string | null
     } & DefaultSession["user"]
   }
 
@@ -21,6 +22,7 @@ declare module "next-auth" {
     companyName: string | null
     staffRole: string | null
     profilePicture: string | null
+    nationalId: string | null
   }
 }
 
@@ -33,5 +35,6 @@ declare module "next-auth/jwt" {
     companyName: string | null
     staffRole: string | null
     profilePicture: string | null
+    nationalId: string | null
   }
 }

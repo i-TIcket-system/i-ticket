@@ -165,6 +165,7 @@ export const authOptions: NextAuthOptions = {
             companyName: user.company?.name || null,
             staffRole: user.staffRole,
             profilePicture: user.profilePicture,
+            nationalId: user.nationalId,
           }
         }
 
@@ -199,6 +200,7 @@ export const authOptions: NextAuthOptions = {
             companyName: null,
             staffRole: null,
             profilePicture: null,
+            nationalId: null,
           }
         }
 
@@ -216,6 +218,7 @@ export const authOptions: NextAuthOptions = {
         token.companyName = user.companyName
         token.staffRole = user.staffRole
         token.profilePicture = user.profilePicture
+        token.nationalId = user.nationalId
       }
 
       // Refresh user data when session is manually updated
@@ -228,6 +231,8 @@ export const authOptions: NextAuthOptions = {
           if (freshUser) {
             // Update profile picture
             token.profilePicture = freshUser.profilePicture
+            // Update nationalId
+            token.nationalId = freshUser.nationalId
             // Update company name if user is associated with a company
             if (token.companyId && freshUser.company) {
               token.companyName = freshUser.company.name
@@ -249,6 +254,7 @@ export const authOptions: NextAuthOptions = {
         session.user.companyName = token.companyName as string | null
         session.user.staffRole = token.staffRole as string | null
         session.user.profilePicture = token.profilePicture as string | null
+        session.user.nationalId = token.nationalId as string | null
       }
       return session
     }

@@ -165,6 +165,7 @@ export default function BookingPage() {
           ...prev[0],
           name: session.user.name || "",
           phone: session.user.phone || "",
+          nationalId: session.user.nationalId || "",
         },
         ...prev.slice(1),
       ])
