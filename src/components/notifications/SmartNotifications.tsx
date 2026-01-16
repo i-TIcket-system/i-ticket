@@ -423,7 +423,7 @@ export function NotificationPreferences({
               </div>
               <Switch
                 checked={localPrefs[type]}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked: boolean) =>
                   setLocalPrefs(prev => ({ ...prev, [type]: checked }))
                 }
               />
