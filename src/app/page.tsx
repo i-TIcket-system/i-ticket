@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
+import { EnhancedCard } from "@/components/ui/enhanced-card"
 import { CityCombobox } from "@/components/ui/city-combobox"
 import { getAllCities } from "@/lib/ethiopian-cities"
 import { toast } from "sonner"
@@ -367,7 +368,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {features.map((feature, i) => (
-              <Card key={feature.title} className="card-hover border-0 shadow-lg shadow-black/5 overflow-hidden group">
+              <EnhancedCard key={feature.title} glass interactive glow={2} className="overflow-hidden group">
                 <CardContent className="p-8 relative">
                   {/* Gradient accent line */}
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${feature.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
@@ -378,7 +379,7 @@ export default function HomePage() {
                   <h3 className="mb-3 text-foreground">{feature.title}</h3>
                   <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
                 </CardContent>
-              </Card>
+              </EnhancedCard>
             ))}
           </div>
         </div>
