@@ -20,6 +20,8 @@ import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { TripCountdown } from "@/components/ui/trip-countdown"
+import { SuccessAnimation } from "@/components/animations/SuccessAnimation"
+import { paymentSuccessConfetti } from "@/lib/confetti"
 
 interface Booking {
   id: string
@@ -93,6 +95,9 @@ export default function PaymentPage() {
         setPaymentStatus("success")
         toast.success("Payment successful! Generating your tickets...")
 
+        // Trigger confetti animation
+        paymentSuccessConfetti()
+
         // Clean up sessionStorage (remove saved passenger data for this trip)
         if (booking?.trip?.id) {
           sessionStorage.removeItem(`booking-${booking.trip.id}-passengers`)
@@ -101,7 +106,7 @@ export default function PaymentPage() {
         // Wait a moment then redirect to tickets
         setTimeout(() => {
           router.push(`/tickets/${bookingId}`)
-        }, 2000)
+        }, 3000) // Increased to 3s to show animation
       } else {
         setPaymentStatus("failed")
         toast.error(data.error || "Payment failed")
@@ -157,15 +162,13 @@ export default function PaymentPage() {
 
         {/* Payment Status */}
         {paymentStatus === "success" ? (
-          <Card className="text-center p-8">
-            <div className="h-16 w-16 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-4">
-              <Check className="h-8 w-8 text-green-600" />
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Payment Successful!</h2>
-            <p className="text-muted-foreground mb-4">
-              Your tickets have been generated. Redirecting...
-            </p>
-            <Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" />
+          <Card>
+            <SuccessAnimation
+              variant="payment"
+              message="Payment Successful!"
+              submessage="Your tickets have been generated. Redirecting to your tickets..."
+              showConfetti={false} // Confetti already triggered above
+            />
           </Card>
         ) : (
           <>
