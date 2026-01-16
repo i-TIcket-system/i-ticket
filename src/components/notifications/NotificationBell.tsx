@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Bell, CheckCheck, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useNotifications } from "@/hooks/use-notifications"
-import { NotificationItem } from "./NotificationItem"
+import { useGroupedNotifications, NotificationFilter } from "@/hooks/use-grouped-notifications"
+import { NotificationGroupItem } from "./NotificationGroupItem"
 import { cn } from "@/lib/utils"
 
 interface NotificationBellProps {
@@ -152,14 +152,17 @@ export function NotificationBell({
   const { data: session } = useSession()
 
   const {
-    notifications,
+    groups,
     unreadCount,
     urgentCount,
+    filter,
     isLoading,
-    fetchNotifications,
+    fetchGroupedNotifications,
+    setFilter,
+    toggleGroup,
     markAsRead,
     markAllAsRead,
-  } = useNotifications()
+  } = useGroupedNotifications()
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -181,31 +184,45 @@ export function NotificationBell({
   // Fetch notifications when dropdown opens
   useEffect(() => {
     if (isOpen) {
-      fetchNotifications()
+      fetchGroupedNotifications()
     }
-  }, [isOpen, fetchNotifications])
+  }, [isOpen, fetchGroupedNotifications])
 
   const handleNotificationClick = async (
     notificationId: string,
-    isRead: boolean,
-    type: string,
-    tripId?: string | null,
-    bookingId?: string | null,
-    metadata?: Record<string, unknown> | null
+    isGroupHeader: boolean,
+    isRead: boolean
   ) => {
-    // Mark as read
+    // Mark as read (group header or individual notification)
     if (!isRead) {
-      await markAsRead(notificationId)
+      await markAsRead(notificationId, isGroupHeader)
     }
 
-    // Extract workOrderId from metadata if present
-    const workOrderId = metadata?.workOrderId as string | undefined
+    // Find the notification to get its details
+    const group = groups.find((g) => {
+      if (g.header.id === notificationId) return true
+      return g.children.some((c) => c.id === notificationId)
+    })
 
-    // Navigate to relevant page based on role and staffRole
+    if (!group) return
+
+    const notification = group.header.id === notificationId
+      ? group.header
+      : group.children.find((c) => c.id === notificationId)
+
+    if (!notification) return
+
+    // Extract workOrderId from metadata if present
+    const metadata = typeof group.header.metadata === 'string'
+      ? JSON.parse(group.header.metadata || '{}')
+      : group.header.metadata || {}
+    const workOrderId = metadata.workOrderId as string | undefined
+
+    // Navigate to relevant page
     const url = getNotificationUrl(
-      type,
-      tripId,
-      bookingId,
+      notification.type || group.header.type,
+      notification.tripId || group.header.tripId,
+      notification.bookingId || group.header.bookingId,
       workOrderId,
       session?.user?.role,
       session?.user?.staffRole
@@ -260,58 +277,91 @@ export function NotificationBell({
           )}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            <div>
-              <h3 className="font-semibold text-gray-900 dark:text-white">
-                Notifications
-              </h3>
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  Notifications
+                </h3>
+                {unreadCount > 0 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {unreadCount} unread
+                  </p>
+                )}
+              </div>
+
               {unreadCount > 0 && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {unreadCount} unread
-                </p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-teal-600 hover:text-teal-700 dark:text-teal-400"
+                  onClick={() => markAllAsRead()}
+                >
+                  <CheckCheck className="h-3.5 w-3.5 mr-1" />
+                  Mark all read
+                </Button>
               )}
             </div>
 
-            {unreadCount > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-teal-600 hover:text-teal-700 dark:text-teal-400"
-                onClick={() => markAllAsRead()}
+            {/* Filter Tabs */}
+            <div className="flex gap-1 bg-white dark:bg-gray-900 rounded-md p-1">
+              <button
+                onClick={() => setFilter("all")}
+                className={cn(
+                  "flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors",
+                  filter === "all"
+                    ? "bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                )}
               >
-                <CheckCheck className="h-3.5 w-3.5 mr-1" />
-                Mark all read
-              </Button>
-            )}
+                All
+              </button>
+              <button
+                onClick={() => setFilter("urgent")}
+                className={cn(
+                  "flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors",
+                  filter === "urgent"
+                    ? "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                )}
+              >
+                🚨 Urgent {urgentCount > 0 && `(${urgentCount})`}
+              </button>
+              <button
+                onClick={() => setFilter("unread")}
+                className={cn(
+                  "flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors",
+                  filter === "unread"
+                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
+                    : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+                )}
+              >
+                Unread {unreadCount > 0 && `(${unreadCount})`}
+              </button>
+            </div>
           </div>
 
           {/* Notifications list */}
-          <div className="max-h-[400px] overflow-y-auto">
+          <div className="max-h-[500px] overflow-y-auto">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
               </div>
-            ) : notifications.length === 0 ? (
+            ) : groups.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-gray-500 dark:text-gray-400">
                 <Bell className="h-10 w-10 mb-2 opacity-50" />
-                <p className="text-sm">No notifications</p>
+                <p className="text-sm">
+                  {filter === "urgent" ? "No urgent notifications" : filter === "unread" ? "No unread notifications" : "No notifications"}
+                </p>
               </div>
             ) : (
               <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {notifications.map((notification) => (
-                  <NotificationItem
-                    key={notification.id}
-                    {...notification}
-                    onClick={() =>
-                      handleNotificationClick(
-                        notification.id,
-                        notification.isRead,
-                        notification.type,
-                        notification.tripId,
-                        notification.bookingId,
-                        notification.metadata
-                      )
-                    }
+                {groups.map((group) => (
+                  <NotificationGroupItem
+                    key={group.header.id}
+                    group={group}
+                    onToggle={() => toggleGroup(group.header.id)}
+                    onNotificationClick={handleNotificationClick}
                   />
                 ))}
               </div>
@@ -319,7 +369,7 @@ export function NotificationBell({
           </div>
 
           {/* Footer - View all */}
-          {notifications.length > 0 && (
+          {groups.length > 0 && (
             <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
               <button
                 className="w-full text-center text-sm text-teal-600 hover:text-teal-700 dark:text-teal-400 font-medium"
