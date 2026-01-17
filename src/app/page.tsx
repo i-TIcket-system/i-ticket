@@ -303,39 +303,43 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-16 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #0e9494 0%, #0d4f5c 100%)" }}>
-        {/* Pattern overlay */}
-        <div className="absolute inset-0 eth-pattern opacity-10" />
+      {/* Stats Section - Enhanced */}
+      <section className="py-16 relative overflow-hidden bg-gradient-to-br from-teal-medium to-teal-dark">
+        {/* Pattern overlay - Tilahun Weave */}
+        <div className="absolute inset-0 pattern-overlay tilahun-weave" />
 
         <div className="container relative z-10 mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, i) => (
               <div
                 key={stat.label}
-                className="text-center text-white group"
+                className={`text-center text-white group ${mounted ? 'animate-fade-up' : 'opacity-0'}`}
+                style={{ animationDelay: `${i * 100}ms` }}
               >
-                <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-white/10 backdrop-blur mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <stat.icon className="h-7 w-7" />
+                <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 mb-4 group-hover:scale-110 group-hover:bg-white/25 transition-all duration-300 shadow-lg">
+                  <stat.icon className="h-8 w-8" />
                 </div>
-                <div className="text-4xl md:text-5xl font-display mb-2">{stat.value}</div>
-                <div className="text-sm text-white/70 uppercase tracking-wider">{stat.label}</div>
+                <div className="text-4xl md:text-5xl font-display font-bold mb-2">{stat.value}</div>
+                <div className="text-sm text-white/80 uppercase tracking-wider font-medium">{stat.label}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Bus Companies */}
-      <section className="py-20 md:py-28 eth-pattern">
-        <div className="container mx-auto px-4">
+      {/* Bus Companies - Enhanced */}
+      <section className="py-20 md:py-28 relative overflow-hidden">
+        {/* Subtle pattern background */}
+        <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-[0.02]" />
+
+        <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-14">
             <div className="ethiopian-bar justify-center mb-6">
               <div />
               <div />
               <div />
             </div>
-            <h2 className="mb-4">Our Trusted Partners</h2>
+            <h2 className="mb-4 font-display">Our Trusted Partners</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
               We partner with Ethiopia&apos;s leading bus companies to bring you the best travel experience.
             </p>
@@ -345,9 +349,10 @@ export default function HomePage() {
             {busCompanies.map((company, i) => (
               <div
                 key={company.name}
-                className="group flex flex-col items-center gap-4 p-6 rounded-2xl bg-card hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 hover:-translate-y-1 border border-transparent hover:border-primary/10"
+                className={`group flex flex-col items-center gap-4 p-6 rounded-2xl bg-card/80 backdrop-blur-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 hover:-translate-y-2 border border-border/50 hover:border-primary/20 ${mounted ? 'animate-fade-up' : 'opacity-0'}`}
+                style={{ animationDelay: `${i * 100}ms` }}
               >
-                <div className={`h-20 w-20 rounded-2xl bg-gradient-to-br ${company.color} flex items-center justify-center text-white text-2xl font-bold shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`h-20 w-20 rounded-2xl bg-gradient-to-br ${company.color} flex items-center justify-center text-white text-2xl font-bold shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300`}>
                   {company.logo}
                 </div>
                 <span className="font-medium text-foreground">{company.name}</span>
@@ -357,11 +362,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-20 md:py-28 bg-muted/30">
-        <div className="container mx-auto px-4">
+      {/* Features - Enhanced */}
+      <section className="py-20 md:py-28 bg-muted/30 relative overflow-hidden">
+        {/* Very subtle pattern */}
+        <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-[0.015]" />
+
+        <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-14">
-            <h2 className="mb-4">Why Choose i-Ticket?</h2>
+            <h2 className="mb-4 font-display">Why Choose i-Ticket?</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
               We&apos;ve built the most convenient way to book bus tickets in Ethiopia.
             </p>
@@ -369,15 +377,22 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {features.map((feature, i) => (
-              <EnhancedCard key={feature.title} glass interactive glow={2} className="overflow-hidden group">
+              <EnhancedCard
+                key={feature.title}
+                glass
+                interactive
+                glow={2}
+                className={`overflow-hidden group ${mounted ? 'animate-fade-up' : 'opacity-0'}`}
+                style={{ animationDelay: `${i * 150}ms` }}
+              >
                 <CardContent className="p-8 relative">
                   {/* Gradient accent line */}
                   <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${feature.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
 
-                  <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${feature.accent} flex items-center justify-center mb-6 shadow-lg`}>
+                  <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${feature.accent} flex items-center justify-center mb-6 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
                     <feature.icon className="h-7 w-7 text-white" />
                   </div>
-                  <h3 className="mb-3 text-foreground">{feature.title}</h3>
+                  <h3 className="mb-3 text-foreground font-display text-xl">{feature.title}</h3>
                   <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
                 </CardContent>
               </EnhancedCard>
@@ -386,11 +401,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it Works */}
-      <section className="py-20 md:py-28">
-        <div className="container mx-auto px-4">
+      {/* How it Works - Enhanced */}
+      <section className="py-20 md:py-28 relative overflow-hidden">
+        {/* Very subtle pattern */}
+        <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-[0.01]" />
+
+        <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-14">
-            <h2 className="mb-4">How It Works</h2>
+            <h2 className="mb-4 font-display">How It Works</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
               Book your bus ticket in 3 simple steps
             </p>
@@ -417,16 +435,20 @@ export default function HomePage() {
                 description: "Receive your QR code ticket instantly and show it when boarding.",
               },
             ].map((item, i) => (
-              <div key={item.step} className="relative text-center group">
+              <div
+                key={item.step}
+                className={`relative text-center group ${mounted ? 'animate-fade-up' : 'opacity-0'}`}
+                style={{ animationDelay: `${i * 150}ms` }}
+              >
                 {/* Connector line */}
                 {i < 2 && (
-                  <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/30 to-transparent" />
+                  <div className="hidden lg:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/30 to-transparent" />
                 )}
 
-                <div className="inline-flex h-20 w-20 items-center justify-center rounded-full text-white shadow-xl shadow-[#0e9494]/30 mb-6 group-hover:scale-110 transition-transform duration-300" style={{ background: "linear-gradient(135deg, #0e9494 0%, #0d4f5c 100%)" }}>
-                  <span className="text-3xl font-display">{item.step}</span>
+                <div className="inline-flex h-20 w-20 items-center justify-center rounded-full text-white bg-gradient-to-br from-teal-medium to-teal-dark shadow-xl shadow-primary/30 mb-6 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-primary/40 transition-all duration-300 border-2 border-teal-light/20">
+                  <span className="text-3xl font-display font-bold">{item.step}</span>
                 </div>
-                <h3 className="mb-3 text-foreground">{item.title}</h3>
+                <h3 className="mb-3 text-foreground font-display text-xl">{item.title}</h3>
                 <p className="text-muted-foreground leading-relaxed">{item.description}</p>
               </div>
             ))}
@@ -434,10 +456,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 md:py-28 gradient-hero text-white relative overflow-hidden">
+      {/* CTA Section - Enhanced */}
+      <section className="py-20 md:py-28 gradient-hero-simien text-white relative overflow-hidden">
         {/* Background elements */}
-        <div className="absolute inset-0 eth-pattern opacity-20" />
+        <div className="absolute inset-0 pattern-overlay tilahun-weave" />
 
         <div className="container relative z-10 mx-auto px-4 text-center">
           <div className="ethiopian-bar justify-center mb-8">
@@ -446,22 +468,22 @@ export default function HomePage() {
             <div />
           </div>
 
-          <h2 className="text-white mb-6">
+          <h2 className="text-white mb-6 font-display">
             Ready to Start Your Journey?
           </h2>
-          <p className="text-xl text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">
             Join thousands of travelers who trust i-Ticket for their bus bookings across Ethiopia.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/search">
-              <Button size="lg" variant="secondary" className="h-14 px-8 text-base font-medium shadow-xl">
+              <Button size="lg" variant="secondary" className="h-14 px-8 text-base font-medium shadow-xl hover:shadow-2xl coffee-ripple">
                 <Search className="h-5 w-5 mr-2" />
                 Find Trips
               </Button>
             </Link>
             <Link href="/register">
-              <Button size="lg" variant="outline" className="h-14 px-8 text-base font-medium border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/50 backdrop-blur-sm">
+              <Button size="lg" variant="outline" className="h-14 px-8 text-base font-medium border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/50 backdrop-blur-md hover:backdrop-blur-lg transition-all duration-300">
                 <UserPlus className="h-5 w-5 mr-2" />
                 Create Account
               </Button>
