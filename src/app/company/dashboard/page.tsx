@@ -118,6 +118,25 @@ export default function CompanyDashboard() {
     }
   }, [dismissedAlerts])
 
+  // UX-9 FIX: Clear dismissed alerts when slots increase (no longer low)
+  useEffect(() => {
+    const updatedAlerts = new Set(dismissedAlerts)
+    let hasChanges = false
+
+    dismissedAlerts.forEach((tripId) => {
+      const trip = trips.find((t) => t.id === tripId)
+      // Remove from dismissed if trip no longer exists or no longer has low slots
+      if (!trip || !isLowSlots(trip.availableSlots, trip.totalSlots)) {
+        updatedAlerts.delete(tripId)
+        hasChanges = true
+      }
+    })
+
+    if (hasChanges) {
+      setDismissedAlerts(updatedAlerts)
+    }
+  }, [trips, dismissedAlerts])
+
   const fetchDashboardData = async () => {
     try {
       const [tripsRes, statsRes] = await Promise.all([
@@ -344,8 +363,11 @@ export default function CompanyDashboard() {
               <CardHeader className="pb-2">
                 <CardDescription>Total Distance</CardDescription>
                 <CardTitle className="text-3xl">
-                  {stats.fleetMetrics?.totalDistance?.toLocaleString() || 0}
-                  <span className="text-lg font-normal ml-1">km</span>
+                  {stats.fleetMetrics?.totalDistance ?
+                    stats.fleetMetrics.totalDistance.toLocaleString() :
+                    <span className="text-muted-foreground text-xl">No data yet</span>
+                  }
+                  {stats.fleetMetrics?.totalDistance && <span className="text-lg font-normal ml-1">km</span>}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -360,8 +382,11 @@ export default function CompanyDashboard() {
               <CardHeader className="pb-2">
                 <CardDescription>Fuel Consumed</CardDescription>
                 <CardTitle className="text-3xl">
-                  {stats.fleetMetrics?.totalFuelConsumed?.toLocaleString() || 0}
-                  <span className="text-lg font-normal ml-1">L</span>
+                  {stats.fleetMetrics?.totalFuelConsumed ?
+                    stats.fleetMetrics.totalFuelConsumed.toLocaleString() :
+                    <span className="text-muted-foreground text-xl">No data yet</span>
+                  }
+                  {stats.fleetMetrics?.totalFuelConsumed && <span className="text-lg font-normal ml-1">L</span>}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -376,8 +401,11 @@ export default function CompanyDashboard() {
               <CardHeader className="pb-2">
                 <CardDescription>Avg. Efficiency</CardDescription>
                 <CardTitle className="text-3xl">
-                  {stats.fleetMetrics?.avgFuelEfficiency?.toFixed(1) || "0.0"}
-                  <span className="text-lg font-normal ml-1">km/L</span>
+                  {stats.fleetMetrics?.avgFuelEfficiency ?
+                    stats.fleetMetrics.avgFuelEfficiency.toFixed(1) :
+                    <span className="text-muted-foreground text-xl">No data yet</span>
+                  }
+                  {stats.fleetMetrics?.avgFuelEfficiency && <span className="text-lg font-normal ml-1">km/L</span>}
                 </CardTitle>
               </CardHeader>
               <CardContent>

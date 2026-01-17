@@ -632,7 +632,7 @@ export default function BookingPage() {
                             placeholder={passenger.isChild ? "Not required for children" : "Kebele, National, Regional, or Passport"}
                             value={passenger.nationalId}
                             onChange={(e) => updatePassenger(index, "nationalId", e.target.value)}
-                            className="pl-10"
+                            className={`pl-10 ${passenger.isChild ? 'bg-gray-100 dark:bg-gray-800/60 cursor-not-allowed text-muted-foreground/70 border-dashed' : ''}`}
                             disabled={passenger.isChild}
                             required={!passenger.isChild}
                           />
@@ -739,7 +739,7 @@ export default function BookingPage() {
 
           {/* Price Summary Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-0 md:top-24">
+            <Card className="sticky top-4 md:top-20 lg:top-6">
               <CardHeader>
                 <CardTitle>Price Summary</CardTitle>
               </CardHeader>

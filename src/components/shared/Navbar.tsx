@@ -151,7 +151,7 @@ export function Navbar() {
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
+                <DropdownMenuContent className="w-56" align="start" forceMount>
                   <div className="flex items-center gap-3 p-3 border-b">
                     <Avatar className="h-10 w-10 border-2 border-primary/30">
                       <AvatarFallback className="text-white font-medium" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>

@@ -21,7 +21,9 @@ import {
   PauseCircle,
   CheckSquare,
   Square,
-  Search
+  Search,
+  HelpCircle,
+  Keyboard
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -83,6 +85,7 @@ export default function CompanyTripsPage() {
   const [bulkAction, setBulkAction] = useState<BulkAction>(null)
   const [newPrice, setNewPrice] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
+  const [showHelpModal, setShowHelpModal] = useState(false)
 
   // P2: Search and filter state
   const [searchQuery, setSearchQuery] = useState("")
@@ -217,8 +220,26 @@ export default function CompanyTripsPage() {
   // P3-UX-012: Keyboard shortcuts for power users (using refs to avoid infinite loop)
   useEffect(() => {
     const handleKeyboard = (e: KeyboardEvent) => {
-      // Ignore if typing in input/textarea
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      // Ignore if typing in input/textarea (but allow ? for help)
+      if ((e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) && e.key !== '?') {
+        return
+      }
+
+      // ? or Ctrl/Cmd + /: Show keyboard shortcuts help
+      if (e.key === '?' || ((e.ctrlKey || e.metaKey) && e.key === '/')) {
+        e.preventDefault()
+        setShowHelpModal(true)
+        return
+      }
+
+      // Escape: Close help modal or clear selection
+      if (e.key === 'Escape') {
+        if (showHelpModal) {
+          setShowHelpModal(false)
+        } else if (selectedTripsRef.current.size > 0) {
+          setSelectedTrips(new Set())
+          toast.success('Selection cleared')
+        }
         return
       }
 
@@ -231,19 +252,11 @@ export default function CompanyTripsPage() {
           toast.success(`Selected all ${filtered.length} trip(s)`)
         }
       }
-
-      // Escape: Clear selection
-      if (e.key === 'Escape') {
-        if (selectedTripsRef.current.size > 0) {
-          setSelectedTrips(new Set())
-          toast.success('Selection cleared')
-        }
-      }
     }
 
     document.addEventListener('keydown', handleKeyboard)
     return () => document.removeEventListener('keydown', handleKeyboard)
-  }, []) // Empty deps - use refs for current values
+  }, [showHelpModal]) // Include showHelpModal to handle Escape properly
 
   // Bulk operations
   const handleBulkPriceUpdate = async () => {
@@ -393,12 +406,23 @@ export default function CompanyTripsPage() {
             )}
           </p>
         </div>
-        <Link href="/company/trips/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Create New Trip
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowHelpModal(true)}
+            aria-label="Show keyboard shortcuts"
+          >
+            <Keyboard className="h-4 w-4 mr-2" />
+            Shortcuts
           </Button>
-        </Link>
+          <Link href="/company/trips/new">
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Create New Trip
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* P2: Search and Filter Bar */}
@@ -476,7 +500,9 @@ export default function CompanyTripsPage() {
           <CardTitle>All Trips</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
+          {/* UX-19: Add horizontal scroll on tablet to prevent column squeezing */}
+          <div className="overflow-x-auto">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[50px]">
@@ -634,6 +660,7 @@ export default function CompanyTripsPage() {
               )}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
 
@@ -645,10 +672,12 @@ export default function CompanyTripsPage() {
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
                   <CheckSquare className="h-5 w-5 text-primary" />
-                  <span className="font-semibold">{selectedTrips.size} trip(s) selected</span>
-                  {filteredTrips.length !== trips.length && selectedTrips.size > visibleSelectedCount && (
+                  <span className="font-semibold">
+                    {visibleSelectedCount} of {filteredTrips.length} visible trip(s) selected
+                  </span>
+                  {selectedTrips.size > visibleSelectedCount && (
                     <Badge variant="secondary" className="ml-2">
-                      {selectedTrips.size - visibleSelectedCount} hidden by filters
+                      +{selectedTrips.size - visibleSelectedCount} more (hidden by current filters)
                     </Badge>
                   )}
                 </div>
@@ -846,6 +875,70 @@ export default function CompanyTripsPage() {
               ) : (
                 "Delete Trips"
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Keyboard Shortcuts Help Modal */}
+      <Dialog open={showHelpModal} onOpenChange={setShowHelpModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Keyboard className="h-5 w-5" />
+              Keyboard Shortcuts
+            </DialogTitle>
+            <DialogDescription>
+              Use these shortcuts to manage trips more efficiently
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-3">
+              <h4 className="font-medium text-sm text-muted-foreground">Selection</h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Select all visible trips</span>
+                  <Badge variant="secondary" className="font-mono">
+                    Ctrl + A
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Clear selection</span>
+                  <Badge variant="secondary" className="font-mono">
+                    Esc
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-3 space-y-3">
+              <h4 className="font-medium text-sm text-muted-foreground">Help</h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Show keyboard shortcuts</span>
+                  <Badge variant="secondary" className="font-mono">
+                    ?
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Close this dialog</span>
+                  <Badge variant="secondary" className="font-mono">
+                    Esc
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
+              <p className="flex items-center gap-1">
+                <HelpCircle className="h-3 w-3" />
+                <span>Shortcuts are disabled when typing in input fields</span>
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowHelpModal(false)} className="w-full">
+              Got it!
             </Button>
           </DialogFooter>
         </DialogContent>

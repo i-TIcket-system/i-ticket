@@ -230,7 +230,17 @@ function SearchContent() {
                 />
               </div>
 
-              <Select value={busType} onValueChange={setBusType}>
+              <Select value={busType} onValueChange={(value) => {
+                setBusType(value)
+                // Update URL with bus type filter
+                const params = new URLSearchParams(searchParams.toString())
+                if (origin) params.set("from", origin)
+                if (destination) params.set("to", destination)
+                if (date) params.set("date", date)
+                if (value && value !== "all") params.set("type", value)
+                else params.delete("type")
+                router.push(`/search?${params.toString()}`)
+              }}>
                 <SelectTrigger className="bg-white/10 border-white/20 text-white">
                   <Bus className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Bus Type" />
@@ -336,8 +346,39 @@ function SearchContent() {
               <p>• Check for nearby cities or alternative routes</p>
               <p>• Some routes may not operate daily</p>
             </div>
-            <Button onClick={() => { setOrigin(""); setDestination(""); setDate(""); }}>
-              Clear Filters
+            <div className="flex flex-wrap gap-2 justify-center mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const tomorrow = new Date()
+                  tomorrow.setDate(tomorrow.getDate() + 1)
+                  setDate(tomorrow.toISOString().split('T')[0])
+                }}
+              >
+                Try Tomorrow
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const nextWeek = new Date()
+                  nextWeek.setDate(nextWeek.getDate() + 7)
+                  setDate(nextWeek.toISOString().split('T')[0])
+                }}
+              >
+                Try Next Week
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setBusType("all"); }}
+              >
+                All Bus Types
+              </Button>
+            </div>
+            <Button onClick={() => { setOrigin(""); setDestination(""); setDate(""); setBusType("all"); }}>
+              Clear All Filters
             </Button>
           </Card>
         ) : (
@@ -365,7 +406,7 @@ function SearchContent() {
                 }`}
               >
                 {/* Compare Checkbox */}
-                <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10">
+                <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10">
                   <Checkbox
                     id={`compare-${trip.id}`}
                     checked={selectedTripsForComparison.includes(trip.id)}
@@ -378,7 +419,7 @@ function SearchContent() {
                         setSelectedTripsForComparison(selectedTripsForComparison.filter((id) => id !== trip.id))
                       }
                     }}
-                    className="h-5 w-5 bg-white border-2"
+                    className="h-5 w-5 bg-white border-2 shadow-sm"
                     aria-label={`Compare ${trip.company.name} trip`}
                   />
                 </div>
@@ -460,7 +501,7 @@ function SearchContent() {
                                           <TooltipProvider>
                                             <Tooltip>
                                               <TooltipTrigger asChild>
-                                                <span className="text-xs text-primary font-medium mt-1 cursor-help truncate max-w-xs">
+                                                <span className="text-xs text-primary font-medium mt-1 cursor-help line-clamp-1 max-w-xs">
                                                   via {stopsText}
                                                 </span>
                                               </TooltipTrigger>
@@ -483,7 +524,7 @@ function SearchContent() {
                                           <TooltipProvider>
                                             <Tooltip>
                                               <TooltipTrigger asChild>
-                                                <span className="text-xs text-primary font-medium mt-1 cursor-help truncate max-w-xs">
+                                                <span className="text-xs text-primary font-medium mt-1 cursor-help line-clamp-1 max-w-xs">
                                                   via {stopsText}
                                                 </span>
                                               </TooltipTrigger>

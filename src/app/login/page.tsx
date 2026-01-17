@@ -129,6 +129,8 @@ export default function LoginPage() {
     }
     setPhone(accounts[type].phone)
     setPassword(accounts[type].password)
+    // UX-14: Disable Remember Me for demo accounts to prevent saving demo credentials
+    setRememberMe(false)
   }
 
   return (

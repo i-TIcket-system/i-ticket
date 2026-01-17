@@ -319,6 +319,21 @@ function TripCard({ trip }: { trip: AssignedTrip }) {
                   style={{ width: `${fillPercentage}%` }}
                 />
               </div>
+              {/* Color Legend */}
+              <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full bg-green-500"></div>
+                  <span>&lt;70% Available</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full bg-yellow-500"></div>
+                  <span>70-89% Filling Fast</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="h-2 w-2 rounded-full bg-red-500"></div>
+                  <span>≥90% Almost Full</span>
+                </div>
+              </div>
             </div>
 
             {/* Vehicle Info */}
