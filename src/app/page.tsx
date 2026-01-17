@@ -308,7 +308,7 @@ export default function HomePage() {
         <div className="absolute inset-0 eth-pattern opacity-10" />
 
         <div className="container relative z-10 mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {stats.map((stat, i) => (
               <div
                 key={stat.label}
@@ -366,7 +366,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {features.map((feature, i) => (
               <EnhancedCard key={feature.title} glass interactive glow={2} className="overflow-hidden group">
                 <CardContent className="p-8 relative">
@@ -395,7 +395,7 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-4xl mx-auto">
             {[
               {
                 step: "1",

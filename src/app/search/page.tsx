@@ -436,7 +436,7 @@ function SearchContent() {
                           {BUS_TYPES.find((t) => t.value === trip.busType)?.label || trip.busType}
                         </Badge>
                         {trip.distance && (
-                          <Badge variant="outline" className="text-primary border-primary/30">
+                          <Badge variant="outline" className="text-primary border-primary/50">
                             {trip.distance} km journey
                           </Badge>
                         )}
