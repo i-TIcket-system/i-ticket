@@ -21,7 +21,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent",
+      "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-all duration-200 focus:bg-gradient-to-br focus:from-white/75 focus:to-white/55 focus:backdrop-blur-md focus:shadow-[0_2px_8px_rgba(14,148,148,0.05)] dark:focus:from-white/6 dark:focus:to-white/8 data-[state=open]:bg-gradient-to-br data-[state=open]:from-white/75 data-[state=open]:to-white/55 data-[state=open]:backdrop-blur-md dark:data-[state=open]:from-white/6 dark:data-[state=open]:to-white/8",
       inset && "pl-8",
       className
     )}
@@ -75,7 +75,7 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-all duration-200 focus:bg-gradient-to-br focus:from-white/75 focus:to-white/55 focus:backdrop-blur-md focus:shadow-[0_2px_8px_rgba(14,148,148,0.05)] dark:focus:from-white/6 dark:focus:to-white/8 focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       inset && "pl-8",
       className
     )}
@@ -91,7 +91,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-all duration-200 focus:bg-gradient-to-br focus:from-white/75 focus:to-white/55 focus:backdrop-blur-md focus:shadow-[0_2px_8px_rgba(14,148,148,0.05)] dark:focus:from-white/6 dark:focus:to-white/8 focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     checked={checked}
@@ -114,7 +114,7 @@ const DropdownMenuRadioItem = React.forwardRef<
   <DropdownMenuPrimitive.RadioItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-all duration-200 focus:bg-gradient-to-br focus:from-white/75 focus:to-white/55 focus:backdrop-blur-md focus:shadow-[0_2px_8px_rgba(14,148,148,0.05)] dark:focus:from-white/6 dark:focus:to-white/8 focus:text-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     {...props}
