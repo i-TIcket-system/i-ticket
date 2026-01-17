@@ -17,8 +17,8 @@
     --secondary-foreground: 0 0% 100%;
     --muted: 180 10% 92%;
     --muted-foreground: 189 40% 35%;
-    --accent: 189 78% 21%; /* Deep teal as accent */
-    --accent-foreground: 0 0% 100%;
+    --accent: 180 15% 93%; /* Light teal for hover backgrounds */
+    --accent-foreground: 189 78% 21%; /* Dark teal for text on accent */
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
     --border: 180 20% 88%;
@@ -51,8 +51,8 @@
     --secondary-foreground: 0 0% 100%;
     --muted: 189 40% 18%;
     --muted-foreground: 180 20% 65%;
-    --accent: 180 73% 45%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 189 35% 20%; /* Subtle dark teal for hover backgrounds in dark mode */
+    --accent-foreground: 180 60% 75%; /* Light teal for text on accent */
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 100%;
     --border: 189 30% 22%;
