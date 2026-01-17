@@ -153,7 +153,7 @@ export default function HomePage() {
               {/* Ethiopian Flag Accent - Vertical Strip */}
               <div className="flag-accent" />
 
-              <h1 className="text-7xl lg:text-9xl font-display font-bold leading-[0.9]">
+              <h1 className="text-5xl lg:text-7xl font-display font-bold leading-[1.1]">
                 <span className="block text-white">Your Journey</span>
                 <span className="block bg-gradient-to-r from-teal-light to-secondary bg-clip-text text-transparent mt-2">
                   Across Ethiopia
