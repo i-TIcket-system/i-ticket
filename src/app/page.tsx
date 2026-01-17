@@ -136,56 +136,50 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col overflow-hidden">
-      {/* Hero Section - Simien Sky Design */}
+      {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center gradient-hero-simien text-white overflow-hidden">
         {/* Background elements */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* Ethiopian pattern overlay - Tilahun Weave */}
+          {/* Ethiopian pattern overlay - subtle */}
           <div className="absolute inset-0 pattern-overlay tilahun-weave" />
-          {/* Simien Ridge silhouette at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 h-32 pattern-simien-ridge opacity-10" />
         </div>
 
         <div className="container relative z-10 mx-auto px-4 py-20">
-          <div className="grid lg:grid-cols-12 gap-8 items-end">
-            {/* Left content - 7 columns, bottom aligned */}
-            <div className={`lg:col-span-7 pb-12 lg:pb-24 space-y-8 ${mounted ? 'animate-fade-up' : 'opacity-0'}`}>
-              {/* Ethiopian Flag Accent - Vertical Strip */}
-              <div className="flag-accent" />
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left content */}
+            <div className={`space-y-8 ${mounted ? 'animate-fade-up' : 'opacity-0'}`}>
+              {/* Ethiopian Flag Bar */}
+              <div className="ethiopian-bar">
+                <div />
+                <div />
+                <div />
+              </div>
 
-              <h1 className="text-5xl lg:text-7xl font-display font-bold leading-[1.1]">
-                <span className="block text-white">Your Journey</span>
-                <span className="block bg-gradient-to-r from-teal-light to-secondary bg-clip-text text-transparent mt-2">
-                  Across Ethiopia
+              <h1 className="text-white leading-[1.15]">
+                Travel Ethiopia
+                <br />
+                <span className="text-[#20c4c4]">
+                  with Confidence
                 </span>
               </h1>
 
-              <p className="text-xl lg:text-2xl text-white/80 max-w-2xl leading-relaxed">
-                Book premium bus tickets with Ethiopia&apos;s most trusted platform.
-                <span className="block mt-2 text-lg font-amharic text-teal-light/90">
-                  ወደ ሁሉም ቦታ በአስተማማኝ መንገድ
-                </span>
+              <p className="text-lg md:text-xl text-white/70 max-w-xl leading-relaxed">
+                Book bus tickets from Ethiopia&apos;s top companies. Fast, secure, and hassle-free booking at your fingertips.
               </p>
 
-              {/* Trust indicators with Ethiopian context */}
-              <div className="flex flex-wrap gap-6 text-sm">
-                {[
-                  { text: "10,000+ Happy Travelers", icon: CheckCircle2 },
-                  { text: "TeleBirr Secure Payment", icon: Shield },
-                  { text: "24/7 Support", icon: Smartphone }
-                ].map((item, i) => (
-                  <div key={item.text} className="flex items-center gap-2">
-                    <item.icon className="h-5 w-5 text-teal-light" />
-                    <span className="text-white/90">{item.text}</span>
+              {/* Trust indicators */}
+              <div className="flex flex-wrap gap-4 text-sm text-white/60">
+                {["Instant QR Tickets", "TeleBirr Payment", "24/7 Support"].map((item, i) => (
+                  <div key={item} className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary-400" />
+                    <span>{item}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Popular Routes - Enhanced Design */}
+              {/* Popular Routes */}
               <div className="pt-4">
-                <p className="text-sm text-white/50 mb-3 uppercase tracking-wider font-amharic">
-                  Popular Routes • ተወዳጅ መንገዶች
-                </p>
+                <p className="text-sm text-white/40 mb-3 uppercase tracking-wider">Popular Routes</p>
                 <div className="flex flex-wrap gap-2">
                   {[
                     { from: "Addis Ababa", to: "Bahir Dar" },
@@ -195,22 +189,20 @@ export default function HomePage() {
                     <Link
                       key={`${route.from}-${route.to}`}
                       href={`/search?from=${route.from}&to=${route.to}`}
-                      className="group inline-flex items-center px-4 py-2.5 rounded-full bg-white/5 hover:bg-teal-light/20 border border-white/10 hover:border-teal-light/40 transition-all duration-300 text-sm backdrop-blur-sm"
+                      className="group inline-flex items-center px-4 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300 text-sm"
                     >
-                      <span className="text-white/80 group-hover:text-white">{route.from}</span>
-                      <ArrowRight className="h-3.5 w-3.5 mx-2 text-teal-light group-hover:translate-x-0.5 transition-transform" />
-                      <span className="text-white group-hover:text-teal-light">{route.to}</span>
+                      <span className="text-white/80">{route.from}</span>
+                      <ArrowRight className="h-3.5 w-3.5 mx-2 text-primary-400 group-hover:translate-x-0.5 transition-transform" />
+                      <span className="text-white">{route.to}</span>
                     </Link>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Right - Search Form - 5 columns, overlapping bottom */}
-            <div className={`lg:col-span-5 lg:-mb-16 ${mounted ? 'animate-fade-up' : 'opacity-0'}`} style={{ animationDelay: '200ms' }}>
-              <Card className="glass-enhanced shadow-2xl transform lg:rotate-2 hover:rotate-0 transition-transform duration-500 border-white/20 relative overflow-hidden">
-                {/* Decorative Lalibela window corner accent */}
-                <div className="absolute -top-4 -right-4 w-16 h-16 pattern-lalibela-window opacity-20 pointer-events-none" />
+            {/* Right - Search Form */}
+            <div className={`${mounted ? 'animate-fade-up' : 'opacity-0'}`} style={{ animationDelay: '200ms' }}>
+              <Card className="glass-enhanced border-white/10 shadow-2xl shadow-black/20">
 
                 <CardContent className="p-8 relative z-10">
                   <div className="mb-6">
@@ -260,9 +252,9 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full h-14 text-lg coffee-ripple hover:shadow-lg hover:shadow-primary/30 transition-all duration-300" size="lg">
+                    <Button type="submit" className="w-full h-12 text-base coffee-ripple" size="lg">
                       <Search className="h-5 w-5 mr-2" />
-                      Search Trips
+                      Search Available Trips
                     </Button>
                   </form>
                 </CardContent>
