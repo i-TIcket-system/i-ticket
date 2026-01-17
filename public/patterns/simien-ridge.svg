@@ -1,0 +1,26 @@
+<svg width="400" height="120" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+  <!-- Mountain silhouette pattern inspired by Simien Mountains -->
+  <defs>
+    <linearGradient id="mountainGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:currentColor;stop-opacity:0.2" />
+      <stop offset="100%" style="stop-color:currentColor;stop-opacity:0" />
+    </linearGradient>
+  </defs>
+  <!-- Mountain ridge silhouette -->
+  <path
+    d="M0,120 L0,80 Q20,70 40,65 Q60,60 80,70 L100,75 Q120,80 140,70 Q160,60 180,55 L200,50 Q220,45 240,55 Q260,65 280,60 L300,55 Q320,50 340,60 Q360,70 380,65 L400,60 L400,120 Z"
+    fill="url(#mountainGrad)"
+  />
+  <!-- Second layer for depth -->
+  <path
+    d="M0,120 L0,95 Q30,85 60,90 Q90,95 120,85 L150,80 Q180,75 210,85 Q240,95 270,90 L300,85 Q330,80 360,90 L400,95 L400,120 Z"
+    fill="currentColor"
+    opacity="0.1"
+  />
+  <!-- Decorative peaks -->
+  <g fill="currentColor" opacity="0.15">
+    <polygon points="100,75 105,65 110,75" />
+    <polygon points="200,50 205,40 210,50" />
+    <polygon points="300,55 305,45 310,55" />
+  </g>
+</svg>

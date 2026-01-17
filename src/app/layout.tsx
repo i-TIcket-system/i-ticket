@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next"
-import { Plus_Jakarta_Sans, DM_Serif_Display } from "next/font/google"
+import { Playfair_Display, Outfit, Noto_Sans_Ethiopic } from "next/font/google"
 import "./globals.css"
 import { SessionProvider } from "@/components/providers/SessionProvider"
 import { ThemeProvider } from "@/components/providers/ThemeProvider"
@@ -7,18 +7,24 @@ import { Navbar } from "@/components/shared/Navbar"
 import { Footer } from "@/components/shared/Footer"
 import { Toaster } from "sonner"
 
-// Body font - modern, clean, characterful
-const jakarta = Plus_Jakarta_Sans({
+// Display font - Luxury magazine aesthetic, dramatic contrast
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+})
+
+// Body font - Modern geometric sans, Ethiopian-inspired roundness
+const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-body",
   display: "swap",
 })
 
-// Display font - elegant, editorial feel for headings
-const dmSerif = DM_Serif_Display({
-  subsets: ["latin"],
-  weight: "400",
-  variable: "--font-display",
+// Amharic font - Strategic use for station names, cultural headings
+const amharic = Noto_Sans_Ethiopic({
+  subsets: ["ethiopic"],
+  variable: "--font-amharic",
   display: "swap",
 })
 
@@ -43,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${jakarta.variable} ${dmSerif.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${playfair.variable} ${outfit.variable} ${amharic.variable}`}>
       <body className="font-body antialiased">
         <ThemeProvider>
         <SessionProvider>

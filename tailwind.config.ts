@@ -10,10 +10,23 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        body: ['var(--font-body)', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'Georgia', 'serif'],
+        display: ['var(--font-display)', 'Georgia', 'serif'], // Playfair Display
+        body: ['var(--font-body)', 'system-ui', 'sans-serif'], // Outfit
+        amharic: ['var(--font-amharic)', 'system-ui', 'sans-serif'], // Noto Sans Ethiopic
       },
       colors: {
+        // Simien Sunset Palette - Direct color references
+        'simien-deep': 'hsl(var(--simien-deep))',
+        'simien-sky': 'hsl(var(--simien-sky))',
+        'simien-mist': 'hsl(var(--simien-mist))',
+        'sun-gold': 'hsl(var(--sun-gold))',
+        'earth-terracotta': 'hsl(var(--earth-terracotta))',
+        'coffee-bean': 'hsl(var(--coffee-bean))',
+        'highland-emerald': 'hsl(var(--highland-emerald))',
+        'barley-field': 'hsl(var(--barley-field))',
+        'eth-green': 'hsl(var(--eth-green))',
+        'eth-yellow': 'hsl(var(--eth-yellow))',
+        'eth-red': 'hsl(var(--eth-red))',
         // Custom i-Ticket theme
         primary: {
           DEFAULT: '#018790',
@@ -82,18 +95,22 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       animation: {
-        'fade-up': 'fadeUp 0.6s ease-out forwards',
+        'fade-up': 'fadeUp 0.8s ease-out forwards',
         'fade-in': 'fadeIn 0.4s ease-out forwards',
         'slide-in-left': 'slideInLeft 0.5s ease-out forwards',
         'slide-in-right': 'slideInRight 0.5s ease-out forwards',
         'scale-in': 'scaleIn 0.4s ease-out forwards',
-        'float': 'float 6s ease-in-out infinite',
+        'float': 'float 8s ease-in-out infinite',
         'shimmer': 'shimmer 2s linear infinite',
+        'coffee-ripple': 'coffeeRipple 0.6s ease-out',
+        'sun-pulse': 'sunPulse 2s ease-in-out infinite',
+        'gradient-shift': 'gradientShift 15s ease infinite',
+        'spin-slow': 'spin 8s linear infinite',
       },
       keyframes: {
         fadeUp: {
-          '0%': { opacity: '0', transform: 'translateY(30px)' },
-          '100%': { opacity: '1', transform: 'translateY(0)' },
+          '0%': { opacity: '0', transform: 'translateY(32px) scale(0.95)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
         fadeIn: {
           '0%': { opacity: '0' },
@@ -112,12 +129,26 @@ const config: Config = {
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         float: {
-          '0%, 100%': { transform: 'translateY(0)' },
-          '50%': { transform: 'translateY(-20px)' },
+          '0%, 100%': { transform: 'translateY(0px) translateX(0px)' },
+          '25%': { transform: 'translateY(-20px) translateX(10px)' },
+          '50%': { transform: 'translateY(-10px) translateX(-10px)' },
+          '75%': { transform: 'translateY(-15px) translateX(5px)' },
         },
         shimmer: {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
+        },
+        coffeeRipple: {
+          '0%': { boxShadow: '0 0 0 0 rgba(184, 82, 44, 0.4)' },
+          '100%': { boxShadow: '0 0 0 24px rgba(184, 82, 44, 0)' },
+        },
+        sunPulse: {
+          '0%, 100%': { filter: 'brightness(1)' },
+          '50%': { filter: 'brightness(1.1)' },
+        },
+        gradientShift: {
+          '0%, 100%': { backgroundPosition: '0% 50%, 100% 50%' },
+          '50%': { backgroundPosition: '100% 50%, 0% 50%' },
         },
       },
       backgroundImage: {
