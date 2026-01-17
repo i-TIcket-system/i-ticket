@@ -266,7 +266,7 @@ export default function HomePage() {
       </section>
 
       {/* Track Booking Section */}
-      <section className="py-8 relative z-20 bg-background">
+      <section className="py-8 relative z-20 bg-gradient-to-b from-teal-pale/30 to-background">
         <div className="container mx-auto px-4">
           <Card className="max-w-3xl mx-auto border-primary/10 shadow-lg shadow-primary/5">
             <CardContent className="p-6">
@@ -328,7 +328,7 @@ export default function HomePage() {
       </section>
 
       {/* Bus Companies - Enhanced */}
-      <section className="py-20 md:py-28 relative overflow-hidden">
+      <section className="py-20 md:py-28 relative overflow-hidden bg-gradient-to-b from-background via-teal-pale/10 to-background">
         {/* Subtle pattern background */}
         <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-[0.02]" />
 
@@ -363,9 +363,9 @@ export default function HomePage() {
       </section>
 
       {/* Features - Enhanced */}
-      <section className="py-20 md:py-28 bg-muted/30 relative overflow-hidden">
+      <section className="py-20 md:py-28 bg-gradient-to-br from-teal-pale/40 via-teal-pale/20 to-background relative overflow-hidden">
         {/* Very subtle pattern */}
-        <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-[0.015]" />
+        <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-[0.02]" />
 
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-14">
@@ -402,9 +402,9 @@ export default function HomePage() {
       </section>
 
       {/* How it Works - Enhanced */}
-      <section className="py-20 md:py-28 relative overflow-hidden">
+      <section className="py-20 md:py-28 relative overflow-hidden bg-gradient-to-b from-background via-teal-pale/15 to-background">
         {/* Very subtle pattern */}
-        <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-[0.01]" />
+        <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-[0.02]" />
 
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-14">
