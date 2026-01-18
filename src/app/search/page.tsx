@@ -77,6 +77,7 @@ function SearchContent() {
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 0 })
   const [selectedTripsForComparison, setSelectedTripsForComparison] = useState<string[]>([])
   const [showComparison, setShowComparison] = useState(false)
+  const [compareMode, setCompareMode] = useState(false) // Toggle for compare mode
 
   // Search filters
   const [origin, setOrigin] = useState(searchParams.get("from") || "")
@@ -195,9 +196,13 @@ function SearchContent() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] relative overflow-hidden">
-      {/* Enhanced Ethiopian pattern background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-teal-pale/30 via-background to-teal-pale/20 -z-10" />
-      <div className="fixed inset-0 bg-pattern-tilahun-glass opacity-10 -z-10" />
+      {/* Darker background - half strength of homepage hero */}
+      <div className="fixed inset-0 bg-gradient-to-br from-[#0d7a7a]/50 via-[#0e9494]/40 to-[#20c4c4]/30 -z-10" />
+      <div className="fixed inset-0 bg-pattern-tilahun-glass opacity-15 -z-10" />
+
+      {/* Floating gradient orbs for depth */}
+      <div className="fixed top-20 right-20 w-96 h-96 bg-gradient-radial from-[#20c4c4]/20 to-transparent rounded-full blur-3xl -z-10" />
+      <div className="fixed bottom-20 left-20 w-80 h-80 bg-gradient-radial from-[#0e9494]/15 to-transparent rounded-full blur-3xl -z-10" />
 
       {/* Sticky Search Header - GLASSMORPHISM */}
       <div className="sticky top-0 z-30 backdrop-blur-glass-dramatic border-b border-white/10">
@@ -301,16 +306,22 @@ function SearchContent() {
           </div>
 
           <div className="flex items-center gap-4">
-            {selectedTripsForComparison.length >= 2 && (
-              <Button
-                onClick={() => setShowComparison(true)}
-                variant="default"
-                className="gap-2"
-              >
-                <ArrowRight className="h-4 w-4" />
-                Compare ({selectedTripsForComparison.length})
-              </Button>
-            )}
+            {/* Compare Results Button */}
+            <Button
+              onClick={() => {
+                setCompareMode(!compareMode)
+                if (compareMode) {
+                  // Exit compare mode - clear selections
+                  setSelectedTripsForComparison([])
+                }
+              }}
+              variant={compareMode ? "default" : "outline"}
+              className="gap-2"
+            >
+              {compareMode ? <X className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
+              {compareMode ? "Cancel Compare" : "Compare Results"}
+            </Button>
+
             <Select value={sortBy} onValueChange={(v) => { setSortBy(v); searchTrips(); }}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Sort by" />
@@ -435,20 +446,12 @@ function SearchContent() {
                 const isDeparted = trip.status === "DEPARTED" || trip.status === "COMPLETED"
 
                 return (
-              <Card
-                key={trip.id}
-                className={`glass-dramatic glass-lift overflow-hidden relative border-white/10 shadow-glass-md hover:shadow-glass-lg transition-all duration-500 group ${
-                  isDeparted ? "opacity-60" : ""
-                }`}
-              >
-                {/* Teal accent line on hover */}
-                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-medium to-teal-light opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg shadow-primary/50" />
-
-                {/* Compare Checkbox - Glass style */}
-                <div className="absolute top-3 right-3 md:top-5 md:right-5 z-10">
-                  <div className="glass-subtle rounded-lg p-1.5 shadow-md">
+              <div key={trip.id} className="flex items-start gap-3">
+                {/* Checkbox - outside card, only in compare mode */}
+                {compareMode && (
+                  <div className="pt-6">
                     <Checkbox
-                      id={`compare-${trip.id}`}
+                      id={`select-trip-${trip.id}`}
                       checked={selectedTripsForComparison.includes(trip.id)}
                       onCheckedChange={(checked) => {
                         if (checked) {
@@ -459,13 +462,21 @@ function SearchContent() {
                           setSelectedTripsForComparison(selectedTripsForComparison.filter((id) => id !== trip.id))
                         }
                       }}
-                      className="h-5 w-5 border-2"
-                      aria-label={`Compare ${trip.company.name} trip`}
+                      className="h-6 w-6 border-2 rounded-md"
+                      aria-label={`Select ${trip.company.name} trip for comparison`}
                     />
                   </div>
-                </div>
+                )}
 
-                <CardContent className="p-0">
+                <Card
+                  className={`glass-dramatic glass-lift overflow-hidden relative border-white/10 shadow-glass-md hover:shadow-glass-lg transition-all duration-500 group flex-1 ${
+                    isDeparted ? "opacity-60" : ""
+                  }`}
+                >
+                  {/* Teal accent line on hover */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-medium to-teal-light opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg shadow-primary/50" />
+
+                  <CardContent className="p-0">
                   <div className="flex flex-col md:flex-row">
                     {/* Company Info - Glass tinted section */}
                     <div className="p-6 md:w-48 glass-teal flex flex-col items-center justify-center text-center border-r border-white/10">
@@ -477,17 +488,17 @@ function SearchContent() {
                         <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-primary-700 blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300" />
                       </div>
                       <h3 className="font-semibold text-foreground mb-2">{trip.company.name}</h3>
-                      <div className="flex flex-col gap-1.5">
-                        <Badge variant="secondary" className="glass-subtle border-white/20">
+                      <div className="flex flex-col gap-1.5 w-full items-center">
+                        <Badge variant="secondary" className="glass-subtle border-white/20 justify-center w-full">
                           {BUS_TYPES.find((t) => t.value === trip.busType)?.label || trip.busType}
                         </Badge>
                         {trip.distance && (
-                          <Badge variant="outline" className="text-primary border-primary/50 glass-subtle">
+                          <Badge variant="outline" className="text-primary border-primary/50 glass-subtle justify-center w-full">
                             {trip.distance} km journey
                           </Badge>
                         )}
                         {isDeparted && (
-                          <Badge variant="outline" className="text-orange-600 border-orange-600/50 glass-subtle">
+                          <Badge variant="outline" className="text-orange-600 border-orange-600/50 glass-subtle justify-center w-full">
                             {trip.status === "DEPARTED" ? "Departed" : "Completed"}
                           </Badge>
                         )}
@@ -625,8 +636,8 @@ function SearchContent() {
                         {/* Price & Seats - Enhanced glass section */}
                         <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-4 md:w-44">
                           <div className="text-right">
-                            <div className="glass-subtle rounded-xl px-4 py-3 border border-white/20 mb-2">
-                              <div className="text-3xl font-bold gradient-text-simien bg-gradient-to-r from-primary to-teal-light bg-clip-text">
+                            <div className="glass-subtle rounded-lg px-3 py-2 border border-white/20 mb-2">
+                              <div className="text-lg font-bold text-[#0d4f5c] dark:text-white">
                                 {formatCurrency(Number(trip.price))}
                               </div>
                               <div className="text-xs text-muted-foreground font-medium">per person</div>
@@ -678,6 +689,7 @@ function SearchContent() {
                   </div>
                 </CardContent>
               </Card>
+              </div>
                 )
               })}
 
@@ -706,6 +718,39 @@ function SearchContent() {
           </div>
         )}
       </div>
+
+      {/* Floating Action Bar - Compare Mode - Centered with high contrast */}
+      {compareMode && selectedTripsForComparison.length >= 2 && (
+        <div className="fixed bottom-8 left-0 right-0 z-50 flex justify-center animate-fade-up">
+          <div className="bg-gradient-to-r from-[#0d4f5c] via-[#0e9494] to-[#0d4f5c] rounded-full px-8 py-4 border-2 border-white/40 shadow-2xl shadow-black/30 flex items-center gap-6 max-w-2xl mx-4">
+            <span className="text-base font-semibold text-white">
+              {selectedTripsForComparison.length} of 4 trips selected
+            </span>
+            <Button
+              onClick={() => {
+                setShowComparison(true)
+                setCompareMode(false)
+              }}
+              size="lg"
+              className="rounded-full bg-white text-[#0d4f5c] hover:bg-white/90 font-bold shadow-lg"
+            >
+              <ArrowRight className="h-5 w-5 mr-2" />
+              Compare Now
+            </Button>
+            <Button
+              onClick={() => {
+                setSelectedTripsForComparison([])
+                setCompareMode(false)
+              }}
+              variant="ghost"
+              size="lg"
+              className="rounded-full text-white hover:bg-white/20 font-medium"
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Trip Comparison Dialog */}
       <TripComparison

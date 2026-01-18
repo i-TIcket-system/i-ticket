@@ -393,12 +393,13 @@ export default function BookingPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] relative overflow-hidden">
-      {/* GLASSMORPHISM TRANSFORMATION - Immersive Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-teal-pale/40 via-background to-teal-pale/30 -z-10" />
-      <div className="fixed inset-0 bg-pattern-tilahun-glass opacity-8 -z-10" />
-      {/* Animated gradient orbs */}
-      <div className="fixed top-20 right-20 w-96 h-96 bg-gradient-radial from-teal-light/20 to-transparent rounded-full blur-3xl animate-float -z-10" />
-      <div className="fixed bottom-20 left-20 w-80 h-80 bg-gradient-radial from-teal-medium/15 to-transparent rounded-full blur-3xl animate-float -z-10" style={{ animationDelay: '3s' }} />
+      {/* Darker background - half strength of homepage hero (same as search page) */}
+      <div className="fixed inset-0 bg-gradient-to-br from-[#0d7a7a]/50 via-[#0e9494]/40 to-[#20c4c4]/30 -z-10" />
+      <div className="fixed inset-0 bg-pattern-tilahun-glass opacity-15 -z-10" />
+
+      {/* Floating gradient orbs for depth */}
+      <div className="fixed top-20 right-20 w-96 h-96 bg-gradient-radial from-[#20c4c4]/20 to-transparent rounded-full blur-3xl -z-10" />
+      <div className="fixed bottom-20 left-20 w-80 h-80 bg-gradient-radial from-[#0e9494]/15 to-transparent rounded-full blur-3xl -z-10" />
 
       <div className="container mx-auto px-4 py-8">
         {/* Header - Glass Style */}
@@ -796,14 +797,14 @@ export default function BookingPage() {
 
                 <Separator className="bg-white/10" />
 
-                <div className="glass-teal rounded-2xl p-5 border border-white/20 shadow-glass-md">
+                <div className="glass-dramatic rounded-2xl p-5 border-2 border-white/30 shadow-glass-lg bg-gradient-to-r from-[#0d4f5c]/30 via-[#0e9494]/20 to-[#0d4f5c]/30">
                   <div className="flex justify-between items-center">
-                    <span className="text-foreground font-medium">Total</span>
+                    <span className="text-white font-semibold text-lg">Total</span>
                     <div className="text-right">
-                      <div className="text-3xl font-bold gradient-text-simien bg-gradient-to-r from-primary to-teal-light bg-clip-text">
+                      <div className="text-3xl font-bold text-white drop-shadow-lg">
                         {formatCurrency(total)}
                       </div>
-                      <div className="text-xs text-muted-foreground">incl. taxes & fees</div>
+                      <div className="text-xs text-white/80 font-medium">incl. taxes & fees</div>
                     </div>
                   </div>
                 </div>

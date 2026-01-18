@@ -96,6 +96,29 @@ All 9 items from previous session completed:
 
 ## Recent Development (Jan 2026)
 
+### January 18, 2026 (Late Night) - Search & Booking Pages UX Improvements
+- **Search Results Page Redesign** - Complete visual and UX overhaul
+  - Darker background (half strength of homepage hero): `from-[#0d7a7a]/50 via-[#0e9494]/40 to-[#20c4c4]/30`
+  - Ethiopian Tilahun weave pattern at 15% opacity with floating gradient orbs
+  - Price display fixed: White text with drop shadow (was invisible gradient), reduced from `text-3xl` to `text-lg`
+  - Price container: Dark teal `#0d4f5c` for visibility, compact glass-subtle styling
+  - Badge alignment fixed: Centered bus type badges with `items-center` and `justify-center`
+- **Compare Feature - Batch Selection UX** - Gmail-style selection pattern
+  - "Compare Results" button at top (replaces individual checkboxes on cards)
+  - Batch-style checkboxes appear outside/left of cards when compare mode active
+  - Floating action bar at bottom: Center-aligned, high contrast dark teal gradient
+  - "Compare Now" button: White on dark for maximum visibility, large size
+  - Max 4 trips selectable, clean toggle between compare/normal mode
+  - Checkboxes don't disturb card visibility (positioned outside)
+- **Booking Page Visual Consistency** - Matched search page design
+  - Same darker teal gradient background as search page
+  - Total price fixed: White text `text-3xl` with drop shadow (was invisible)
+  - Total price container: Dark teal gradient background `from-[#0d4f5c]/30 via-[#0e9494]/20`
+  - Stronger border (`border-2`) and glass-dramatic styling for prominence
+- **UX Impact**: Consistent dark theme across pages, all prices visible, professional batch selection
+- **Files**: `src/app/search/page.tsx`, `src/app/booking/[tripId]/page.tsx`
+- **Commits**: 1 commit (search & booking pages redesign)
+
 ### January 18, 2026 (Night) - Login & Register Pages Redesign with Ethiopian Elements
 - **Login Page Redesign** - Matched homepage design with Ethiopian cultural elements
   - Left Panel: Dark hero gradient with Tilahun weave pattern (matches homepage hero)
