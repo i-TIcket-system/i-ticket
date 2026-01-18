@@ -137,7 +137,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col overflow-hidden">
       {/* Hero Section - GLASSMORPHISM TRANSFORMATION */}
-      <section className="relative min-h-[85vh] flex items-center gradient-hero-simien text-white overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center gradient-hero-simien text-white overflow-hidden">
         {/* Background elements - Enhanced with animated patterns */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Base: Tilahun Weave pattern at 20% opacity */}
@@ -149,10 +149,10 @@ export default function HomePage() {
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-radial from-teal-dark/20 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }} />
         </div>
 
-        <div className="container relative z-10 mx-auto px-4 py-16">
-          <div className="grid lg:grid-cols-2 gap-16 items-start">
+        <div className="container relative z-10 mx-auto px-4 py-20">
+          <div className="grid lg:grid-cols-2 gap-12 items-start">
             {/* Left content - Enhanced typography */}
-            <div className={`space-y-6 ${mounted ? 'animate-fade-up' : 'opacity-0'}`}>
+            <div className={`space-y-8 ${mounted ? 'animate-fade-up' : 'opacity-0'}`}>
               {/* Ethiopian Flag Bar with glow */}
               <div className="ethiopian-bar">
                 <div className="shadow-lg shadow-[hsl(var(--eth-green))]/50" />
@@ -173,26 +173,28 @@ export default function HomePage() {
                 Book bus tickets from Ethiopia&apos;s top companies. Fast, secure, and hassle-free booking at your fingertips.
               </p>
 
-              {/* Trust indicators - Larger, cleaner design */}
-              <div className="flex flex-wrap gap-6 max-w-2xl pt-6">
+              {/* Trust indicators - redesigned grid layout */}
+              <div className="grid grid-cols-3 gap-4 max-w-2xl pt-4">
                 {[
                   { icon: Ticket, text: "Instant QR Tickets" },
                   { icon: Smartphone, text: "TeleBirr Payment" },
                   { icon: Clock, text: "24/7 Support" }
                 ].map((item, i) => (
-                  <div key={item.text} className="flex items-center gap-3 px-5 py-3 rounded-full glass-moderate border border-white/30 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 group">
-                    <div className="h-10 w-10 rounded-full bg-[#20c4c4]/20 flex items-center justify-center group-hover:bg-[#20c4c4]/30 transition-colors">
-                      <item.icon className="h-5 w-5 text-[#20c4c4] flex-shrink-0" />
-                    </div>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">{item.text}</span>
+                  <div key={item.text} className="glass-moderate rounded-xl px-4 py-4 flex flex-col items-center gap-2 border border-white/30 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300">
+                    <item.icon className="h-5 w-5 text-[#20c4c4] flex-shrink-0" />
+                    <span className="text-xs font-semibold text-center text-gray-900 dark:text-white leading-tight">{item.text}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Popular Routes - Clean & Simple */}
-              <div className="pt-8">
-                <p className="text-sm text-white/80 font-medium mb-4">Quick Search:</p>
-                <div className="flex flex-wrap gap-3">
+              {/* Popular Routes - redesigned with better spacing */}
+              <div className="pt-10 pb-4">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                  <p className="text-sm text-white/70 uppercase tracking-widest font-semibold">Popular Routes</p>
+                  <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
                     { from: "Addis Ababa", to: "Bahir Dar" },
                     { from: "Addis Ababa", to: "Hawassa" },
@@ -201,10 +203,15 @@ export default function HomePage() {
                     <Link
                       key={`${route.from}-${route.to}`}
                       href={`/search?from=${route.from}&to=${route.to}`}
-                      className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-full glass-moderate border border-white/30 hover:border-[#20c4c4]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#20c4c4]/20 hover:scale-105"
+                      className="group glass-dark hover:glass-moderate border border-white/20 hover:border-white/40 rounded-xl px-4 py-4 transition-all duration-300 hover:shadow-xl hover:shadow-[#20c4c4]/30 hover:scale-105"
                     >
-                      <span className="text-white text-sm font-medium whitespace-nowrap">{route.to}</span>
-                      <ArrowRight className="h-4 w-4 text-[#20c4c4] group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-white/80 text-xs font-medium">{route.from}</span>
+                          <ArrowRight className="h-4 w-4 text-[#20c4c4] group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                        </div>
+                        <span className="text-white font-semibold text-sm">{route.to}</span>
+                      </div>
                     </Link>
                   ))}
                 </div>
@@ -212,12 +219,12 @@ export default function HomePage() {
             </div>
 
             {/* Right - Search Form - Enhanced glass with micro-interactions */}
-            <div className={`${mounted ? 'animate-fade-up' : 'opacity-0'}`} style={{ animationDelay: '200ms' }}>
+            <div className={`h-full ${mounted ? 'animate-fade-up' : 'opacity-0'}`} style={{ animationDelay: '200ms' }}>
               <EnhancedCard
                 glass="dramatic"
-                className="border-white/10 shadow-glass-lg group hover:shadow-glass-glow transition-all duration-500"
+                className="h-full flex flex-col border-white/10 shadow-glass-lg group hover:shadow-glass-glow transition-all duration-500"
               >
-                <CardContent className="p-8 relative z-10">
+                <CardContent className="p-8 relative z-10 flex-1 flex flex-col justify-center">
                   <div className="mb-6">
                     <h3 className="text-2xl font-display text-foreground mb-2 flex items-center gap-2">
                       <Bus className="h-6 w-6 text-primary flex-shrink-0" />
@@ -279,7 +286,7 @@ export default function HomePage() {
 
                     <Button
                       type="submit"
-                      className="w-full h-16 text-lg bg-gradient-to-r from-[#0e9494] to-[#0d4f5c] hover:from-[#20c4c4] hover:to-[#0e9494] text-white border-0 shadow-xl hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 mt-6 font-bold hover:scale-[1.02]"
+                      className="w-full h-16 text-lg glass-button border-0 shadow-lg hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 mt-6 font-semibold"
                       size="lg"
                     >
                       <Search className="h-6 w-6 mr-2 flex-shrink-0" />
@@ -292,6 +299,44 @@ export default function HomePage() {
           </div>
         </div>
 
+      </section>
+
+      {/* Track Booking Section */}
+      <section className="py-8 relative z-20 bg-gradient-to-b from-teal-pale/30 to-background">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-3xl mx-auto border-primary/10 shadow-lg shadow-primary/5">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row md:items-center gap-4">
+                <div className="flex-1">
+                  <h3 className="text-lg font-display text-foreground mb-1 flex items-center gap-2">
+                    <Ticket className="h-5 w-5 text-primary" />
+                    Already have a booking?
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Enter your booking ID or ticket code to track your trip
+                  </p>
+                </div>
+                <div className="flex gap-2 md:w-auto w-full">
+                  <Input
+                    placeholder="Enter code..."
+                    className="md:w-56 h-11"
+                    value={trackingCode}
+                    onChange={(e) => setTrackingCode(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleTrackBooking()
+                      }
+                    }}
+                  />
+                  <Button onClick={handleTrackBooking} className="shrink-0 h-11 px-6">
+                    <Search className="h-4 w-4 md:mr-2" />
+                    <span className="hidden md:inline">Track</span>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
       {/* Stats Section - Transparent Glass Effect */}
