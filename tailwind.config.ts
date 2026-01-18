@@ -155,6 +155,25 @@ const config: Config = {
         'ethiopian-pattern': `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23018790' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-mesh': 'linear-gradient(135deg, var(--tw-gradient-from) 0%, transparent 50%, var(--tw-gradient-to) 100%)',
+        // Glassmorphism gradients
+        'glass-gradient': 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.6) 100%)',
+        'glass-gradient-teal': 'linear-gradient(135deg, rgba(14, 148, 148, 0.15) 0%, rgba(32, 196, 196, 0.1) 100%)',
+      },
+      backdropBlur: {
+        'xs': '2px',
+        'glass-subtle': '16px',
+        'glass-moderate': '24px',
+        'glass-dramatic': '28px',
+        'glass-extreme': '32px',
+      },
+      backdropSaturate: {
+        'glass': '200%',
+      },
+      boxShadow: {
+        'glass': '0 8px 32px rgba(14, 148, 148, 0.1)',
+        'glass-md': '0 8px 32px rgba(14, 148, 148, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+        'glass-lg': '0 12px 48px rgba(14, 148, 148, 0.2), 0 4px 16px rgba(14, 148, 148, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+        'glass-glow': '0 16px 64px rgba(14, 148, 148, 0.3), 0 6px 24px rgba(14, 148, 148, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 20px rgba(32, 196, 196, 0.4)',
       },
     },
   },

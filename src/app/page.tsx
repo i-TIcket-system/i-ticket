@@ -136,50 +136,56 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col overflow-hidden">
-      {/* Hero Section */}
+      {/* Hero Section - GLASSMORPHISM TRANSFORMATION */}
       <section className="relative min-h-[90vh] flex items-center gradient-hero-simien text-white overflow-hidden">
-        {/* Background elements */}
+        {/* Background elements - Enhanced with animated patterns */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* Ethiopian pattern overlay - subtle */}
-          <div className="absolute inset-0 pattern-overlay tilahun-weave" />
+          {/* Base: Tilahun Weave pattern at 20% opacity */}
+          <div className="absolute inset-0 bg-pattern-tilahun-glass opacity-20" />
+
+          {/* Middle: Floating teal gradients */}
+          <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-radial from-teal-light/30 to-transparent rounded-full blur-3xl animate-float" />
+          <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-radial from-teal-medium/25 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-radial from-teal-dark/20 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }} />
         </div>
 
         <div className="container relative z-10 mx-auto px-4 py-20">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left content */}
+            {/* Left content - Enhanced typography */}
             <div className={`space-y-8 ${mounted ? 'animate-fade-up' : 'opacity-0'}`}>
-              {/* Ethiopian Flag Bar */}
+              {/* Ethiopian Flag Bar with glow */}
               <div className="ethiopian-bar">
-                <div />
-                <div />
-                <div />
+                <div className="shadow-lg shadow-[hsl(var(--eth-green))]/50" />
+                <div className="shadow-lg shadow-[hsl(var(--eth-yellow))]/50" />
+                <div className="shadow-lg shadow-[hsl(var(--eth-red))]/50" />
               </div>
 
-              <h1 className="text-white leading-[1.15]">
+              {/* Larger, more dramatic heading */}
+              <h1 className="text-white leading-[1.1] text-5xl md:text-6xl lg:text-7xl">
                 Travel Ethiopia
                 <br />
-                <span className="text-[#20c4c4]">
+                <span className="gradient-text-simien bg-gradient-to-r from-[#20c4c4] via-[#0e9494] to-[#0d4f5c] bg-clip-text text-transparent drop-shadow-lg">
                   with Confidence
                 </span>
               </h1>
 
-              <p className="text-lg md:text-xl text-white/70 max-w-xl leading-relaxed">
+              <p className="text-xl md:text-2xl text-white/80 max-w-xl leading-relaxed drop-shadow-md">
                 Book bus tickets from Ethiopia&apos;s top companies. Fast, secure, and hassle-free booking at your fingertips.
               </p>
 
-              {/* Trust indicators */}
-              <div className="flex flex-wrap gap-4 text-sm text-white/60">
+              {/* Trust indicators - glass badges */}
+              <div className="flex flex-wrap gap-3">
                 {["Instant QR Tickets", "TeleBirr Payment", "24/7 Support"].map((item, i) => (
-                  <div key={item} className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary-400" />
-                    <span>{item}</span>
+                  <div key={item} className="glass-subtle rounded-full px-4 py-2.5 flex items-center gap-2 border border-white/20">
+                    <CheckCircle2 className="h-4 w-4 text-[#20c4c4] flex-shrink-0" />
+                    <span className="text-sm font-medium text-foreground">{item}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Popular Routes */}
+              {/* Popular Routes - glass chips */}
               <div className="pt-4">
-                <p className="text-sm text-white/40 mb-3 uppercase tracking-wider">Popular Routes</p>
+                <p className="text-sm text-white/50 mb-3 uppercase tracking-wider font-medium">Popular Routes</p>
                 <div className="flex flex-wrap gap-2">
                   {[
                     { from: "Addis Ababa", to: "Bahir Dar" },
@@ -189,43 +195,55 @@ export default function HomePage() {
                     <Link
                       key={`${route.from}-${route.to}`}
                       href={`/search?from=${route.from}&to=${route.to}`}
-                      className="group inline-flex items-center px-4 py-2.5 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all duration-300 text-sm"
+                      className="group inline-flex items-center px-5 py-3 rounded-full glass-dark hover:glass-teal border border-white/10 hover:border-[#20c4c4]/40 transition-all duration-300 text-sm shadow-lg hover:shadow-xl hover:shadow-[#20c4c4]/20 hover:scale-105"
                     >
-                      <span className="text-white/80">{route.from}</span>
-                      <ArrowRight className="h-3.5 w-3.5 mx-2 text-primary-400 group-hover:translate-x-0.5 transition-transform" />
-                      <span className="text-white">{route.to}</span>
+                      <span className="text-white/90">{route.from}</span>
+                      <ArrowRight className="h-4 w-4 mx-2 text-[#20c4c4] group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                      <span className="text-white font-medium">{route.to}</span>
                     </Link>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Right - Search Form */}
+            {/* Right - Search Form - Enhanced glass with micro-interactions */}
             <div className={`${mounted ? 'animate-fade-up' : 'opacity-0'}`} style={{ animationDelay: '200ms' }}>
-              <Card className="glass-enhanced border-white/10 shadow-2xl shadow-black/20">
-
+              <EnhancedCard
+                glass="dramatic"
+                flagBorder
+                className="border-white/10 shadow-glass-lg group hover:shadow-glass-glow transition-all duration-500"
+              >
                 <CardContent className="p-8 relative z-10">
                   <div className="mb-6">
-                    <h3 className="text-xl font-display text-foreground mb-1">Find Your Trip</h3>
+                    <h3 className="text-2xl font-display text-foreground mb-2 flex items-center gap-2">
+                      <Bus className="h-6 w-6 text-primary flex-shrink-0" />
+                      Find Your Trip
+                    </h3>
                     <p className="text-sm text-muted-foreground">Search from 100+ daily departures</p>
                   </div>
 
                   <form onSubmit={handleSearch} className="space-y-5">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground/70">From</label>
+                    <div className="space-y-2 group/field">
+                      <label className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                        From
+                      </label>
                       <CityCombobox
                         value={origin}
                         onChange={setOrigin}
                         suggestions={cities}
                         placeholder={citiesLoading ? "Loading cities..." : "Where are you departing from?"}
                         disabled={citiesLoading}
-                        className="h-12"
-                        icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none z-10" />}
+                        className="h-12 transition-all duration-300 focus-within:shadow-md focus-within:shadow-primary/20"
+                        icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none z-10 flex-shrink-0" />}
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground/70">To</label>
+                    <div className="space-y-2 group/field">
+                      <label className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-secondary flex-shrink-0" />
+                        To
+                      </label>
                       <CityCombobox
                         value={destination}
                         onChange={setDestination}
@@ -233,32 +251,39 @@ export default function HomePage() {
                         excludeCity={origin}
                         placeholder={citiesLoading ? "Loading cities..." : "Where are you going?"}
                         disabled={citiesLoading}
-                        className="h-12"
-                        icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary pointer-events-none z-10" />}
+                        className="h-12 transition-all duration-300 focus-within:shadow-md focus-within:shadow-secondary/20"
+                        icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary pointer-events-none z-10 flex-shrink-0" />}
                       />
                     </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium text-foreground/70">Date</label>
+                    <div className="space-y-2 group/field">
+                      <label className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        Date
+                      </label>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" />
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none flex-shrink-0" />
                         <Input
                           type="date"
                           value={date}
                           onChange={(e) => setDate(e.target.value)}
                           min={today}
-                          className="pl-11 h-12"
+                          className="pl-11 h-12 transition-all duration-300 focus:shadow-md focus:shadow-primary/10"
                         />
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full h-12 text-base coffee-ripple" size="lg">
-                      <Search className="h-5 w-5 mr-2" />
+                    <Button
+                      type="submit"
+                      className="w-full h-13 text-base glass-button border-0 shadow-lg hover:shadow-xl hover:shadow-primary/30 transition-all duration-300 mt-6"
+                      size="lg"
+                    >
+                      <Search className="h-5 w-5 mr-2 flex-shrink-0" />
                       Search Available Trips
                     </Button>
                   </form>
                 </CardContent>
-              </Card>
+              </EnhancedCard>
             </div>
           </div>
         </div>
@@ -362,14 +387,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features - Enhanced */}
+      {/* Features - GLASSMORPHISM TRANSFORMATION */}
       <section className="py-20 md:py-28 bg-gradient-to-br from-teal-pale/40 via-teal-pale/20 to-background relative overflow-hidden">
-        {/* Very subtle pattern */}
-        <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-[0.02]" />
+        {/* Enhanced Ethiopian pattern background */}
+        <div className="absolute inset-0 bg-pattern-lalibela-glass opacity-15" />
 
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-14">
-            <h2 className="mb-4 font-display">Why Choose i-Ticket?</h2>
+            {/* Ethiopian Flag Bar */}
+            <div className="ethiopian-bar justify-center mb-6">
+              <div />
+              <div />
+              <div />
+            </div>
+            <h2 className="mb-4 font-display gradient-text-simien">Why Choose i-Ticket?</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
               We&apos;ve built the most convenient way to book bus tickets in Ethiopia.
             </p>
@@ -379,21 +410,34 @@ export default function HomePage() {
             {features.map((feature, i) => (
               <EnhancedCard
                 key={feature.title}
-                glass
+                glass="dramatic"
+                lift
                 interactive
-                glow={2}
-                className={`overflow-hidden group ${mounted ? 'animate-fade-up' : 'opacity-0'}`}
+                ethiopianPattern={i === 0 ? 'tilahun' : i === 1 ? 'lalibela' : 'coffee'}
+                className={`overflow-hidden ${mounted ? 'animate-fade-up' : 'opacity-0'} hover:scale-[1.02] transition-all duration-500`}
                 style={{ animationDelay: `${i * 150}ms` }}
               >
-                <CardContent className="p-8 relative">
-                  {/* Gradient accent line */}
-                  <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${feature.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                <CardContent className="p-8 relative z-10">
+                  {/* Gradient accent line - enhanced with glow */}
+                  <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${feature.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg shadow-primary/50`} />
 
-                  <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${feature.accent} flex items-center justify-center mb-6 shadow-lg group-hover:shadow-xl transition-shadow duration-300`}>
-                    <feature.icon className="h-7 w-7 text-white" />
+                  {/* Icon with enhanced glass background */}
+                  <div className="relative mb-6">
+                    <div className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${feature.accent} flex items-center justify-center shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300 relative z-10`}>
+                      <feature.icon className="h-8 w-8 text-white flex-shrink-0" />
+                    </div>
+                    {/* Glow effect behind icon */}
+                    <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${feature.accent} blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-300`} />
                   </div>
-                  <h3 className="mb-3 text-foreground font-display text-xl">{feature.title}</h3>
+
+                  <h3 className="mb-3 text-foreground font-display text-xl group-hover:text-primary transition-colors duration-300">{feature.title}</h3>
                   <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+
+                  {/* Hover indicator */}
+                  <div className="mt-6 flex items-center gap-2 text-sm text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <span className="font-medium">Learn more</span>
+                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                  </div>
                 </CardContent>
               </EnhancedCard>
             ))}

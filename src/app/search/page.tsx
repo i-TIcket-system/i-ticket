@@ -194,79 +194,85 @@ function SearchContent() {
   }
 
   return (
-    <div className="min-h-[calc(100vh-4rem)]" style={{ background: "linear-gradient(180deg, #f0fafa 0%, #f5f5f5 100%)" }}>
-      {/* Search Header */}
-      <div className="text-white py-8" style={{ background: "linear-gradient(135deg, #0d4f5c 0%, #0e9494 100%)" }}>
-        <div className="container mx-auto px-4">
-          <form onSubmit={handleSearch}>
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <CityCombobox
-                value={origin}
-                onChange={setOrigin}
-                suggestions={cities}
-                placeholder="Type or select origin city"
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary pointer-events-none z-10" />}
-              />
+    <div className="min-h-[calc(100vh-4rem)] relative overflow-hidden">
+      {/* Enhanced Ethiopian pattern background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-teal-pale/30 via-background to-teal-pale/20 -z-10" />
+      <div className="fixed inset-0 bg-pattern-tilahun-glass opacity-10 -z-10" />
 
-              <CityCombobox
-                value={destination}
-                onChange={setDestination}
-                suggestions={cities}
-                excludeCity={origin}
-                placeholder="Type or select destination"
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-accent pointer-events-none z-10" />}
-              />
-
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary" />
-                <Input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  min={today}
-                  className="pl-10 bg-white/10 border-white/20 text-white"
+      {/* Sticky Search Header - GLASSMORPHISM */}
+      <div className="sticky top-0 z-30 backdrop-blur-glass-dramatic border-b border-white/10">
+        <div className="glass-teal py-6 shadow-glass-md">
+          <div className="container mx-auto px-4">
+            <form onSubmit={handleSearch}>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <CityCombobox
+                  value={origin}
+                  onChange={setOrigin}
+                  suggestions={cities}
+                  placeholder="From"
+                  className="glass-input text-foreground placeholder:text-muted-foreground h-11 transition-all duration-300 focus-within:shadow-md focus-within:shadow-primary/20"
+                  icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-primary pointer-events-none z-10 flex-shrink-0" />}
                 />
+
+                <CityCombobox
+                  value={destination}
+                  onChange={setDestination}
+                  suggestions={cities}
+                  excludeCity={origin}
+                  placeholder="To"
+                  className="glass-input text-foreground placeholder:text-muted-foreground h-11 transition-all duration-300 focus-within:shadow-md focus-within:shadow-secondary/20"
+                  icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-secondary pointer-events-none z-10 flex-shrink-0" />}
+                />
+
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <Input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    min={today}
+                    className="pl-10 glass-input text-foreground h-11"
+                  />
+                </div>
+
+                <Select value={busType} onValueChange={(value) => {
+                  setBusType(value)
+                  // Update URL with bus type filter
+                  const params = new URLSearchParams(searchParams.toString())
+                  if (origin) params.set("from", origin)
+                  if (destination) params.set("to", destination)
+                  if (date) params.set("date", date)
+                  if (value && value !== "all") params.set("type", value)
+                  else params.delete("type")
+                  router.push(`/search?${params.toString()}`)
+                }}>
+                  <SelectTrigger className="glass-input text-foreground h-11">
+                    <Bus className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <SelectValue placeholder="Bus Type" />
+                  </SelectTrigger>
+                  <SelectContent className="glass-moderate">
+                    <SelectItem value="all">All Types</SelectItem>
+                    {BUS_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Button type="submit" disabled={isLoading} className="glass-button h-11 shadow-lg hover:shadow-xl transition-all">
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
+                  ) : (
+                    <>
+                      <Search className="h-4 w-4 mr-2 flex-shrink-0" />
+                      Search
+                    </>
+                  )}
+                </Button>
               </div>
-
-              <Select value={busType} onValueChange={(value) => {
-                setBusType(value)
-                // Update URL with bus type filter
-                const params = new URLSearchParams(searchParams.toString())
-                if (origin) params.set("from", origin)
-                if (destination) params.set("to", destination)
-                if (date) params.set("date", date)
-                if (value && value !== "all") params.set("type", value)
-                else params.delete("type")
-                router.push(`/search?${params.toString()}`)
-              }}>
-                <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                  <Bus className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Bus Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {BUS_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Search className="h-4 w-4 mr-2" />
-                    Search
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -335,18 +341,41 @@ function SearchContent() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : trips.length === 0 ? (
-          <Card className="p-12 text-center">
-            <Bus className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No trips found</h3>
-            <p className="text-muted-foreground mb-4">
+          <Card className="glass-dramatic p-12 text-center max-w-2xl mx-auto shadow-glass-lg ethiopianPattern border-white/10">
+            {/* Ethiopian coffee ceremony illustration placeholder */}
+            <div className="relative mb-6">
+              <div className="h-24 w-24 mx-auto rounded-full glass-teal flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform">
+                <Coffee className="h-12 w-12 text-primary" />
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="h-32 w-32 rounded-full bg-gradient-to-br from-primary/20 to-teal-light/20 blur-2xl" />
+              </div>
+            </div>
+
+            <h3 className="text-2xl font-display font-semibold mb-3 gradient-text-simien">No trips found</h3>
+            <p className="text-muted-foreground mb-6 text-lg">
               Try adjusting your search criteria or check back later.
             </p>
-            <div className="text-sm text-muted-foreground space-y-1 mb-4">
-              <p>• Try different dates (tomorrow or next week)</p>
-              <p>• Check for nearby cities or alternative routes</p>
-              <p>• Some routes may not operate daily</p>
+
+            <div className="glass-subtle rounded-xl p-6 mb-6 text-left border border-white/20">
+              <p className="font-medium text-foreground mb-3">Suggestions:</p>
+              <div className="text-sm text-muted-foreground space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <p>Try different dates (tomorrow or next week)</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <p>Check for nearby cities or alternative routes</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  <p>Some routes may not operate daily</p>
+                </div>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2 justify-center mb-4">
+
+            <div className="flex flex-wrap gap-3 justify-center mb-6">
               <Button
                 variant="outline"
                 size="sm"
@@ -355,6 +384,7 @@ function SearchContent() {
                   tomorrow.setDate(tomorrow.getDate() + 1)
                   setDate(tomorrow.toISOString().split('T')[0])
                 }}
+                className="glass-subtle border-white/30 hover:glass-moderate"
               >
                 Try Tomorrow
               </Button>
@@ -366,6 +396,7 @@ function SearchContent() {
                   nextWeek.setDate(nextWeek.getDate() + 7)
                   setDate(nextWeek.toISOString().split('T')[0])
                 }}
+                className="glass-subtle border-white/30 hover:glass-moderate"
               >
                 Try Next Week
               </Button>
@@ -373,11 +404,16 @@ function SearchContent() {
                 variant="outline"
                 size="sm"
                 onClick={() => { setBusType("all"); }}
+                className="glass-subtle border-white/30 hover:glass-moderate"
               >
                 All Bus Types
               </Button>
             </div>
-            <Button onClick={() => { setOrigin(""); setDestination(""); setDate(""); setBusType("all"); }}>
+
+            <Button
+              onClick={() => { setOrigin(""); setDestination(""); setDate(""); setBusType("all"); }}
+              className="glass-button shadow-lg hover:shadow-xl"
+            >
               Clear All Filters
             </Button>
           </Card>
@@ -401,47 +437,57 @@ function SearchContent() {
                 return (
               <Card
                 key={trip.id}
-                className={`card-hover overflow-hidden relative ${
-                  isDeparted ? "opacity-60 bg-muted" : ""
+                className={`glass-dramatic glass-lift overflow-hidden relative border-white/10 shadow-glass-md hover:shadow-glass-lg transition-all duration-500 group ${
+                  isDeparted ? "opacity-60" : ""
                 }`}
               >
-                {/* Compare Checkbox */}
-                <div className="absolute top-2 right-2 md:top-4 md:right-4 z-10">
-                  <Checkbox
-                    id={`compare-${trip.id}`}
-                    checked={selectedTripsForComparison.includes(trip.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        if (selectedTripsForComparison.length < 4) {
-                          setSelectedTripsForComparison([...selectedTripsForComparison, trip.id])
+                {/* Teal accent line on hover */}
+                <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-teal-medium to-teal-light opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg shadow-primary/50" />
+
+                {/* Compare Checkbox - Glass style */}
+                <div className="absolute top-3 right-3 md:top-5 md:right-5 z-10">
+                  <div className="glass-subtle rounded-lg p-1.5 shadow-md">
+                    <Checkbox
+                      id={`compare-${trip.id}`}
+                      checked={selectedTripsForComparison.includes(trip.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          if (selectedTripsForComparison.length < 4) {
+                            setSelectedTripsForComparison([...selectedTripsForComparison, trip.id])
+                          }
+                        } else {
+                          setSelectedTripsForComparison(selectedTripsForComparison.filter((id) => id !== trip.id))
                         }
-                      } else {
-                        setSelectedTripsForComparison(selectedTripsForComparison.filter((id) => id !== trip.id))
-                      }
-                    }}
-                    className="h-5 w-5 bg-white border-2 shadow-sm"
-                    aria-label={`Compare ${trip.company.name} trip`}
-                  />
+                      }}
+                      className="h-5 w-5 border-2"
+                      aria-label={`Compare ${trip.company.name} trip`}
+                    />
+                  </div>
                 </div>
+
                 <CardContent className="p-0">
                   <div className="flex flex-col md:flex-row">
-                    {/* Company Info */}
-                    <div className="p-6 md:w-48 bg-muted/50 flex flex-col items-center justify-center text-center">
-                      <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-white font-bold mb-2">
-                        {trip.company.name.charAt(0)}
+                    {/* Company Info - Glass tinted section */}
+                    <div className="p-6 md:w-48 glass-teal flex flex-col items-center justify-center text-center border-r border-white/10">
+                      <div className="relative mb-3">
+                        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center text-white font-bold text-xl shadow-xl relative z-10 group-hover:scale-110 transition-transform duration-300">
+                          {trip.company.name.charAt(0)}
+                        </div>
+                        {/* Glow behind company logo */}
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-primary-700 blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300" />
                       </div>
-                      <h3 className="font-semibold">{trip.company.name}</h3>
-                      <div className="flex flex-col gap-1 mt-1">
-                        <Badge variant="secondary">
+                      <h3 className="font-semibold text-foreground mb-2">{trip.company.name}</h3>
+                      <div className="flex flex-col gap-1.5">
+                        <Badge variant="secondary" className="glass-subtle border-white/20">
                           {BUS_TYPES.find((t) => t.value === trip.busType)?.label || trip.busType}
                         </Badge>
                         {trip.distance && (
-                          <Badge variant="outline" className="text-primary border-primary/50">
+                          <Badge variant="outline" className="text-primary border-primary/50 glass-subtle">
                             {trip.distance} km journey
                           </Badge>
                         )}
                         {isDeparted && (
-                          <Badge variant="outline" className="text-orange-600 border-orange-600/50 bg-orange-50">
+                          <Badge variant="outline" className="text-orange-600 border-orange-600/50 glass-subtle">
                             {trip.status === "DEPARTED" ? "Departed" : "Completed"}
                           </Badge>
                         )}
@@ -574,33 +620,35 @@ function SearchContent() {
                           </div>
                         </div>
 
-                        <Separator orientation="vertical" className="hidden md:block h-20" />
+                        <Separator orientation="vertical" className="hidden md:block h-20 bg-white/10" />
 
-                        {/* Price & Seats */}
-                        <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-4 md:w-40">
+                        {/* Price & Seats - Enhanced glass section */}
+                        <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-4 md:w-44">
                           <div className="text-right">
-                            <div className="text-2xl font-bold text-primary">
-                              {formatCurrency(Number(trip.price))}
+                            <div className="glass-subtle rounded-xl px-4 py-3 border border-white/20 mb-2">
+                              <div className="text-3xl font-bold gradient-text-simien bg-gradient-to-r from-primary to-teal-light bg-clip-text">
+                                {formatCurrency(Number(trip.price))}
+                              </div>
+                              <div className="text-xs text-muted-foreground font-medium">per person</div>
                             </div>
-                            <div className="text-xs text-muted-foreground">per person</div>
                           </div>
 
-                          <div className="flex flex-col items-end gap-2">
-                            <div className={`flex items-center gap-1 ${getSlotsColor(trip.availableSlots, trip.totalSlots)}`}>
-                              <Users className="h-4 w-4" />
+                          <div className="flex flex-col items-end gap-3">
+                            <div className={`glass-subtle rounded-lg px-3 py-2 flex items-center gap-2 border border-white/20 ${getSlotsColor(trip.availableSlots, trip.totalSlots)}`}>
+                              <Users className="h-4 w-4 flex-shrink-0" />
                               <span className="text-sm font-medium">
                                 {trip.availableSlots} seats left
                               </span>
                             </div>
 
                             {isCompanyAdmin ? (
-                              <Button disabled variant="secondary" size="sm">
+                              <Button disabled variant="secondary" size="sm" className="glass-subtle w-full">
                                 View Only
                               </Button>
                             ) : (
                               <>
                                 {trip.status === "COMPLETED" || trip.status === "CANCELLED" ? (
-                                  <Button disabled variant="secondary" size="sm">
+                                  <Button disabled variant="secondary" size="sm" className="glass-subtle w-full">
                                     {trip.status === "COMPLETED" ? "Trip Completed" : "Cancelled"}
                                   </Button>
                                 ) : (
@@ -610,8 +658,13 @@ function SearchContent() {
                                       // Clear any previous booking data for this trip (prevents guest data persistence)
                                       sessionStorage.removeItem(`booking-${trip.id}-passengers`)
                                     }}
+                                    className="w-full"
                                   >
-                                    <Button disabled={trip.availableSlots === 0 || trip.status === "DEPARTED"}>
+                                    <Button
+                                      disabled={trip.availableSlots === 0 || trip.status === "DEPARTED"}
+                                      className="glass-button w-full shadow-md hover:shadow-lg hover:scale-105 transition-all"
+                                      size="sm"
+                                    >
                                       {trip.availableSlots === 0 ? "Sold Out" : trip.status === "DEPARTED" ? "Departed" : "Select"}
                                     </Button>
                                   </Link>

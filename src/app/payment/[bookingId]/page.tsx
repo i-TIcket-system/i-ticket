@@ -147,19 +147,27 @@ export default function PaymentPage() {
   const ticketPrice = total - commission - commissionVAT  // What company receives
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8">
-      <div className="container mx-auto px-4 max-w-2xl">
+    <div className="min-h-[calc(100vh-4rem)] relative overflow-hidden">
+      {/* GLASSMORPHISM TRANSFORMATION - Immersive Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-teal-pale/40 via-background to-teal-pale/30 -z-10" />
+      <div className="fixed inset-0 bg-pattern-lalibela-glass opacity-10 -z-10" />
+      {/* Animated gradient orbs */}
+      <div className="fixed top-20 left-1/4 w-96 h-96 bg-gradient-radial from-teal-light/25 to-transparent rounded-full blur-3xl animate-float -z-10" />
+      <div className="fixed bottom-20 right-1/4 w-80 h-80 bg-gradient-radial from-teal-medium/20 to-transparent rounded-full blur-3xl animate-float -z-10" style={{ animationDelay: '2s' }} />
+
+      <div className="container mx-auto px-4 max-w-2xl py-8">
         <Link
           href={`/booking/${booking.trip.id}`}
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
+          className="inline-flex items-center text-sm glass-subtle rounded-full px-4 py-2 mb-8 border border-white/20 hover:glass-moderate transition-all duration-300 group"
         >
-          <ArrowLeft className="h-4 w-4 mr-1" />
+          <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
           Back to booking
         </Link>
 
         {/* Payment Status */}
         {paymentStatus === "success" ? (
-          <Card>
+          <Card className="glass-dramatic border-white/10 shadow-glass-lg overflow-hidden">
+            <div className="h-1 bg-gradient-to-r from-green-400 to-teal-400 shadow-lg" />
             <SuccessAnimation
               variant="payment"
               message="Payment Successful!"
@@ -169,15 +177,23 @@ export default function PaymentPage() {
           </Card>
         ) : (
           <>
-            {/* Booking Summary */}
-            <Card className="mb-6">
+            {/* Booking Summary - GLASS DRAMATIC */}
+            <Card className="glass-dramatic border-white/10 shadow-glass-lg mb-6 overflow-hidden">
+              {/* Teal accent line */}
+              <div className="h-1 bg-gradient-to-r from-teal-medium to-teal-light shadow-lg shadow-primary/50" />
+
               <CardHeader>
-                <CardTitle>Booking Summary</CardTitle>
-                <CardDescription>
-                  {booking.trip.origin} to {booking.trip.destination}
+                <CardTitle className="text-2xl font-display">Booking Summary</CardTitle>
+                <CardDescription className="text-base flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <span>{booking.trip.origin}</span>
+                    <ArrowLeft className="h-4 w-4 rotate-180 text-primary flex-shrink-0" />
+                    <span>{booking.trip.destination}</span>
+                  </div>
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                <div className="glass-subtle rounded-xl p-4 border border-white/20 space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Bus Company</span>
                   <span className="font-medium">{booking.trip.company.name}</span>
@@ -190,29 +206,36 @@ export default function PaymentPage() {
                   <span className="text-muted-foreground">Passengers</span>
                   <span className="font-medium">{booking.passengers.length}</span>
                 </div>
-
-                <Separator />
-
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Ticket Price ({booking.passengers.length} passenger{booking.passengers.length > 1 ? "s" : ""})
-                  </span>
-                  <span>{formatCurrency(ticketPrice)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">i-Ticket Commission (5%)</span>
-                  <span>{formatCurrency(commission)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">VAT on Commission (15%)</span>
-                  <span>{formatCurrency(commissionVAT)}</span>
                 </div>
 
-                <Separator />
+                <Separator className="bg-white/10" />
 
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Total</span>
-                  <span className="text-primary">{formatCurrency(total)}</span>
+                <div className="glass-subtle rounded-xl p-4 border border-white/20 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      Ticket Price ({booking.passengers.length} passenger{booking.passengers.length > 1 ? "s" : ""})
+                    </span>
+                    <span>{formatCurrency(ticketPrice)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">i-Ticket Commission (5%)</span>
+                    <span>{formatCurrency(commission)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">VAT on Commission (15%)</span>
+                    <span>{formatCurrency(commissionVAT)}</span>
+                  </div>
+                </div>
+
+                <div className="glass-teal rounded-2xl p-5 border border-white/20 shadow-glass-md">
+                  <div className="flex justify-between items-center">
+                    <span className="text-foreground font-medium text-lg">Total</span>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold gradient-text-simien bg-gradient-to-r from-primary to-teal-light bg-clip-text">
+                        {formatCurrency(total)}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -220,26 +243,34 @@ export default function PaymentPage() {
             {/* Countdown Timer */}
             <TripCountdown departureTime={booking.trip.departureTime} variant="default" />
 
-            {/* Payment Method */}
-            <Card>
+            {/* Payment Method - GLASS DRAMATIC */}
+            <Card className="glass-dramatic border-white/10 shadow-glass-lg overflow-hidden">
+              {/* Teal accent line */}
+              <div className="h-1 bg-gradient-to-r from-teal-medium to-teal-light shadow-lg shadow-primary/50" />
+
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-2xl font-display">
+                  <div className="h-10 w-10 rounded-xl glass-teal flex items-center justify-center shadow-md">
+                    <CreditCard className="h-5 w-5 text-primary flex-shrink-0" />
+                  </div>
                   Payment Method
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-base mt-2">
                   Complete your payment to receive your tickets
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* TeleBirr Option */}
-                <div className="p-4 border-2 border-primary rounded-lg bg-primary/5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="h-12 w-12 rounded-lg bg-blue-600 flex items-center justify-center">
-                      <Smartphone className="h-6 w-6 text-white" />
+                {/* TeleBirr Option - Enhanced Glass */}
+                <div className="glass-teal p-6 border-2 border-primary/30 rounded-2xl relative overflow-hidden group">
+                  {/* Shimmer effect */}
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
+
+                  <div className="flex items-center gap-4 mb-4 relative z-10">
+                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                      <Smartphone className="h-7 w-7 text-white flex-shrink-0" />
                     </div>
                     <div>
-                      <h3 className="font-semibold">TeleBirr</h3>
+                      <h3 className="font-bold text-lg">TeleBirr</h3>
                       <p className="text-sm text-muted-foreground">
                         Pay with your mobile wallet
                       </p>

@@ -113,63 +113,75 @@ export default function MyTicketsPage() {
   }
 
   const BookingCard = ({ booking }: { booking: BookingWithTrip }) => (
-    <Card className="card-hover">
+    <Card className="glass-dramatic glass-lift border-white/10 shadow-glass-md hover:shadow-glass-lg transition-all duration-500 group overflow-hidden">
+      {/* Status accent line */}
+      <div className={`h-1 bg-gradient-to-r shadow-lg ${
+        booking.status === 'PAID' ? 'from-green-400 to-teal-400 shadow-green-500/50' :
+        booking.status === 'PENDING' ? 'from-amber-400 to-orange-400 shadow-amber-500/50' :
+        'from-red-400 to-rose-400 shadow-red-500/50'
+      }`} />
+
       <CardContent className="p-6">
         <div className="flex flex-col md:flex-row gap-4">
-          {/* Company & Status */}
-          <div className="flex items-center gap-4 md:w-48">
-            <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center text-white font-bold">
-              {booking.trip.company.name.charAt(0)}
+          {/* Company & Status - Glass Enhanced */}
+          <div className="flex items-center gap-4 md:w-52">
+            <div className="relative">
+              <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center text-white font-bold text-xl shadow-xl relative z-10 group-hover:scale-110 transition-transform">
+                {booking.trip.company.name.charAt(0)}
+              </div>
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-primary-700 blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
             </div>
             <div>
-              <h3 className="font-semibold">{booking.trip.company.name}</h3>
-              <Badge variant={getStatusColor(booking.status) as any}>
+              <h3 className="font-semibold text-lg">{booking.trip.company.name}</h3>
+              <Badge variant={getStatusColor(booking.status) as any} className="glass-subtle border-white/20">
                 {booking.status}
               </Badge>
             </div>
           </div>
 
-          {/* Route */}
+          {/* Route - Enhanced */}
           <div className="flex-1">
             <div className="flex items-center gap-2 text-lg font-medium mb-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              {booking.trip.origin}
-              <ArrowRight className="h-4 w-4" />
-              <MapPin className="h-4 w-4 text-accent" />
-              {booking.trip.destination}
+              <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+              <span>{booking.trip.origin}</span>
+              <ArrowRight className="h-4 w-4 flex-shrink-0" />
+              <MapPin className="h-4 w-4 text-accent flex-shrink-0" />
+              <span>{booking.trip.destination}</span>
             </div>
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
+              <span className="flex items-center gap-1.5 glass-subtle rounded-lg px-2 py-1">
+                <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
                 {formatDate(booking.trip.departureTime)}
               </span>
-              <span className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
+              <span className="flex items-center gap-1.5 glass-subtle rounded-lg px-2 py-1">
+                <Clock className="h-3.5 w-3.5 flex-shrink-0" />
                 {formatDuration(booking.trip.estimatedDuration)}
               </span>
-              <span>{booking.passengers.length} passenger(s)</span>
+              <span className="glass-subtle rounded-lg px-2 py-1">{booking.passengers.length} passenger(s)</span>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex flex-col items-end justify-center gap-2">
+          {/* Actions - Glass Enhanced */}
+          <div className="flex flex-col items-end justify-center gap-3">
             {booking.status === "PAID" && booking.tickets.length > 0 ? (
               <Link href={`/tickets/${booking.id}`}>
-                <Button>
-                  <QrCode className="h-4 w-4 mr-2" />
+                <Button className="glass-button shadow-md hover:shadow-lg">
+                  <QrCode className="h-4 w-4 mr-2 flex-shrink-0" />
                   View Tickets
                 </Button>
               </Link>
             ) : booking.status === "PENDING" ? (
               <Link href={`/payment/${booking.id}`}>
-                <Button>
+                <Button className="glass-button shadow-md hover:shadow-lg">
                   Complete Payment
                 </Button>
               </Link>
             ) : null}
-            <span className="text-sm text-muted-foreground">
-              {formatCurrency(Number(booking.totalAmount))}
-            </span>
+            <div className="glass-teal rounded-lg px-3 py-1.5">
+              <span className="text-sm font-semibold text-primary">
+                {formatCurrency(Number(booking.totalAmount))}
+              </span>
+            </div>
           </div>
         </div>
       </CardContent>
@@ -177,17 +189,27 @@ export default function MyTicketsPage() {
   )
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8">
-      <div className="container mx-auto px-4">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">My Tickets</h1>
-          <p className="text-muted-foreground">
+    <div className="min-h-[calc(100vh-4rem)] relative overflow-hidden">
+      {/* GLASSMORPHISM TRANSFORMATION - Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-teal-pale/35 via-background to-teal-pale/25 -z-10" />
+      <div className="fixed inset-0 bg-pattern-tilahun-glass opacity-8 -z-10" />
+      <div className="fixed top-20 right-20 w-96 h-96 bg-gradient-radial from-teal-light/20 to-transparent rounded-full blur-3xl animate-float -z-10" />
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-12 w-12 rounded-2xl glass-teal flex items-center justify-center shadow-lg">
+              <Ticket className="h-6 w-6 text-primary flex-shrink-0" />
+            </div>
+            <h1 className="text-3xl font-display font-bold gradient-text-simien">My Tickets</h1>
+          </div>
+          <p className="text-muted-foreground ml-15">
             Manage your bookings and view ticket details
           </p>
         </div>
 
         <Tabs defaultValue="upcoming" className="space-y-6">
-          <TabsList>
+          <TabsList className="glass-moderate border border-white/20 shadow-glass-md">
             <TabsTrigger value="upcoming">
               Upcoming ({upcomingBookings.length})
             </TabsTrigger>

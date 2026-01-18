@@ -392,38 +392,56 @@ export default function BookingPage() {
   const maxPassengers = Math.min(5, trip.availableSlots)
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="mb-6">
+    <div className="min-h-[calc(100vh-4rem)] relative overflow-hidden">
+      {/* GLASSMORPHISM TRANSFORMATION - Immersive Background */}
+      <div className="fixed inset-0 bg-gradient-to-br from-teal-pale/40 via-background to-teal-pale/30 -z-10" />
+      <div className="fixed inset-0 bg-pattern-tilahun-glass opacity-8 -z-10" />
+      {/* Animated gradient orbs */}
+      <div className="fixed top-20 right-20 w-96 h-96 bg-gradient-radial from-teal-light/20 to-transparent rounded-full blur-3xl animate-float -z-10" />
+      <div className="fixed bottom-20 left-20 w-80 h-80 bg-gradient-radial from-teal-medium/15 to-transparent rounded-full blur-3xl animate-float -z-10" style={{ animationDelay: '3s' }} />
+
+      <div className="container mx-auto px-4 py-8">
+        {/* Header - Glass Style */}
+        <div className="mb-8">
           <Link
             href={`/search?from=${trip.origin}&to=${trip.destination}`}
-            className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-4"
+            className="inline-flex items-center text-sm glass-subtle rounded-full px-4 py-2 mb-6 border border-white/20 hover:glass-moderate transition-all duration-300 group"
           >
-            <ArrowLeft className="h-4 w-4 mr-1" />
+            <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform flex-shrink-0" />
             Back to search results
           </Link>
 
-          <h1 className="text-2xl font-bold">Complete Your Booking</h1>
+          <div className="flex items-center gap-3">
+            <div className="h-12 w-12 rounded-2xl glass-teal flex items-center justify-center shadow-lg">
+              <Bus className="h-6 w-6 text-primary flex-shrink-0" />
+            </div>
+            <h1 className="text-3xl font-display font-bold gradient-text-simien">Complete Your Booking</h1>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Trip Summary */}
-            <Card>
+            {/* Trip Summary - GLASS DRAMATIC */}
+            <Card className="glass-dramatic border-white/10 shadow-glass-lg overflow-hidden group">
+              {/* Teal accent line */}
+              <div className="h-1 bg-gradient-to-r from-teal-medium to-teal-light shadow-lg shadow-primary/50" />
+
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Bus className="h-5 w-5 text-primary" />
-                      {trip.company.name}
+                    <CardTitle className="flex items-center gap-2 text-2xl">
+                      <div className="h-10 w-10 rounded-xl glass-teal flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                        <Bus className="h-5 w-5 text-primary flex-shrink-0" />
+                      </div>
+                      <span className="font-display">{trip.company.name}</span>
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="mt-2 flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-primary flex-shrink-0" />
                       {formatDate(trip.departureTime)}
                     </CardDescription>
                   </div>
-                  <Badge>
+                  <Badge className="glass-subtle border-white/20 text-foreground">
                     {BUS_TYPES.find((t) => t.value === trip.busType)?.label || trip.busType}
                   </Badge>
                 </div>
@@ -496,22 +514,27 @@ export default function BookingPage() {
               </CardContent>
             </Card>
 
-            {/* Passenger Details */}
-            <Card>
+            {/* Passenger Details - GLASS DRAMATIC */}
+            <Card className="glass-dramatic border-white/10 shadow-glass-lg overflow-hidden">
+              {/* Teal accent line */}
+              <div className="h-1 bg-gradient-to-r from-teal-medium to-teal-light shadow-lg shadow-primary/50" />
+
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Users className="h-5 w-5" />
+                    <CardTitle className="flex items-center gap-2 text-xl font-display">
+                      <div className="h-10 w-10 rounded-xl glass-teal flex items-center justify-center shadow-md">
+                        <Users className="h-5 w-5 text-primary flex-shrink-0" />
+                      </div>
                       Passenger Details
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="mt-2">
                       {passengers.length} of {maxPassengers} passengers (max 5 per booking)
                     </CardDescription>
                   </div>
                   {passengers.length < maxPassengers && (
-                    <Button variant="outline" size="sm" onClick={addPassenger}>
-                      <Plus className="h-4 w-4 mr-1" />
+                    <Button variant="outline" size="sm" onClick={addPassenger} className="glass-subtle border-white/30 hover:glass-moderate">
+                      <Plus className="h-4 w-4 mr-1 flex-shrink-0" />
                       Add Passenger
                     </Button>
                   )}
@@ -519,7 +542,7 @@ export default function BookingPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {passengers.map((passenger, index) => (
-                  <div key={index} className="p-4 border rounded-lg space-y-4">
+                  <div key={index} className="glass-subtle p-5 border border-white/20 rounded-xl space-y-4 hover:glass-moderate transition-all duration-300">
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium">
                         {index === 0 ? (
@@ -737,49 +760,66 @@ export default function BookingPage() {
             )}
           </div>
 
-          {/* Price Summary Sidebar */}
+          {/* Price Summary Sidebar - GLASS DRAMATIC STICKY */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-4 md:top-20 lg:top-6">
+            <Card className="glass-dramatic border-white/10 shadow-glass-lg sticky top-4 md:top-20 lg:top-24 overflow-hidden">
+              {/* Teal accent line */}
+              <div className="h-1 bg-gradient-to-r from-teal-light to-teal-medium shadow-lg shadow-primary/50" />
+
               <CardHeader>
-                <CardTitle>Price Summary</CardTitle>
+                <CardTitle className="flex items-center gap-2 font-display text-xl">
+                  <div className="h-8 w-8 rounded-lg glass-teal flex items-center justify-center shadow-md">
+                    <CreditCard className="h-4 w-4 text-primary flex-shrink-0" />
+                  </div>
+                  Price Summary
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    {formatCurrency(Number(trip.price))} x {passengers.length} passenger{passengers.length > 1 ? "s" : ""}
-                  </span>
-                  <span>{formatCurrency(ticketTotal)}</span>
+                <div className="glass-subtle rounded-xl p-4 border border-white/20">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-muted-foreground text-sm">
+                      {formatCurrency(Number(trip.price))} x {passengers.length} passenger{passengers.length > 1 ? "s" : ""}
+                    </span>
+                    <span className="font-medium">{formatCurrency(ticketTotal)}</span>
+                  </div>
+
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-muted-foreground">i-Ticket commission (5%)</span>
+                    <span>{formatCurrency(baseCommission)}</span>
+                  </div>
+
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">VAT on commission (15%)</span>
+                    <span>{formatCurrency(commissionVAT)}</span>
+                  </div>
                 </div>
 
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">i-Ticket commission (5%)</span>
-                  <span>{formatCurrency(baseCommission)}</span>
+                <Separator className="bg-white/10" />
+
+                <div className="glass-teal rounded-2xl p-5 border border-white/20 shadow-glass-md">
+                  <div className="flex justify-between items-center">
+                    <span className="text-foreground font-medium">Total</span>
+                    <div className="text-right">
+                      <div className="text-3xl font-bold gradient-text-simien bg-gradient-to-r from-primary to-teal-light bg-clip-text">
+                        {formatCurrency(total)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">incl. taxes & fees</div>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">VAT on commission (15%)</span>
-                  <span>{formatCurrency(commissionVAT)}</span>
-                </div>
-
-                <Separator />
-
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Total</span>
-                  <span className="text-primary">{formatCurrency(total)}</span>
-                </div>
-
-                {/* Selected Seats Summary */}
+                {/* Selected Seats Summary - Glass Enhanced */}
                 {selectedSeats.length > 0 && (
                   <>
-                    <Separator />
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium flex items-center gap-1">
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    <Separator className="bg-white/10" />
+                    <div className="glass-subtle rounded-xl p-4 border border-white/20 space-y-3">
+                      <p className="text-sm font-medium flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
                         Selected Seats:
                       </p>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex flex-wrap gap-2">
                         {selectedSeats.map((seat) => (
-                          <Badge key={seat} variant="secondary" className="bg-blue-500 text-white">
+                          <Badge key={seat} className="glass-button text-white px-3 py-1.5 shadow-md">
                             {seat}
                           </Badge>
                         ))}
@@ -797,22 +837,24 @@ export default function BookingPage() {
                   )}
                 </div>
 
-                {/* Payment Phone Clarity Banner */}
+                {/* Payment Phone Clarity Banner - Glass Style */}
                 {passengers.length > 0 && passengers[0].phone && (
-                  <div className="p-3 rounded-lg bg-blue-50 border border-blue-200">
-                    <div className="flex items-start gap-2">
-                      <Phone className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="glass-subtle rounded-xl p-4 border border-blue-200/30">
+                    <div className="flex items-start gap-3">
+                      <div className="h-8 w-8 rounded-lg glass-teal flex items-center justify-center flex-shrink-0">
+                        <Phone className="h-4 w-4 text-primary" />
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-blue-900">
+                        <p className="text-sm font-medium text-foreground">
                           TeleBirr Payment Request
                         </p>
-                        <p className="text-xs text-blue-700 mt-1">
-                          Will be sent to: <span className="font-semibold">{passengers[0].phone}</span>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Will be sent to: <span className="font-semibold text-primary">{passengers[0].phone}</span>
                           {passengers.length > 1 && (
-                            <span className="text-blue-600"> (Passenger 1 - Primary Contact)</span>
+                            <span className="text-muted-foreground"> (Passenger 1 - Primary Contact)</span>
                           )}
                         </p>
-                        <p className="text-xs text-blue-600 mt-1">
+                        <p className="text-xs text-primary mt-1 font-medium">
                           Make sure this number has TeleBirr enabled
                         </p>
                       </div>
@@ -820,20 +862,20 @@ export default function BookingPage() {
                   </div>
                 )}
 
-                {/* UX-2: Show warning banner when price changed */}
+                {/* UX-2: Show warning banner when price changed - Glass Style */}
                 {priceChanged && (
-                  <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg space-y-2">
-                    <p className="text-sm text-amber-800 dark:text-amber-200 font-medium flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
+                  <div className="glass-subtle rounded-xl p-4 border border-amber-200/30 space-y-3">
+                    <p className="text-sm text-amber-600 dark:text-amber-400 font-medium flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 flex-shrink-0" />
                       Price has changed
                     </p>
-                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                    <p className="text-xs text-muted-foreground">
                       The trip price was updated while you were booking. Please review the new total above.
                     </p>
                     <Button
                       variant="outline"
                       size="sm"
-                      className="w-full"
+                      className="w-full glass-subtle border-white/30 hover:glass-moderate"
                       onClick={() => {
                         setPriceChanged(false)
                         setOriginalPrice(trip?.price || null)
@@ -846,7 +888,7 @@ export default function BookingPage() {
                 )}
 
                 <Button
-                  className="w-full"
+                  className="w-full h-12 glass-button shadow-glass-md hover:shadow-glass-lg text-base font-medium"
                   onClick={handleBooking}
                   disabled={isSubmitting || priceChanged}
                 >
