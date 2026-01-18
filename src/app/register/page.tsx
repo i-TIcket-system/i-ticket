@@ -139,13 +139,15 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Panel - Teal Gradient */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(160deg, #0d4f5c 0%, #0e9494 50%, #20c4c4 100%)" }}
-        />
-        <div className="absolute inset-0 eth-pattern opacity-10" />
+      {/* Left Panel - Match homepage Features section */}
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-gradient-to-br from-[#0e9494] via-[#0d7a7a] to-[#0d4f5c]">
+        {/* Enhanced Ethiopian Lalibela pattern background */}
+        <div className="absolute inset-0 bg-pattern-lalibela-glass opacity-20" />
+
+        {/* Floating teal gradients for depth */}
+        <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-radial from-[#20c4c4]/30 to-transparent rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-radial from-[#0e9494]/25 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-radial from-[#0d4f5c]/20 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }} />
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 text-white">
@@ -186,14 +188,32 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      {/* Right Panel - Registration Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative overflow-hidden overflow-y-auto" style={{ background: "linear-gradient(135deg, #b8e6e6 0%, #a8dede 50%, #b5e5e5 100%)" }}>
-        {/* Teal accent elements - z-0 and pointer-events-none to stay behind form */}
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-30 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #20c4c4 0%, transparent 70%)" }} />
-        <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-30 z-0 pointer-events-none" style={{ background: "radial-gradient(circle, #0e9494 0%, transparent 70%)" }} />
+      {/* Right Panel - Registration Form - Match login page */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-8 relative overflow-hidden overflow-y-auto bg-gradient-to-br from-[#0d7a7a] via-[#0e9494] to-[#20c4c4]">
+        {/* Ethiopian Lalibela pattern - subtle */}
+        <div className="absolute inset-0 pattern-overlay lalibela-cross opacity-10 z-0 pointer-events-none" />
 
-        {/* Teal accent line on left edge */}
-        <div className="hidden lg:block absolute left-0 top-1/4 bottom-1/4 w-1 z-0 pointer-events-none" style={{ background: "linear-gradient(180deg, #20c4c4 0%, #0e9494 50%, #0d4f5c 100%)" }} />
+        {/* Large gradient orbs for depth */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-radial from-[#20c4c4]/40 to-transparent rounded-full blur-3xl animate-float z-0 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-gradient-radial from-[#0d4f5c]/30 to-transparent rounded-full blur-3xl animate-float z-0 pointer-events-none" style={{ animationDelay: '3s' }} />
+
+        {/* Decorative Ethiopian crosses floating around (like snowflakes in reference) */}
+        <div className="absolute top-[15%] left-[10%] text-4xl text-white/25 z-0 pointer-events-none animate-float">✚</div>
+        <div className="absolute top-[25%] right-[15%] text-3xl text-white/20 z-0 pointer-events-none animate-float" style={{ animationDelay: '1s' }}>✜</div>
+        <div className="absolute top-[60%] left-[8%] text-3xl text-white/15 z-0 pointer-events-none animate-float" style={{ animationDelay: '2s' }}>✚</div>
+        <div className="absolute bottom-[20%] right-[12%] text-2xl text-white/25 z-0 pointer-events-none animate-float" style={{ animationDelay: '1.5s' }}>✜</div>
+        <div className="absolute top-[45%] right-[8%] text-2xl text-white/20 z-0 pointer-events-none animate-float" style={{ animationDelay: '2.5s' }}>✚</div>
+        <div className="absolute bottom-[35%] left-[15%] text-3xl text-white/15 z-0 pointer-events-none animate-float" style={{ animationDelay: '0.5s' }}>✜</div>
+
+        {/* Additional scattered crosses */}
+        <div className="absolute top-[35%] left-[18%] text-2xl text-white/18 z-0 pointer-events-none animate-float" style={{ animationDelay: '3s' }}>✚</div>
+        <div className="absolute bottom-[50%] right-[22%] text-xl text-white/15 z-0 pointer-events-none animate-float" style={{ animationDelay: '1.8s' }}>✜</div>
+
+        {/* Small dots scattered (like in reference) */}
+        <div className="absolute top-[20%] left-[20%] w-2 h-2 bg-white/40 rounded-full z-0 pointer-events-none"></div>
+        <div className="absolute top-[70%] right-[20%] w-2 h-2 bg-white/30 rounded-full z-0 pointer-events-none"></div>
+        <div className="absolute bottom-[40%] left-[25%] w-1.5 h-1.5 bg-white/35 rounded-full z-0 pointer-events-none"></div>
+        <div className="absolute top-[55%] right-[25%] w-2 h-2 bg-white/40 rounded-full z-0 pointer-events-none"></div>
 
         <div className="w-full max-w-md py-4 relative z-10">
           {/* Mobile Header */}
