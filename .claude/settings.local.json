@@ -108,7 +108,10 @@
       "Bash(gh:*)",
       "Bash(git remote:*)",
       "Bash(git push:*)",
-      "Bash(git clean:*)"
+      "Bash(git clean:*)",
+      "WebFetch(domain:superdevresources.com)",
+      "WebFetch(domain:onyx8agency.com)",
+      "WebFetch(domain:freefrontend.com)"
     ]
   }
 }

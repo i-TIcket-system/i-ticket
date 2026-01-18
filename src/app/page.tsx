@@ -77,9 +77,31 @@ export default function HomePage() {
   const [citiesLoading, setCitiesLoading] = useState(true)
   const [trackingCode, setTrackingCode] = useState("")
   const [mounted, setMounted] = useState(false)
+  const [popularRoutes, setPopularRoutes] = useState<{ from: string; to: string }[]>([
+    { from: "Addis Ababa", to: "Bahir Dar" },
+    { from: "Addis Ababa", to: "Hawassa" },
+    { from: "Addis Ababa", to: "Gondar" },
+  ])
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  // Fetch popular routes based on customer searches and trip creations
+  useEffect(() => {
+    async function fetchPopularRoutes() {
+      try {
+        const response = await fetch("/api/popular-routes")
+        const data = await response.json()
+        if (data.routes && data.routes.length > 0) {
+          setPopularRoutes(data.routes)
+        }
+      } catch (error) {
+        console.error("Failed to fetch popular routes:", error)
+        // Keep default routes if fetch fails
+      }
+    }
+    fetchPopularRoutes()
   }, [])
 
   // Fetch cities from API on mount
@@ -132,6 +154,12 @@ export default function HomePage() {
     router.push(`/track/${code}`)
   }
 
+  // Helper function to shorten city names for display
+  const shortenCityName = (city: string) => {
+    if (city === "Addis Ababa") return "Addis"
+    return city
+  }
+
   const today = new Date().toISOString().split("T")[0]
 
   return (
@@ -173,38 +201,35 @@ export default function HomePage() {
                 Book bus tickets from Ethiopia&apos;s top companies. Fast, secure, and hassle-free booking at your fingertips.
               </p>
 
-              {/* Trust indicators - Larger, cleaner design */}
-              <div className="flex flex-wrap gap-6 max-w-2xl pt-6">
+              {/* Trust indicators - Clean checkmark style */}
+              <div className="flex flex-wrap gap-6 pt-6">
                 {[
                   { icon: Ticket, text: "Instant QR Tickets" },
                   { icon: Smartphone, text: "TeleBirr Payment" },
                   { icon: Clock, text: "24/7 Support" }
                 ].map((item, i) => (
-                  <div key={item.text} className="flex items-center gap-3 px-5 py-3 rounded-full glass-moderate border border-white/30 shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 group">
-                    <div className="h-10 w-10 rounded-full bg-[#20c4c4]/20 flex items-center justify-center group-hover:bg-[#20c4c4]/30 transition-colors">
-                      <item.icon className="h-5 w-5 text-[#20c4c4] flex-shrink-0" />
+                  <div key={item.text} className="flex items-center gap-2.5">
+                    <div className="h-6 w-6 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+                      <CheckCircle2 className="h-4 w-4 text-white flex-shrink-0" />
                     </div>
-                    <span className="text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">{item.text}</span>
+                    <span className="text-sm font-medium text-white/95 whitespace-nowrap">{item.text}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Popular Routes - Clean & Simple */}
-              <div className="pt-8">
-                <p className="text-sm text-white/80 font-medium mb-4">Quick Search:</p>
+              {/* Popular Routes - Dynamic based on customer searches */}
+              <div className="pt-4">
+                <p className="text-sm text-white/80 font-medium mb-4">Popular Routes:</p>
                 <div className="flex flex-wrap gap-3">
-                  {[
-                    { from: "Addis Ababa", to: "Bahir Dar" },
-                    { from: "Addis Ababa", to: "Hawassa" },
-                    { from: "Addis Ababa", to: "Gondar" },
-                  ].map((route) => (
+                  {popularRoutes.map((route) => (
                     <Link
                       key={`${route.from}-${route.to}`}
                       href={`/search?from=${route.from}&to=${route.to}`}
                       className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-full glass-moderate border border-white/30 hover:border-[#20c4c4]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#20c4c4]/20 hover:scale-105"
                     >
+                      <span className="text-white text-sm font-medium whitespace-nowrap">{shortenCityName(route.from)}</span>
+                      <ArrowRight className="h-4 w-4 text-[#20c4c4] flex-shrink-0" />
                       <span className="text-white text-sm font-medium whitespace-nowrap">{route.to}</span>
-                      <ArrowRight className="h-4 w-4 text-[#20c4c4] group-hover:translate-x-1 transition-transform flex-shrink-0" />
                     </Link>
                   ))}
                 </div>
@@ -294,14 +319,14 @@ export default function HomePage() {
 
       </section>
 
-      {/* Stats Section - Transparent Glass Effect */}
-      <section className="py-20 relative overflow-hidden bg-gradient-to-br from-[#0e9494] via-[#0d7a7a] to-[#0d4f5c]">
+      {/* Stats Section - Solid medium teal (halfway between dark hero and light sections) */}
+      <section className="py-20 relative overflow-hidden bg-[#0e9494]">
         {/* Pattern overlay - Tilahun Weave */}
         <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-10" />
 
         {/* Animated gradient orbs for depth */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-radial from-[#20c4c4]/30 to-transparent rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-radial from-[#0e9494]/30 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-radial from-[#0d7a7a]/30 to-transparent rounded-full blur-3xl" />
 
         <div className="container relative z-10 mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
@@ -326,13 +351,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Bus Companies - Enhanced */}
-      <section className="py-20 md:py-28 relative overflow-hidden bg-gradient-to-b from-teal-pale/20 via-background to-teal-pale/15">
-        {/* Subtle pattern background */}
-        <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-[0.05]" />
+      {/* Bus Companies - Enhanced with cooler blue-teal tones */}
+      <section className="py-20 md:py-28 relative overflow-hidden bg-gradient-to-br from-blue-100/80 via-cyan-100/70 to-teal-100/80 dark:from-blue-950/35 dark:via-cyan-950/30 dark:to-teal-950/35">
+        {/* Ethiopian pattern background - more visible */}
+        <div className="absolute inset-0 pattern-overlay coffee-beans opacity-15" />
 
-        {/* Subtle gradient orb */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-radial from-teal-pale/30 to-transparent rounded-full blur-3xl" />
+        {/* Multiple gradient orbs for depth */}
+        <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-radial from-blue-200/30 to-transparent rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-radial from-cyan-200/25 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '3s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-radial from-teal-200/20 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '1.5s' }} />
 
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-14">
@@ -364,15 +391,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Features - GLASSMORPHISM TRANSFORMATION */}
-      <section className="py-20 md:py-28 bg-gradient-to-br from-teal-light/60 via-teal-pale/40 to-teal-pale/20 relative overflow-hidden">
-        {/* Enhanced Ethiopian pattern background */}
-        <div className="absolute inset-0 bg-pattern-lalibela-glass opacity-25" />
+      {/* Features - Solid teal like hero section */}
+      <section className="py-20 md:py-28 bg-gradient-to-br from-[#0e9494] via-[#0d7a7a] to-[#0d4f5c] relative overflow-hidden">
+        {/* Enhanced Ethiopian pattern background - visible on solid color */}
+        <div className="absolute inset-0 bg-pattern-lalibela-glass opacity-20" />
 
         {/* Floating teal gradients for depth */}
-        <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-radial from-teal-medium/40 to-transparent rounded-full blur-3xl animate-float" />
-        <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-radial from-teal-light/35 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-radial from-teal-dark/30 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }} />
+        <div className="absolute top-20 right-20 w-96 h-96 bg-gradient-radial from-[#20c4c4]/30 to-transparent rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-20 left-20 w-80 h-80 bg-gradient-radial from-[#0e9494]/25 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 bg-gradient-radial from-[#0d4f5c]/20 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }} />
 
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-14">
@@ -382,8 +409,8 @@ export default function HomePage() {
               <div />
               <div />
             </div>
-            <h2 className="mb-4 font-display gradient-text-simien">Why Choose i-Ticket?</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            <h2 className="mb-4 font-display text-white">Why Choose i-Ticket?</h2>
+            <p className="text-white/90 max-w-2xl mx-auto text-lg">
               We&apos;ve built the most convenient way to book bus tickets in Ethiopia.
             </p>
           </div>
@@ -403,13 +430,11 @@ export default function HomePage() {
                   {/* Gradient accent line - enhanced with glow */}
                   <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r ${feature.accent} opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-lg shadow-primary/50`} />
 
-                  {/* Icon with enhanced glass background */}
-                  <div className="relative mb-6">
-                    <div className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${feature.accent} flex items-center justify-center shadow-xl group-hover:shadow-2xl group-hover:scale-110 transition-all duration-300 relative z-10`}>
+                  {/* Icon - clean without glow */}
+                  <div className="mb-6">
+                    <div className={`h-16 w-16 rounded-2xl bg-gradient-to-br ${feature.accent} flex items-center justify-center shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300`}>
                       <feature.icon className="h-8 w-8 text-white flex-shrink-0" />
                     </div>
-                    {/* Glow effect behind icon */}
-                    <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${feature.accent} blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-300`} />
                   </div>
 
                   <h3 className="mb-3 text-foreground font-display text-xl group-hover:text-primary transition-colors duration-300">{feature.title}</h3>
@@ -427,14 +452,15 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* How it Works - Enhanced */}
-      <section className="py-20 md:py-28 relative overflow-hidden bg-gradient-to-br from-teal-pale/25 via-teal-light/15 to-teal-pale/20">
-        {/* Very subtle pattern */}
-        <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-[0.08]" />
+      {/* How it Works - Enhanced with cooler blue-teal tones */}
+      <section className="py-20 md:py-28 relative overflow-hidden bg-gradient-to-br from-blue-100/80 via-cyan-100/70 to-teal-100/80 dark:from-blue-950/35 dark:via-cyan-950/30 dark:to-teal-950/35">
+        {/* Ethiopian Lalibela pattern - more visible */}
+        <div className="absolute inset-0 pattern-overlay lalibela-cross opacity-15" />
 
-        {/* Gradient orbs for visual interest */}
-        <div className="absolute top-10 right-10 w-80 h-80 bg-gradient-radial from-teal-medium/25 to-transparent rounded-full blur-3xl" />
-        <div className="absolute bottom-10 left-10 w-72 h-72 bg-gradient-radial from-teal-light/20 to-transparent rounded-full blur-3xl" />
+        {/* Gradient orbs for visual interest - cooler tones */}
+        <div className="absolute top-10 right-10 w-80 h-80 bg-gradient-radial from-blue-200/30 to-transparent rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-10 left-10 w-72 h-72 bg-gradient-radial from-cyan-200/25 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '2.5s' }} />
+        <div className="absolute top-1/2 right-1/4 w-64 h-64 bg-gradient-radial from-teal-200/20 to-transparent rounded-full blur-3xl animate-float" style={{ animationDelay: '4s' }} />
 
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-14">
@@ -475,7 +501,7 @@ export default function HomePage() {
                   <div className="hidden lg:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/30 to-transparent" />
                 )}
 
-                <div className="inline-flex h-20 w-20 items-center justify-center rounded-full text-white bg-gradient-to-br from-teal-medium to-teal-dark shadow-xl shadow-primary/30 mb-6 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-primary/40 transition-all duration-300 border-2 border-teal-light/20">
+                <div className="inline-flex h-20 w-20 items-center justify-center rounded-full text-white bg-gradient-to-br from-[#0e9494] to-[#0d4f5c] shadow-xl shadow-cyan-500/30 mb-6 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-cyan-500/40 transition-all duration-300 border-2 border-cyan-300/20">
                   <span className="text-3xl font-display font-bold">{item.step}</span>
                 </div>
                 <h3 className="mb-3 text-foreground font-display text-xl">{item.title}</h3>

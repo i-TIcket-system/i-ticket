@@ -106,7 +106,7 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
             onFocus={() => setIsOpen(true)}
             placeholder={placeholder || "Type or select a city"}
             disabled={disabled}
-            className={cn("pl-10 pr-8", className)}
+            className={cn("pl-10 pr-8 text-gray-900 dark:text-gray-100", className)}
             autoComplete="off"
           />
 
@@ -125,7 +125,7 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
         {isOpen && !disabled && (filteredSuggestions.length > 0 || inputValue) && (
           <div
             ref={dropdownRef}
-            className="absolute top-full left-0 right-0 mt-1 bg-popover border rounded-md shadow-lg z-50 max-h-64 overflow-y-auto"
+            className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md shadow-xl z-50 max-h-64 overflow-y-auto backdrop-blur-sm"
           >
             {/* City suggestions list */}
             {filteredSuggestions.length > 0 && (
@@ -138,15 +138,16 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-sm transition-colors",
                       "flex items-center gap-2",
-                      "text-foreground hover:bg-primary/10 hover:text-primary",
-                      city === inputValue && "bg-primary/20 text-primary font-medium"
+                      city === inputValue
+                        ? "bg-primary text-white font-medium"
+                        : "text-gray-900 dark:text-gray-100 hover:bg-primary/10 hover:text-primary"
                     )}
                   >
                     <MapPin className={cn(
                       "h-3 w-3 flex-shrink-0",
-                      city === inputValue ? "text-primary" : "text-muted-foreground"
+                      city === inputValue ? "text-white" : "text-gray-500 dark:text-gray-400"
                     )} />
-                    <span className="text-sm flex-1 text-inherit">
+                    <span className="text-sm flex-1">
                       {city || "[Empty]"}
                     </span>
                   </button>
