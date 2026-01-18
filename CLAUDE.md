@@ -22,7 +22,33 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ---
 
-## NEXT SESSION TODO LIST (7 items remaining)
+## NEXT SESSION TODO LIST
+
+### Homepage UX Improvements - Remaining (Optional)
+**Priority 2 (Medium Impact):**
+1. **Stats Section Placement** - Move stats bar above hero for better trust building
+   - Social proof should appear BEFORE asking users to search
+   - Option: Thin horizontal bar OR compact section
+   - Impact: Better conversion through early trust signals
+2. **Mobile Responsiveness Audit** - Test and optimize mobile experience
+   - Verify trust indicators wrap properly on small screens
+   - Test search form on mobile devices
+   - Ensure popular routes are touch-friendly
+3. **Section Spacing Optimization** - Add more breathing room
+   - Increase padding between major sections
+   - Adjust Stats → Bus Companies → Features flow
+   - Create more "premium" feel with whitespace
+
+**Priority 3 (Nice to Have):**
+4. **Micro-animations** - Add subtle engagement animations
+   - Smooth scroll to search form from popular routes
+   - Fade-in animations for sections on scroll
+   - Button ripple effects on click
+5. **Accessibility Improvements** - WCAG 2.1 compliance
+   - Add ARIA labels to search form
+   - Improve keyboard navigation
+   - Add focus states for all interactive elements
+6. **Performance Optimization** - Lazy load below-fold sections
 
 ### From Comprehensive Audit (7 items)
 1. **QA-1 (P0)**: Division by zero in sales conversion rate (`/api/admin/sales-persons/route.ts` line 80)
@@ -34,6 +60,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 7. **UX-1/2 (P1)**: Booking flow - seat selection & price change feedback
 
 ### Already Fixed ✅
+- **Homepage UX Priority 1** (Jan 18) - 5 major improvements completed, backup created
 - Company segregation: manifest + alert-response routes secured
 - **Vehicle change comprehensive fix** (Jan 16) - Syncs all properties (capacity, busType, seats)
 - **Commission + VAT business logic** (Jan 16) - CRITICAL FIX: Passengers now pay ticket+commission+VAT
