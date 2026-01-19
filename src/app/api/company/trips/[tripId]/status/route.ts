@@ -102,12 +102,12 @@ export async function PATCH(
       )
     }
 
-    // Prepare update data with proper typing
+    // Prepare update data with explicit TypeScript typing for boolean flags
     interface TripStatusUpdate {
       status: string
       actualDepartureTime?: Date
       actualArrivalTime?: Date
-      bookingHalted?: boolean
+      bookingHalted?: boolean // Explicit boolean type (not truthy/falsy)
     }
 
     const updateData: TripStatusUpdate = {
@@ -117,7 +117,7 @@ export async function PATCH(
     // Record actual departure time and auto-halt booking when status changes to DEPARTED
     if (validatedData.status === "DEPARTED") {
       updateData.actualDepartureTime = new Date()
-      updateData.bookingHalted = true
+      updateData.bookingHalted = true as boolean // Explicit boolean assignment
     }
 
     // Record actual arrival time when status changes to COMPLETED

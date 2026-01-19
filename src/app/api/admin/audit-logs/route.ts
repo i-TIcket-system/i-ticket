@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { requireSuperAdmin, handleAuthError } from "@/lib/auth-helpers"
+import { paginationSchema } from "@/lib/validations"
 
 /**
  * Get audit logs with filtering and pagination
@@ -15,9 +16,9 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate")
     const endDate = searchParams.get("endDate")
 
-    // Validate pagination param to prevent NaN issues
-    const parsedPage = parseInt(searchParams.get("page") || "1")
-    const page = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage
+    // M1 FIX: Use pagination schema to reject scientific notation and floats
+    const paginationParams = Object.fromEntries(searchParams.entries())
+    const { page } = paginationSchema.parse(paginationParams)
     const limit = 20
 
     const where: any = {}

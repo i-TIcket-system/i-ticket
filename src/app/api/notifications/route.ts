@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { z } from "zod"
 
 /**
  * GET /api/notifications
@@ -17,11 +18,33 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url)
-    // Validate parseInt results to prevent NaN issues
-    const parsedLimit = parseInt(searchParams.get("limit") || "20")
-    const parsedOffset = parseInt(searchParams.get("offset") || "0")
-    const limit = Math.min(isNaN(parsedLimit) ? 20 : parsedLimit, 50)
-    const offset = isNaN(parsedOffset) || parsedOffset < 0 ? 0 : parsedOffset
+
+    // M1 FIX: Pagination schema to reject scientific notation and floats
+    const limitOffsetSchema = z.object({
+      limit: z.string()
+        .optional()
+        .default("20")
+        .transform((val) => {
+          if (/[eE.]/.test(val)) return "20"
+          const num = parseInt(val, 10)
+          if (isNaN(num) || num < 1) return "20"
+          if (num > 50) return "50"
+          return String(num)
+        })
+        .transform((val) => parseInt(val, 10)),
+      offset: z.string()
+        .optional()
+        .default("0")
+        .transform((val) => {
+          if (/[eE.]/.test(val)) return "0"
+          const num = parseInt(val, 10)
+          return isNaN(num) || num < 0 ? "0" : String(num)
+        })
+        .transform((val) => parseInt(val, 10)),
+    })
+
+    const paginationParams = Object.fromEntries(searchParams.entries())
+    const { limit, offset } = limitOffsetSchema.parse(paginationParams)
     const unreadOnly = searchParams.get("unreadOnly") === "true"
 
     // Determine recipient type based on user role

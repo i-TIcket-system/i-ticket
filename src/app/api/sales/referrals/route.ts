@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { requireSalesPerson, handleAuthError } from "@/lib/auth-helpers"
+import { paginationSchema } from "@/lib/validations"
 
 // GET /api/sales/referrals - Get sales person's referred users
 export async function GET(request: NextRequest) {
@@ -10,11 +11,9 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
 
-    // Validate pagination params to prevent NaN issues
-    const parsedPage = parseInt(searchParams.get('page') || '1')
-    const parsedLimit = parseInt(searchParams.get('limit') || '20')
-    const page = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage
-    const limit = isNaN(parsedLimit) || parsedLimit < 1 ? 20 : Math.min(parsedLimit, 100)
+    // M1 FIX: Use pagination schema to reject scientific notation and floats
+    const paginationParams = Object.fromEntries(searchParams.entries())
+    const { page, limit } = paginationSchema.parse(paginationParams)
 
     const [referrals, total] = await Promise.all([
       prisma.salesReferral.findMany({

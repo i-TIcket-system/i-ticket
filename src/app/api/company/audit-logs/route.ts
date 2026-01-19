@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { paginationSchema } from "@/lib/validations"
 
 /**
  * Get audit logs for the company admin's company
@@ -27,9 +28,9 @@ export async function GET(request: NextRequest) {
     const startDate = searchParams.get("startDate")
     const endDate = searchParams.get("endDate")
 
-    // Validate pagination param to prevent NaN issues
-    const parsedPage = parseInt(searchParams.get("page") || "1")
-    const page = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage
+    // M1 FIX: Use pagination schema to reject scientific notation and floats
+    const paginationParams = Object.fromEntries(searchParams.entries())
+    const { page } = paginationSchema.parse(paginationParams)
     const limit = 20
 
     // Always filter by company

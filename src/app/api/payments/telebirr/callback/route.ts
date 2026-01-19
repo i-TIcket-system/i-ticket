@@ -5,6 +5,7 @@ import { generateShortCode, handleApiError } from "@/lib/utils";
 import { getSmsGateway } from "@/lib/sms/gateway";
 import QRCode from "qrcode";
 import { generateCallbackHash, isCallbackProcessed, recordProcessedCallback } from "@/lib/payments/callback-hash";
+import { safeAdminLog } from "@/lib/admin-log-helper";
 
 /**
  * POST /api/payments/telebirr/callback
@@ -51,21 +52,20 @@ export async function POST(request: NextRequest) {
       console.warn(`[TeleBirr Callback] REPLAY DETECTED: ${transactionId}`);
       console.warn(`[TeleBirr Callback] Original processing: ${existingRecord.processedAt}`);
 
-      // Log replay attempt for forensics
-      await prisma.adminLog.create({
-        data: {
-          userId: 'SYSTEM',
-          action: 'PAYMENT_CALLBACK_REPLAY_BLOCKED',
-          details: JSON.stringify({
-            transactionId,
-            callbackHash,
-            originalProcessedAt: existingRecord.processedAt,
-            attemptedAt: new Date().toISOString(),
-            clientIP: request.headers.get('x-forwarded-for') ||
-                     request.headers.get('x-real-ip') ||
-                     'unknown'
-          })
-        }
+      // L3 FIX: Use safeAdminLog for non-critical logging (replay forensics)
+      // If this fails, we don't want to block the callback response
+      await safeAdminLog({
+        userId: 'SYSTEM',
+        action: 'PAYMENT_CALLBACK_REPLAY_BLOCKED',
+        details: JSON.stringify({
+          transactionId,
+          callbackHash,
+          originalProcessedAt: existingRecord.processedAt,
+          attemptedAt: new Date().toISOString(),
+          clientIP: request.headers.get('x-forwarded-for') ||
+                   request.headers.get('x-real-ip') ||
+                   'unknown'
+        })
       });
 
       return NextResponse.json(
@@ -165,25 +165,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: "Already processed" });
     }
 
-    // CRITICAL: Record callback as processed BEFORE handling
-    // This ensures idempotency even if processing fails
-    await recordProcessedCallback(
-      transactionId,
-      payment.bookingId,
-      callbackHash,
-      body,
-      status,
-      parseFloat(amount),
-      signature
-    );
-
-    console.log(`[TeleBirr Callback] Recorded callback for idempotency: ${transactionId}`);
+    // CRITICAL FIX: Record callback AFTER successful processing (inside transaction)
+    // This ensures payment status and callback status stay in sync
+    // If transaction fails, callback is NOT marked as processed → TeleBirr retries safely
 
     // Process based on status
     if (status === 'SUCCESS') {
-      await handleSuccessfulPayment(payment, body);
+      await handleSuccessfulPayment(payment, body, callbackHash);
     } else {
-      await handleFailedPayment(payment, body);
+      await handleFailedPayment(payment, body, callbackHash);
     }
 
     return NextResponse.json({ success: true });
@@ -196,9 +186,14 @@ export async function POST(request: NextRequest) {
 
 /**
  * Handle successful payment
+ * CRITICAL: Now accepts callbackHash to record callback INSIDE transaction
  */
-async function handleSuccessfulPayment(payment: any, callback: TelebirrCallbackPayload) {
-  const { transactionId, amount } = callback;
+async function handleSuccessfulPayment(
+  payment: any,
+  callback: TelebirrCallbackPayload,
+  callbackHash: string
+) {
+  const { transactionId, amount, status, signature } = callback;
 
   console.log(`[TeleBirr Callback] Processing successful payment: ${transactionId}`);
 
@@ -335,7 +330,25 @@ async function handleSuccessfulPayment(payment: any, callback: TelebirrCallbackP
       }
     }
 
-    // 6. Send tickets via SMS
+    // 6. CRITICAL: Record callback as processed at END of transaction
+    // This ensures payment status and callback status are atomically updated together
+    // If transaction fails, callback NOT marked processed → TeleBirr retries safely
+    await tx.processedCallback.create({
+      data: {
+        transactionId,
+        bookingId: payment.bookingId,
+        callbackHash,
+        payload: JSON.stringify(callback),
+        status,
+        amount: parseFloat(amount),
+        signature: signature || '',
+        processedAt: new Date(),
+      }
+    });
+
+    console.log(`[TeleBirr Callback] Recorded callback for idempotency: ${transactionId}`);
+
+    // 7. Send tickets via SMS (outside transaction for better performance)
     await sendTicketsSms(payment.booking, tickets);
 
     console.log(`[TeleBirr Callback] Payment processed successfully: ${tickets.length} tickets generated`);
@@ -344,9 +357,14 @@ async function handleSuccessfulPayment(payment: any, callback: TelebirrCallbackP
 
 /**
  * Handle failed payment
+ * CRITICAL: Now accepts callbackHash to record callback INSIDE transaction
  */
-async function handleFailedPayment(payment: any, callback: TelebirrCallbackPayload) {
-  const { transactionId } = callback;
+async function handleFailedPayment(
+  payment: any,
+  callback: TelebirrCallbackPayload,
+  callbackHash: string
+) {
+  const { transactionId, amount, status, signature } = callback;
 
   console.log(`[TeleBirr Callback] Processing failed payment: ${transactionId}`);
 
@@ -388,7 +406,23 @@ async function handleFailedPayment(payment: any, callback: TelebirrCallbackPaylo
       }
     });
 
-    // Notify user via SMS
+    // CRITICAL: Record callback as processed at END of transaction
+    await tx.processedCallback.create({
+      data: {
+        transactionId,
+        bookingId: payment.bookingId,
+        callbackHash,
+        payload: JSON.stringify(callback),
+        status,
+        amount: parseFloat(amount),
+        signature: signature || '',
+        processedAt: new Date(),
+      }
+    });
+
+    console.log(`[TeleBirr Callback] Recorded callback for idempotency: ${transactionId}`);
+
+    // Notify user via SMS (outside transaction)
     const gateway = getSmsGateway();
     await gateway.send(
       payment.booking.user.phone,

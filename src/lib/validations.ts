@@ -59,13 +59,42 @@ export const createTripSchema = z.object({
 
 export const updateTripSchema = createTripSchema.partial();
 
+// Pagination validation - rejects scientific notation ("1e10") and floats ("10.5")
+export const paginationSchema = z.object({
+  page: z.string()
+    .optional()
+    .default("1")
+    .transform((val) => {
+      // Reject scientific notation and floats
+      if (/[eE.]/.test(val)) {
+        return "1"; // Default to page 1 for invalid format
+      }
+      const num = parseInt(val, 10);
+      return isNaN(num) || num < 1 ? "1" : String(num);
+    })
+    .transform((val) => parseInt(val, 10)),
+  limit: z.string()
+    .optional()
+    .default("20")
+    .transform((val) => {
+      // Reject scientific notation and floats
+      if (/[eE.]/.test(val)) {
+        return "20"; // Default to limit 20 for invalid format
+      }
+      const num = parseInt(val, 10);
+      // Clamp between 1 and 100
+      if (isNaN(num) || num < 1) return "1";
+      if (num > 100) return "100";
+      return String(num);
+    })
+    .transform((val) => parseInt(val, 10)),
+});
+
 export const searchTripsSchema = z.object({
   origin: z.string().optional(),
   destination: z.string().optional(),
   date: z.string().optional(),
-  page: z.coerce.number().default(1),
-  limit: z.coerce.number().default(20),
-});
+}).merge(paginationSchema);
 
 // Booking validations
 export const createBookingSchema = z.object({

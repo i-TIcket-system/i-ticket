@@ -3,7 +3,22 @@ import prisma from "@/lib/db"
 import { requireSuperAdmin, handleAuthError } from "@/lib/auth-helpers"
 
 /**
+ * Helper to safely extract values from Promise.allSettled results
+ * Returns default value if promise was rejected
+ */
+function getValue<T>(result: PromiseSettledResult<T>, defaultValue: T): T {
+  if (result.status === 'fulfilled') {
+    return result.value
+  }
+  // Log failure for monitoring
+  console.error('[Stats] Query failed:', result.reason)
+  return defaultValue
+}
+
+/**
  * Get system-wide statistics for super admin dashboard
+ * L4 FIX: Uses Promise.allSettled for graceful degradation
+ * Dashboard loads with partial data if some queries fail
  */
 export async function GET(request: NextRequest) {
   try {
@@ -17,46 +32,8 @@ export async function GET(request: NextRequest) {
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
     const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
 
-    const [
-      // Total counts
-      totalUsers,
-      customerCount,
-      companyAdminCount,
-      guestUserCount,
-      totalCompanies,
-      activeCompanies,
-      totalTrips,
-      activeTrips,
-      totalBookings,
-      paidBookings,
-      pendingBookings,
-      cancelledBookings,
-
-      // Revenue aggregations
-      totalRevenue,
-      todayRevenue,
-      yesterdayRevenue,
-      weekRevenue,
-      monthRevenue,
-
-      // Channel breakdown
-      webBookings,
-      smsBookings,
-
-      // Payment methods
-      telebirrPayments,
-      demoPayments,
-
-      // Today's activity
-      todayBookings,
-      todayUsers,
-
-      // Recent bookings
-      recentBookings,
-
-      // NEW: Business Insights - Booking analytics by hour for peak hours
-      bookingsByHour,
-    ] = await Promise.all([
+    // L4 FIX: Use Promise.allSettled instead of Promise.all for resilience
+    const results = await Promise.allSettled([
       // User counts
       prisma.user.count(),
       prisma.user.count({ where: { role: "CUSTOMER" } }),
@@ -148,6 +125,33 @@ export async function GET(request: NextRequest) {
         select: { createdAt: true }
       }),
     ])
+
+    // L4 FIX: Extract values safely from allSettled results
+    const totalUsers = getValue(results[0], 0)
+    const customerCount = getValue(results[1], 0)
+    const companyAdminCount = getValue(results[2], 0)
+    const guestUserCount = getValue(results[3], 0)
+    const totalCompanies = getValue(results[4], 0)
+    const activeCompanies = getValue(results[5], 0)
+    const totalTrips = getValue(results[6], 0)
+    const activeTrips = getValue(results[7], 0)
+    const totalBookings = getValue(results[8], 0)
+    const paidBookings = getValue(results[9], 0)
+    const pendingBookings = getValue(results[10], 0)
+    const cancelledBookings = getValue(results[11], 0)
+    const totalRevenue = getValue(results[12], { _sum: { totalAmount: 0, commission: 0 } })
+    const todayRevenue = getValue(results[13], { _sum: { totalAmount: 0, commission: 0 } })
+    const yesterdayRevenue = getValue(results[14], { _sum: { totalAmount: 0, commission: 0 } })
+    const weekRevenue = getValue(results[15], { _sum: { totalAmount: 0, commission: 0 } })
+    const monthRevenue = getValue(results[16], { _sum: { totalAmount: 0, commission: 0 } })
+    const webBookings = getValue(results[17], 0)
+    const smsBookings = getValue(results[18], 0)
+    const telebirrPayments = getValue(results[19], 0)
+    const demoPayments = getValue(results[20], 0)
+    const todayBookings = getValue(results[21], 0)
+    const todayUsers = getValue(results[22], 0)
+    const recentBookings = getValue(results[23], [])
+    const bookingsByHour = getValue(results[24], [])
 
     // Calculate changes
     const todayRevenueValue = todayRevenue._sum.totalAmount || 0

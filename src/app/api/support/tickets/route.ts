@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth"
 import { z } from "zod"
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
 import { createSupportTicketTask } from "@/lib/clickup"
+import { paginationSchema } from "@/lib/validations"
 
 // Generate unique ticket number
 function generateTicketNumber(): string {
@@ -136,11 +137,10 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status")
     const priority = searchParams.get("priority")
 
-    // Validate pagination params to prevent NaN issues
-    const parsedPage = parseInt(searchParams.get("page") || "1")
-    const parsedLimit = parseInt(searchParams.get("limit") || "20")
-    const page = isNaN(parsedPage) || parsedPage < 1 ? 1 : parsedPage
-    const limit = isNaN(parsedLimit) || parsedLimit < 1 ? 20 : Math.min(parsedLimit, 100)
+    // M1 FIX: Use pagination schema to reject scientific notation and floats
+    const paginationParams = Object.fromEntries(searchParams.entries())
+    const validatedPagination = paginationSchema.parse(paginationParams)
+    const { page, limit } = validatedPagination
 
     const where: any = {}
     if (status) where.status = status

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { z } from "zod"
 
 /**
  * GET /api/notifications/grouped
@@ -26,8 +27,22 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const filter = searchParams.get("filter") || "all"
-    const parsedLimit = parseInt(searchParams.get("limit") || "50")
-    const limit = isNaN(parsedLimit) || parsedLimit < 1 ? 50 : Math.min(parsedLimit, 100)
+
+    // M1 FIX: Pagination schema to reject scientific notation and floats
+    const limitSchema = z.object({
+      limit: z.string()
+        .optional()
+        .default("50")
+        .transform((val) => {
+          if (/[eE.]/.test(val)) return "50"
+          const num = parseInt(val, 10)
+          if (isNaN(num) || num < 1) return "50"
+          if (num > 100) return "100"
+          return String(num)
+        })
+        .transform((val) => parseInt(val, 10)),
+    })
+    const { limit } = limitSchema.parse(Object.fromEntries(searchParams.entries()))
 
     // Determine recipient type based on user role
     const recipientType = session.user.role === "SALES_PERSON" ? "SALES_PERSON" : "USER"

@@ -24,14 +24,32 @@ const createWorkOrderSchema = z.object({
   scheduledDate: z.string().datetime().optional(),
 })
 
-// Validation schema for query parameters
+// M1 FIX: Validation schema with scientific notation rejection
 const workOrderQuerySchema = z.object({
   status: z.enum(['OPEN', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELLED']).optional(),
   priority: z.coerce.number().int().min(1).max(4).optional(),
   vehicleId: z.string().optional(),
   workType: z.enum(['PREVENTIVE', 'CORRECTIVE', 'INSPECTION', 'EMERGENCY']).optional(),
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
+  page: z.string()
+    .optional()
+    .default("1")
+    .transform((val) => {
+      if (/[eE.]/.test(val)) return "1"
+      const num = parseInt(val, 10)
+      return isNaN(num) || num < 1 ? "1" : String(num)
+    })
+    .transform((val) => parseInt(val, 10)),
+  limit: z.string()
+    .optional()
+    .default("20")
+    .transform((val) => {
+      if (/[eE.]/.test(val)) return "20"
+      const num = parseInt(val, 10)
+      if (isNaN(num) || num < 1) return "20"
+      if (num > 100) return "100"
+      return String(num)
+    })
+    .transform((val) => parseInt(val, 10)),
 })
 
 /**

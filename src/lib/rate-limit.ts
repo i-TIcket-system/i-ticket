@@ -12,16 +12,47 @@ class RateLimiter {
   private store = new Map<string, RateLimitRecord>()
   private cleanupInterval: NodeJS.Timeout | null = null
 
+  // Memory safety limits
+  private readonly MAX_STORE_SIZE = 100000 // 100k entries (~10MB)
+  private readonly EMERGENCY_CLEANUP_THRESHOLD = 80000 // 80% capacity
+
   constructor() {
-    // Clean up expired records every minute
+    // Clean up expired records every minute with error handling
     this.cleanupInterval = setInterval(() => {
-      const now = Date.now()
-      for (const [key, record] of Array.from(this.store.entries())) {
-        if (now > record.resetTime) {
-          this.store.delete(key)
+      try {
+        const now = Date.now()
+        for (const [key, record] of Array.from(this.store.entries())) {
+          if (now > record.resetTime) {
+            this.store.delete(key)
+          }
         }
+      } catch (error) {
+        console.error('[RateLimiter] Cleanup failed:', error)
       }
     }, 60000)
+  }
+
+  /**
+   * Emergency cleanup - removes oldest 20% of entries
+   * Triggered when store reaches 80% capacity
+   */
+  private emergencyCleanup(): void {
+    try {
+      const entries = Array.from(this.store.entries())
+
+      // Sort by resetTime (oldest first)
+      entries.sort((a, b) => a[1].resetTime - b[1].resetTime)
+
+      // Remove oldest 20%
+      const removeCount = Math.floor(entries.length * 0.2)
+      for (let i = 0; i < removeCount; i++) {
+        this.store.delete(entries[i][0])
+      }
+
+      console.warn(`[RateLimiter] Emergency cleanup: Removed ${removeCount} entries. Current size: ${this.store.size}`)
+    } catch (error) {
+      console.error('[RateLimiter] Emergency cleanup failed:', error)
+    }
   }
 
   /**
@@ -32,11 +63,23 @@ class RateLimiter {
    * @returns true if allowed, false if rate limited
    */
   check(identifier: string, maxRequests: number, windowMs: number): boolean {
+    // Memory safety check
+    if (this.store.size > this.EMERGENCY_CLEANUP_THRESHOLD) {
+      console.warn(`[RateLimiter] Store size (${this.store.size}) exceeded threshold. Triggering emergency cleanup.`)
+      this.emergencyCleanup()
+    }
+
     const now = Date.now()
     const record = this.store.get(identifier)
 
     if (!record || now > record.resetTime) {
       // First request or window expired, create new record
+      // Prevent unbounded growth
+      if (this.store.size >= this.MAX_STORE_SIZE) {
+        console.error(`[RateLimiter] MAX_STORE_SIZE (${this.MAX_STORE_SIZE}) reached. Rejecting new entries.`)
+        return false // Reject when at max capacity
+      }
+
       this.store.set(identifier, {
         count: 1,
         resetTime: now + windowMs
