@@ -67,6 +67,29 @@ All 9 items from previous session completed:
 
 ## Recent Development (Jan 2026)
 
+### January 20, 2026 (Morning) - Super Admin All Trips View
+- **New Feature: All Trips Management** - Super Admin can now oversee all trips across all companies
+  - **Navigation**: Added "All Trips" menu item with Bus icon in admin sidebar
+  - **API Endpoint**: `/api/admin/trips` with comprehensive filtering and sorting
+    - Filters: Company, status (SCHEDULED/BOARDING/DEPARTED/COMPLETED/CANCELLED), date range, search query
+    - Sorting: Company name, departure time, price, available seats (ascending/descending)
+    - Pagination: 50 trips per page with page navigation
+  - **Data Displayed**:
+    - Company name, route (origin → destination), departure date/time
+    - Price, seat availability (booked/total), availability status
+    - Vehicle details (plate, side number, bus type)
+    - Driver info (name, phone), trip status, booking count
+  - **Availability Badges**:
+    - Halted (red) - booking stopped
+    - Full (gray) - no seats available
+    - Low (red) - 90%+ occupancy
+    - Medium (blue) - 70-89% occupancy
+    - Available (gray) - <70% occupancy
+  - **UX Features**: Real-time refresh, filter toggle, clear filters, responsive table, date pickers
+  - **Files**: `src/app/admin/layout.tsx`, `src/app/api/admin/trips/route.ts`, `src/app/admin/trips/page.tsx`
+- **Impact**: Super Admin can monitor all trips platform-wide, identify issues, track company performance
+- **Commit**: 1ede845
+
 ### January 20, 2026 (Early Morning) - CRITICAL Bug Fixes: Race Conditions
 - **Two CRITICAL race condition bugs fixed** - Trip log conflicts and duplicate bookings
   - **Bug 1: Trip Log Race Condition** - Admin and driver could simultaneously record odometer/fuel
