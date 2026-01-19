@@ -77,7 +77,6 @@ export default function HomePage() {
   const [citiesLoading, setCitiesLoading] = useState(true)
   const [trackingCode, setTrackingCode] = useState("")
   const [mounted, setMounted] = useState(false)
-  const [belowFoldVisible, setBelowFoldVisible] = useState(false)
   const [popularRoutes, setPopularRoutes] = useState<{ from: string; to: string }[]>([
     { from: "Addis Ababa", to: "Bahir Dar" },
     { from: "Addis Ababa", to: "Hawassa" },
@@ -86,13 +85,6 @@ export default function HomePage() {
 
   useEffect(() => {
     setMounted(true)
-
-    // Defer below-fold content rendering for better initial load performance
-    const timer = setTimeout(() => {
-      setBelowFoldVisible(true)
-    }, 100)
-
-    return () => clearTimeout(timer)
   }, [])
 
   // Fetch popular routes based on customer searches and trip creations
@@ -172,42 +164,8 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col overflow-hidden">
-      {/* Skip to main content - Accessibility */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-6 focus:py-3 focus:bg-primary focus:text-white focus:rounded-lg focus:shadow-lg focus:outline-none focus:ring-4 focus:ring-primary/50"
-      >
-        Skip to main content
-      </a>
-
-      {/* Stats Bar - Compact horizontal trust indicators (moved above hero for better conversion) */}
-      <section aria-label="Platform statistics" className="relative py-3 md:py-6 bg-gradient-to-r from-[#0e9494] via-[#0d7a7a] to-[#0d4f5c] border-b border-white/10">
-        <div className="container mx-auto px-4">
-          {/* Mobile: 2x2 grid, Tablet+: horizontal row */}
-          <div className="grid grid-cols-2 md:flex md:flex-wrap md:items-center md:justify-center gap-4 md:gap-8 lg:gap-12">
-            {stats.map((stat, i) => (
-              <div
-                key={stat.label}
-                className={`flex items-center gap-2 md:gap-3 ${mounted ? 'animate-fade-up' : 'opacity-0'}`}
-                style={{ animationDelay: `${i * 50}ms` }}
-              >
-                {/* Icon - smaller on mobile */}
-                <div className="flex-shrink-0 h-8 w-8 md:h-10 md:w-10 rounded-lg bg-white/15 backdrop-blur-sm border border-white/25 flex items-center justify-center">
-                  <stat.icon className="h-4 w-4 md:h-5 md:w-5 text-white" />
-                </div>
-                {/* Value and Label - responsive sizing */}
-                <div className="text-left min-w-0">
-                  <div className="text-xl md:text-2xl lg:text-3xl font-display font-bold text-white leading-none">{stat.value}</div>
-                  <div className="text-[10px] md:text-xs text-white/80 font-medium mt-0.5 truncate">{stat.label}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Hero Section - GLASSMORPHISM TRANSFORMATION */}
-      <section id="main-content" className="relative min-h-[85vh] flex items-center gradient-hero-simien text-white overflow-hidden">
+      <section className="relative min-h-[85vh] flex items-center gradient-hero-simien text-white overflow-hidden">
         {/* Background elements - Enhanced with animated patterns */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Base: Tilahun Weave pattern at 20% opacity */}
@@ -261,21 +219,20 @@ export default function HomePage() {
 
               {/* Popular Routes - Dynamic based on customer searches */}
               <div className="pt-4">
-                <p className="text-sm text-white/80 font-medium mb-4" id="popular-routes-label">Popular Routes:</p>
-                <nav aria-labelledby="popular-routes-label" className="flex flex-wrap gap-3">
+                <p className="text-sm text-white/80 font-medium mb-4">Popular Routes:</p>
+                <div className="flex flex-wrap gap-3">
                   {popularRoutes.map((route) => (
                     <Link
                       key={`${route.from}-${route.to}`}
                       href={`/search?from=${route.from}&to=${route.to}`}
-                      className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-full glass-moderate border border-white/30 hover:border-[#20c4c4]/50 focus:border-[#20c4c4] focus:ring-4 focus:ring-[#20c4c4]/50 focus:outline-none transition-all duration-300 hover:shadow-lg hover:shadow-[#20c4c4]/20 hover:scale-105 focus:scale-105"
-                      aria-label={`Search trips from ${route.from} to ${route.to}`}
+                      className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-full glass-moderate border border-white/30 hover:border-[#20c4c4]/50 transition-all duration-300 hover:shadow-lg hover:shadow-[#20c4c4]/20 hover:scale-105"
                     >
                       <span className="text-white text-sm font-medium whitespace-nowrap">{shortenCityName(route.from)}</span>
-                      <ArrowRight className="h-4 w-4 text-[#20c4c4] flex-shrink-0" aria-hidden="true" />
+                      <ArrowRight className="h-4 w-4 text-[#20c4c4] flex-shrink-0" />
                       <span className="text-white text-sm font-medium whitespace-nowrap">{route.to}</span>
                     </Link>
                   ))}
-                </nav>
+                </div>
               </div>
             </div>
 
@@ -294,10 +251,10 @@ export default function HomePage() {
                     <p className="text-sm text-muted-foreground">Search from 100+ daily departures</p>
                   </div>
 
-                  <form onSubmit={handleSearch} className="space-y-5" role="search" aria-label="Trip search form">
+                  <form onSubmit={handleSearch} className="space-y-5">
                     <div className="space-y-2 group/field">
-                      <label htmlFor="origin-city" className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" aria-hidden="true" />
+                      <label className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" />
                         From
                       </label>
                       <CityCombobox
@@ -306,14 +263,14 @@ export default function HomePage() {
                         suggestions={cities}
                         placeholder={citiesLoading ? "Loading cities..." : "Where are you departing from?"}
                         disabled={citiesLoading}
-                        className="h-12 transition-all duration-300 focus-within:shadow-md focus-within:shadow-primary/20 focus-within:ring-2 focus-within:ring-primary/50 placeholder:text-gray-600 dark:placeholder:text-gray-400"
-                        icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none z-10 flex-shrink-0" aria-hidden="true" />}
+                        className="h-12 transition-all duration-300 focus-within:shadow-md focus-within:shadow-primary/20 placeholder:text-gray-600 dark:placeholder:text-gray-400"
+                        icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-primary pointer-events-none z-10 flex-shrink-0" />}
                       />
                     </div>
 
                     <div className="space-y-2 group/field">
-                      <label htmlFor="destination-city" className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
-                        <MapPin className="h-3.5 w-3.5 text-secondary flex-shrink-0" aria-hidden="true" />
+                      <label className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-secondary flex-shrink-0" />
                         To
                       </label>
                       <CityCombobox
@@ -323,37 +280,34 @@ export default function HomePage() {
                         excludeCity={origin}
                         placeholder={citiesLoading ? "Loading cities..." : "Where are you going?"}
                         disabled={citiesLoading}
-                        className="h-12 transition-all duration-300 focus-within:shadow-md focus-within:shadow-secondary/20 focus-within:ring-2 focus-within:ring-secondary/50 placeholder:text-gray-600 dark:placeholder:text-gray-400"
-                        icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary pointer-events-none z-10 flex-shrink-0" aria-hidden="true" />}
+                        className="h-12 transition-all duration-300 focus-within:shadow-md focus-within:shadow-secondary/20 placeholder:text-gray-600 dark:placeholder:text-gray-400"
+                        icon={<MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-secondary pointer-events-none z-10 flex-shrink-0" />}
                       />
                     </div>
 
                     <div className="space-y-2 group/field">
-                      <label htmlFor="travel-date" className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" aria-hidden="true" />
+                      <label className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
+                        <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
                         Date
                       </label>
                       <div className="relative">
-                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none flex-shrink-0" aria-hidden="true" />
+                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none flex-shrink-0" />
                         <Input
-                          id="travel-date"
                           type="date"
                           value={date}
                           onChange={(e) => setDate(e.target.value)}
                           min={today}
-                          className="pl-11 h-12 transition-all duration-300 focus:shadow-md focus:shadow-primary/10 focus:ring-2 focus:ring-primary/50 text-gray-900 dark:text-gray-100"
-                          aria-label="Select travel date"
+                          className="pl-11 h-12 transition-all duration-300 focus:shadow-md focus:shadow-primary/10 text-gray-900 dark:text-gray-100"
                         />
                       </div>
                     </div>
 
                     <Button
                       type="submit"
-                      className="ripple-effect w-full h-16 text-lg bg-gradient-to-r from-[#0e9494] to-[#0d4f5c] hover:from-[#20c4c4] hover:to-[#0e9494] text-white border-0 shadow-xl hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 mt-6 font-bold hover:scale-[1.02] active:scale-[0.98] focus:ring-4 focus:ring-primary/50 focus:outline-none relative overflow-hidden group/btn"
+                      className="w-full h-16 text-lg bg-gradient-to-r from-[#0e9494] to-[#0d4f5c] hover:from-[#20c4c4] hover:to-[#0e9494] text-white border-0 shadow-xl hover:shadow-2xl hover:shadow-primary/40 transition-all duration-300 mt-6 font-bold hover:scale-[1.02]"
                       size="lg"
-                      aria-label="Search for available bus trips"
                     >
-                      <Search className="h-6 w-6 mr-2 flex-shrink-0" aria-hidden="true" />
+                      <Search className="h-6 w-6 mr-2 flex-shrink-0" />
                       Search Available Trips
                     </Button>
                   </form>
@@ -365,11 +319,40 @@ export default function HomePage() {
 
       </section>
 
-      {/* Below-fold sections - Lazy loaded for better performance */}
-      {belowFoldVisible && (
-        <>
-          {/* Bus Companies - Enhanced with cooler blue-teal tones */}
-          <section className="py-24 md:py-32 lg:py-36 relative overflow-hidden bg-gradient-to-br from-blue-100/80 via-cyan-100/70 to-teal-100/80 dark:from-blue-950/35 dark:via-cyan-950/30 dark:to-teal-950/35">
+      {/* Stats Section - Solid medium teal (halfway between dark hero and light sections) */}
+      <section className="py-20 relative overflow-hidden bg-[#0e9494]">
+        {/* Pattern overlay - Tilahun Weave */}
+        <div className="absolute inset-0 pattern-overlay tilahun-weave opacity-10" />
+
+        {/* Animated gradient orbs for depth */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-radial from-[#20c4c4]/30 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-radial from-[#0d7a7a]/30 to-transparent rounded-full blur-3xl" />
+
+        <div className="container relative z-10 mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
+            {stats.map((stat, i) => (
+              <div
+                key={stat.label}
+                className={`text-center group ${mounted ? 'animate-fade-up' : 'opacity-0'}`}
+                style={{ animationDelay: `${i * 100}ms` }}
+              >
+                {/* Very transparent glass card */}
+                <div className="relative rounded-2xl p-8 bg-white/10 backdrop-blur-md border border-white/20 group-hover:bg-white/15 group-hover:border-white/30 transition-all duration-500 group-hover:-translate-y-2 shadow-lg">
+                  {/* Icon with subtle glass background */}
+                  <div className="inline-flex items-center justify-center h-16 w-16 rounded-xl bg-white/15 backdrop-blur-sm border border-white/25 mb-5 group-hover:scale-110 transition-transform duration-300">
+                    <stat.icon className="h-8 w-8 text-white" />
+                  </div>
+                  <div className="text-5xl md:text-6xl font-display font-bold mb-3 text-white">{stat.value}</div>
+                  <div className="text-sm text-white/90 uppercase tracking-wider font-medium">{stat.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Bus Companies - Enhanced with cooler blue-teal tones */}
+      <section className="py-20 md:py-28 relative overflow-hidden bg-gradient-to-br from-blue-100/80 via-cyan-100/70 to-teal-100/80 dark:from-blue-950/35 dark:via-cyan-950/30 dark:to-teal-950/35">
         {/* Ethiopian pattern background - more visible */}
         <div className="absolute inset-0 pattern-overlay coffee-beans opacity-15" />
 
@@ -409,7 +392,7 @@ export default function HomePage() {
       </section>
 
       {/* Features - Solid teal like hero section */}
-      <section className="py-24 md:py-32 lg:py-36 bg-gradient-to-br from-[#0e9494] via-[#0d7a7a] to-[#0d4f5c] relative overflow-hidden">
+      <section className="py-20 md:py-28 bg-gradient-to-br from-[#0e9494] via-[#0d7a7a] to-[#0d4f5c] relative overflow-hidden">
         {/* Enhanced Ethiopian pattern background - visible on solid color */}
         <div className="absolute inset-0 bg-pattern-lalibela-glass opacity-20" />
 
@@ -470,7 +453,7 @@ export default function HomePage() {
       </section>
 
       {/* How it Works - Enhanced with cooler blue-teal tones */}
-      <section className="py-24 md:py-32 lg:py-36 relative overflow-hidden bg-gradient-to-br from-blue-100/80 via-cyan-100/70 to-teal-100/80 dark:from-blue-950/35 dark:via-cyan-950/30 dark:to-teal-950/35">
+      <section className="py-20 md:py-28 relative overflow-hidden bg-gradient-to-br from-blue-100/80 via-cyan-100/70 to-teal-100/80 dark:from-blue-950/35 dark:via-cyan-950/30 dark:to-teal-950/35">
         {/* Ethiopian Lalibela pattern - more visible */}
         <div className="absolute inset-0 pattern-overlay lalibela-cross opacity-15" />
 
@@ -564,8 +547,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-        </>
-      )}
     </div>
   )
 }

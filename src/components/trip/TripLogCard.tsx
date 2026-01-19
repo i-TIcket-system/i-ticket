@@ -155,16 +155,24 @@ export function TripLogCard({
 
     setIsSubmitting(true)
     try {
+      // QA-10 FIX: Validate odometer reading before parseInt
+      const odometerValue = parseInt(form.odometer, 10)
+      if (isNaN(odometerValue) || odometerValue < 0) {
+        toast.error("Please enter a valid odometer reading")
+        setIsSubmitting(false)
+        return
+      }
+
       const body =
         dialogMode === "start"
           ? {
-              startOdometer: parseInt(form.odometer),
+              startOdometer: odometerValue,
               startFuel: form.fuel ? parseFloat(form.fuel) : undefined,
               startFuelUnit: form.fuel ? form.fuelUnit : undefined,
               startNotes: form.notes || undefined,
             }
           : {
-              endOdometer: parseInt(form.odometer),
+              endOdometer: odometerValue,
               endFuel: form.fuel ? parseFloat(form.fuel) : undefined,
               endNotes: form.notes || undefined,
             }

@@ -90,7 +90,11 @@ function parseDate(dateStr: string): Date {
   // Try to parse as day number (e.g., "25" = 25th of current month)
   const dayMatch = /^(\d{1,2})$/.exec(dateStr);
   if (dayMatch) {
-    const day = parseInt(dayMatch[1]);
+    const day = parseInt(dayMatch[1], 10);
+    // QA-13 FIX: Validate parseInt result to prevent NaN issues
+    if (isNaN(day) || day < 1 || day > 31) {
+      return today; // Return default if invalid day
+    }
     const result = new Date(today.getFullYear(), today.getMonth(), day);
     if (result < today) {
       result.setMonth(result.getMonth() + 1);
@@ -106,15 +110,18 @@ function parseDate(dateStr: string): Date {
       JUL: 6, AUG: 7, SEP: 8, OCT: 9, NOV: 10, DEC: 11
     };
     const monthStr = monthDayMatch[1].toUpperCase();
-    const day = parseInt(monthDayMatch[2]);
+    const day = parseInt(monthDayMatch[2], 10);
 
-    if (months[monthStr] !== undefined) {
-      const result = new Date(today.getFullYear(), months[monthStr], day);
-      if (result < today) {
-        result.setFullYear(result.getFullYear() + 1);
-      }
-      return result;
+    // QA-13 FIX: Validate parseInt result and month
+    if (isNaN(day) || day < 1 || day > 31 || months[monthStr] === undefined) {
+      return today; // Return default if invalid
     }
+
+    const result = new Date(today.getFullYear(), months[monthStr], day);
+    if (result < today) {
+      result.setFullYear(result.getFullYear() + 1);
+    }
+    return result;
   }
 
   // Default to today if can't parse
