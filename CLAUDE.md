@@ -54,7 +54,20 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 1. **QA-10 (P2)**: Add parseInt validation across APIs (12+ files)
 
 ### Already Fixed ✅
-- **Comprehensive Audit P0+P1 Fixes** (Jan 19) - All 7 critical/high priority issues verified fixed:
+- **Bug Audit Fixes (M1-M3, L1-L4)** (Jan 19 Evening) - All 7 defensive programming issues fixed:
+  - M1: Integer parsing validation (9 API files) - Rejects scientific notation
+  - M2: Rate limiter memory safety - 100k entry limit with emergency cleanup
+  - M3 (CRITICAL): Payment callback race condition - Transaction atomicity ensured
+  - L1: Rate limiter cleanup error handler
+  - L2: Boolean validation in trip status
+  - L3: Admin log safe helper - Prevents business logic failures
+  - L4: Stats API graceful degradation - Partial data loading
+- **Payment UX Improvements** (Jan 19 Evening) - 4 major enhancements:
+  - Payment expiration status: Red "PAYMENT EXPIRED" after 15 mins, separate expired tab
+  - Seat numbers clarity: Shows "Seat 2" instead of just "2"
+  - Brand colors corrected: TeleBirr green, CBE Birr purple/magenta
+  - Booking heading visibility: White text with drop shadow (was invisible teal)
+- **Comprehensive Audit P0+P1 Fixes** (Jan 19 Morning) - All 7 critical/high priority issues verified fixed:
   - QA-1 (P0): Division by zero in sales conversion - checks `uniqueVisitors > 0`
   - QA-4 (P1): Null reference in trip status - guard clause ensures session exists
   - SEC-7 (P1): Support tickets company filtering - restricted to SUPER_ADMIN only
@@ -97,6 +110,39 @@ All 9 items from previous session completed:
 ---
 
 ## Recent Development (Jan 2026)
+
+### January 19, 2026 (Evening) - Bug Audit Fixes & Payment UX Improvements
+- **Bug Audit Implementation (7 Issues)** - Defensive programming improvements from comprehensive QA audit
+  - M1: Integer parsing validation for pagination (9 API files) - Rejects scientific notation
+  - M2: Rate limiter memory safety - MAX_STORE_SIZE (100k), emergency cleanup at 80%
+  - M3 (CRITICAL): Payment callback race condition - Moved callback recording INSIDE transaction
+  - L1: Rate limiter cleanup error handler
+  - L2: Boolean validation in trip status API
+  - L3: Admin log safe helper - Created `src/lib/admin-log-helper.ts` to prevent business logic failures
+  - L4: Stats API graceful degradation - Promise.allSettled for partial data loading
+  - Files: `src/lib/admin-log-helper.ts`, `src/lib/validations.ts`, `src/lib/rate-limit.ts`, 9+ API files
+- **Payment Expiration Status** - 15-minute window with visual indicators
+  - Added `isPaymentExpired()` helper function in tickets page
+  - Red "PAYMENT EXPIRED" badge and accent line for expired bookings
+  - Separate "Expired" tab with "Book Again" button
+  - Pending bookings show orange badge with "Complete Payment" button
+  - File: `src/app/tickets/page.tsx`
+- **Payment Page UX Improvements** - Better clarity and brand authenticity
+  - Seat numbers now show "Seat 2" instead of just "2" for clarity
+  - Updated brand colors: TeleBirr green (`#8dc63f` verified), CBE Birr purple/magenta
+  - Added half-intensity teal background matching homepage style
+  - CBE Birr hybrid payment: QR code for desktop, copy buttons for mobile
+  - Mobile detection for device-appropriate payment flow
+  - File: `src/app/payment/[bookingId]/page.tsx`
+- **Booking Page Heading Fix** - Visibility improvement
+  - Changed "Complete Your Booking" from teal gradient to white with drop shadow
+  - Fixed contrast issue where text was only visible when highlighted
+  - File: `src/app/booking/[tripId]/page.tsx`
+- **Test Scripts** - Payment expiration testing utilities
+  - `scripts/test-payment-expiration.ts` - Creates test bookings with backdated timestamps
+  - `scripts/set-test-password.ts` - Sets password for test user
+  - `scripts/verify-test.ts` - Verifies test setup and shows expected results
+- **Commits**: 3 commits (e53d41f, 9a423db, + bug audit fixes)
 
 ### January 18, 2026 (Late Night) - Search & Booking Pages UX Improvements
 - **Search Results Page Redesign** - Complete visual and UX overhaul
