@@ -182,6 +182,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // CRITICAL FIX: Check for existing PENDING booking for this user + trip
+    // This prevents duplicate bookings when user goes back/forth to modify seats
+    const existingPendingBooking = await prisma.booking.findFirst({
+      where: {
+        userId,
+        tripId,
+        status: "PENDING"
+      },
+      include: {
+        passengers: true
+      }
+    });
+
     // P2: Use transaction with timeout (10s) to ensure atomic booking with row-level locking
     const booking = await transactionWithTimeout(async (tx) => {
       // CRITICAL: Use SELECT FOR UPDATE NOWAIT to lock the trip row
@@ -216,8 +229,19 @@ export async function POST(request: NextRequest) {
         throw new Error("Booking is currently halted for this trip")
       }
 
-      if (lockedTrip.availableSlots < passengers.length) {
-        throw new Error(`Only ${lockedTrip.availableSlots} seats available`)
+      // Check available slots
+      if (existingPendingBooking) {
+        // UPDATING existing booking - check if we have enough slots for ADDITIONAL passengers
+        const additionalSeatsNeeded = passengers.length - existingPendingBooking.passengers.length;
+        if (additionalSeatsNeeded > 0 && lockedTrip.availableSlots < additionalSeatsNeeded) {
+          throw new Error(`Only ${lockedTrip.availableSlots} additional seats available. You currently have ${existingPendingBooking.passengers.length} passenger(s).`)
+        }
+        // If reducing passengers (additionalSeatsNeeded < 0), no check needed - we're freeing seats
+      } else {
+        // NEW booking - check if we have enough slots for all passengers
+        if (lockedTrip.availableSlots < passengers.length) {
+          throw new Error(`Only ${lockedTrip.availableSlots} seats available`)
+        }
       }
 
       // Seat assignment: Use selected seats if provided, otherwise auto-assign
@@ -230,6 +254,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Verify all selected seats are available (security check)
+        // OPTION A: Exclude existing pending booking to allow atomic updates
         const occupiedPassengers = await tx.passenger.findMany({
           where: {
             booking: {
@@ -237,6 +262,12 @@ export async function POST(request: NextRequest) {
               status: {
                 not: "CANCELLED",
               },
+              // CRITICAL: Exclude the existing booking we're updating (if any)
+              ...(existingPendingBooking ? {
+                id: {
+                  not: existingPendingBooking.id
+                }
+              } : {})
             },
             seatNumber: {
               in: selectedSeats,
@@ -249,7 +280,10 @@ export async function POST(request: NextRequest) {
 
         if (occupiedPassengers.length > 0) {
           const occupiedNumbers = occupiedPassengers.map((p: any) => p.seatNumber).join(", ")
-          throw new Error(`Seats ${occupiedNumbers} are no longer available. Please select different seats.`)
+          const errorMsg = existingPendingBooking
+            ? `Seats ${occupiedNumbers} are no longer available. Your booking still has your original seats.`
+            : `Seats ${occupiedNumbers} are no longer available. Please select different seats.`;
+          throw new Error(errorMsg)
         }
 
         // Verify seats are within valid range
@@ -274,37 +308,117 @@ export async function POST(request: NextRequest) {
       const passengerCount = passengers.length;
       const amounts = calculateBookingAmounts(lockedTrip.price, passengerCount);
 
-      // Create booking with seat assignments
-      const newBooking = await tx.booking.create({
-        data: {
-          tripId,
-          userId, // Use determined userId (web or SMS guest)
-          totalAmount: amounts.totalAmount, // Passenger pays: ticket + commission + VAT
-          commission: amounts.commission.baseCommission,
-          commissionVAT: amounts.commission.vat,
-          status: "PENDING",
-          passengers: {
-            create: passengers.map((p: any, index: number) => ({
-              name: p.name,
-              // For child passengers, use placeholder values
-              nationalId: p.isChild ? `CHILD-${Date.now()}-${index}` : p.nationalId,
-              phone: p.isChild ? (passengers[0]?.phone || smsSession?.phone || "CHILD") : (p.phone || smsSession?.phone || session?.user?.phone),
-              seatNumber: seatNumbers[index], // Assign seat number
-              specialNeeds: p.isChild ? "child" : (p.specialNeeds || null),
-              pickupLocation: p.pickupLocation || null,
-              dropoffLocation: p.dropoffLocation || null,
-            })),
+      let newBooking;
+
+      if (existingPendingBooking) {
+        // UPDATE EXISTING PENDING BOOKING (Option A: Atomic Update - Safe)
+        // This prevents duplicate bookings when user modifies seats/passengers
+        // Seat validation already done above (lines 245-276) - it excludes this booking
+
+        const oldPassengerCount = existingPendingBooking.passengers.length;
+        const seatDifference = passengerCount - oldPassengerCount;
+
+        // Delete old passengers (releases their seats)
+        await tx.passenger.deleteMany({
+          where: {
+            bookingId: existingPendingBooking.id
+          }
+        });
+
+        // Update booking with new amounts and create new passengers
+        newBooking = await tx.booking.update({
+          where: {
+            id: existingPendingBooking.id
           },
-        },
-        include: {
-          passengers: true,
-          trip: {
-            include: {
-              company: true,
+          data: {
+            totalAmount: amounts.totalAmount,
+            commission: amounts.commission.baseCommission,
+            commissionVAT: amounts.commission.vat,
+            passengers: {
+              create: passengers.map((p: any, index: number) => ({
+                name: p.name,
+                nationalId: p.isChild ? `CHILD-${Date.now()}-${index}` : p.nationalId,
+                phone: p.isChild ? (passengers[0]?.phone || smsSession?.phone || "CHILD") : (p.phone || smsSession?.phone || session?.user?.phone),
+                seatNumber: seatNumbers[index],
+                specialNeeds: p.isChild ? "child" : (p.specialNeeds || null),
+                pickupLocation: p.pickupLocation || null,
+                dropoffLocation: p.dropoffLocation || null,
+              })),
             },
           },
-        },
-      })
+          include: {
+            passengers: true,
+            trip: {
+              include: {
+                company: true,
+              },
+            },
+          },
+        });
+
+        // Adjust trip's available slots based on seat difference
+        // If user increased passengers, reduce available slots
+        // If user decreased passengers, increase available slots
+        if (seatDifference !== 0) {
+          await tx.trip.update({
+            where: { id: tripId },
+            data: {
+              availableSlots: {
+                decrement: seatDifference // Can be negative (will increment)
+              }
+            }
+          });
+        }
+
+        console.log(`[Booking Update] Updated existing pending booking ${existingPendingBooking.id} for user ${userId}. Seat diff: ${seatDifference}`);
+      } else {
+        // CREATE NEW BOOKING (first time booking this trip)
+        newBooking = await tx.booking.create({
+          data: {
+            tripId,
+            userId,
+            totalAmount: amounts.totalAmount,
+            commission: amounts.commission.baseCommission,
+            commissionVAT: amounts.commission.vat,
+            status: "PENDING",
+            passengers: {
+              create: passengers.map((p: any, index: number) => ({
+                name: p.name,
+                nationalId: p.isChild ? `CHILD-${Date.now()}-${index}` : p.nationalId,
+                phone: p.isChild ? (passengers[0]?.phone || smsSession?.phone || "CHILD") : (p.phone || smsSession?.phone || session?.user?.phone),
+                seatNumber: seatNumbers[index],
+                specialNeeds: p.isChild ? "child" : (p.specialNeeds || null),
+                pickupLocation: p.pickupLocation || null,
+                dropoffLocation: p.dropoffLocation || null,
+              })),
+            },
+          },
+          include: {
+            passengers: true,
+            trip: {
+              include: {
+                company: true,
+              },
+            },
+          },
+        });
+
+        // Reduce available slots (only for new bookings)
+        const updateResult = await tx.$executeRaw`
+          UPDATE "Trip"
+          SET "availableSlots" = "availableSlots" - ${passengers.length},
+              "updatedAt" = NOW()
+          WHERE id = ${tripId}
+            AND "availableSlots" >= ${passengers.length}
+            AND "bookingHalted" = false
+        `;
+
+        if (updateResult === 0) {
+          throw new Error("Seats no longer available. Please search again.");
+        }
+
+        console.log(`[Booking Create] Created new pending booking ${newBooking.id} for user ${userId}`);
+      }
 
       // Update guest user with first passenger's name if not set
       if (smsSessionId && !user?.name && passengers.length > 0) {
@@ -315,21 +429,6 @@ export async function POST(request: NextRequest) {
             nationalId: passengers[0].nationalId
           }
         });
-      }
-
-      // ATOMIC UPDATE: Use raw SQL for better concurrency control
-      const updateResult = await tx.$executeRaw`
-        UPDATE "Trip"
-        SET "availableSlots" = "availableSlots" - ${passengers.length},
-            "updatedAt" = NOW()
-        WHERE id = ${tripId}
-          AND "availableSlots" >= ${passengers.length}
-          AND "bookingHalted" = false
-      `
-
-      // If no rows were updated, another booking took the seats
-      if (updateResult === 0) {
-        throw new Error("Seats no longer available. Please search again.")
       }
 
       // CRITICAL: Auto-halt if slots drop to 10 or below
