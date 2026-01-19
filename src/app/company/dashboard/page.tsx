@@ -224,12 +224,12 @@ export default function CompanyDashboard() {
               {session?.user.companyName || "Manage your trips and bookings"}
             </p>
           </div>
-          <Link href="/company/trips/new">
-            <Button>
+          <Button asChild>
+            <Link href="/company/trips/new">
               <Plus className="h-4 w-4 mr-2" />
               Add Trip
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
         {/* Low Slot Alerts */}
@@ -459,9 +459,9 @@ export default function CompanyDashboard() {
                     <TableCell colSpan={6} className="text-center py-8">
                       <Bus className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                       <p className="text-muted-foreground">No trips yet</p>
-                      <Link href="/company/trips/new">
-                        <Button variant="link">Create your first trip</Button>
-                      </Link>
+                      <Button variant="link" asChild>
+                        <Link href="/company/trips/new">Create your first trip</Link>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ) : (
