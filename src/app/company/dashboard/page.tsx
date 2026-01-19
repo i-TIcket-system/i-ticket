@@ -371,10 +371,17 @@ export default function CompanyDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Gauge className="h-4 w-4 mr-1" />
-                  from {stats.fleetMetrics?.completedTripLogs || 0} logged trips
-                </div>
+                {stats.fleetMetrics?.completedTripLogs ? (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Gauge className="h-4 w-4 mr-1" />
+                    from {stats.fleetMetrics.completedTripLogs} logged trips
+                  </div>
+                ) : (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Gauge className="h-4 w-4 mr-1" />
+                    from 0 logged trips
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -390,10 +397,14 @@ export default function CompanyDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Fuel className="h-4 w-4 mr-1" />
-                  total fuel usage
-                </div>
+                {stats.fleetMetrics?.totalFuelConsumed ? (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <Fuel className="h-4 w-4 mr-1" />
+                    total fuel usage
+                  </div>
+                ) : (
+                  <div className="h-5" />
+                )}
               </CardContent>
             </Card>
 
@@ -409,10 +420,14 @@ export default function CompanyDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                  fleet average
-                </div>
+                {stats.fleetMetrics?.avgFuelEfficiency ? (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    fleet average
+                  </div>
+                ) : (
+                  <div className="h-5" />
+                )}
               </CardContent>
             </Card>
           </div>
