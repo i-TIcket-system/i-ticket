@@ -74,7 +74,7 @@ async function main() {
   // Hash passwords
   const customerPassword = await hash("demo123", 12)
   const companyPassword = await hash("demo123", 12)
-  const adminPassword = await hash("admin123", 12)
+  const adminPassword = await hash("demo123", 12) // Changed from admin123 to demo123 to match CLAUDE.md
 
   // Create users
   const users = await Promise.all([
@@ -106,7 +106,7 @@ async function main() {
     prisma.user.create({
       data: {
         name: "System Admin",
-        phone: "0933456789",
+        phone: "0911223344", // Updated to match CLAUDE.md documentation
         email: "admin@i-ticket.et",
         password: adminPassword,
         role: "SUPER_ADMIN",
@@ -640,7 +640,7 @@ async function main() {
   console.log("   Mechanic:    0925555557 / demo123 (Solomon Tesfaye)\n")
 
   console.log("👑 SUPER ADMIN:")
-  console.log("   Phone: 0933456789 / Password: admin123\n")
+  console.log("   Phone: 0911223344 / Password: demo123\n")
 
   console.log("🚌 VEHICLES CREATED:")
   console.log(`   - ${vehicles.length} vehicles with maintenance schedules`)

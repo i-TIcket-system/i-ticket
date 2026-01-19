@@ -95,6 +95,12 @@ export default function LoginPage() {
         await new Promise(resolve => setTimeout(resolve, 300))
         const session = await getSession()
 
+        // Check if user must change password (new company admins with temp passwords)
+        if (session?.user?.mustChangePassword) {
+          router.replace("/force-change-password")
+          return
+        }
+
         if (callbackUrl !== "/") {
           router.replace(callbackUrl)
         } else if (session?.user?.role === "COMPANY_ADMIN") {
@@ -119,18 +125,6 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const fillDemoAccount = (type: "customer" | "company" | "admin") => {
-    const accounts = {
-      customer: { phone: "0911234567", password: "demo123" },
-      company: { phone: "0922345678", password: "demo123" },
-      admin: { phone: "0933456789", password: "admin123" },
-    }
-    setPhone(accounts[type].phone)
-    setPassword(accounts[type].password)
-    // UX-14: Disable Remember Me for demo accounts to prevent saving demo credentials
-    setRememberMe(false)
   }
 
   return (
@@ -314,26 +308,20 @@ export default function LoginPage() {
                 </>
               )}
             </Button>
-
-            {process.env.NEXT_PUBLIC_DEMO_MODE === "true" && (
-              <div className="pt-4 border-t border-border">
-                <p className="text-xs text-muted-foreground text-center mb-3">Demo Mode - Quick Access</p>
-                <div className="grid grid-cols-3 gap-2">
-                  <Button type="button" variant="outline" size="sm" onClick={() => fillDemoAccount("customer")} className="text-xs">
-                    Customer
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => fillDemoAccount("company")} className="text-xs">
-                    Company
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" onClick={() => fillDemoAccount("admin")} className="text-xs">
-                    Admin
-                  </Button>
-                </div>
-              </div>
-            )}
             </form>
 
-            <p className="mt-8 text-center text-sm text-muted-foreground">
+            {/* Bus Company Registration Notice */}
+            <div className="mt-6 p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <p className="text-sm text-muted-foreground text-center">
+                <strong className="text-foreground">Bus Companies:</strong> Contact i-Ticket support to register your company.
+              </p>
+              <div className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground text-center">
+                <span>📧 Email: support@i-ticket.et</span>
+                <span>📱 Phone: 0911223344</span>
+              </div>
+            </div>
+
+            <p className="mt-6 text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{" "}
               <Link href="/register" className="text-primary font-medium hover:text-primary/80 transition-colors">
                 Create account

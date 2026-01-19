@@ -27,6 +27,7 @@ model User {
   nextOfKinPhone String?
   profilePicture String?   // URL/path to profile picture
   isGuestUser    Boolean   @default(false) // True for SMS users without full registration
+  mustChangePassword Boolean @default(false) // True for new company admins with temp passwords
   bookings       Booking[]
 
   // Sales referral (if user was referred by a sales person)
@@ -51,6 +52,7 @@ model User {
   @@index([isGuestUser, createdAt])
   @@index([companyId, staffRole])
   @@index([phone, isGuestUser])  // P3-2: Optimize guest user lookups
+  @@index([mustChangePassword])  // For force password change redirects
 }
 
 model Company {

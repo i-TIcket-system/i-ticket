@@ -5,6 +5,7 @@ import { z } from "zod"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import { createAuditLogTask } from "@/lib/clickup"
+import bcrypt from "bcryptjs"
 
 const CompanyStatusSchema = z.object({
   companyId: z.string().min(1, "Company ID is required"),
@@ -14,6 +15,48 @@ const CompanyStatusSchema = z.object({
     .min(10, "Reason must be at least 10 characters")
     .max(500, "Reason must not exceed 500 characters"),
 })
+
+const CreateCompanySchema = z.object({
+  // Company info
+  companyName: z.string().min(2, "Company name must be at least 2 characters"),
+  companyPhone: z.string().regex(/^09\d{8}$/, "Phone must be Ethiopian format (09XXXXXXXX)"),
+  companyEmail: z.string().email("Invalid email address"),
+  address: z.string().optional(),
+
+  // Bank info (optional)
+  bankName: z.string().optional(),
+  bankAccount: z.string().optional(),
+  bankBranch: z.string().optional(),
+
+  // Admin account info
+  adminName: z.string().min(2, "Admin name must be at least 2 characters"),
+  adminPhone: z.string().regex(/^09\d{8}$/, "Admin phone must be Ethiopian format (09XXXXXXXX)"),
+  adminEmail: z.string().email("Invalid admin email address"),
+})
+
+// Generate secure temporary password
+function generateTempPassword(): string {
+  const upper = "ABCDEFGHJKLMNPQRSTUVWXYZ" // Exclude I, O
+  const lower = "abcdefghjkmnpqrstuvwxyz" // Exclude i, l, o
+  const numbers = "23456789" // Exclude 0, 1
+  const special = "!@#$%^&*"
+
+  const all = upper + lower + numbers + special
+
+  let password = ""
+  password += upper[Math.floor(Math.random() * upper.length)]
+  password += lower[Math.floor(Math.random() * lower.length)]
+  password += numbers[Math.floor(Math.random() * numbers.length)]
+  password += special[Math.floor(Math.random() * special.length)]
+
+  // Fill remaining 4 characters
+  for (let i = 0; i < 4; i++) {
+    password += all[Math.floor(Math.random() * all.length)]
+  }
+
+  // Shuffle
+  return password.split('').sort(() => Math.random() - 0.5).join('')
+}
 
 /**
  * Get all companies for admin management
@@ -36,6 +79,155 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ companies })
   } catch (error) {
+    return handleAuthError(error)
+  }
+}
+
+/**
+ * Create a new company with admin account
+ */
+export async function POST(request: NextRequest) {
+  try {
+    await requireSuperAdmin()
+    const session = await getServerSession(authOptions)
+
+    // Validate request body
+    const body = await request.json()
+    const validation = CreateCompanySchema.safeParse(body)
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error.errors[0].message },
+        { status: 400 }
+      )
+    }
+
+    const {
+      companyName,
+      companyPhone,
+      companyEmail,
+      address,
+      bankName,
+      bankAccount,
+      bankBranch,
+      adminName,
+      adminPhone,
+      adminEmail,
+    } = validation.data
+
+    // Check for duplicate company phone
+    const existingCompanyByPhone = await prisma.company.findFirst({
+      where: {
+        phones: {
+          contains: companyPhone,
+        },
+      },
+    })
+
+    if (existingCompanyByPhone) {
+      return NextResponse.json(
+        { error: "A company with this phone number already exists" },
+        { status: 400 }
+      )
+    }
+
+    // Check for duplicate admin phone
+    const existingUserByPhone = await prisma.user.findUnique({
+      where: { phone: adminPhone },
+    })
+
+    if (existingUserByPhone) {
+      return NextResponse.json(
+        { error: "A user with this admin phone number already exists" },
+        { status: 400 }
+      )
+    }
+
+    // Generate temporary password
+    const tempPassword = generateTempPassword()
+    const hashedPassword = await bcrypt.hash(tempPassword, 12)
+
+    // Create company + admin in transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create company
+      const company = await tx.company.create({
+        data: {
+          name: companyName,
+          phones: JSON.stringify([companyPhone]),
+          email: companyEmail,
+          address: address || null,
+          bankName: bankName || null,
+          bankAccount: bankAccount || null,
+          bankBranch: bankBranch || null,
+          adminName,
+          adminPhone,
+          adminEmail,
+        },
+      })
+
+      // Create admin user
+      const admin = await tx.user.create({
+        data: {
+          name: adminName,
+          phone: adminPhone,
+          email: adminEmail,
+          password: hashedPassword,
+          role: "COMPANY_ADMIN",
+          staffRole: "ADMIN",
+          companyId: company.id,
+          mustChangePassword: true, // Force password change on first login
+        },
+      })
+
+      // Create audit log
+      await tx.adminLog.create({
+        data: {
+          userId: session!.user.id,
+          action: "COMPANY_CREATED",
+          companyId: company.id,
+          details: JSON.stringify({
+            companyId: company.id,
+            companyName: company.name,
+            companyPhone,
+            adminName,
+            adminPhone,
+            adminEmail,
+            createdBy: session!.user.name,
+            createdByEmail: session!.user.email,
+            timestamp: new Date().toISOString(),
+          }),
+        },
+      })
+
+      return { company, admin }
+    })
+
+    // Create ClickUp audit task (non-blocking)
+    createAuditLogTask({
+      action: "COMPANY_CREATED",
+      userId: session!.user.id,
+      userName: session!.user.name,
+      companyId: result.company.id,
+      companyName: result.company.name,
+      details: `New company registered: ${companyName}. Admin: ${adminName} (${adminPhone})`,
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: "Company created successfully",
+      company: result.company,
+      admin: {
+        name: result.admin.name,
+        phone: result.admin.phone,
+        email: result.admin.email,
+      },
+      credentials: {
+        phone: adminPhone,
+        tempPassword, // Super Admin can manually share this
+      },
+    })
+  } catch (error) {
+    console.error("Company creation error:", error)
     return handleAuthError(error)
   }
 }

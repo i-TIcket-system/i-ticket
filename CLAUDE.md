@@ -67,6 +67,65 @@ All 9 items from previous session completed:
 
 ## Recent Development (Jan 2026)
 
+### January 20, 2026 (Evening) - Super Admin Company Management (Registration + Editing)
+- **NEW: Company Registration System** - Super Admin can create bus company accounts with admin credentials
+  - **Company Creation API** (`/api/admin/companies` POST):
+    - Zod validation with Ethiopian phone format (09XXXXXXXX)
+    - Duplicate phone check (company + admin)
+    - Secure 8-character temporary password generation
+    - Atomic transaction: Company + Admin User + Audit Log
+    - Credentials returned for manual sharing (email/phone)
+  - **Force Password Change Flow**:
+    - New admins must change temp password on first login
+    - Redirect to `/force-change-password` before dashboard access
+    - Password requirements: 8+ chars, uppercase, lowercase, number
+    - Live validation with green checkmark indicators
+    - No current password required (one-time exception)
+  - **Force Password Change API** (`/api/auth/force-change-password`):
+    - POST endpoint requiring authentication
+    - Validates password strength (regex + length)
+    - Clears `mustChangePassword` flag after success
+  - **Add Company Dialog**:
+    - Three sections: Company Info, Bank Info (optional), Admin Account
+    - Ethiopian phone pattern validation
+    - Credentials auto-copied to clipboard
+    - Success toast shows temp password (dev mode only)
+  - **Login Page Cleanup**:
+    - Demo buttons removed for production
+    - Added "Contact i-Ticket support" notice for bus companies
+    - `mustChangePassword` redirect before role-based routing
+- **NEW: Company Editing System** - Super Admin can update company details
+  - **Company Edit API** (`/api/admin/companies/[companyId]` PUT):
+    - Update company info (name, phone, email, address)
+    - Update bank details (bank name, account, branch)
+    - Update admin contact (admin name, phone, email)
+    - Duplicate phone validation
+    - Audit logging with `COMPANY_UPDATED` action
+  - **Edit Company Dialog**:
+    - Edit button in companies table Actions column
+    - Pre-filled form with current company data
+    - Same validation as creation
+    - Success toast + auto-refresh on save
+- **Database Schema**:
+  - Added `mustChangePassword` field to User model
+  - Migration: `20260119113029_add_must_change_password`
+  - Index added for performance
+- **Auth Flow Updates**:
+  - `mustChangePassword` added to JWT, Session, User types
+  - Auth callbacks updated in `lib/auth.ts`
+  - Session persists flag through token refresh
+- **Seed File Fix**:
+  - Corrected Super Admin credentials to match docs
+  - Phone: 0911223344 (was 0933456789)
+  - Password: demo123 (was admin123)
+- **Files**:
+  - Backend: `src/app/api/admin/companies/route.ts` (POST), `src/app/api/admin/companies/[companyId]/route.ts` (PUT), `src/app/api/auth/force-change-password/route.ts`
+  - Frontend: `src/app/admin/companies/page.tsx` (Add + Edit dialogs), `src/app/force-change-password/page.tsx`, `src/app/login/page.tsx`
+  - Auth: `src/lib/auth.ts`, `src/types/next-auth.d.ts`
+  - Database: `prisma/schema.prisma`, `prisma/seed.ts`
+- **Impact**: Super Admin can onboard bus companies, manage company details, and ensure secure admin access
+- **Commits**: Multiple commits (company registration + editing features)
+
 ### January 20, 2026 (Afternoon) - Super Admin Trip Detail View with Audit Logging
 - **CRITICAL: Implemented Option 1 - Super Admin can view trip details with audit trail**
   - **Business Justification**: Platform takes 5% commission → responsible for transaction integrity

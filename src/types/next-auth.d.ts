@@ -11,6 +11,7 @@ declare module "next-auth" {
       staffRole: string | null
       profilePicture: string | null
       nationalId: string | null
+      mustChangePassword?: boolean
     } & DefaultSession["user"]
   }
 
@@ -23,6 +24,7 @@ declare module "next-auth" {
     staffRole: string | null
     profilePicture: string | null
     nationalId: string | null
+    mustChangePassword?: boolean
   }
 }
 
@@ -36,5 +38,6 @@ declare module "next-auth/jwt" {
     staffRole: string | null
     profilePicture: string | null
     nationalId: string | null
+    mustChangePassword?: boolean
   }
 }

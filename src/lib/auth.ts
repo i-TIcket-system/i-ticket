@@ -166,6 +166,7 @@ export const authOptions: NextAuthOptions = {
             staffRole: user.staffRole,
             profilePicture: user.profilePicture,
             nationalId: user.nationalId,
+            mustChangePassword: user.mustChangePassword,
           }
         }
 
@@ -219,6 +220,7 @@ export const authOptions: NextAuthOptions = {
         token.staffRole = user.staffRole
         token.profilePicture = user.profilePicture
         token.nationalId = user.nationalId
+        token.mustChangePassword = user.mustChangePassword
       }
 
       // Refresh user data when session is manually updated
@@ -255,6 +257,7 @@ export const authOptions: NextAuthOptions = {
         session.user.staffRole = token.staffRole as string | null
         session.user.profilePicture = token.profilePicture as string | null
         session.user.nationalId = token.nationalId as string | null
+        session.user.mustChangePassword = token.mustChangePassword as boolean | undefined
       }
       return session
     }
