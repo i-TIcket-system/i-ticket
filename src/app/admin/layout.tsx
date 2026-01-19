@@ -18,7 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  Bus
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -43,6 +44,11 @@ const sidebarItems = [
     title: "Companies",
     href: "/admin/companies",
     icon: Building2,
+  },
+  {
+    title: "All Trips",
+    href: "/admin/trips",
+    icon: Bus,
   },
   {
     title: "Sales Team",

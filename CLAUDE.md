@@ -95,7 +95,6 @@ All 9 items from previous session completed:
     - `scripts/test-booking-race.ts` - Tests duplicate booking prevention
       - Scenario 1: Editing PENDING booking UPDATES existing (no duplicates) ✅
       - Scenario 2: After payment, user can create NEW booking ✅
-      - Validates existingPendingBooking check is inside transaction ✅
     - `scripts/find-test-user.ts` - Helper to find existing test users
     - All test scenarios passing - both fixes validated ✅
 - **Commits**: 75d32e3 (bug fixes), a7dc1a8 (test scripts)
