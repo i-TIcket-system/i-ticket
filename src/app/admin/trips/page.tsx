@@ -277,11 +277,12 @@ export default function AllTripsPage() {
 
                 <div className="space-y-2">
                   <Label>Company</Label>
-                  <Select value={companyId || undefined} onValueChange={(value) => setCompanyId(value)}>
+                  <Select value={companyId || "all"} onValueChange={(value) => setCompanyId(value === "all" ? "" : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="All companies" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all">All companies</SelectItem>
                       {companies.map((company) => (
                         <SelectItem key={company.id} value={company.id}>
                           {company.name}
@@ -293,11 +294,12 @@ export default function AllTripsPage() {
 
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select value={tripStatus || undefined} onValueChange={(value) => setTripStatus(value)}>
+                  <Select value={tripStatus || "all"} onValueChange={(value) => setTripStatus(value === "all" ? "" : value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="All statuses" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="all">All statuses</SelectItem>
                       <SelectItem value="SCHEDULED">Scheduled</SelectItem>
                       <SelectItem value="BOARDING">Boarding</SelectItem>
                       <SelectItem value="DEPARTED">Departed</SelectItem>
