@@ -421,12 +421,16 @@ export default function AllTripsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <span className="text-sm">
+                        <Link
+                          href={`/admin/trips/${trip.id}`}
+                          className="flex items-center gap-1 hover:underline"
+                          style={{ color: "#0e9494" }}
+                        >
+                          <MapPin className="h-4 w-4 flex-shrink-0" />
+                          <span className="text-sm font-medium">
                             {trip.origin} → {trip.destination}
                           </span>
-                        </div>
+                        </Link>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
