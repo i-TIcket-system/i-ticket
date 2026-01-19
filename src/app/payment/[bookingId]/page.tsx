@@ -12,7 +12,10 @@ import {
   Check,
   ArrowLeft,
   Clock,
-  Shield
+  Shield,
+  Copy,
+  CheckCircle2,
+  QrCode as QrCodeIcon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -54,9 +57,14 @@ export default function PaymentPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentStatus, setPaymentStatus] = useState<"pending" | "processing" | "success" | "failed">("pending")
+  const [isMobile, setIsMobile] = useState(false)
+  const [cbeTransactionId, setCbeTransactionId] = useState("")
+  const [copiedField, setCopiedField] = useState<string | null>(null)
 
   useEffect(() => {
     fetchBooking()
+    // Detect if user is on mobile
+    setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent))
   }, [bookingId])
 
   const fetchBooking = async () => {
@@ -79,7 +87,7 @@ export default function PaymentPage() {
     }
   }
 
-  const processPayment = async () => {
+  const processPayment = async (method: "TELEBIRR" | "CBE" = "TELEBIRR") => {
     setIsProcessing(true)
     setPaymentStatus("processing")
 
@@ -89,7 +97,8 @@ export default function PaymentPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           bookingId,
-          method: process.env.NEXT_PUBLIC_DEMO_MODE === "true" ? "DEMO" : "TELEBIRR",
+          method: process.env.NEXT_PUBLIC_DEMO_MODE === "true" ? "DEMO" : method,
+          ...(method === "CBE" && cbeTransactionId && { transactionId: cbeTransactionId }),
         }),
       })
 
@@ -122,6 +131,21 @@ export default function PaymentPage() {
       setIsProcessing(false)
     }
   }
+
+  const copyToClipboard = async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(field)
+      toast.success("Copied to clipboard!")
+      setTimeout(() => setCopiedField(null), 2000)
+    } catch (err) {
+      toast.error("Failed to copy")
+    }
+  }
+
+  // CBE Payment details
+  const cbeAccountNumber = "1000567890123456" // i-Ticket CBE account
+  const paymentReference = `PAY-${bookingId.slice(-8).toUpperCase()}`
 
   if (isLoading) {
     return <PaymentPageSkeleton />
@@ -318,13 +342,13 @@ export default function PaymentPage() {
                   </Button>
                 </div>
 
-                {/* CBE Birr Option - Coming Soon */}
-                <div className="glass-subtle p-6 border border-white/20 rounded-2xl relative overflow-hidden opacity-60">
+                {/* CBE Birr Option - Hybrid Approach */}
+                <div className="glass-subtle p-6 border border-white/20 rounded-2xl relative overflow-hidden">
                   <div className="flex items-center gap-4 mb-4">
                     <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow-xl">
                       <CreditCard className="h-7 w-7 text-white flex-shrink-0" />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h3 className="font-bold text-lg">CBE Birr</h3>
                       <p className="text-sm text-muted-foreground">
                         Pay with Commercial Bank of Ethiopia
@@ -332,14 +356,135 @@ export default function PaymentPage() {
                     </div>
                   </div>
 
-                  <Button
-                    className="w-full"
-                    size="lg"
-                    variant="outline"
-                    disabled
-                  >
-                    Coming Soon
-                  </Button>
+                  <div className="space-y-4">
+                    {/* Desktop: Show QR Code */}
+                    {!isMobile && (
+                      <div className="flex flex-col items-center gap-3 p-4 glass-teal rounded-xl">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <QrCodeIcon className="h-4 w-4" />
+                          Scan with CBE Birr App
+                        </div>
+                        <div className="bg-white p-4 rounded-xl">
+                          {/* QR Code placeholder - will be replaced with actual QR */}
+                          <div className="h-48 w-48 flex items-center justify-center border-2 border-dashed border-gray-300 rounded-lg">
+                            <div className="text-center text-gray-500 text-xs">
+                              <QrCodeIcon className="h-12 w-12 mx-auto mb-2" />
+                              QR Code
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Scan this code with your phone's CBE Birr app
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Mobile OR Desktop Fallback: Show Account Details */}
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium">{isMobile ? "Payment Details:" : "Or enter manually:"}</p>
+
+                      {/* Account Number */}
+                      <div className="glass-subtle rounded-xl p-3 border border-white/10">
+                        <label className="text-xs text-muted-foreground block mb-1">i-Ticket Account</label>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 font-mono text-sm font-semibold">
+                            {cbeAccountNumber}
+                          </code>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={() => copyToClipboard(cbeAccountNumber, "account")}
+                          >
+                            {copiedField === "account" ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Reference Code */}
+                      <div className="glass-subtle rounded-xl p-3 border border-white/10">
+                        <label className="text-xs text-muted-foreground block mb-1">Reference Code</label>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 font-mono text-sm font-semibold text-primary">
+                            {paymentReference}
+                          </code>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={() => copyToClipboard(paymentReference, "reference")}
+                          >
+                            {copiedField === "reference" ? (
+                              <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Amount */}
+                      <div className="glass-subtle rounded-xl p-3 border border-white/10">
+                        <label className="text-xs text-muted-foreground block mb-1">Amount</label>
+                        <div className="font-bold text-lg text-primary">
+                          {formatCurrency(total)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Instructions */}
+                    <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
+                      <p className="font-semibold mb-2">Steps to pay:</p>
+                      <ol className="list-decimal list-inside space-y-1 text-muted-foreground">
+                        <li>Open your CBE Birr app</li>
+                        <li>Select "Send Money" or "Pay Bill"</li>
+                        <li>{isMobile ? "Copy & paste" : "Scan QR or enter"} the account number</li>
+                        <li>Enter the reference code above</li>
+                        <li>Confirm the amount: {formatCurrency(total)}</li>
+                        <li>Complete payment & enter transaction ID below</li>
+                      </ol>
+                    </div>
+
+                    {/* Transaction ID Verification */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">CBE Transaction ID</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Enter transaction ID from CBE"
+                          className="flex-1 px-3 py-2 rounded-lg border border-white/20 bg-background/50 text-sm"
+                          value={cbeTransactionId}
+                          onChange={(e) => setCbeTransactionId(e.target.value)}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        After completing payment in CBE Birr, enter the transaction ID you received
+                      </p>
+                    </div>
+
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      onClick={() => processPayment("CBE")}
+                      disabled={!cbeTransactionId || isProcessing}
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Verifying Payment...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="mr-2 h-4 w-4" />
+                          Verify Payment
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Security Notice */}
