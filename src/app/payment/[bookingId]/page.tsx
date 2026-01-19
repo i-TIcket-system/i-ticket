@@ -239,7 +239,7 @@ export default function PaymentPage() {
                       <div key={index} className="flex justify-between text-xs">
                         <span className="text-muted-foreground">{passenger.name}</span>
                         <span className="font-mono font-medium text-primary">
-                          {passenger.seatNumber || "Auto-assign"}
+                          {passenger.seatNumber ? `Seat ${passenger.seatNumber}` : "Auto-assign"}
                         </span>
                       </div>
                     ))}
@@ -306,7 +306,7 @@ export default function PaymentPage() {
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000" />
 
                   <div className="flex items-center gap-4 mb-4 relative z-10">
-                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
+                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform">
                       <Smartphone className="h-7 w-7 text-white flex-shrink-0" />
                     </div>
                     <div>
@@ -345,7 +345,7 @@ export default function PaymentPage() {
                 {/* CBE Birr Option - Hybrid Approach */}
                 <div className="glass-subtle p-6 border border-white/20 rounded-2xl relative overflow-hidden">
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow-xl">
+                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-purple-600 to-fuchsia-700 flex items-center justify-center shadow-xl">
                       <CreditCard className="h-7 w-7 text-white flex-shrink-0" />
                     </div>
                     <div className="flex-1">
