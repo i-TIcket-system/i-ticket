@@ -6,6 +6,7 @@ import { getAvailableSeatNumbers, handleApiError } from "@/lib/utils"
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
 import { createLowSlotAlertTask } from "@/lib/clickup"
 import { calculateCommission, calculateBookingAmounts } from "@/lib/commission"
+import { generateAndStoreManifest } from "@/lib/manifest-generator"
 
 export async function POST(request: NextRequest) {
   try {
@@ -515,6 +516,21 @@ export async function POST(request: NextRequest) {
 
       return newBooking
     }) // Using default 10-second timeout from transactionWithTimeout
+
+    // Auto-generate manifest for Super Admin if bus is full (async, non-blocking)
+    // This runs AFTER the transaction completes to not delay the booking response
+    // Check if availableSlots is 0 (trip is now full)
+    const updatedTrip = await prisma.trip.findUnique({
+      where: { id: tripId },
+      select: { availableSlots: true, companyId: true }
+    })
+
+    if (updatedTrip && updatedTrip.availableSlots === 0) {
+      // Fire and forget - don't await (non-blocking)
+      generateAndStoreManifest(tripId, "AUTO_FULL_CAPACITY").catch((error) => {
+        console.error("Failed to auto-generate manifest on full capacity:", error)
+      })
+    }
 
     return NextResponse.json({ booking }, { status: 201 })
   } catch (error) {

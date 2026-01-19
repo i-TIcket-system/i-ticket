@@ -300,6 +300,9 @@ export default function StaffManagementPage() {
     others: staff.filter(s => !knownRoles.includes(s.staffRole)).length,
   }
 
+  // Get all unique roles for filter dropdown (including custom roles)
+  const uniqueRoles = Array.from(new Set(staff.map(s => s.staffRole))).sort()
+
   // Filter staff by search term and role
   const filteredStaff = staff.filter((member) => {
     const searchLower = searchTerm.toLowerCase()
@@ -307,7 +310,8 @@ export default function StaffManagementPage() {
       member.name.toLowerCase().includes(searchLower) ||
       member.phone.includes(searchTerm) ||
       (member.email && member.email.toLowerCase().includes(searchLower)) ||
-      (member.employeeId && member.employeeId.toLowerCase().includes(searchLower))
+      (member.employeeId && member.employeeId.toLowerCase().includes(searchLower)) ||
+      member.staffRole.toLowerCase().includes(searchLower) // Also search by role
 
     const matchesRole = roleFilter === "all" || member.staffRole === roleFilter
 
@@ -458,12 +462,14 @@ export default function StaffManagementPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="DRIVER">Driver</SelectItem>
-                  <SelectItem value="CONDUCTOR">Conductor</SelectItem>
-                  <SelectItem value="MANUAL_TICKETER">Manual Ticketer</SelectItem>
-                  <SelectItem value="MECHANIC">Mechanic</SelectItem>
-                  <SelectItem value="FINANCE">Finance</SelectItem>
+                  {uniqueRoles.map((role) => {
+                    const roleInfo = getRoleInfo(role)
+                    return (
+                      <SelectItem key={role} value={role}>
+                        {roleInfo.label}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -697,6 +703,12 @@ export default function StaffManagementPage() {
                     <SelectItem value="MANUAL_TICKETER">Manual Ticketer</SelectItem>
                     <SelectItem value="MECHANIC">Mechanic</SelectItem>
                     <SelectItem value="FINANCE">Finance</SelectItem>
+                    {/* Show existing custom roles */}
+                    {uniqueRoles.filter(role => !["ADMIN", "DRIVER", "CONDUCTOR", "MANUAL_TICKETER", "MECHANIC", "FINANCE"].includes(role)).map(role => (
+                      <SelectItem key={role} value={role}>
+                        {getRoleInfo(role).label}
+                      </SelectItem>
+                    ))}
                     <SelectItem value="CUSTOM">Custom Role...</SelectItem>
                   </SelectContent>
                 </Select>

@@ -16,6 +16,8 @@ import {
   Wrench,
   Truck,
   MapPin,
+  Download,
+  Calendar as CalendarIcon,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -162,6 +164,28 @@ export default function CompanyAuditLogsPage() {
     setCurrentPage(1)
   }
 
+  const setQuickDateRange = (days: number) => {
+    const end = new Date()
+    const start = new Date()
+    start.setDate(start.getDate() - days)
+
+    setFilters({
+      ...filters,
+      startDate: start.toISOString().split('T')[0],
+      endDate: end.toISOString().split('T')[0],
+    })
+    setCurrentPage(1)
+  }
+
+  const handleDownload = () => {
+    const params = new URLSearchParams()
+    if (filters.action !== "ALL") params.append("action", filters.action)
+    if (filters.startDate) params.append("startDate", filters.startDate)
+    if (filters.endDate) params.append("endDate", filters.endDate)
+
+    window.open(`/api/company/audit-logs/download?${params}`, '_blank')
+  }
+
   const parsedDetails = (log: AuditLog) => {
     try {
       return log.details ? JSON.parse(log.details) : null
@@ -280,6 +304,46 @@ export default function CompanyAuditLogsPage() {
                   value={filters.endDate}
                   onChange={(e) => handleFilterChange("endDate", e.target.value)}
                 />
+              </div>
+            </div>
+
+            {/* Quick Date Range & Download */}
+            <div className="mt-4 flex flex-wrap items-center gap-3 pt-4 border-t">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground font-medium">Quick Range:</span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setQuickDateRange(7)}
+              >
+                Last 7 Days
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setQuickDateRange(30)}
+              >
+                Last 30 Days
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setQuickDateRange(90)}
+              >
+                Last 90 Days
+              </Button>
+              <div className="ml-auto">
+                <Button
+                  onClick={handleDownload}
+                  style={{ background: "#0e9494" }}
+                  className="text-white"
+                  disabled={logs.length === 0}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download CSV
+                </Button>
               </div>
             </div>
           </CardContent>

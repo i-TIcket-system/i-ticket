@@ -19,7 +19,8 @@ import {
   ChevronRight,
   Sparkles,
   MessageSquare,
-  Bus
+  Bus,
+  FileDown
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -49,6 +50,11 @@ const sidebarItems = [
     title: "All Trips",
     href: "/admin/trips",
     icon: Bus,
+  },
+  {
+    title: "Manifests",
+    href: "/admin/manifests",
+    icon: FileDown,
   },
   {
     title: "Sales Team",

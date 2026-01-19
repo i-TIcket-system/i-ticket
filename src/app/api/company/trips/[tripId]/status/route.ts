@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { generateAndStoreManifest } from "@/lib/manifest-generator"
 
 const statusUpdateSchema = z.object({
   status: z.enum(["SCHEDULED", "BOARDING", "DEPARTED", "COMPLETED", "CANCELLED"]),
@@ -169,6 +170,13 @@ export async function PATCH(
           tripId,
           companyId: trip.companyId,
         },
+      })
+
+      // Auto-generate manifest for Super Admin (i-Ticket platform) tracking
+      // This runs asynchronously and doesn't block the API response
+      // Companies are NOT notified - they download manually when needed
+      generateAndStoreManifest(tripId, "AUTO_DEPARTED").catch((error) => {
+        console.error("Failed to auto-generate manifest on DEPARTED:", error)
       })
     }
 

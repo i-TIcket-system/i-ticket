@@ -137,6 +137,7 @@ model Trip {
   bookings          Booking[]
   tickets           Ticket[]
   tripLog           TripLog?  // Before/after odometer and fuel readings
+  manifestDownloads ManifestDownload[]  // Auto-generated manifest files
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -196,6 +197,34 @@ model TripLog {
   @@index([companyId])
   @@index([startedAt])
   @@index([endedAt])
+}
+
+// Manifest download tracking (Super Admin auto-tracking + Company manual downloads)
+model ManifestDownload {
+  id              String   @id @default(cuid())
+  tripId          String
+  trip            Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  companyId       String   // Company that owns the trip
+
+  filePath        String   // /manifests/company-{id}/trip-{id}-{timestamp}.xlsx
+  fileSize        Int      // bytes
+
+  // Download tracking
+  downloadType    String   // "AUTO_DEPARTED", "AUTO_FULL_CAPACITY", "MANUAL_COMPANY"
+  downloadedBy    String?  // userId if manual company download, null if auto (SYSTEM)
+  downloadedAt    DateTime @default(now())
+
+  // Trip summary (for quick filtering without joins)
+  passengerCount  Int
+  totalRevenue    Float
+  origin          String
+  destination     String
+  departureTime   DateTime
+
+  @@index([tripId])
+  @@index([companyId, downloadedAt])
+  @@index([downloadType])
+  @@index([downloadedBy])
 }
 
 model Vehicle {

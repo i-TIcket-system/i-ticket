@@ -16,7 +16,10 @@ const createStaffSchema = z.object({
     .regex(/[A-Z]/, "Must contain uppercase letter")
     .regex(/[a-z]/, "Must contain lowercase letter")
     .regex(/[0-9]/, "Must contain number"),
-  staffRole: z.enum(["ADMIN", "DRIVER", "CONDUCTOR", "MANUAL_TICKETER", "MECHANIC", "FINANCE"]),
+  staffRole: z.string()
+    .min(2, "Staff role must be at least 2 characters")
+    .max(50, "Staff role must not exceed 50 characters")
+    .regex(/^[A-Z_]+$/, "Staff role must be uppercase with underscores only (e.g., SUPERVISOR, QUALITY_INSPECTOR)"),
   licenseNumber: z.string().optional().or(z.literal("")),
   employeeId: z.string().optional().or(z.literal("")),
 })
