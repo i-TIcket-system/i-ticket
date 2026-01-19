@@ -160,6 +160,30 @@ export async function POST(
       // Validate start readings
       const validatedData = startReadingsSchema.parse(body)
 
+      // CRITICAL: Check if someone else has already started recording
+      if (trip.tripLog && trip.tripLog.startedById) {
+        const existingRecorderId = trip.tripLog.startedById
+        const currentUserId = session.user.id
+
+        // If someone else started, prevent this user from modifying
+        if (existingRecorderId !== currentUserId) {
+          // Get the original recorder's name
+          const originalRecorder = await prisma.user.findUnique({
+            where: { id: existingRecorderId },
+            select: { name: true, role: true, staffRole: true },
+          })
+
+          return NextResponse.json(
+            {
+              error: 'Trip log already started by another user',
+              message: `${originalRecorder?.name || 'Another user'} has already started recording trip log. Only they can modify it. You can view the progress but cannot edit.`,
+              startedBy: originalRecorder?.name,
+            },
+            { status: 409 } // Conflict
+          )
+        }
+      }
+
       // Create or update trip log with start readings
       const tripLog = await prisma.tripLog.upsert({
         where: { tripId },
@@ -260,6 +284,30 @@ export async function POST(
           { error: 'Start readings must be recorded first' },
           { status: 400 }
         )
+      }
+
+      // CRITICAL: Check if someone else started recording - only they can end it
+      if (trip.tripLog.startedById) {
+        const existingRecorderId = trip.tripLog.startedById
+        const currentUserId = session.user.id
+
+        // If someone else started, prevent this user from modifying
+        if (existingRecorderId !== currentUserId) {
+          // Get the original recorder's name
+          const originalRecorder = await prisma.user.findUnique({
+            where: { id: existingRecorderId },
+            select: { name: true },
+          })
+
+          return NextResponse.json(
+            {
+              error: 'Trip log started by another user',
+              message: `${originalRecorder?.name || 'Another user'} started recording this trip log. Only they can record end readings.`,
+              startedBy: originalRecorder?.name,
+            },
+            { status: 409 } // Conflict
+          )
+        }
       }
 
       // Validate end odometer is greater than start

@@ -182,19 +182,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // CRITICAL FIX: Check for existing PENDING booking for this user + trip
-    // This prevents duplicate bookings when user goes back/forth to modify seats
-    const existingPendingBooking = await prisma.booking.findFirst({
-      where: {
-        userId,
-        tripId,
-        status: "PENDING"
-      },
-      include: {
-        passengers: true
-      }
-    });
-
     // P2: Use transaction with timeout (10s) to ensure atomic booking with row-level locking
     const booking = await transactionWithTimeout(async (tx) => {
       // CRITICAL: Use SELECT FOR UPDATE NOWAIT to lock the trip row
@@ -228,6 +215,20 @@ export async function POST(request: NextRequest) {
       if (lockedTrip.bookingHalted) {
         throw new Error("Booking is currently halted for this trip")
       }
+
+      // CRITICAL FIX (RACE CONDITION): Check for existing PENDING booking INSIDE transaction
+      // This prevents duplicate bookings when user makes concurrent requests or goes back/forth
+      // Moving this check inside the transaction (after trip lock) ensures atomicity
+      const existingPendingBooking = await tx.booking.findFirst({
+        where: {
+          userId,
+          tripId,
+          status: "PENDING"
+        },
+        include: {
+          passengers: true
+        }
+      });
 
       // Check available slots
       if (existingPendingBooking) {
