@@ -87,7 +87,18 @@ All 9 items from previous session completed:
     - Trip logs: No more conflicting odometer/fuel readings from simultaneous recording
     - Bookings: No more duplicate bookings when editing pending bookings
     - Both fixes use proper database-level locking for atomicity
-- **Commit**: 75d32e3 - fix(critical): Fix trip log race condition and multiple bookings bug
+  - **Test Scripts Created** - Comprehensive validation of both fixes
+    - `scripts/test-trip-log-race.ts` - Tests trip log locking mechanism
+      - Scenario 1: Admin starts → Driver gets 409 Conflict ✅
+      - Scenario 2: Driver starts → Admin gets 409 Conflict ✅
+      - Scenario 3: Same user can update own log ✅
+    - `scripts/test-booking-race.ts` - Tests duplicate booking prevention
+      - Scenario 1: Editing PENDING booking UPDATES existing (no duplicates) ✅
+      - Scenario 2: After payment, user can create NEW booking ✅
+      - Validates existingPendingBooking check is inside transaction ✅
+    - `scripts/find-test-user.ts` - Helper to find existing test users
+    - All test scenarios passing - both fixes validated ✅
+- **Commits**: 75d32e3 (bug fixes), a7dc1a8 (test scripts)
 
 ### January 19, 2026 (Late Night) - Homepage UX Priority 2 & 3 Completion
 - **All Optional UX Polish Items COMPLETED** - Priority 2 (Medium Impact) + Priority 3 (Nice to Have)
