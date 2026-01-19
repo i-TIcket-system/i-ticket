@@ -67,6 +67,28 @@ All 9 items from previous session completed:
 
 ## Recent Development (Jan 2026)
 
+### January 20, 2026 (Early Morning) - CRITICAL Bug Fixes: Race Conditions
+- **Two CRITICAL race condition bugs fixed** - Trip log conflicts and duplicate bookings
+  - **Bug 1: Trip Log Race Condition** - Admin and driver could simultaneously record odometer/fuel
+    - Problem: Both admin and driver could start/modify trip log simultaneously → conflicting data
+    - Solution: Added startedById validation - only the user who started can modify
+    - If admin starts: Only admin can modify, driver can only view progress
+    - If driver starts: Only driver can modify, admin can only observe
+    - Returns 409 Conflict with clear error message if someone else started recording
+    - File: `src/app/api/company/trips/[tripId]/log/route.ts` (lines 163-185, 289-311)
+  - **Bug 2: Multiple Bookings Race Condition** - Editing pending booking created duplicates
+    - Problem: User editing pending booking resulted in 3 identical bookings instead of updating
+    - Root cause: existingPendingBooking check happened OUTSIDE transaction (race condition)
+    - Multiple concurrent requests could all see "no existing booking" → all create new ones
+    - Solution: MOVED check INSIDE transaction after SELECT FOR UPDATE NOWAIT on trip row
+    - This ensures only ONE request at a time can check/create/update bookings atomically
+    - File: `src/app/api/bookings/route.ts` (lines 219-231)
+  - **Impact**:
+    - Trip logs: No more conflicting odometer/fuel readings from simultaneous recording
+    - Bookings: No more duplicate bookings when editing pending bookings
+    - Both fixes use proper database-level locking for atomicity
+- **Commit**: 75d32e3 - fix(critical): Fix trip log race condition and multiple bookings bug
+
 ### January 19, 2026 (Late Night) - Homepage UX Priority 2 & 3 Completion
 - **All Optional UX Polish Items COMPLETED** - Priority 2 (Medium Impact) + Priority 3 (Nice to Have)
   - **Stable backup created**: `src/app/page.stable-jan19.tsx` before modifications
