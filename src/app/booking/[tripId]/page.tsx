@@ -416,7 +416,7 @@ export default function BookingPage() {
             <div className="h-12 w-12 rounded-2xl glass-teal flex items-center justify-center shadow-lg">
               <Bus className="h-6 w-6 text-primary flex-shrink-0" />
             </div>
-            <h1 className="text-3xl font-display font-bold gradient-text-simien">Complete Your Booking</h1>
+            <h1 className="text-3xl font-display font-bold text-white drop-shadow-lg">Complete Your Booking</h1>
           </div>
         </div>
 
