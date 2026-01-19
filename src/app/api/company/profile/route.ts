@@ -176,14 +176,51 @@ export async function PATCH(req: NextRequest) {
       data: updateData
     })
 
+    const updatedFields = Object.keys(updateData)
+
     // Log the update
     await prisma.adminLog.create({
       data: {
         userId: session.user.id,
         action: "COMPANY_PROFILE_UPDATED",
-        details: `Updated company profile: ${Object.keys(updateData).join(", ")}`
+        details: `Updated company profile: ${updatedFields.join(", ")}`,
+        companyId: session.user.companyId
       }
     })
+
+    // Categorize sensitive vs non-sensitive changes
+    const sensitiveFields = ["bankName", "bankAccount", "bankBranch", "phones", "email", "adminPhone", "adminEmail"]
+    const hasSensitiveChanges = updatedFields.some(field => sensitiveFields.includes(field))
+
+    // Get all Super Admins
+    const superAdmins = await prisma.user.findMany({
+      where: { role: "SUPER_ADMIN" },
+      select: { id: true }
+    })
+
+    // Create notifications for all Super Admins
+    const notificationPromises = superAdmins.map(admin =>
+      prisma.notification.create({
+        data: {
+          recipientId: admin.id,
+          recipientType: "USER",
+          type: hasSensitiveChanges ? "COMPANY_PROFILE_CHANGE_URGENT" : "COMPANY_PROFILE_CHANGE",
+          title: hasSensitiveChanges ? "🚨 URGENT: Company Profile Updated" : "Company Profile Updated",
+          message: `${company.name} updated their profile. Fields changed: ${updatedFields.join(", ")}`,
+          priority: hasSensitiveChanges ? 4 : 2, // 4=Urgent, 2=Normal
+          companyId: company.id,
+          metadata: JSON.stringify({
+            companyId: company.id,
+            companyName: company.name,
+            updatedFields,
+            hasBankChanges: updatedFields.some(f => f.startsWith("bank")),
+            hasContactChanges: updatedFields.some(f => ["phones", "email", "adminPhone", "adminEmail"].includes(f))
+          })
+        }
+      })
+    )
+
+    await Promise.all(notificationPromises)
 
     return NextResponse.json({
       success: true,
