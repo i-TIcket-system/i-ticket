@@ -67,6 +67,64 @@ All 9 items from previous session completed:
 
 ## Recent Development (Jan 2026)
 
+### January 19, 2026 - Custom Staff Roles + Auto-Manifest System
+- **NEW: Custom Staff Roles** - Companies can create unlimited custom roles beyond 6 predefined ones
+  - **API Validation Update**:
+    - Changed from `z.enum([...])` to `z.string().min(2).max(50).regex(/^[A-Z_]+$/)`
+    - Accepts any UPPERCASE_WITH_UNDERSCORES format (e.g., SUPERVISOR, QUALITY_INSPECTOR, FLEET_MANAGER)
+    - Files: `src/app/api/company/staff/route.ts`, `src/app/api/company/staff/[staffId]/route.ts`
+  - **Staff Page Improvements**:
+    - Dynamic role filter dropdown shows ALL unique roles (including custom ones)
+    - Search functionality now includes role names
+    - Add Staff dropdown shows existing custom roles for easy reuse
+    - File: `src/app/company/staff/page.tsx`
+  - **Database**: `staffRole String?` already supported any value (no schema change needed)
+- **NEW: Auto-Manifest Generation System** - Platform automatically tracks trips for Super Admin oversight
+  - **🚨 CRITICAL: Super Admin ONLY** - Companies NOT notified, they download manually when needed
+  - **Two Automatic Triggers**:
+    - Trigger 1: When trip status → DEPARTED
+    - Trigger 2: When all seats sold (availableSlots = 0)
+  - **Database Model** (`ManifestDownload`):
+    - Tracks: tripId, companyId, filePath, fileSize, downloadType, downloadedBy, passengerCount, totalRevenue
+    - downloadType: "AUTO_DEPARTED", "AUTO_FULL_CAPACITY", "MANUAL_COMPANY"
+    - downloadedBy: null for auto (SYSTEM), userId for manual company downloads
+    - Migration: `20260119131031_add_manifest_download_model`
+  - **File Storage**: `/public/manifests/company-{companyId}/trip-{tripId}-{timestamp}.xlsx`
+  - **Audit Logging with Segregation**:
+    - Super Admin logs: `companyId = null` (platform surveillance - NOT visible to companies)
+    - Company logs: `companyId = their company` (operational logs)
+    - Action: `MANIFEST_AUTO_GENERATED` (Super Admin), `MANIFEST_DOWNLOADED` (Company manual)
+  - **Super Admin Dashboard** (`/admin/manifests`):
+    - Dedicated "Manifests" tab in sidebar with FileDown icon
+    - View all auto-generated manifests platform-wide
+    - Filters: Company, download type, date range
+    - Stats: Total manifests, passengers, revenue, platform commission
+    - Download any manifest for verification
+  - **Helper Functions** (`src/lib/manifest-generator.ts`):
+    - `generateAndStoreManifest(tripId, triggerType)` - Auto-generation for Super Admin
+    - `recordManualDownload(tripId, userId, filePath, fileSize)` - Track company downloads
+  - **Non-Blocking Execution**: Fire-and-forget pattern, doesn't block API responses
+- **NEW: Audit Log CSV Download** - Export audit logs for compliance and analysis
+  - Available for both Super Admin and Company admins
+  - Quick date range buttons (7, 30, 90 days)
+  - Filtered exports based on current filter settings
+  - APIs: `/api/admin/audit-logs/download`, `/api/company/audit-logs/download`
+  - Files: `src/app/admin/audit-logs/page.tsx`, `src/app/company/audit-logs/page.tsx`
+- **Test Scripts**:
+  - `scripts/test-custom-staff-roles.ts` - Validates custom role creation (3 roles tested)
+  - `scripts/test-auto-manifest-generation.ts` - Validates manifest generation, file storage, audit logs
+  - All tests passing ✅
+- **Files**:
+  - Backend: `src/lib/manifest-generator.ts`, `src/app/api/admin/manifests/route.ts`, trigger updates in status & bookings APIs
+  - Frontend: `src/app/admin/manifests/page.tsx`, `src/app/admin/layout.tsx` (menu item)
+  - Database: `prisma/schema.prisma` (ManifestDownload model + Trip relation)
+- **Impact**:
+  - Companies can organize staff with any custom roles needed for their operations
+  - Platform has automatic manifest records for commission tracking, compliance, and support
+  - Complete audit trail segregation ensures data privacy
+- **Documentation**: See `IMPLEMENTATION-SUMMARY.md` for full technical details
+- **Commit**: f0a9734
+
 ### January 20, 2026 (Evening) - Super Admin Company Management (Registration + Editing)
 - **NEW: Company Registration System** - Super Admin can create bus company accounts with admin credentials
   - **Company Creation API** (`/api/admin/companies` POST):
@@ -573,8 +631,9 @@ All 9 items from previous session completed:
 ## Core Features
 
 ### Authentication
-- Multi-role: Customer, Company Admin, Super Admin, Staff (Driver/Conductor/Ticketer/Mechanic/Finance), Sales Person
+- Multi-role: Customer, Company Admin, Super Admin, Staff (Driver/Conductor/Ticketer/Mechanic/Finance + **Custom Roles**), Sales Person
 - NextAuth.js sessions, guest users (SMS-only), password reset via OTP
+- Force password change flow for new company admins
 
 ### Booking & Payments
 - Real-time slot management, seat selection, multi-passenger bookings
@@ -593,8 +652,8 @@ All 9 items from previous session completed:
 - VehicleHealthDashboard with real-time gauge
 
 ### Admin Portals
-- **Super Admin**: Stats, revenue analytics, companies, audit logs, support tickets, company support chat
-- **Company Admin**: Trips, staff, vehicles, work orders, manifests, contact i-Ticket support
+- **Super Admin**: Stats, revenue analytics, companies, audit logs (CSV export), support tickets, company support chat, **auto-generated manifests dashboard**
+- **Company Admin**: Trips, staff (with custom roles), vehicles, work orders, manifests (manual download), contact i-Ticket support, audit logs (CSV export)
 - **Staff Portal**: My Trips with TripChat
 - **Cashier**: Ticketing dashboard with seat map
 - **Mechanic**: Work orders assigned to me
@@ -606,6 +665,20 @@ All 9 items from previous session completed:
 - File attachments support (images, PDFs, documents)
 - Company segregation enforced, bidirectional read tracking
 - Real-time updates via polling, rate limiting for spam prevention
+
+### Staff Management
+- **Custom Roles**: Companies can create unlimited custom roles (e.g., SUPERVISOR, QUALITY_INSPECTOR, FLEET_MANAGER)
+- Dynamic role filtering and search in staff management page
+- Role dropdown shows all unique roles (predefined + custom)
+
+### Auto-Manifest System (Platform Oversight)
+- **Super Admin Only**: Automatic manifest generation for commission tracking and compliance
+- **Two Triggers**: Trip DEPARTED + Full capacity (availableSlots = 0)
+- **File Storage**: `/public/manifests/company-{id}/trip-{id}-{timestamp}.xlsx`
+- **Audit Segregation**: Super Admin logs (companyId = null) NOT visible to companies
+- **Non-Blocking**: Fire-and-forget async execution, doesn't delay API responses
+- **Dashboard**: Dedicated "Manifests" tab with filters, stats, and download capability
+- Companies download manifests manually when needed (no auto-notifications)
 
 ### Integrations
 - TeleBirr (HMAC-SHA256), ClickUp (one-way sync), Africa's Talking SMS
@@ -619,6 +692,7 @@ All 9 items from previous session completed:
 **Communication**: TripMessage, TripMessageReadReceipt, Notification, SupportTicket, CompanyMessage, WorkOrderMessage, WorkOrderMessageReadReceipt
 **Sales**: SalesPerson, SalesQrScan, SalesReferral, SalesCommission, SalesPayout
 **Security**: ProcessedCallback, PasswordReset, AdminLog
+**Platform Oversight**: **ManifestDownload** (tracks auto-generated manifests for Super Admin)
 **SMS**: SmsSession
 
 ---
@@ -631,7 +705,7 @@ All 9 items from previous session completed:
 **Cashier**: `/api/cashier/my-trips`, `/api/cashier/trip/[tripId]/sell`
 **Mechanic**: `/api/mechanic/work-orders`
 **Finance**: `/api/finance/work-orders`
-**Admin**: `/api/admin/stats`, `/api/admin/companies`, `/api/admin/sales-persons/*`, `/api/admin/company-messages`
+**Admin**: `/api/admin/stats`, `/api/admin/companies`, `/api/admin/sales-persons/*`, `/api/admin/company-messages`, **`/api/admin/manifests`**, **`/api/admin/audit-logs/download`**, **`/api/company/audit-logs/download`**
 **Cron**: `/api/cron/predictive-maintenance` (daily 2 AM), `/api/cron/trip-reminders` (hourly), `/api/cron/cleanup` (hourly)
 
 ---
@@ -645,7 +719,7 @@ All 9 items from previous session completed:
 - `/(cashier)` - Ticketing portal
 - `/(mechanic)` - Work order management
 - `/(finance)` - Cost tracking
-- `/(admin)` - Super Admin dashboard, Company Support
+- `/(admin)` - Super Admin dashboard, Company Support, **Manifests Dashboard**, All Trips, Audit Logs
 - `/(sales)` - Sales person portal
 
 ---
