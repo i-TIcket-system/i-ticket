@@ -38,7 +38,10 @@ interface Booking {
     price: number  // Base ticket price per passenger
     company: { name: string }
   }
-  passengers: { name: string }[]
+  passengers: {
+    name: string
+    seatNumber: string | null
+  }[]
 }
 
 export default function PaymentPage() {
@@ -148,12 +151,12 @@ export default function PaymentPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] relative overflow-hidden">
-      {/* GLASSMORPHISM TRANSFORMATION - Immersive Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-teal-pale/40 via-background to-teal-pale/30 -z-10" />
-      <div className="fixed inset-0 bg-pattern-lalibela-glass opacity-10 -z-10" />
+      {/* GLASSMORPHISM TRANSFORMATION - Homepage-style background (half intensity) */}
+      <div className="fixed inset-0 bg-gradient-to-br from-[#0e9494]/25 via-[#0d7a7a]/20 to-[#0d4f5c]/15 -z-10" />
+      <div className="fixed inset-0 bg-pattern-tilahun-glass opacity-8 -z-10" />
       {/* Animated gradient orbs */}
-      <div className="fixed top-20 left-1/4 w-96 h-96 bg-gradient-radial from-teal-light/25 to-transparent rounded-full blur-3xl animate-float -z-10" />
-      <div className="fixed bottom-20 right-1/4 w-80 h-80 bg-gradient-radial from-teal-medium/20 to-transparent rounded-full blur-3xl animate-float -z-10" style={{ animationDelay: '2s' }} />
+      <div className="fixed top-20 left-1/4 w-96 h-96 bg-gradient-radial from-[#20c4c4]/10 to-transparent rounded-full blur-3xl animate-float -z-10" />
+      <div className="fixed bottom-20 right-1/4 w-80 h-80 bg-gradient-radial from-[#0e9494]/8 to-transparent rounded-full blur-3xl animate-float -z-10" style={{ animationDelay: '2s' }} />
 
       <div className="container mx-auto px-4 max-w-2xl py-8">
         <Link
@@ -202,9 +205,21 @@ export default function PaymentPage() {
                   <span className="text-muted-foreground">Departure</span>
                   <span className="font-medium">{formatDate(booking.trip.departureTime)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Passengers</span>
-                  <span className="font-medium">{booking.passengers.length}</span>
+                <div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-muted-foreground">Passengers</span>
+                    <span className="font-medium">{booking.passengers.length} passenger{booking.passengers.length > 1 ? "s" : ""}</span>
+                  </div>
+                  <div className="space-y-1.5 ml-4">
+                    {booking.passengers.map((passenger, index) => (
+                      <div key={index} className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">{passenger.name}</span>
+                        <span className="font-mono font-medium text-primary">
+                          {passenger.seatNumber || "Auto-assign"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 </div>
 
@@ -260,7 +275,7 @@ export default function PaymentPage() {
                   Complete your payment to receive your tickets
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 {/* TeleBirr Option - Enhanced Glass */}
                 <div className="glass-teal p-6 border-2 border-primary/30 rounded-2xl relative overflow-hidden group">
                   {/* Shimmer effect */}
@@ -300,6 +315,30 @@ export default function PaymentPage() {
                         Pay {formatCurrency(total)}
                       </>
                     )}
+                  </Button>
+                </div>
+
+                {/* CBE Birr Option - Coming Soon */}
+                <div className="glass-subtle p-6 border border-white/20 rounded-2xl relative overflow-hidden opacity-60">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow-xl">
+                      <CreditCard className="h-7 w-7 text-white flex-shrink-0" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg">CBE Birr</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Pay with Commercial Bank of Ethiopia
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    variant="outline"
+                    disabled
+                  >
+                    Coming Soon
                   </Button>
                 </div>
 

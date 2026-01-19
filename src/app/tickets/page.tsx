@@ -91,15 +91,30 @@ export default function MyTicketsPage() {
     )
   }
 
+  // Helper to check if payment has expired (15 minutes)
+  const isPaymentExpired = (booking: BookingWithTrip) => {
+    if (booking.status !== "PENDING") return false
+    const createdAt = new Date(booking.createdAt)
+    const now = new Date()
+    const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60)
+    return diffMinutes > 15
+  }
+
   const upcomingBookings = bookings.filter(
     (b) => b.status === "PAID" && new Date(b.trip.departureTime) > new Date()
   )
   const pastBookings = bookings.filter(
     (b) => b.status === "PAID" && new Date(b.trip.departureTime) <= new Date()
   )
-  const pendingBookings = bookings.filter((b) => b.status === "PENDING")
+  const pendingBookings = bookings.filter((b) => b.status === "PENDING" && !isPaymentExpired(b))
+  const expiredBookings = bookings.filter((b) => isPaymentExpired(b))
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, booking?: BookingWithTrip) => {
+    // Check if payment expired for pending bookings
+    if (booking && isPaymentExpired(booking)) {
+      return "destructive"
+    }
+
     switch (status) {
       case "PAID":
         return "success"
@@ -112,12 +127,19 @@ export default function MyTicketsPage() {
     }
   }
 
+  const getStatusLabel = (status: string, booking: BookingWithTrip) => {
+    if (isPaymentExpired(booking)) {
+      return "PAYMENT EXPIRED"
+    }
+    return status
+  }
+
   const BookingCard = ({ booking }: { booking: BookingWithTrip }) => (
     <Card className="glass-dramatic glass-lift border-white/10 shadow-glass-md hover:shadow-glass-lg transition-all duration-500 group overflow-hidden">
       {/* Status accent line */}
       <div className={`h-1 bg-gradient-to-r shadow-lg ${
         booking.status === 'PAID' ? 'from-green-400 to-teal-400 shadow-green-500/50' :
-        booking.status === 'PENDING' ? 'from-amber-400 to-orange-400 shadow-amber-500/50' :
+        booking.status === 'PENDING' && !isPaymentExpired(booking) ? 'from-amber-400 to-orange-400 shadow-amber-500/50' :
         'from-red-400 to-rose-400 shadow-red-500/50'
       }`} />
 
@@ -133,8 +155,8 @@ export default function MyTicketsPage() {
             </div>
             <div>
               <h3 className="font-semibold text-lg text-foreground">{booking.trip.company.name}</h3>
-              <Badge variant={getStatusColor(booking.status) as any} className="mt-1 font-medium">
-                {booking.status}
+              <Badge variant={getStatusColor(booking.status, booking) as any} className="mt-1 font-medium">
+                {getStatusLabel(booking.status, booking)}
               </Badge>
             </div>
           </div>
@@ -170,10 +192,16 @@ export default function MyTicketsPage() {
                   View Tickets
                 </Button>
               </Link>
-            ) : booking.status === "PENDING" ? (
+            ) : booking.status === "PENDING" && !isPaymentExpired(booking) ? (
               <Link href={`/payment/${booking.id}`}>
                 <Button className="glass-button shadow-md hover:shadow-lg">
                   Complete Payment
+                </Button>
+              </Link>
+            ) : isPaymentExpired(booking) ? (
+              <Link href="/search">
+                <Button variant="outline" className="glass-button shadow-md hover:shadow-lg">
+                  Book Again
                 </Button>
               </Link>
             ) : null}
@@ -222,6 +250,11 @@ export default function MyTicketsPage() {
                 Pending ({pendingBookings.length})
               </TabsTrigger>
             )}
+            {expiredBookings.length > 0 && (
+              <TabsTrigger value="expired">
+                Expired ({expiredBookings.length})
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="upcoming" className="space-y-4">
@@ -262,6 +295,14 @@ export default function MyTicketsPage() {
           {pendingBookings.length > 0 && (
             <TabsContent value="pending" className="space-y-4">
               {pendingBookings.map((booking) => (
+                <BookingCard key={booking.id} booking={booking} />
+              ))}
+            </TabsContent>
+          )}
+
+          {expiredBookings.length > 0 && (
+            <TabsContent value="expired" className="space-y-4">
+              {expiredBookings.map((booking) => (
                 <BookingCard key={booking.id} booking={booking} />
               ))}
             </TabsContent>
