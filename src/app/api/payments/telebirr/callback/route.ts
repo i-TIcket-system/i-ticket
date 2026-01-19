@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma, { transactionWithTimeout } from "@/lib/db";
 import { verifyTelebirrSignature, type TelebirrCallbackPayload } from "@/lib/payments/telebirr";
-import { generateShortCode } from "@/lib/utils";
+import { generateShortCode, handleApiError } from "@/lib/utils";
 import { getSmsGateway } from "@/lib/sms/gateway";
 import QRCode from "qrcode";
 import { generateCallbackHash, isCallbackProcessed, recordProcessedCallback } from "@/lib/payments/callback-hash";
@@ -189,10 +189,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[TeleBirr Callback] Error:', error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    const { message, status } = handleApiError(error)
+    return NextResponse.json({ error: message }, { status });
   }
 }
 

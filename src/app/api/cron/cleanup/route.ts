@@ -66,18 +66,21 @@ export async function GET(request: NextRequest) {
       results.notificationsSent++;
     }
 
-    // 3. Cleanup old pending bookings without payments (> 15 minutes old)
+    // 3. Cleanup old pending bookings (> 15 minutes old)
+    // This includes:
+    // - Bookings with no payment record at all
+    // - Bookings with PENDING payment (user created payment intent but didn't complete)
     const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
     const stalePendingBookings = await prisma.booking.findMany({
       where: {
         status: 'PENDING',
-        createdAt: { lt: fifteenMinutesAgo },
-        payment: null // No payment record at all
+        createdAt: { lt: fifteenMinutesAgo }
       },
       include: {
         passengers: true,
-        trip: true
+        trip: true,
+        payment: true
       }
     });
 
@@ -158,7 +161,7 @@ async function handlePaymentTimeout(payment: any) {
 }
 
 /**
- * Cancel stale pending booking without payment
+ * Cancel stale pending booking (with or without payment)
  */
 async function cancelStaleBooking(booking: any) {
   console.log(`[Cron] Cancelling stale booking: ${booking.id}`);
@@ -169,6 +172,14 @@ async function cancelStaleBooking(booking: any) {
       where: { id: booking.id },
       data: { status: 'CANCELLED' }
     });
+
+    // Cancel pending payment if exists
+    if (booking.payment && booking.payment.status === 'PENDING') {
+      await tx.payment.update({
+        where: { id: booking.payment.id },
+        data: { status: 'CANCELLED' }
+      });
+    }
 
     // Release seats
     await tx.trip.update({
@@ -186,7 +197,8 @@ async function cancelStaleBooking(booking: any) {
         tripId: booking.tripId,
         details: JSON.stringify({
           bookingId: booking.id,
-          reason: 'No payment initiated within 15 minutes'
+          reason: 'No payment completed within 15 minutes',
+          hadPaymentIntent: !!booking.payment
         })
       }
     });

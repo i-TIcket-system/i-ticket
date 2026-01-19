@@ -797,14 +797,15 @@ export default function BookingPage() {
 
                 <Separator className="bg-white/10" />
 
-                <div className="glass-dramatic rounded-2xl p-5 border-2 border-white/30 shadow-glass-lg bg-gradient-to-r from-[#0d4f5c]/30 via-[#0e9494]/20 to-[#0d4f5c]/30">
+                {/* TOTAL - Glass Theme with Better Contrast */}
+                <div className="glass-dramatic rounded-2xl p-5 border-2 border-white/30 shadow-glass-lg bg-gradient-to-r from-[#0d4f5c]/40 via-[#0e9494]/30 to-[#0d4f5c]/40">
                   <div className="flex justify-between items-center">
-                    <span className="text-white font-semibold text-lg">Total</span>
+                    <span className="text-foreground font-semibold text-lg">Total</span>
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-white drop-shadow-lg">
+                      <div className="text-3xl font-bold text-foreground drop-shadow-md">
                         {formatCurrency(total)}
                       </div>
-                      <div className="text-xs text-white/80 font-medium">incl. taxes & fees</div>
+                      <div className="text-xs text-muted-foreground font-medium">incl. taxes & fees</div>
                     </div>
                   </div>
                 </div>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import prisma, { transactionWithTimeout } from "@/lib/db"
 import { authOptions } from "@/lib/auth"
-import { generateShortCode } from "@/lib/utils"
+import { generateShortCode, handleApiError } from "@/lib/utils"
 import QRCode from "qrcode"
 import { checkEnhancedRateLimit, checkBookingRateLimit, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
 
@@ -69,6 +69,21 @@ export async function POST(request: NextRequest) {
           { status: 401 }
         )
       }
+    }
+
+    // CRITICAL: Block payment if booking is older than 15 minutes
+    // This prevents duplicate bookings when users pay after the 15-minute window
+    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const bookingCreatedAt = new Date(booking.createdAt);
+
+    if (bookingCreatedAt < fifteenMinutesAgo) {
+      return NextResponse.json(
+        {
+          error: "Payment window expired",
+          message: "This booking was created more than 15 minutes ago and has expired. Please create a new booking."
+        },
+        { status: 400 }
+      )
     }
 
     if (booking.status === "PAID") {
@@ -291,9 +306,8 @@ export async function POST(request: NextRequest) {
       console.error("Failed to log payment error:", logError)
     }
 
-    return NextResponse.json(
-      { error: "Payment processing failed" },
-      { status: 500 }
-    )
+    // Use centralized error handler for user-friendly messages
+    const { message, status } = handleApiError(error)
+    return NextResponse.json({ error: message }, { status })
   }
 }

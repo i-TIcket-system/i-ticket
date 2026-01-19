@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { requireAuth, handleAuthError } from "@/lib/auth-helpers"
+import { handleApiError } from "@/lib/utils"
 
 /**
  * Get user profile
@@ -37,7 +38,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ user })
   } catch (error) {
-    return handleAuthError(error)
+    // Try auth error handler first, fall back to API error handler
+    if (error && typeof error === 'object' && 'status' in error) {
+      return handleAuthError(error)
+    }
+    const { message, status } = handleApiError(error)
+    return NextResponse.json({ error: message }, { status })
   }
 }
 
@@ -88,6 +94,11 @@ export async function PATCH(request: NextRequest) {
     })
   } catch (error) {
     console.error("Profile update error:", error)
-    return handleAuthError(error)
+    // Try auth error handler first, fall back to API error handler
+    if (error && typeof error === 'object' && 'status' in error) {
+      return handleAuthError(error)
+    }
+    const { message, status } = handleApiError(error)
+    return NextResponse.json({ error: message }, { status })
   }
 }

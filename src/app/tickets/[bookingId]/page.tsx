@@ -327,6 +327,19 @@ export default function TicketsPage() {
                           {selectedTicket.shortCode}
                         </code>
                       </div>
+
+                      {/* i-Ticket Branding */}
+                      <div className="mt-6 pt-4 border-t border-muted text-center space-y-2">
+                        <p className="text-sm font-semibold text-primary">
+                          Thank you for using i-Ticket!
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Visit <span className="font-medium text-primary">i-tickets.et</span>
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Ethiopia's #1 Bus Booking Platform
+                        </p>
+                      </div>
                     </div>
 
                     {/* Ticket Details */}

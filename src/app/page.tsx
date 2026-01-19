@@ -501,8 +501,8 @@ export default function HomePage() {
                   <div className="hidden lg:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary/30 to-transparent" />
                 )}
 
-                <div className="inline-flex h-20 w-20 items-center justify-center rounded-full text-white bg-gradient-to-br from-[#0e9494] to-[#0d4f5c] shadow-xl shadow-cyan-500/30 mb-6 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-cyan-500/40 transition-all duration-300 border-2 border-cyan-300/20">
-                  <span className="text-3xl font-display font-bold">{item.step}</span>
+                <div className="flex h-20 w-20 items-center justify-center rounded-full text-white bg-gradient-to-br from-[#0e9494] to-[#0d4f5c] shadow-xl shadow-cyan-500/30 mb-6 group-hover:scale-110 group-hover:shadow-2xl group-hover:shadow-cyan-500/40 transition-all duration-300 border-2 border-cyan-300/20 mx-auto">
+                  <span className="text-3xl font-display font-bold leading-none block" style={{ transform: 'translateY(1px)' }}>{item.step}</span>
                 </div>
                 <h3 className="mb-3 text-foreground font-display text-xl">{item.title}</h3>
                 <p className="text-muted-foreground leading-relaxed">{item.description}</p>

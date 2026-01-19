@@ -144,3 +144,65 @@ export async function getAvailableSeatNumbers(
 
   return availableSeats
 }
+
+/**
+ * Handle database and API errors with user-friendly messages
+ * Prevents exposing technical error details to customers
+ */
+export function handleApiError(error: any): { message: string; status: number } {
+  // Prisma database connection errors
+  if (error.message?.includes("Can't reach database") ||
+      error.message?.includes("database server") ||
+      error.code === 'P1001' || // Can't reach database server
+      error.code === 'P1002' || // Database server timeout
+      error.code === 'P1008' || // Operations timed out
+      error.code === 'P1017') { // Server has closed the connection
+    console.error('Database connection error:', error)
+    return {
+      message: 'Our service is temporarily unavailable. Please try again in a few moments.',
+      status: 503
+    }
+  }
+
+  // Prisma unique constraint violations
+  if (error.code === 'P2002') {
+    return {
+      message: 'This record already exists. Please check your input.',
+      status: 409
+    }
+  }
+
+  // Prisma foreign key constraint violations
+  if (error.code === 'P2003') {
+    return {
+      message: 'Referenced record not found. Please check your input.',
+      status: 400
+    }
+  }
+
+  // Prisma record not found
+  if (error.code === 'P2025') {
+    return {
+      message: 'The requested record was not found.',
+      status: 404
+    }
+  }
+
+  // Network/timeout errors
+  if (error.code === 'ECONNREFUSED' ||
+      error.code === 'ETIMEDOUT' ||
+      error.code === 'ENOTFOUND') {
+    console.error('Network error:', error)
+    return {
+      message: 'Unable to connect to our service. Please check your internet connection.',
+      status: 503
+    }
+  }
+
+  // Generic fallback
+  console.error('Unhandled error:', error)
+  return {
+    message: 'An unexpected error occurred. Please try again later.',
+    status: 500
+  }
+}

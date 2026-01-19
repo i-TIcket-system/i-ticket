@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
+import { handleApiError } from "@/lib/utils"
 
 /**
  * Track booking by booking ID or ticket code
@@ -90,9 +91,7 @@ export async function GET(
     return NextResponse.json({ booking })
   } catch (error) {
     console.error("Track booking error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    const { message, status } = handleApiError(error)
+    return NextResponse.json({ error: message }, { status })
   }
 }

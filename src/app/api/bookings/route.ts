@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import prisma, { transactionWithTimeout } from "@/lib/db"
 import { authOptions } from "@/lib/auth"
-import { getAvailableSeatNumbers } from "@/lib/utils"
+import { getAvailableSeatNumbers, handleApiError } from "@/lib/utils"
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
 import { createLowSlotAlertTask } from "@/lib/clickup"
 import { calculateCommission, calculateBookingAmounts } from "@/lib/commission"
@@ -429,17 +429,11 @@ export async function POST(request: NextRequest) {
           { status: 409 }
         )
       }
-
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      )
     }
 
-    return NextResponse.json(
-      { error: "Booking failed" },
-      { status: 500 }
-    )
+    // Use centralized error handler for database and other errors
+    const { message, status } = handleApiError(error)
+    return NextResponse.json({ error: message }, { status })
   }
 }
 
@@ -480,9 +474,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ bookings })
   } catch (error) {
     console.error("Bookings fetch error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    const { message, status } = handleApiError(error)
+    return NextResponse.json({ error: message }, { status })
   }
 }

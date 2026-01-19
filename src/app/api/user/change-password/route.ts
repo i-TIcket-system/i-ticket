@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import bcrypt from "bcryptjs"
 import { requireAuth, handleAuthError } from "@/lib/auth-helpers"
+import { handleApiError } from "@/lib/utils"
 
 /**
  * Change user password
@@ -97,6 +98,11 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error("Password change error:", error)
-    return handleAuthError(error)
+    // Try auth error handler first, fall back to API error handler
+    if (error && typeof error === 'object' && 'status' in error) {
+      return handleAuthError(error)
+    }
+    const { message, status } = handleApiError(error)
+    return NextResponse.json({ error: message }, { status })
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import prisma from "@/lib/db"
 import { authOptions } from "@/lib/auth"
+import { handleApiError } from "@/lib/utils"
 
 export async function GET(
   request: NextRequest,
@@ -87,10 +88,8 @@ export async function GET(
     return NextResponse.json({ booking })
   } catch (error) {
     console.error("Booking fetch error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    const { message, status } = handleApiError(error)
+    return NextResponse.json({ error: message }, { status })
   }
 }
 
@@ -170,9 +169,7 @@ export async function PATCH(
     return NextResponse.json({ booking })
   } catch (error) {
     console.error("Booking update error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    const { message, status } = handleApiError(error)
+    return NextResponse.json({ error: message }, { status })
   }
 }

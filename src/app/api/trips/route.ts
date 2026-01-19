@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { searchTripsSchema, validateQueryParams } from "@/lib/validations"
 import { createAuditLogTask } from "@/lib/clickup"
+import { handleApiError } from "@/lib/utils"
 
 export async function GET(request: NextRequest) {
   try {
@@ -109,10 +110,8 @@ export async function GET(request: NextRequest) {
     })
   } catch (error) {
     console.error("Trips fetch error:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    const { message, status } = handleApiError(error)
+    return NextResponse.json({ error: message }, { status })
   }
 }
 

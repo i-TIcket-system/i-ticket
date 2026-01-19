@@ -227,13 +227,14 @@ export default function PaymentPage() {
                   </div>
                 </div>
 
-                <div className="glass-teal rounded-2xl p-5 border border-white/20 shadow-glass-md">
+                <div className="glass-subtle rounded-2xl p-5 border border-white/20 shadow-glass-md">
                   <div className="flex justify-between items-center">
-                    <span className="text-foreground font-medium text-lg">Total</span>
+                    <span className="text-foreground font-semibold text-lg">Total</span>
                     <div className="text-right">
-                      <div className="text-3xl font-bold gradient-text-simien bg-gradient-to-r from-primary to-teal-light bg-clip-text">
+                      <div className="text-3xl font-bold text-foreground drop-shadow-sm">
                         {formatCurrency(total)}
                       </div>
+                      <div className="text-xs text-muted-foreground font-medium">incl. taxes & fees</div>
                     </div>
                   </div>
                 </div>

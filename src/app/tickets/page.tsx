@@ -132,8 +132,8 @@ export default function MyTicketsPage() {
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-primary-700 blur-lg opacity-30 group-hover:opacity-50 transition-opacity" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">{booking.trip.company.name}</h3>
-              <Badge variant={getStatusColor(booking.status) as any} className="glass-subtle border-white/20">
+              <h3 className="font-semibold text-lg text-foreground">{booking.trip.company.name}</h3>
+              <Badge variant={getStatusColor(booking.status) as any} className="mt-1 font-medium">
                 {booking.status}
               </Badge>
             </div>
@@ -190,10 +190,11 @@ export default function MyTicketsPage() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] relative overflow-hidden">
-      {/* GLASSMORPHISM TRANSFORMATION - Background */}
-      <div className="fixed inset-0 bg-gradient-to-br from-teal-pale/35 via-background to-teal-pale/25 -z-10" />
-      <div className="fixed inset-0 bg-pattern-tilahun-glass opacity-8 -z-10" />
-      <div className="fixed top-20 right-20 w-96 h-96 bg-gradient-radial from-teal-light/20 to-transparent rounded-full blur-3xl animate-float -z-10" />
+      {/* GLASSMORPHISM TRANSFORMATION - Background with homepage colors (half intensity) */}
+      <div className="fixed inset-0 bg-gradient-to-br from-[#0e9494]/50 via-[#0d7a7a]/40 to-[#0d4f5c]/30 -z-10" />
+      <div className="fixed inset-0 bg-pattern-tilahun-glass opacity-15 -z-10" />
+      <div className="fixed top-20 right-20 w-96 h-96 bg-gradient-radial from-[#20c4c4]/15 to-transparent rounded-full blur-3xl animate-float -z-10" />
+      <div className="fixed bottom-20 left-20 w-80 h-80 bg-gradient-radial from-[#0e9494]/10 to-transparent rounded-full blur-3xl animate-float -z-10" style={{ animationDelay: '2s' }} />
 
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
@@ -201,9 +202,9 @@ export default function MyTicketsPage() {
             <div className="h-12 w-12 rounded-2xl glass-teal flex items-center justify-center shadow-lg">
               <Ticket className="h-6 w-6 text-primary flex-shrink-0" />
             </div>
-            <h1 className="text-3xl font-display font-bold gradient-text-simien">My Tickets</h1>
+            <h1 className="text-3xl font-display font-bold text-foreground drop-shadow-sm">My Tickets</h1>
           </div>
-          <p className="text-muted-foreground ml-15">
+          <p className="text-muted-foreground ml-[60px]">
             Manage your bookings and view ticket details
           </p>
         </div>
