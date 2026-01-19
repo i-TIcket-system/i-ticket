@@ -277,12 +277,11 @@ export default function AllTripsPage() {
 
                 <div className="space-y-2">
                   <Label>Company</Label>
-                  <Select value={companyId} onValueChange={setCompanyId}>
+                  <Select value={companyId || undefined} onValueChange={(value) => setCompanyId(value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="All companies" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All companies</SelectItem>
                       {companies.map((company) => (
                         <SelectItem key={company.id} value={company.id}>
                           {company.name}
@@ -294,12 +293,11 @@ export default function AllTripsPage() {
 
                 <div className="space-y-2">
                   <Label>Status</Label>
-                  <Select value={tripStatus} onValueChange={setTripStatus}>
+                  <Select value={tripStatus || undefined} onValueChange={(value) => setTripStatus(value)}>
                     <SelectTrigger>
                       <SelectValue placeholder="All statuses" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All statuses</SelectItem>
                       <SelectItem value="SCHEDULED">Scheduled</SelectItem>
                       <SelectItem value="BOARDING">Boarding</SelectItem>
                       <SelectItem value="DEPARTED">Departed</SelectItem>
@@ -400,7 +398,6 @@ export default function AllTripsPage() {
                     </Button>
                   </TableHead>
                   <TableHead>Vehicle</TableHead>
-                  <TableHead>Driver</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Bookings</TableHead>
                 </TableRow>
@@ -408,7 +405,7 @@ export default function AllTripsPage() {
               <TableBody>
                 {trips.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                       No trips found. Try adjusting your filters.
                     </TableCell>
                   </TableRow>
@@ -457,16 +454,6 @@ export default function AllTripsPage() {
                             <div className="text-xs text-muted-foreground">
                               {trip.vehicle.sideNumber} • {trip.vehicle.busType}
                             </div>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">Not assigned</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {trip.driver ? (
-                          <div className="text-sm">
-                            <div>{trip.driver.name}</div>
-                            <div className="text-xs text-muted-foreground">{trip.driver.phone}</div>
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">Not assigned</span>
