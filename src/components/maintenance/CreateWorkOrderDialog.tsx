@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
+import { StaffSelector, type StaffMember } from "./StaffSelector"
 
 interface Vehicle {
   id: string
@@ -29,11 +30,6 @@ interface Vehicle {
   sideNumber: string | null
   make: string
   model: string
-}
-
-interface Mechanic {
-  id: string
-  name: string
 }
 
 interface CreateWorkOrderDialogProps {
@@ -50,7 +46,7 @@ export function CreateWorkOrderDialog({
   const [isLoading, setIsLoading] = useState(false)
   const [isFetchingData, setIsFetchingData] = useState(true)
   const [vehicles, setVehicles] = useState<Vehicle[]>([])
-  const [mechanics, setMechanics] = useState<Mechanic[]>([])
+  const [staff, setStaff] = useState<StaffMember[]>([])
 
   const [formData, setFormData] = useState({
     vehicleId: "",
@@ -82,11 +78,15 @@ export function CreateWorkOrderDialog({
 
       setVehicles(vehiclesData.vehicles || [])
 
-      // Filter only mechanics
-      const mechanicsList = (staffData.staff || []).filter(
-        (s: any) => s.staffRole === "MECHANIC"
-      )
-      setMechanics(mechanicsList)
+      // Get all staff members (mechanics, supervisors, etc.)
+      // Filter to maintenance-related roles if needed
+      const allStaff = (staffData.staff || []).map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        staffRole: s.staffRole,
+        email: s.email,
+      }))
+      setStaff(allStaff)
     } catch (error) {
       console.error("Error fetching data:", error)
       toast.error("Failed to load vehicles and mechanics")
@@ -180,7 +180,7 @@ export function CreateWorkOrderDialog({
         {isFetchingData ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="ml-2 text-muted-foreground">Loading vehicles and mechanics...</p>
+            <p className="ml-2 text-muted-foreground">Loading vehicles and staff...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -287,27 +287,23 @@ export function CreateWorkOrderDialog({
               </p>
             </div>
 
-            {/* Assigned Mechanic */}
+            {/* Assigned Staff Member */}
             <div className="space-y-2">
-              <Label htmlFor="mechanic">Assigned Mechanic</Label>
-              <Select
+              <Label htmlFor="staff">Assigned Staff Member</Label>
+              <StaffSelector
+                staff={staff}
                 value={formData.assignedMechanicId}
                 onValueChange={(value) =>
                   setFormData({ ...formData, assignedMechanicId: value })
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a mechanic (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="unassigned">Unassigned</SelectItem>
-                  {mechanics.map((mechanic) => (
-                    <SelectItem key={mechanic.id} value={mechanic.id}>
-                      {mechanic.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder="Search by name, role, or ID..."
+                showUnassigned={true}
+                // Optionally filter to maintenance roles only:
+                // allowedRoles={["MECHANIC", "SUPERVISOR", "MAINTENANCE_LEAD"]}
+              />
+              <p className="text-xs text-muted-foreground">
+                Search and assign any staff member to this work order
+              </p>
             </div>
 
             {/* External Shop (if not using internal mechanic) */}

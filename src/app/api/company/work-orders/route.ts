@@ -27,29 +27,26 @@ const createWorkOrderSchema = z.object({
 // M1 FIX: Validation schema with scientific notation rejection
 const workOrderQuerySchema = z.object({
   status: z.enum(['OPEN', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELLED']).optional(),
-  priority: z.coerce.number().int().min(1).max(4).optional(),
+  priority: z.string().optional().transform((val) => {
+    if (!val) return undefined
+    const num = parseInt(val, 10)
+    if (isNaN(num) || num < 1 || num > 4) return undefined
+    return num
+  }),
   vehicleId: z.string().optional(),
   workType: z.enum(['PREVENTIVE', 'CORRECTIVE', 'INSPECTION', 'EMERGENCY']).optional(),
-  page: z.string()
-    .optional()
-    .default("1")
-    .transform((val) => {
-      if (/[eE.]/.test(val)) return "1"
-      const num = parseInt(val, 10)
-      return isNaN(num) || num < 1 ? "1" : String(num)
-    })
-    .transform((val) => parseInt(val, 10)),
-  limit: z.string()
-    .optional()
-    .default("20")
-    .transform((val) => {
-      if (/[eE.]/.test(val)) return "20"
-      const num = parseInt(val, 10)
-      if (isNaN(num) || num < 1) return "20"
-      if (num > 100) return "100"
-      return String(num)
-    })
-    .transform((val) => parseInt(val, 10)),
+  page: z.string().nullable().optional().transform((val) => {
+    if (!val || /[eE.]/.test(val)) return 1
+    const num = parseInt(val, 10)
+    return isNaN(num) || num < 1 ? 1 : num
+  }),
+  limit: z.string().nullable().optional().transform((val) => {
+    if (!val || /[eE.]/.test(val)) return 20
+    const num = parseInt(val, 10)
+    if (isNaN(num) || num < 1) return 20
+    if (num > 100) return 100
+    return num
+  }),
 })
 
 /**
@@ -59,11 +56,36 @@ const workOrderQuerySchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
+
+    console.log('[WorkOrders GET] Session:', {
+      exists: !!session,
+      role: session?.user?.role,
+      companyId: session?.user?.companyId,
+    })
+
     if (!session || session.user.role !== 'COMPANY_ADMIN' || !session.user.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      console.error('[WorkOrders GET] Unauthorized:', {
+        hasSession: !!session,
+        role: session?.user?.role,
+        companyId: session?.user?.companyId,
+      })
+      return NextResponse.json({
+        error: 'Unauthorized',
+        details: !session ? 'No session' : !session.user.companyId ? 'No company ID' : 'Invalid role'
+      }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
+
+    console.log('[WorkOrders GET] Raw query params:', {
+      status: searchParams.get('status'),
+      priority: searchParams.get('priority'),
+      vehicleId: searchParams.get('vehicleId'),
+      workType: searchParams.get('workType'),
+      page: searchParams.get('page'),
+      limit: searchParams.get('limit'),
+      fullUrl: request.url,
+    })
 
     // Validate query parameters with Zod
     const validationResult = workOrderQuerySchema.safeParse({
@@ -76,6 +98,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (!validationResult.success) {
+      console.error('[WorkOrders GET] Validation failed:', validationResult.error.format())
       return NextResponse.json(
         { error: 'Invalid query parameters', details: validationResult.error.format() },
         { status: 400 }
@@ -140,9 +163,16 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Error fetching work orders:', error)
+    console.error('[WorkOrders GET] Error fetching work orders:', error)
+    console.error('[WorkOrders GET] Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    })
     return NextResponse.json(
-      { error: 'Failed to fetch work orders' },
+      {
+        error: 'Failed to fetch work orders',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
       { status: 500 }
     )
   }
