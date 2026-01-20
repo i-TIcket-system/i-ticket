@@ -90,6 +90,7 @@ interface Trip {
   hasWater: boolean
   hasFood: boolean
   bookingHalted: boolean
+  autoResumeEnabled: boolean
   status: string
   company: {
     name: string

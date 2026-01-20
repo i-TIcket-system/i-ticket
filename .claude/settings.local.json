@@ -121,7 +121,8 @@
       "WebFetch(domain:apps.apple.com)",
       "WebFetch(domain:ui.shadcn.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(npm run db:push:*)"
+      "Bash(npm run db:push:*)",
+      "Bash(move:*)"
     ]
   }
 }

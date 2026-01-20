@@ -222,32 +222,6 @@ export default function HomePage() {
         Skip to main content
       </a>
 
-      {/* Stats Bar - Compact horizontal trust indicators (moved above hero for better conversion) */}
-      <section aria-label="Platform statistics" className="relative py-3 md:py-6 bg-gradient-to-r from-[#0e9494] via-[#0d7a7a] to-[#0d4f5c] border-b border-white/10">
-        <div className="container mx-auto px-4">
-          {/* Mobile: 2x2 grid, Tablet+: horizontal row */}
-          <div className="grid grid-cols-2 md:flex md:flex-wrap md:items-center md:justify-center gap-4 md:gap-8 lg:gap-12">
-            {stats.map((stat, i) => (
-              <div
-                key={stat.label}
-                className={`flex items-center gap-2 md:gap-3 ${mounted ? 'animate-fade-up' : 'opacity-0'}`}
-                style={{ animationDelay: `${i * 50}ms` }}
-              >
-                {/* Icon - smaller on mobile */}
-                <div className="flex-shrink-0 h-8 w-8 md:h-10 md:w-10 rounded-lg bg-white/15 backdrop-blur-sm border border-white/25 flex items-center justify-center">
-                  <stat.icon className="h-4 w-4 md:h-5 md:w-5 text-white" />
-                </div>
-                {/* Value and Label - responsive sizing */}
-                <div className="text-left min-w-0">
-                  <div className="text-xl md:text-2xl lg:text-3xl font-display font-bold text-white leading-none">{stat.value}</div>
-                  <div className="text-[10px] md:text-xs text-white/80 font-medium mt-0.5 truncate">{stat.label}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Hero Section - GLASSMORPHISM TRANSFORMATION */}
       <section id="main-content" className="relative min-h-[85vh] flex items-center gradient-hero-simien text-white overflow-hidden">
         {/* Background elements - Enhanced with animated patterns */}
@@ -405,6 +379,29 @@ export default function HomePage() {
           </div>
         </div>
 
+      </section>
+
+      {/* Stats Bar - Trust indicators at bottom of hero */}
+      <section aria-label="Platform statistics" className="relative py-3 md:py-6 bg-gradient-to-r from-[#0e9494] via-[#0d7a7a] to-[#0d4f5c] border-b border-white/10">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:flex md:flex-wrap md:items-center md:justify-center gap-4 md:gap-8 lg:gap-12">
+            {stats.map((stat, i) => (
+              <div
+                key={stat.label}
+                className={`flex items-center gap-2 md:gap-3 ${mounted ? 'animate-fade-up' : 'opacity-0'}`}
+                style={{ animationDelay: `${i * 50}ms` }}
+              >
+                <div className="flex-shrink-0 h-8 w-8 md:h-10 md:w-10 rounded-lg bg-white/15 backdrop-blur-sm border border-white/25 flex items-center justify-center">
+                  <stat.icon className="h-4 w-4 md:h-5 md:w-5 text-white" />
+                </div>
+                <div className="text-left min-w-0">
+                  <div className="text-xl md:text-2xl lg:text-3xl font-display font-bold text-white leading-none">{stat.value}</div>
+                  <div className="text-[10px] md:text-xs text-white/80 font-medium mt-0.5 truncate">{stat.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* Below-fold sections - Lazy loaded for better performance */}
