@@ -42,8 +42,12 @@ export async function POST(
         reportGenerated: true,
         lowSlotAlertSent: true,
         adminResumedFromAutoHalt: true,
+        autoResumeEnabled: true,
         company: {
-          select: { name: true }
+          select: {
+            name: true,
+            disableAutoHaltGlobally: true
+          }
         }
       }
     })
@@ -116,6 +120,51 @@ export async function POST(
           },
         },
       })
+
+      // AUTO-HALT ONLINE BOOKING: If slots drop to 10 or below, halt ONLINE booking (manual ticketing unaffected)
+      if (
+        updatedTrip.availableSlots <= 10 &&
+        !updatedTrip.bookingHalted &&
+        !trip.adminResumedFromAutoHalt &&
+        !trip.autoResumeEnabled &&  // Trip-specific bypass
+        !trip.company.disableAutoHaltGlobally  // Company-wide bypass
+      ) {
+        await tx.trip.update({
+          where: { id: params.tripId },
+          data: {
+            bookingHalted: true,
+            lowSlotAlertSent: true,
+          },
+        })
+
+        await tx.adminLog.create({
+          data: {
+            userId: "SYSTEM",
+            action: "AUTO_HALT_LOW_SLOTS",
+            tripId: params.tripId,
+            details: JSON.stringify({
+              reason: "Slots dropped to 10 or below",
+              availableSlots: updatedTrip.availableSlots,
+              totalSlots: updatedTrip.totalSlots,
+              triggeredBy: "manual_ticket_sale",
+              timestamp: new Date().toISOString(),
+            }),
+          },
+        })
+
+        console.log(`[AUTO-HALT] Online booking halted for trip ${params.tripId} (${updatedTrip.availableSlots} seats remaining). Manual ticketing can continue.`)
+
+        // Create ClickUp alert (non-blocking)
+        createLowSlotAlertTask({
+          tripId: params.tripId,
+          origin: trip.origin,
+          destination: trip.destination,
+          departureTime: trip.departureTime,
+          availableSlots: updatedTrip.availableSlots,
+          totalSlots: updatedTrip.totalSlots,
+          companyName: trip.company.name,
+        })
+      }
 
       // Log the manual sale with seat numbers
       await tx.adminLog.create({
