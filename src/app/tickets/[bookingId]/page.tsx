@@ -221,9 +221,9 @@ export default function TicketsPage() {
           <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-semibold mb-2">Tickets Not Found</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
-          <Link href="/tickets">
-            <Button>View All Tickets</Button>
-          </Link>
+          <Button asChild>
+            <Link href="/tickets">View All Tickets</Link>
+          </Button>
         </Card>
       </div>
     )

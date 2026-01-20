@@ -96,6 +96,22 @@
 }
 
 @layer base {
+  /* Hide browser-native password reveal buttons */
+  input[type="password"]::-ms-reveal,
+  input[type="password"]::-ms-clear {
+    display: none;
+  }
+
+  input[type="password"]::-webkit-credentials-auto-fill-button,
+  input[type="password"]::-webkit-caps-lock-indicator {
+    display: none;
+  }
+
+  /* Edge/Chromium password toggle */
+  input[type="password"]::-webkit-textfield-decoration-container {
+    display: none;
+  }
+
   * {
     @apply border-border;
   }

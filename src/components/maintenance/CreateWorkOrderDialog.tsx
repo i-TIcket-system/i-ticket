@@ -54,7 +54,7 @@ export function CreateWorkOrderDialog({
     taskType: "CORRECTIVE" as const,
     description: "",
     priority: 2, // 1=Low, 2=Normal, 3=High, 4=Urgent
-    assignedMechanicId: "",
+    assignedStaffIds: [] as string[], // Multiple staff can be assigned
     serviceProvider: "", // External shop name
     scheduledDate: "",
   })
@@ -116,15 +116,16 @@ export function CreateWorkOrderDialog({
     setIsLoading(true)
 
     try {
+      // Filter out "unassigned" from staff IDs
+      const validStaffIds = formData.assignedStaffIds.filter(id => id !== "unassigned")
+
       const payload = {
         vehicleId: formData.vehicleId,
         title: formData.title,
         taskType: formData.taskType,
         description: formData.description,
         priority: formData.priority,
-        assignedMechanicId: formData.assignedMechanicId && formData.assignedMechanicId !== "unassigned"
-          ? formData.assignedMechanicId
-          : undefined,
+        assignedStaffIds: validStaffIds.length > 0 ? validStaffIds : undefined,
         serviceProvider: formData.serviceProvider || undefined,
         scheduledDate: formData.scheduledDate
           ? new Date(formData.scheduledDate).toISOString()
@@ -152,7 +153,7 @@ export function CreateWorkOrderDialog({
         taskType: "CORRECTIVE",
         description: "",
         priority: 2,
-        assignedMechanicId: "",
+        assignedStaffIds: [],
         serviceProvider: "",
         scheduledDate: "",
       })
@@ -287,22 +288,23 @@ export function CreateWorkOrderDialog({
               </p>
             </div>
 
-            {/* Assigned Staff Member */}
+            {/* Assigned Staff Members */}
             <div className="space-y-2">
-              <Label htmlFor="staff">Assigned Staff Member</Label>
+              <Label htmlFor="staff">Assigned Staff Members</Label>
               <StaffSelector
                 staff={staff}
-                value={formData.assignedMechanicId}
+                value={formData.assignedStaffIds}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, assignedMechanicId: value })
+                  setFormData({ ...formData, assignedStaffIds: value as string[] })
                 }
-                placeholder="Search by name, role, or ID..."
+                placeholder="Select staff members..."
                 showUnassigned={true}
+                multiple={true}
                 // Optionally filter to maintenance roles only:
                 // allowedRoles={["MECHANIC", "SUPERVISOR", "MAINTENANCE_LEAD"]}
               />
               <p className="text-xs text-muted-foreground">
-                Search and assign any staff member to this work order
+                Assign multiple staff members (driver, conductor, mechanic, etc.) to this work order
               </p>
             </div>
 

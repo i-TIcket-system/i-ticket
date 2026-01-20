@@ -11,11 +11,12 @@ export async function GET(
   { params }: { params: { code: string } }
 ) {
   try {
-    const code = params.code.trim().toUpperCase()
+    const code = params.code.trim()
+    const codeUpper = code.toUpperCase()
 
-    // Try to find by booking ID first
+    // Try to find by booking ID first (case-sensitive, use trimmed original)
     let booking = await prisma.booking.findUnique({
-      where: { id: params.code },
+      where: { id: code },
       include: {
         passengers: {
           select: {
@@ -42,10 +43,10 @@ export async function GET(
       }
     })
 
-    // If not found by booking ID, try to find by ticket short code
+    // If not found by booking ID, try to find by ticket short code (uppercase)
     if (!booking) {
       const ticket = await prisma.ticket.findUnique({
-        where: { shortCode: code },
+        where: { shortCode: codeUpper },
         include: {
           booking: {
             include: {

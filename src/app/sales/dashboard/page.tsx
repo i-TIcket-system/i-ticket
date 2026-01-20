@@ -270,12 +270,12 @@ export default function SalesDashboardPage() {
               </div>
               {data.stats.team.recruitsCount > 0 && (
                 <div className="pt-3 border-t">
-                  <Link href="/sales/team">
-                    <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" asChild>
+                    <Link href="/sales/team">
                       <Users className="h-4 w-4 mr-2" />
                       View My Team ({data.stats.team.recruitsCount})
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               )}
             </CardContent>
@@ -395,11 +395,11 @@ export default function SalesDashboardPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle>Recent Commissions</CardTitle>
-              <Link href="/sales/commissions">
-                <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/sales/commissions">
                   View All <ArrowRight className="h-4 w-4 ml-1" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </CardHeader>
             <CardContent>
               {data.recentCommissions.length === 0 ? (

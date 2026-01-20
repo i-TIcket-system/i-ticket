@@ -278,15 +278,16 @@ function TripCard({ trip }: { trip: AssignedTrip }) {
 
           {/* Action Button - Always visible */}
           <div className="flex lg:flex-col items-center justify-center gap-3 p-4 lg:p-6 bg-gray-50 lg:w-48 border-t lg:border-t-0 lg:border-l">
-            <Link href={`/cashier/trip/${trip.id}`} className="w-full">
-              <Button
-                className="w-full h-12 text-lg"
-                disabled={isPast || isSoldOut}
-              >
+            <Button
+              className="w-full h-12 text-lg"
+              disabled={isPast || isSoldOut}
+              asChild
+            >
+              <Link href={`/cashier/trip/${trip.id}`}>
                 <Ticket className="h-5 w-5 mr-2" />
                 {isPast ? "View" : isSoldOut ? "Sold Out" : "Sell Tickets"}
-              </Button>
-            </Link>
+              </Link>
+            </Button>
             <p className="text-xs text-center text-muted-foreground">
               {trip.availableSlots} seats available
             </p>

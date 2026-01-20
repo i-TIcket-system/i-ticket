@@ -62,6 +62,7 @@ model Company {
   phones    String   @default("[]") // JSON array stored as string
   email     String
   isActive  Boolean  @default(true)
+  disableAutoHaltGlobally Boolean @default(false)  // Company-wide auto-halt preference
 
   // Additional contact information (optional)
   fax         String?  // Fax number
@@ -164,6 +165,7 @@ model Trip {
   lowSlotAlertSent         Boolean   @default(false)
   bookingHalted            Boolean   @default(false)
   adminResumedFromAutoHalt Boolean   @default(false)
+  autoResumeEnabled        Boolean   @default(false)  // Admin preference to prevent future auto-halts
   reportGenerated          Boolean   @default(false)
   version           Int       @default(0)  // P3: Optimistic locking version
   bookings          Booking[]
@@ -858,8 +860,9 @@ model WorkOrder {
   priority          Int      @default(2) // 1=Low, 2=Normal, 3=High, 4=Urgent
 
   // Assignment
-  assignedToId      String?  // Mechanic user ID
-  assignedToName    String?  // Denormalized name
+  assignedToId      String?  // Mechanic user ID (deprecated - use assignedStaffIds)
+  assignedToName    String?  // Denormalized name (deprecated)
+  assignedStaffIds  String?  @db.Text // JSON array of staff user IDs (supports multiple assignments)
   serviceProvider   String?  // External shop name (if outsourced)
 
   // Status tracking

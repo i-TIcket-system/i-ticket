@@ -186,9 +186,9 @@ export default function CashierTripPage() {
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h2 className="text-lg font-semibold mb-2">Error</h2>
             <p className="text-muted-foreground mb-4">{error || "Trip not found"}</p>
-            <Link href="/cashier">
-              <Button>Back to Dashboard</Button>
-            </Link>
+            <Button asChild>
+              <Link href="/cashier">Back to Dashboard</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -203,11 +203,11 @@ export default function CashierTripPage() {
     <div className="container mx-auto px-4 py-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/cashier">
-          <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" asChild>
+          <Link href="/cashier">
             <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <div className="flex-1">
           <h1 className="text-xl font-bold flex items-center gap-2">
             <MapPin className="h-5 w-5 text-teal-600" />

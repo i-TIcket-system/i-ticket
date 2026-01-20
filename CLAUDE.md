@@ -24,6 +24,39 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ## Recent Development (Jan 2026)
 
+### Latest Updates (Jan 20, 2026 - Late Evening Session)
+- **Customer-Facing Fixes & Critical Security Patches** (✅ COMPLETE)
+  - **Terms & Conditions**: Added booking change policy (Section 6.7 & 6.8)
+    - Clarified i-Ticket's limited responsibility for trip changes
+    - Refund policy: Direct customers to bus companies (platform not liable)
+    - Version updated to 2.2
+  - **Admin Notifications**: Super Admins now notified when auto-manifest generates
+    - New notification type: `MANIFEST_AUTO_GENERATED`
+    - Includes company name, route, trigger reason, passenger count
+  - **Password Eye Icon Fix**: Fixed visual bug with duplicate eye icons
+    - Added CSS to hide browser-native password toggles
+    - Clean single-icon display across all browsers
+  - **Track Ticket API**: Fixed booking ID search functionality
+    - Issue: Case-sensitive UUID matching was using uppercased string
+    - Fixed: Proper trimming without case conversion for booking IDs
+    - Ticket codes still properly uppercased for lookup
+  - **Batch Trips UI**: Removed duplicate departure time field
+    - Conditional rendering: Only show when `sameTimeForAll` is true
+    - Individual time pickers take precedence when checkbox unchecked
+
+  - **🚨 CRITICAL SECURITY FIXES**:
+    - **Manual Ticketing Trip Status Validation**:
+      - Added blocking for DEPARTED/COMPLETED/CANCELLED trips
+      - Prevents selling tickets for buses that already left or trips that ended
+      - Files: `manual-ticket/route.ts`, `cashier/sell/route.ts`
+    - **Trip Status Forced Halt**:
+      - When trip status → DEPARTED/COMPLETED/CANCELLED, booking ALWAYS halts
+      - NO bypass settings (global/trip-specific) can override trip status
+      - Documented in `BUSINESS-LOGIC.md` Section 1.8 with Scenario 8
+    - **Auto-Halt on DEPARTED**: Verified existing implementation works correctly
+      - Status change API sets `bookingHalted = true` unconditionally
+      - Both online and manual ticketing respect trip status (blocks before halt check)
+
 ### Latest Updates (Jan 20, 2026 - Evening Session)
 - **Batch Trip Creation - Build Fixes** (✅ COMPLETE)
   - Fixed import paths in new API routes (batch, trip-templates)
@@ -33,6 +66,36 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
   - Fixed `validateQueryParams` type signature: `z.ZodSchema<T>` → `z.ZodType<T, any, any>` (supports transform schemas)
   - Fixed payment page onClick handler (processPayment method parameter)
   - **STATUS**: ✅ Build passing, TypeScript compilation successful
+
+- **UI/UX Enhancements** (✅ COMPLETE)
+  - **Track Booking Widget**: Added guest trip tracking section on homepage
+    - Placed between hero and partners sections (py-4 spacing)
+    - Strict validation patterns (TKT-ABC123, BKG-ABC123, booking IDs)
+    - Clean white card design (no glassmorphism per user request)
+  - **Toaster Notifications**: Redesigned toast styling to match teal brand
+    - Dark text on light teal backgrounds for better readability
+    - Fixed CSS syntax error (unclosed @media query block)
+    - Consistent brand colors across all toast types (success, error, info, warning)
+
+- **Multi-Date Picker - Complete Rebuild** (✅ COMPLETE)
+  - **Interactive Calendar**: Persistent month-view calendar (stays open, no modal)
+  - **Click-to-Select**: Click dates to select/deselect (highlighted in teal)
+  - **24-Hour Rule (CRITICAL)**: Automatic gray-out of next day after selection
+    - When driver/bus leaves on Day 1, they return on Day 2 (unavailable)
+    - Next available forward trip: Day 3
+    - Prevents double-booking of vehicles/staff
+  - **Compact Design**: Reduced size by 50% (max-w-xs, smaller padding/text)
+  - **Dark Mode Fixed**: Proper contrast in dark theme
+  - **Month Navigation**: Previous/next arrows, today indicator
+
+- **Time Picker Improvements** (✅ COMPLETE)
+  - **Individual Times**: When "same time for all" unchecked, show time pickers per date
+  - **Clock Icons**: Visual indicators for departure and return times
+  - **Clear Labels**: "Depart" / "Return" labels for clarity
+  - **Dark Mode Fixed**: All time inputs visible in dark theme
+    - White bg in light mode, dark gray in dark mode
+    - Time picker indicator inverted in dark mode
+  - **Responsive Layout**: Stacked on mobile, side-by-side on desktop
 
 ### Latest Updates (Jan 20, 2026 - Morning Session)
 - **Company Management**: Super Admin can register/edit bus companies with credential provisioning
@@ -96,7 +159,13 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ### Trip Management
 - CRUD with intermediate stops, staff/vehicle assignment (all mandatory)
-- Auto-halt at 10% capacity, search filters, distance tracking
+- **Auto-Halt System** (ONLINE booking only, manual ticketing exempt):
+  - **Fixed threshold**: 10 seats remaining (NOT 10% - consistent across all bus sizes)
+  - **Two-level control**:
+    1. **Company-wide**: Disable auto-halt for ALL trips (`Company.disableAutoHaltGlobally`)
+    2. **Trip-specific**: Disable auto-halt for ONE trip (`Trip.autoResumeEnabled`)
+  - Priority: Company-wide > Trip-specific > One-time resume > Default (auto-halt)
+  - Manual ticketing (cashier/ticketer) can ALWAYS sell (no auto-halt)
 - Trip status: SCHEDULED, BOARDING, DEPARTED, COMPLETED, CANCELLED
 - Actual departure/arrival times auto-recorded
 

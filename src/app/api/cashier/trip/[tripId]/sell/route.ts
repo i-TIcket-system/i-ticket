@@ -6,6 +6,7 @@ import { transactionWithTimeout } from "@/lib/db"
 import { generateShortCode } from "@/lib/utils"
 import { calculateBookingAmounts } from "@/lib/commission"
 import QRCode from "qrcode"
+import { createErrorResponse } from "@/lib/error-handler"
 
 /**
  * POST /api/cashier/trip/[tripId]/sell
@@ -70,6 +71,7 @@ export async function POST(
             price: true,
             totalSlots: true,
             availableSlots: true,
+            status: true,
             origin: true,
             destination: true,
             departureTime: true,
@@ -90,6 +92,11 @@ export async function POST(
 
         if (!trip) {
           throw new Error("Trip not found or not assigned to you")
+        }
+
+        // CRITICAL: Block ticket sales on departed, completed, or cancelled trips
+        if (trip.status === "DEPARTED" || trip.status === "COMPLETED" || trip.status === "CANCELLED") {
+          throw new Error(`Cannot sell tickets for this trip. Trip status: ${trip.status}`)
         }
 
         // Check available slots
@@ -239,7 +246,6 @@ export async function POST(
     return NextResponse.json(result)
   } catch (error) {
     console.error("Cashier ticket sale error:", error)
-    const message = error instanceof Error ? error.message : "Failed to sell tickets"
-    return NextResponse.json({ error: message }, { status: 500 })
+    return createErrorResponse(error, 500)
   }
 }

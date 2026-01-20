@@ -86,6 +86,8 @@ export default function CompanyTripsPage() {
   const [newPrice, setNewPrice] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [showHelpModal, setShowHelpModal] = useState(false)
+  const [disableAutoHaltGlobally, setDisableAutoHaltGlobally] = useState(false)
+  const [isTogglingGlobalAutoHalt, setIsTogglingGlobalAutoHalt] = useState(false)
 
   // P2: Search and filter state
   const [searchQuery, setSearchQuery] = useState("")
@@ -108,6 +110,7 @@ export default function CompanyTripsPage() {
         return
       }
       fetchTrips()
+      fetchCompanySettings()
     }
   }, [status, session])
 
@@ -124,6 +127,45 @@ export default function CompanyTripsPage() {
       console.error("Failed to fetch trips:", error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchCompanySettings = async () => {
+    try {
+      const response = await fetch("/api/company/settings/auto-halt")
+      const data = await response.json()
+
+      if (response.ok) {
+        setDisableAutoHaltGlobally(data.company.disableAutoHaltGlobally)
+      }
+    } catch (error) {
+      console.error("Failed to fetch company settings:", error)
+    }
+  }
+
+  const toggleGlobalAutoHalt = async () => {
+    setIsTogglingGlobalAutoHalt(true)
+    try {
+      const newValue = !disableAutoHaltGlobally
+      const response = await fetch("/api/company/settings/auto-halt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ disableAutoHaltGlobally: newValue }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setDisableAutoHaltGlobally(newValue)
+        toast.success(data.message)
+      } else {
+        toast.error(data.error || "Failed to update setting")
+      }
+    } catch (error) {
+      console.error("Failed to toggle global auto-halt:", error)
+      toast.error("Network error. Please try again.")
+    } finally {
+      setIsTogglingGlobalAutoHalt(false)
     }
   }
 
@@ -416,12 +458,12 @@ export default function CompanyTripsPage() {
             <Keyboard className="h-4 w-4 mr-2" />
             Shortcuts
           </Button>
-          <Link href="/company/trips/new">
-            <Button>
+          <Button asChild>
+            <Link href="/company/trips/new">
               <Plus className="mr-2 h-4 w-4" />
               Create New Trip
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -497,7 +539,33 @@ export default function CompanyTripsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Trips</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>All Trips</CardTitle>
+            <div className="flex items-center gap-3 px-4 py-2 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+              <input
+                type="checkbox"
+                id="globalAutoHalt"
+                checked={disableAutoHaltGlobally}
+                onChange={toggleGlobalAutoHalt}
+                disabled={isTogglingGlobalAutoHalt}
+                className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500 disabled:opacity-50"
+              />
+              <label
+                htmlFor="globalAutoHalt"
+                className="text-sm font-medium cursor-pointer select-none"
+              >
+                Disable auto-halt for all trips
+              </label>
+              {isTogglingGlobalAutoHalt && (
+                <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+              )}
+            </div>
+          </div>
+          {disableAutoHaltGlobally && (
+            <p className="text-xs text-muted-foreground mt-2 px-1">
+              ⚠️ Global auto-halt is disabled. Online booking will never stop at 10 seats for any trip.
+            </p>
+          )}
         </CardHeader>
         <CardContent>
           {/* UX-19: Add horizontal scroll on tablet to prevent column squeezing */}
@@ -640,18 +708,18 @@ export default function CompanyTripsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Link href={`/company/trips/${trip.id}`}>
-                            <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/company/trips/${trip.id}`}>
                               <Eye className="h-4 w-4 mr-1" />
                               View
-                            </Button>
-                          </Link>
-                          <Link href={`/company/trips/${trip.id}/edit`}>
-                            <Button variant="outline" size="sm">
+                            </Link>
+                          </Button>
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/company/trips/${trip.id}/edit`}>
                               <Edit className="h-4 w-4 mr-1" />
                               Edit
-                            </Button>
-                          </Link>
+                            </Link>
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>

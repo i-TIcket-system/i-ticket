@@ -21,6 +21,7 @@ export function BookingControlCard({
 }: BookingControlCardProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
+  const [autoResumeEnabled, setAutoResumeEnabled] = useState(false)
 
   const toggleBooking = async (action: "RESUME" | "HALT") => {
     setIsLoading(true)
@@ -30,7 +31,10 @@ export function BookingControlCard({
       const response = await fetch(`/api/company/trips/${tripId}/toggle-booking`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({
+          action,
+          ...(action === "RESUME" && { autoResumeEnabled }),
+        }),
       })
 
       const data = await response.json()
@@ -40,6 +44,7 @@ export function BookingControlCard({
           type: "success",
           text: data.message,
         })
+        setAutoResumeEnabled(false) // Reset checkbox after successful action
         setTimeout(() => {
           onUpdate()
           setMessage(null)
@@ -86,36 +91,59 @@ export function BookingControlCard({
           </div>
         )}
 
-        <div className="flex gap-2">
-          {bookingHalted ? (
-            <Button
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-              size="sm"
-              onClick={() => toggleBooking("RESUME")}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <PlayCircle className="h-4 w-4 mr-2" />
-              )}
-              Resume Online Booking
-            </Button>
-          ) : (
-            <Button
-              variant="destructive"
-              className="flex-1"
-              size="sm"
-              onClick={() => toggleBooking("HALT")}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <PauseCircle className="h-4 w-4 mr-2" />
-              )}
-              Halt Online Booking
-            </Button>
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            {bookingHalted ? (
+              <Button
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                size="sm"
+                onClick={() => toggleBooking("RESUME")}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                )}
+                Resume Online Booking
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                className="flex-1"
+                size="sm"
+                onClick={() => toggleBooking("HALT")}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <PauseCircle className="h-4 w-4 mr-2" />
+                )}
+                Halt Online Booking
+              </Button>
+            )}
+          </div>
+
+          {bookingHalted && (
+            <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded">
+              <input
+                type="checkbox"
+                id="autoResumeEnabled"
+                checked={autoResumeEnabled}
+                onChange={(e) => setAutoResumeEnabled(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label
+                htmlFor="autoResumeEnabled"
+                className="text-xs text-blue-900 cursor-pointer select-none"
+              >
+                <strong>Don't auto-halt this trip again</strong>
+                <p className="text-blue-700 mt-1">
+                  Online booking will continue even below 10 seats. Other trips are not affected.
+                </p>
+              </label>
+            </div>
           )}
         </div>
 

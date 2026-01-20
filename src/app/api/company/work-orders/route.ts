@@ -19,7 +19,8 @@ const createWorkOrderSchema = z.object({
   scheduleId: z.string().optional(),
   description: z.string().min(5, 'Description must be at least 5 characters').max(2000),
   priority: z.number().int().min(1).max(4).default(2), // 1=Low, 2=Normal, 3=High, 4=Urgent
-  assignedMechanicId: z.string().optional(),
+  assignedMechanicId: z.string().optional(), // Deprecated: use assignedStaffIds
+  assignedStaffIds: z.array(z.string()).optional(), // Multiple staff assignments
   serviceProvider: z.string().optional(), // External shop name
   scheduledDate: z.string().datetime().optional(),
 })
@@ -191,8 +192,10 @@ export async function POST(request: NextRequest) {
 
     // Validate request body
     const body = await request.json()
+    console.log('[WorkOrder POST] Request body:', JSON.stringify(body, null, 2))
     const validatedData = createWorkOrderSchema.parse(body)
-    const { vehicleId, assignedMechanicId, scheduledDate, ...restData } = validatedData
+    const { vehicleId, assignedMechanicId, assignedStaffIds, scheduledDate, ...restData } = validatedData
+    console.log('[WorkOrder POST] Validated data:', { vehicleId, assignedMechanicId, assignedStaffIds, scheduledDate })
 
     // Verify vehicle belongs to company
     const vehicle = await prisma.vehicle.findUnique({
@@ -211,33 +214,47 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate mechanic belongs to company if specified and get their name
+    // Determine which staff assignment to use (new array or legacy single)
+    const staffIdsToAssign = assignedStaffIds && assignedStaffIds.length > 0
+      ? assignedStaffIds
+      : (assignedMechanicId ? [assignedMechanicId] : [])
+
+    // Validate all assigned staff belong to company
     let mechanicName: string | null = null
-    if (assignedMechanicId) {
-      const mechanic = await prisma.user.findUnique({
-        where: { id: assignedMechanicId },
-        select: { companyId: true, staffRole: true, name: true },
+    if (staffIdsToAssign.length > 0) {
+      const staff = await prisma.user.findMany({
+        where: {
+          id: { in: staffIdsToAssign },
+          companyId: session.user.companyId,
+        },
+        select: { id: true, name: true, staffRole: true },
       })
 
-      if (!mechanic || mechanic.companyId !== session.user.companyId) {
+      if (staff.length !== staffIdsToAssign.length) {
         return NextResponse.json(
-          { error: 'Invalid mechanic assignment' },
+          { error: 'One or more assigned staff members are invalid or do not belong to your company' },
           { status: 400 }
         )
       }
-      mechanicName = mechanic.name
+
+      // For backward compatibility, set mechanicName to first assigned staff
+      mechanicName = staff[0]?.name || null
     }
 
     // Generate work order number
     const workOrderNumber = `WO-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`
 
     // Create work order
+    console.log('[WorkOrder POST] Creating work order with staffIds:', staffIdsToAssign)
     const workOrder = await prisma.workOrder.create({
       data: {
         vehicleId,
         companyId: session.user.companyId,
         workOrderNumber,
-        assignedToId: assignedMechanicId || null,
+        // Store multiple staff IDs as JSON
+        assignedStaffIds: staffIdsToAssign.length > 0 ? JSON.stringify(staffIdsToAssign) : null,
+        // Keep first staff in legacy fields for backward compatibility
+        assignedToId: staffIdsToAssign[0] || null,
         assignedToName: mechanicName,
         odometerAtService: vehicle.currentOdometer,
         scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
@@ -252,6 +269,7 @@ export async function POST(request: NextRequest) {
         },
       },
     })
+    console.log('[WorkOrder POST] Work order created successfully:', workOrder.id)
 
     // Create admin log
     await prisma.adminLog.create({

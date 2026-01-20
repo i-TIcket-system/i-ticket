@@ -3,6 +3,7 @@ import { hash } from "bcryptjs"
 import prisma from "@/lib/db"
 import { checkRateLimit, getClientIdentifier, RATE_LIMITS, rateLimitExceeded } from "@/lib/rate-limit"
 import { generateUniqueReferralCode, generateSalesPersonQR } from "@/lib/sales/referral-utils"
+import { createErrorResponse } from "@/lib/error-handler"
 
 export async function POST(request: NextRequest) {
   try {
@@ -199,18 +200,6 @@ export async function POST(request: NextRequest) {
     )
   } catch (error) {
     console.error("Registration error:", error)
-
-    // Return specific error message if available
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      )
-    }
-
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return createErrorResponse(error, 400)
   }
 }

@@ -17,6 +17,7 @@ export type NotificationType =
   | "REFERRAL_NEW"
   | "PAYOUT_PROCESSED"
   | "LOW_SLOT_ALERT"
+  | "MANIFEST_AUTO_GENERATED"
   | "SYSTEM_ALERT"
   // Work Order notifications
   | "WORK_ORDER_CREATED"
@@ -200,6 +201,14 @@ export function generateNotification(
         title: "Low Availability Alert",
         message: `${data.tripRoute || "Trip"} has only ${data.availableSlots || 0} seats remaining.`,
         priority: 3, // High
+      }
+
+    case "MANIFEST_AUTO_GENERATED":
+      return {
+        type,
+        title: "Manifest Auto-Generated",
+        message: `${data.companyName || "Company"} - ${data.tripRoute || "Trip"}: Manifest generated (${data.reason || "trigger unknown"})`,
+        priority: 2, // Normal
       }
 
     case "SYSTEM_ALERT":

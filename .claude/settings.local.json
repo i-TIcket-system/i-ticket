@@ -111,7 +111,17 @@
       "Bash(git clean:*)",
       "WebFetch(domain:superdevresources.com)",
       "WebFetch(domain:onyx8agency.com)",
-      "WebFetch(domain:freefrontend.com)"
+      "WebFetch(domain:freefrontend.com)",
+      "Bash(do echo -e \"\\\\n--- $file ---\")",
+      "Bash(git pull:*)",
+      "WebFetch(domain:brandfetch.com)",
+      "WebFetch(domain:www.ethiotelecom.et)",
+      "WebFetch(domain:www.cbeib.com.et)",
+      "WebFetch(domain:combanketh.et)",
+      "WebFetch(domain:apps.apple.com)",
+      "WebFetch(domain:ui.shadcn.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npm run db:push:*)"
     ]
   }
 }

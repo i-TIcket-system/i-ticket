@@ -339,9 +339,9 @@ export default function EditTripPage() {
           <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-semibold mb-2">Trip Not Found</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
-          <Link href="/company/trips">
-            <Button variant="outline">Back to Trips</Button>
-          </Link>
+          <Button variant="outline" asChild>
+            <Link href="/company/trips">Back to Trips</Link>
+          </Button>
         </Card>
       </div>
     )

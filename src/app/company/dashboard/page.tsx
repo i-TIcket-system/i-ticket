@@ -511,16 +511,16 @@ export default function CompanyDashboard() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            <Link href={`/company/trips/${trip.id}`}>
-                              <Button variant="ghost" size="sm" aria-label="View trip details">
+                            <Button variant="ghost" size="sm" aria-label="View trip details" asChild>
+                              <Link href={`/company/trips/${trip.id}`}>
                                 <Eye className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Link href={`/company/trips/${trip.id}/edit`}>
-                              <Button variant="ghost" size="sm" aria-label="Edit trip">
+                              </Link>
+                            </Button>
+                            <Button variant="ghost" size="sm" aria-label="Edit trip" asChild>
+                              <Link href={`/company/trips/${trip.id}/edit`}>
                                 <Edit className="h-4 w-4" />
-                              </Button>
-                            </Link>
+                              </Link>
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>

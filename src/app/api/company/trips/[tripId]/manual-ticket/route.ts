@@ -3,6 +3,7 @@ import prisma, { transactionWithTimeout } from "@/lib/db"
 import { requireCompanyAdmin, handleAuthError } from "@/lib/auth-helpers"
 import { createLowSlotAlertTask } from "@/lib/clickup"
 import { getAvailableSeatNumbers } from "@/lib/utils"
+import { createErrorResponse } from "@/lib/error-handler"
 
 /**
  * Record a manual ticket sale (sold at company office)
@@ -36,6 +37,7 @@ export async function POST(
         origin: true,
         destination: true,
         departureTime: true,
+        status: true,
         bookingHalted: true,
         reportGenerated: true,
         lowSlotAlertSent: true,
@@ -54,6 +56,14 @@ export async function POST(
       return NextResponse.json(
         { error: "You can only sell tickets for your company's trips" },
         { status: 403 }
+      )
+    }
+
+    // CRITICAL: Block manual ticket sales on departed, completed, or cancelled trips
+    if (trip.status === "DEPARTED" || trip.status === "COMPLETED" || trip.status === "CANCELLED") {
+      return NextResponse.json(
+        { error: `Cannot sell tickets for this trip. Trip status: ${trip.status}` },
+        { status: 400 }
       )
     }
 
@@ -123,52 +133,6 @@ export async function POST(
         },
       })
 
-      // CRITICAL: Auto-halt if slots drop to 10 or below
-      // Skip if: sold out (0), already halted, or admin resumed from auto-halt
-      if (
-        updatedTrip.availableSlots > 0 &&
-        updatedTrip.availableSlots <= 10 &&
-        !trip.bookingHalted &&
-        !trip.adminResumedFromAutoHalt
-      ) {
-        await tx.trip.update({
-          where: { id: params.tripId },
-          data: {
-            lowSlotAlertSent: true,
-            bookingHalted: true,
-          },
-        })
-
-        await tx.adminLog.create({
-          data: {
-            userId: "SYSTEM",
-            action: "AUTO_HALT_LOW_SLOTS",
-            tripId: params.tripId,
-            details: JSON.stringify({
-              reason: "Slots dropped to 10 or below",
-              availableSlots: updatedTrip.availableSlots,
-              totalSlots: updatedTrip.totalSlots,
-              triggeredBy: "manual_ticket_sale",
-              timestamp: new Date().toISOString(),
-            }),
-          },
-        })
-
-        // Create ClickUp alert task (non-blocking)
-        createLowSlotAlertTask({
-          tripId: params.tripId,
-          origin: trip.origin,
-          destination: trip.destination,
-          departureTime: trip.departureTime,
-          availableSlots: updatedTrip.availableSlots,
-          totalSlots: updatedTrip.totalSlots,
-          companyName: trip.company.name,
-          triggeredBy: 'manual_ticket_sale',
-        })
-
-        console.log(`[ALERT] Trip ${params.tripId} auto-halted: Only ${updatedTrip.availableSlots} slots remaining`)
-      }
-
       // BUS FULL: Mark manifest ready if all seats sold
       if (updatedTrip.availableSlots === 0 && !trip.reportGenerated) {
         await tx.trip.update({
@@ -214,20 +178,10 @@ export async function POST(
     console.error("Manual ticket sale error:", error)
 
     // Handle auth errors separately
-    if (error instanceof Error) {
-      if (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN") {
-        return handleAuthError(error)
-      }
-      // Return the actual error message for non-auth errors
-      return NextResponse.json(
-        { error: error.message },
-        { status: 400 }
-      )
+    if (error instanceof Error && (error.message === "UNAUTHORIZED" || error.message === "FORBIDDEN")) {
+      return handleAuthError(error)
     }
 
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+    return createErrorResponse(error, 400)
   }
 }

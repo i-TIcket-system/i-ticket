@@ -1079,11 +1079,11 @@ export default function FAQPage() {
                   Our friendly support team is ready to help you with any questions or concerns.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                  <Link href="/contact">
-                    <Button className="w-full sm:w-auto">
+                  <Button className="w-full sm:w-auto" asChild>
+                    <Link href="/contact">
                       Contact Support
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                   <a href="tel:+251911234567">
                     <Button variant="outline" className="w-full sm:w-auto">
                       Call +251-91-123-4567

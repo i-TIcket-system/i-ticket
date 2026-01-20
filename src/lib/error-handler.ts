@@ -9,14 +9,43 @@ export function sanitizeErrorMessage(error: unknown): string {
     // Map common error messages to user-friendly versions
     const errorMessage = error.message.toLowerCase()
 
-    if (errorMessage.includes('unique constraint') || errorMessage.includes('duplicate')) {
+    // Check for Prisma error codes
+    const errorCode = (error as any).code
+
+    // Prisma connection errors - NEVER expose these
+    if (
+      errorCode === 'P1001' || // Can't reach database server
+      errorCode === 'P1002' || // Database server timeout
+      errorCode === 'P1008' || // Operations timed out
+      errorCode === 'P1017' || // Server closed connection
+      errorMessage.includes("can't reach database") ||
+      errorMessage.includes("database server") ||
+      errorMessage.includes("connection refused") ||
+      errorMessage.includes("econnrefused") ||
+      errorMessage.includes("etimedout") ||
+      errorMessage.includes("localhost:5432") ||
+      errorMessage.includes("localhost:3306") ||
+      (errorMessage.includes("prisma") && errorMessage.includes("invocation"))
+    ) {
+      return "Service temporarily unavailable. Please try again in a moment."
+    }
+
+    // Prisma unique constraint
+    if (errorCode === 'P2002' || errorMessage.includes('unique constraint') || errorMessage.includes('duplicate')) {
       return "This record already exists. Please check your input."
     }
 
-    if (errorMessage.includes('foreign key constraint')) {
+    // Prisma foreign key constraint
+    if (errorCode === 'P2003' || errorMessage.includes('foreign key constraint')) {
       return "Related record not found. Please refresh and try again."
     }
 
+    // Prisma record not found
+    if (errorCode === 'P2025' || errorMessage.includes('record to') && errorMessage.includes('not found')) {
+      return "Resource not found."
+    }
+
+    // Generic not found
     if (errorMessage.includes('not found')) {
       return "Resource not found."
     }
@@ -25,7 +54,7 @@ export function sanitizeErrorMessage(error: unknown): string {
       return "Authentication required. Please log in."
     }
 
-    if (errorMessage.includes('permission') || errorMessage.includes('access denied')) {
+    if (errorMessage.includes('permission') || errorMessage.includes('access denied') || errorMessage.includes('forbidden')) {
       return "Access denied. You don't have permission for this action."
     }
 

@@ -2,6 +2,7 @@ import { generatePassengerManifest } from "@/lib/report-generator"
 import fs from "fs"
 import path from "path"
 import prisma from "@/lib/db"
+import { notifySuperAdmins } from "@/lib/notifications/create"
 
 /**
  * Auto-generate and store manifest for Super Admin (i-Ticket platform) tracking
@@ -116,6 +117,20 @@ export async function generateAndStoreManifest(
       passengerCount,
       filePath: publicPath
     })
+
+    // Notify Super Admins about manifest generation
+    try {
+      await notifySuperAdmins("MANIFEST_AUTO_GENERATED", {
+        tripId,
+        tripRoute: `${trip.origin} → ${trip.destination}`,
+        companyName: trip.company.name,
+        reason: triggerType === "AUTO_DEPARTED" ? "Trip Departed" : "Full Capacity",
+        availableSlots: trip.availableSlots,
+      })
+    } catch (notifyError) {
+      console.error("Failed to notify Super Admins about manifest:", notifyError)
+      // Don't throw - notification failure shouldn't break manifest generation
+    }
 
     return { success: true, filePath: publicPath }
   } catch (error) {

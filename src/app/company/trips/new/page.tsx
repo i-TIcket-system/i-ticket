@@ -549,13 +549,16 @@ export default function NewTripPage() {
                       {createReturnTrips && sameTimeForAll && (
                         <div className="mt-3 space-y-2">
                           <Label className="text-xs">Return Trip Departure Time *</Label>
-                          <Input
-                            type="time"
-                            value={returnDepartureTime}
-                            onChange={(e) => setReturnDepartureTime(e.target.value)}
-                            className="max-w-[150px]"
-                            required
-                          />
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <Input
+                              type="time"
+                              value={returnDepartureTime}
+                              onChange={(e) => setReturnDepartureTime(e.target.value)}
+                              className="max-w-[150px] bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 [&::-webkit-calendar-picker-indicator]:dark:invert"
+                              required
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -565,45 +568,52 @@ export default function NewTripPage() {
                   {!sameTimeForAll && selectedDates.length > 0 && (
                     <div className="space-y-3 p-3 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
                       <Label className="text-sm font-medium">Set Individual Departure Times *</Label>
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {selectedDates.map((date, index) => {
                           const dateKey = date.toISOString().split('T')[0]
                           return (
-                            <div key={`time-${index}`} className="flex items-center gap-3">
-                              <span className="text-sm min-w-[140px]">
+                            <div key={`time-${index}`} className="flex flex-col sm:flex-row sm:items-center gap-2">
+                              <span className="text-sm font-medium min-w-[140px]">
                                 {date.toLocaleDateString("en-US", {
                                   weekday: "short",
                                   month: "short",
                                   day: "numeric",
                                 })}
                               </span>
-                              <Input
-                                type="time"
-                                value={individualTimes.get(dateKey) || ""}
-                                onChange={(e) => {
-                                  const newMap = new Map(individualTimes)
-                                  newMap.set(dateKey, e.target.value)
-                                  setIndividualTimes(newMap)
-                                }}
-                                className="w-[120px]"
-                                required
-                              />
-                              {createReturnTrips && (
-                                <>
-                                  <span className="text-xs text-muted-foreground">Return:</span>
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <Clock className="h-4 w-4 text-muted-foreground" />
                                   <Input
                                     type="time"
-                                    value={individualReturnTimes.get(dateKey) || ""}
+                                    value={individualTimes.get(dateKey) || ""}
                                     onChange={(e) => {
-                                      const newMap = new Map(individualReturnTimes)
+                                      const newMap = new Map(individualTimes)
                                       newMap.set(dateKey, e.target.value)
-                                      setIndividualReturnTimes(newMap)
+                                      setIndividualTimes(newMap)
                                     }}
-                                    className="w-[120px]"
+                                    className="w-[130px] bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 [&::-webkit-calendar-picker-indicator]:dark:invert"
                                     required
                                   />
-                                </>
-                              )}
+                                  <span className="text-xs text-muted-foreground">Depart</span>
+                                </div>
+                                {createReturnTrips && (
+                                  <div className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                      type="time"
+                                      value={individualReturnTimes.get(dateKey) || ""}
+                                      onChange={(e) => {
+                                        const newMap = new Map(individualReturnTimes)
+                                        newMap.set(dateKey, e.target.value)
+                                        setIndividualReturnTimes(newMap)
+                                      }}
+                                      className="w-[130px] bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 [&::-webkit-calendar-picker-indicator]:dark:invert"
+                                      required
+                                    />
+                                    <span className="text-xs text-muted-foreground">Return</span>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           )
                         })}
@@ -755,36 +765,39 @@ export default function NewTripPage() {
                   <div className="space-y-2">
                     <Label>Departure Time *</Label>
                     <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                       <Input
                         type="time"
                         name="departureTime"
                         value={formData.departureTime}
                         onChange={handleChange}
-                        className="pl-10"
+                        className="pl-10 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 [&::-webkit-calendar-picker-indicator]:dark:invert"
                         required
                       />
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  <Label>Departure Time (for all selected dates) *</Label>
-                  <div className="relative max-w-xs">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="time"
-                      name="departureTime"
-                      value={formData.departureTime}
-                      onChange={handleChange}
-                      className="pl-10"
-                      required
-                    />
+                // Only show this field when using same time for all trips
+                sameTimeForAll && (
+                  <div className="space-y-2">
+                    <Label>Departure Time (for all selected dates) *</Label>
+                    <div className="relative max-w-xs">
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                      <Input
+                        type="time"
+                        name="departureTime"
+                        value={formData.departureTime}
+                        onChange={handleChange}
+                        className="pl-10 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 [&::-webkit-calendar-picker-indicator]:dark:invert"
+                        required
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This time will be used for all trips in the batch
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    This time will be used for all trips in the batch
-                  </p>
-                </div>
+                )
               )}
 
               {/* Duration and Distance */}

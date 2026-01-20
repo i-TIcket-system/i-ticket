@@ -436,13 +436,22 @@ export async function POST(request: NextRequest) {
       // CRITICAL: Auto-halt if slots drop to 10 or below
       const updatedTrip = await tx.trip.findUnique({
         where: { id: tripId },
+        include: {
+          company: {
+            select: {
+              disableAutoHaltGlobally: true,
+            },
+          },
+        },
       })
 
       if (
         updatedTrip &&
         updatedTrip.availableSlots <= 10 &&
         !updatedTrip.bookingHalted &&
-        !updatedTrip.adminResumedFromAutoHalt
+        !updatedTrip.adminResumedFromAutoHalt &&
+        !updatedTrip.autoResumeEnabled &&  // Trip-specific: Admin hasn't enabled auto-resume for this trip
+        !updatedTrip.company.disableAutoHaltGlobally  // Company-wide: Auto-halt not disabled globally
       ) {
         // Halt booking automatically
         await tx.trip.update({

@@ -83,9 +83,9 @@ export default function MyTicketsPage() {
           <p className="text-muted-foreground mb-4">
             Sign in to view your booked tickets and travel history.
           </p>
-          <Link href="/login?callbackUrl=/tickets">
-            <Button>Sign In</Button>
-          </Link>
+          <Button asChild>
+            <Link href="/login?callbackUrl=/tickets">Sign In</Link>
+          </Button>
         </Card>
       </div>
     )
@@ -186,24 +186,24 @@ export default function MyTicketsPage() {
           {/* Actions - Glass Enhanced */}
           <div className="flex flex-col items-end justify-center gap-3">
             {booking.status === "PAID" && booking.tickets.length > 0 ? (
-              <Link href={`/tickets/${booking.id}`}>
-                <Button className="glass-button shadow-md hover:shadow-lg">
+              <Button className="glass-button shadow-md hover:shadow-lg" asChild>
+                <Link href={`/tickets/${booking.id}`}>
                   <QrCode className="h-4 w-4 mr-2 flex-shrink-0" />
                   View Tickets
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             ) : booking.status === "PENDING" && !isPaymentExpired(booking) ? (
-              <Link href={`/payment/${booking.id}`}>
-                <Button className="glass-button shadow-md hover:shadow-lg">
+              <Button className="glass-button shadow-md hover:shadow-lg" asChild>
+                <Link href={`/payment/${booking.id}`}>
                   Complete Payment
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             ) : isPaymentExpired(booking) ? (
-              <Link href="/search">
-                <Button variant="outline" className="glass-button shadow-md hover:shadow-lg">
+              <Button variant="outline" className="glass-button shadow-md hover:shadow-lg" asChild>
+                <Link href="/search">
                   Book Again
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             ) : null}
             <div className="glass-teal rounded-lg px-3 py-1.5">
               <span className="text-sm font-semibold text-primary">
@@ -265,9 +265,9 @@ export default function MyTicketsPage() {
                 <p className="text-muted-foreground mb-4">
                   You don&apos;t have any upcoming trips booked.
                 </p>
-                <Link href="/search">
-                  <Button>Book a Trip</Button>
-                </Link>
+                <Button asChild>
+                  <Link href="/search">Book a Trip</Link>
+                </Button>
               </Card>
             ) : (
               upcomingBookings.map((booking) => (

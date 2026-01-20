@@ -248,9 +248,9 @@ export default function TripDetailPage() {
           <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-semibold mb-2">Trip Not Found</h2>
           <p className="text-muted-foreground mb-4">{error}</p>
-          <Link href="/company/trips">
-            <Button variant="outline">Back to Trips</Button>
-          </Link>
+          <Button variant="outline" asChild>
+            <Link href="/company/trips">Back to Trips</Link>
+          </Button>
         </Card>
       </div>
     )
@@ -273,12 +273,12 @@ export default function TripDetailPage() {
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Trips
           </Link>
-          <Link href={`/company/trips/${tripId}/edit`}>
-            <Button variant="outline">
+          <Button variant="outline" asChild>
+            <Link href={`/company/trips/${tripId}/edit`}>
               <Edit className="h-4 w-4 mr-2" />
               Edit Trip
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

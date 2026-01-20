@@ -23,7 +23,7 @@ export default function TermsPage() {
           <CardHeader className="border-b">
             <CardTitle className="text-4xl font-bold">Terms & Conditions</CardTitle>
             <p className="text-sm text-muted-foreground mt-2">
-              Last updated: January 2, 2026 | Effective Date: January 1, 2024
+              Last updated: January 20, 2026 | Effective Date: January 1, 2024
             </p>
             <p className="text-xs text-muted-foreground mt-1 italic">
               Please read these Terms and Conditions carefully before using our service
@@ -270,6 +270,43 @@ export default function TermsPage() {
               Trips cancelled due to extreme weather, natural disasters, government restrictions, or other force majeure events
               qualify for full refunds. However, neither i-Ticket nor Bus Companies are liable for consequential damages.
             </p>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">6.7 i-Ticket's Limited Responsibility for Trip Changes</h3>
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 my-4">
+              <p className="text-sm font-semibold text-amber-900 mb-2">⚠️ IMPORTANT: Platform vs. Transport Provider Responsibilities</p>
+              <p className="text-sm text-amber-800">
+                <strong>i-Ticket is SOLELY a booking platform.</strong> We facilitate reservations and payment processing but are
+                <strong> NOT responsible</strong> for changes made by Bus Companies after your booking is confirmed.
+              </p>
+            </div>
+            <p>
+              After your booking is confirmed and paid, Bus Companies may make operational changes that are beyond i-Ticket's control.
+              <strong> We are NOT responsible for:</strong>
+            </p>
+            <ul>
+              <li>Changes to vehicle assignment (bus type, size, or amenities)</li>
+              <li>Changes to trip staff (driver, conductor, or ticketer assignments)</li>
+              <li>Modifications to departure time or route</li>
+              <li>Price adjustments or fare changes</li>
+              <li>Service quality issues or passenger complaints</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold mt-6 mb-3">6.8 Refund Policy Clarification</h3>
+            <p>
+              <strong>All refund and cancellation requests must be directed to the Bus Company operating your trip.</strong>
+              i-Ticket does not process refunds for trip-related issues as we are an intermediary platform only.
+            </p>
+            <p className="mt-3">
+              For policies regarding trip modifications, cancellation procedures, refund eligibility, rescheduling options,
+              baggage allowances, or passenger conduct rules, please <strong>contact the Bus Company directly</strong> using
+              the contact information provided on your ticket or trip details page.
+            </p>
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 my-4">
+              <p className="text-sm text-blue-900">
+                <strong>How to Contact Your Bus Company:</strong> Trip details and company contact information (phone, email)
+                are displayed on your ticket and in the trip details section of your account dashboard.
+              </p>
+            </div>
 
             <h2 className="text-2xl font-bold mt-8 mb-4">7. Tickets and Travel</h2>
             <h3 className="text-xl font-semibold mt-6 mb-3">7.1 Ticket Delivery</h3>
@@ -815,7 +852,7 @@ export default function TermsPage() {
 
             <div className="text-center text-xs text-muted-foreground mt-8 pt-6 border-t">
               <p>© 2024-2026 i-Ticket Platform Services. All rights reserved.</p>
-              <p className="mt-2">Document Version 2.1 | Effective Date: January 1, 2024 | Last Updated: January 2, 2026</p>
+              <p className="mt-2">Document Version 2.2 | Effective Date: January 1, 2024 | Last Updated: January 20, 2026</p>
             </div>
           </CardContent>
         </Card>

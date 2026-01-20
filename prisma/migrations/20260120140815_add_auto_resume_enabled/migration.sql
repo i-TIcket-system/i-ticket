@@ -1,0 +1,1 @@
+-- AlterTable\nALTER TABLE "Trip" ADD COLUMN "autoResumeEnabled" BOOLEAN NOT NULL DEFAULT false;

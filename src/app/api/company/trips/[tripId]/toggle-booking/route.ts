@@ -14,11 +14,19 @@ export async function POST(
   try {
     const { session, companyId } = await requireCompanyAdmin()
 
-    const { action } = await request.json()
+    const { action, autoResumeEnabled } = await request.json()
 
     if (!["RESUME", "HALT"].includes(action)) {
       return NextResponse.json(
         { error: "Invalid action. Must be RESUME or HALT" },
+        { status: 400 }
+      )
+    }
+
+    // Validate autoResumeEnabled if provided
+    if (autoResumeEnabled !== undefined && typeof autoResumeEnabled !== 'boolean') {
+      return NextResponse.json(
+        { error: "autoResumeEnabled must be a boolean" },
         { status: 400 }
       )
     }
@@ -60,15 +68,19 @@ export async function POST(
       data: {
         bookingHalted: shouldHalt,
 
-        // When HALTING manually: Reset both flags to allow auto-halt to work again
+        // When HALTING manually: Reset all flags to allow auto-halt to work again
         ...(shouldHalt && {
           lowSlotAlertSent: false,
           adminResumedFromAutoHalt: false,
+          autoResumeEnabled: false,  // Reset permanent override
         }),
 
-        // When RESUMING: Set override flag to prevent auto-halt re-trigger
+        // When RESUMING: Set override flag(s) based on admin preference
         ...(!shouldHalt && {
-          adminResumedFromAutoHalt: true,
+          adminResumedFromAutoHalt: true,  // One-time override (always set)
+          ...(autoResumeEnabled !== undefined && {
+            autoResumeEnabled: autoResumeEnabled,  // Permanent override (if checkbox provided)
+          }),
         }),
       },
     })
@@ -84,7 +96,12 @@ export async function POST(
           performedBy: session.user.name,
           availableSlots: trip.availableSlots,
           totalSlots: trip.totalSlots,
-          reason: action === "HALT" ? "Admin manually halted booking" : "Admin override - resuming online booking",
+          reason: action === "HALT"
+            ? "Admin manually halted booking"
+            : autoResumeEnabled
+              ? "Admin override - resuming with permanent auto-resume enabled (no future auto-halts)"
+              : "Admin override - resuming online booking (one-time)",
+          autoResumeEnabled: autoResumeEnabled ?? false,
           timestamp: new Date().toISOString(),
         }),
       },

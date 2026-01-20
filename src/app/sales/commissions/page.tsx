@@ -107,12 +107,12 @@ export default function SalesCommissionsPage() {
   return (
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
-        <Link href="/sales/dashboard">
-          <Button variant="ghost" size="sm" className="mb-4">
+        <Button variant="ghost" size="sm" className="mb-4" asChild>
+          <Link href="/sales/dashboard">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to Dashboard
-          </Button>
-        </Link>
+          </Link>
+        </Button>
         <h1 className="text-3xl font-bold">Commission History</h1>
         <p className="text-muted-foreground mt-1">
           View all your earned commissions

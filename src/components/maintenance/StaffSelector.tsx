@@ -28,11 +28,12 @@ export interface StaffMember {
 
 interface StaffSelectorProps {
   staff: StaffMember[]
-  value?: string
-  onValueChange: (value: string) => void
+  value?: string | string[]
+  onValueChange: (value: string | string[]) => void
   placeholder?: string
   allowedRoles?: string[] // If specified, only show these roles
   showUnassigned?: boolean
+  multiple?: boolean // Enable multi-select mode
 }
 
 export function StaffSelector({
@@ -42,6 +43,7 @@ export function StaffSelector({
   placeholder = "Select staff member",
   allowedRoles,
   showUnassigned = true,
+  multiple = false,
 }: StaffSelectorProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -53,8 +55,56 @@ export function StaffSelector({
     return staff.filter((member) => allowedRoles.includes(member.staffRole))
   }, [staff, allowedRoles])
 
-  // Find selected staff member
-  const selectedStaff = filteredStaff.find((member) => member.id === value)
+  // Normalize value to array for easier handling
+  const selectedIds = React.useMemo(() => {
+    if (!value) return []
+    return Array.isArray(value) ? value : [value]
+  }, [value])
+
+  // Find selected staff members
+  const selectedStaff = React.useMemo(() => {
+    return filteredStaff.filter((member) => selectedIds.includes(member.id))
+  }, [filteredStaff, selectedIds])
+
+  // Check if a member is selected
+  const isSelected = (id: string) => selectedIds.includes(id)
+
+  // Handle selection/deselection
+  const handleSelect = (id: string) => {
+    if (multiple) {
+      const newSelection = isSelected(id)
+        ? selectedIds.filter((s) => s !== id)
+        : [...selectedIds, id]
+      onValueChange(newSelection)
+    } else {
+      // Single select: if already selected, deselect (empty string)
+      onValueChange(isSelected(id) ? "" : id)
+      setOpen(false)
+    }
+  }
+
+  // Handle unassigned selection
+  const handleUnassignedSelect = () => {
+    if (multiple) {
+      const newSelection = isSelected("unassigned")
+        ? selectedIds.filter((s) => s !== "unassigned")
+        : [...selectedIds, "unassigned"]
+      onValueChange(newSelection)
+    } else {
+      onValueChange(isSelected("unassigned") ? "" : "unassigned")
+      setOpen(false)
+    }
+  }
+
+  // Remove a specific staff member (for multi-select chips)
+  const handleRemove = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (multiple) {
+      onValueChange(selectedIds.filter((s) => s !== id))
+    } else {
+      onValueChange("")
+    }
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -63,74 +113,167 @@ export function StaffSelector({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between h-auto min-h-[44px] px-3 py-2.5 hover:bg-teal-50/50 hover:border-teal-300 transition-all duration-200"
         >
-          {selectedStaff ? (
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4 text-muted-foreground" />
-              <span>{selectedStaff.name}</span>
-              <Badge variant="outline" className="ml-auto text-xs">
-                {selectedStaff.staffRole}
-              </Badge>
-            </div>
-          ) : value === "unassigned" ? (
-            <span className="text-muted-foreground">Unassigned</span>
-          ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
-          )}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            {selectedStaff.length > 0 ? (
+              multiple ? (
+                // Multi-select: Show chips
+                <div className="flex flex-wrap gap-1.5 flex-1 min-w-0">
+                  {selectedIds.includes("unassigned") && (
+                    <Badge
+                      variant="secondary"
+                      className="pl-2 pr-1 py-1 text-xs font-medium bg-slate-100 hover:bg-slate-200 transition-colors"
+                    >
+                      Unassigned
+                      <button
+                        type="button"
+                        onClick={(e) => handleRemove("unassigned", e)}
+                        className="ml-1 rounded-full hover:bg-slate-300 p-0.5"
+                      >
+                        <Check className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  )}
+                  {selectedStaff.map((member) => (
+                    <Badge
+                      key={member.id}
+                      variant="secondary"
+                      className="pl-2 pr-1 py-1 text-xs font-medium bg-teal-100 hover:bg-teal-200 text-teal-700 transition-colors"
+                    >
+                      {member.name}
+                      <button
+                        type="button"
+                        onClick={(e) => handleRemove(member.id, e)}
+                        className="ml-1 rounded-full hover:bg-teal-300 p-0.5"
+                      >
+                        <Check className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                // Single select: Show one staff member with clear button
+                <>
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-700 ring-1 ring-teal-200">
+                      <User className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-sm font-semibold text-foreground truncate leading-tight">
+                        {selectedStaff[0].name}
+                      </span>
+                      <span className="text-xs text-muted-foreground leading-tight mt-0.5">
+                        {selectedStaff[0].staffRole.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => handleRemove(selectedStaff[0].id, e)}
+                    className="ml-2 rounded-full hover:bg-slate-200 p-1 transition-colors"
+                  >
+                    <Check className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </>
+              )
+            ) : isSelected("unassigned") ? (
+              <>
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 ring-1 ring-slate-200">
+                  <User className="h-3.5 w-3.5" />
+                </div>
+                <span className="text-sm font-medium text-muted-foreground">Unassigned</span>
+                <button
+                  type="button"
+                  onClick={(e) => handleRemove("unassigned", e)}
+                  className="ml-auto rounded-full hover:bg-slate-200 p-1 transition-colors"
+                >
+                  <Check className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400 ring-1 ring-slate-200">
+                  <User className="h-3.5 w-3.5" />
+                </div>
+                <span className="text-sm text-muted-foreground">{placeholder}</span>
+              </>
+            )}
+          </div>
+          <ChevronsUpDown className="ml-3 h-4 w-4 shrink-0 text-muted-foreground/70" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[400px] p-0" align="start">
-        <Command className="max-h-[300px]">
-          <CommandInput placeholder="Search by name, role, or ID..." />
-          <CommandList>
-            <CommandEmpty>No staff member found.</CommandEmpty>
-            <CommandGroup>
+      <PopoverContent className="w-[420px] p-0 shadow-lg border-slate-200" align="start" sideOffset={8}>
+        <Command className="rounded-lg">
+          <div className="border-b bg-slate-50/50 px-3 py-2.5">
+            <CommandInput
+              placeholder="Search by name, role, or ID..."
+              className="h-9"
+            />
+          </div>
+          <CommandList className="max-h-[320px] overflow-y-auto p-2">
+            <CommandEmpty>
+              <div className="flex flex-col items-center justify-center py-8 px-4 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 mb-3">
+                  <Search className="h-5 w-5 text-slate-400" />
+                </div>
+                <p className="text-sm font-medium text-slate-600">No staff member found</p>
+                <p className="text-xs text-muted-foreground mt-1">Try adjusting your search</p>
+              </div>
+            </CommandEmpty>
+            <CommandGroup className="p-0">
               {showUnassigned && (
                 <CommandItem
                   value="unassigned"
-                  onSelect={() => {
-                    onValueChange("unassigned")
-                    setOpen(false)
-                  }}
+                  onSelect={handleUnassignedSelect}
+                  className="rounded-md px-3 py-3 mb-1.5 data-[selected=true]:bg-slate-100 cursor-pointer transition-colors"
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      value === "unassigned" ? "opacity-100" : "opacity-0"
+                      "mr-3 h-4 w-4 shrink-0 text-teal-600",
+                      isSelected("unassigned") ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  <span className="text-muted-foreground">Unassigned</span>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 ring-1 ring-slate-200">
+                    <User className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <span className="ml-3 text-sm font-semibold text-slate-700">Unassigned</span>
                 </CommandItem>
               )}
               {filteredStaff.map((member) => (
                 <CommandItem
                   key={member.id}
                   value={`${member.name} ${member.staffRole} ${member.id} ${member.email || ""}`}
-                  onSelect={() => {
-                    onValueChange(member.id)
-                    setOpen(false)
-                  }}
+                  onSelect={() => handleSelect(member.id)}
+                  className="rounded-md px-3 py-3 mb-1.5 data-[selected=true]:bg-teal-50/70 cursor-pointer transition-all duration-150 hover:bg-teal-50/50"
                 >
                   <Check
                     className={cn(
-                      "mr-2 h-4 w-4",
-                      value === member.id ? "opacity-100" : "opacity-0"
+                      "mr-3 h-4 w-4 shrink-0 text-teal-600",
+                      isSelected(member.id) ? "opacity-100" : "opacity-0"
                     )}
                   />
-                  <div className="flex flex-1 items-center justify-between gap-2">
-                    <div className="flex flex-col">
-                      <span className="font-medium">{member.name}</span>
-                      {member.email && (
-                        <span className="text-xs text-muted-foreground">
-                          {member.email}
-                        </span>
-                      )}
+                  <div className="flex flex-1 items-center gap-3 min-w-0">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-100 text-teal-700 ring-1 ring-teal-200">
+                      <User className="h-4 w-4" />
                     </div>
-                    <Badge variant="secondary" className="text-xs">
-                      {member.staffRole}
-                    </Badge>
+                    <div className="flex flex-1 items-center justify-between gap-3 min-w-0">
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="font-semibold text-sm text-slate-900 leading-tight">
+                          {member.name}
+                        </span>
+                        {member.email && (
+                          <span className="text-xs text-muted-foreground truncate leading-tight mt-0.5">
+                            {member.email}
+                          </span>
+                        )}
+                      </div>
+                      <div className="shrink-0">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-100 text-teal-700 border border-teal-200/50">
+                          {member.staffRole.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 </CommandItem>
               ))}
