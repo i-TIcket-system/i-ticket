@@ -70,13 +70,13 @@ export default function RootLayout({
             closeButton
             toastOptions={{
               classNames: {
-                toast: '!text-gray-900',
-                title: '!text-gray-900 !font-semibold',
-                description: '!text-gray-800',
-                success: '!bg-[#0e9494] !text-gray-900 !border-[#20c4c4]',
-                error: '!bg-[#0d4f5c] !text-gray-900 !border-[#0e9494]',
-                info: '!bg-[#20c4c4] !text-gray-900 !border-[#0e9494]',
-                warning: '!bg-[#0d7a7a] !text-gray-900 !border-[#20c4c4]',
+                toast: '!text-[#0d4f5c]',
+                title: '!text-[#0d4f5c] !font-semibold',
+                description: '!text-[#0d4f5c]/80',
+                success: '!bg-[#d4f4f4] !text-[#0d4f5c] !border-[#20c4c4]',
+                error: '!bg-[#d4f4f4] !text-[#0d4f5c] !border-[#20c4c4]',
+                info: '!bg-[#d4f4f4] !text-[#0d4f5c] !border-[#20c4c4]',
+                warning: '!bg-[#d4f4f4] !text-[#0d4f5c] !border-[#20c4c4]',
               },
               style: {
                 borderRadius: '0.75rem',
