@@ -17,12 +17,37 @@
 - **ONLY shared resource: Organic City database**
 - Every API MUST filter by `companyId`
 
+### 3. AUTO-HALT DUAL BEHAVIOR = CRITICAL (Jan 20, 2026)
+- **Manual ticketing**: Can ALWAYS sell down to 0 seats (NEVER blocked by auto-halt)
+- **Online booking**: Auto-halts at ≤10 seats (unless bypassed by company/trip checkboxes)
+- When manual sale drops slots to ≤10, online booking halts but manual ticketing continues
+- This is BY DESIGN - manual ticketers need unrestricted access for walk-in customers
+
 ## Tech Stack
 Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth.js + Tailwind/shadcn/ui
 
 ---
 
 ## Recent Development (Jan 2026)
+
+### Latest Updates (Jan 20, 2026 - Late Night Session)
+- **🚨 CRITICAL AUTO-HALT FIX** (✅ COMPLETE)
+  - **Problem**: Manual ticket sales could bring slots to ≤10 without halting online booking
+  - **Root Cause**: Auto-halt logic only existed in online booking route, not manual-ticket route
+  - **Solution**: Added auto-halt trigger to manual-ticket route
+  - **Critical Business Rule** (saved to memory):
+    1. **Manual ticketing**: Can ALWAYS sell down to 0 seats (NEVER blocked by auto-halt)
+    2. **Online booking**: Auto-halts at ≤10 seats (unless bypassed by checkboxes)
+  - **Behavior**: When manual sale drops slots to ≤10:
+    - ✅ Manual sale completes successfully (no restriction)
+    - ✅ Online booking gets auto-halted (prevents new online bookings)
+    - ✅ Manual ticketing can continue selling all remaining seats
+  - **Respects Bypass Settings**:
+    - Company-wide: `disableAutoHaltGlobally` checkbox
+    - Trip-specific: `autoResumeEnabled` checkbox
+  - **Files**: `api/company/trips/[tripId]/manual-ticket/route.ts`
+  - **Audit**: Creates `AUTO_HALT_LOW_SLOTS` log entry + ClickUp alert
+  - **Commit**: de0bcda
 
 ### Latest Updates (Jan 20, 2026 - Night Session - Bug Fixes)
 - **11 Critical Bug Fixes & UX Improvements** (✅ COMPLETE)
@@ -204,13 +229,19 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ### Trip Management
 - CRUD with intermediate stops, staff/vehicle assignment (all mandatory)
-- **Auto-Halt System** (ONLINE booking only, manual ticketing exempt):
+- **🚨 CRITICAL: Auto-Halt System** (affects ONLINE booking only):
   - **Fixed threshold**: 10 seats remaining (NOT 10% - consistent across all bus sizes)
-  - **Two-level control**:
-    1. **Company-wide**: Disable auto-halt for ALL trips (`Company.disableAutoHaltGlobally`)
-    2. **Trip-specific**: Disable auto-halt for ONE trip (`Trip.autoResumeEnabled`)
-  - Priority: Company-wide > Trip-specific > One-time resume > Default (auto-halt)
-  - Manual ticketing (cashier/ticketer) can ALWAYS sell (no auto-halt)
+  - **CRITICAL BUSINESS RULE** (Jan 20, 2026):
+    1. **Manual ticketing**: Can ALWAYS sell down to 0 seats (NEVER blocked by auto-halt)
+    2. **Online booking**: Auto-halts when slots ≤ 10 (unless bypassed by checkboxes)
+  - **Trigger Sources**: Auto-halt fires when slots drop to ≤10 from:
+    - Online booking payment completion
+    - Manual ticket sale (cashier/ticketer)
+  - **Two-level Bypass Control**:
+    1. **Company-wide**: `Company.disableAutoHaltGlobally` - Disables for ALL trips
+    2. **Trip-specific**: `Trip.autoResumeEnabled` - Disables for ONE trip
+  - **Priority**: Company-wide > Trip-specific > One-time resume > Default (auto-halt)
+  - **Manual Ticketing Exemption**: Cashier/ticketer can ALWAYS sell, even when online booking is halted
 - Trip status: SCHEDULED, BOARDING, DEPARTED, COMPLETED, CANCELLED
 - Actual departure/arrival times auto-recorded
 
