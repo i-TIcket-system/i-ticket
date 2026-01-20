@@ -158,9 +158,9 @@ export default function PaymentPage() {
           <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
           <h2 className="text-xl font-semibold mb-2">Booking Not Found</h2>
           <p className="text-muted-foreground mb-4">The booking you're looking for doesn't exist or has been cancelled.</p>
-          <Link href="/search">
-            <Button variant="outline">Back to Search</Button>
-          </Link>
+          <Button variant="outline" asChild>
+            <Link href="/search">Back to Search</Link>
+          </Button>
         </Card>
       </div>
     )
@@ -326,7 +326,7 @@ export default function PaymentPage() {
                   <Button
                     className="w-full"
                     size="lg"
-                    onClick={processPayment}
+                    onClick={() => processPayment("TELEBIRR")}
                     disabled={isProcessing}
                   >
                     {isProcessing ? (

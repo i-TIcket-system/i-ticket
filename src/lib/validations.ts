@@ -320,7 +320,7 @@ export async function validateRequest<T>(
 // Helper for query params
 export function validateQueryParams<T>(
   searchParams: URLSearchParams,
-  schema: z.ZodSchema<T>
+  schema: z.ZodType<T, any, any>
 ): { success: true; data: T } | { success: false; error: string } {
   const params = Object.fromEntries(searchParams.entries());
   const result = schema.safeParse(params);
