@@ -386,6 +386,61 @@ export default function HomePage() {
       {/* Below-fold sections - Lazy loaded for better performance */}
       {belowFoldVisible && (
         <>
+          {/* Track Your Trip - Clean & Simple */}
+          <section className="py-4 bg-gray-50 dark:bg-gray-900">
+            <div className="container mx-auto px-4">
+              <div className="max-w-6xl mx-auto">
+                {/* Simple Card */}
+                <div className="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700">
+                  <div className="flex flex-col md:flex-row md:items-center gap-6">
+                    {/* Left: Icon + Text */}
+                    <div className="flex items-start md:items-center gap-4 flex-1">
+                      <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-[#0e9494] to-[#0d4f5c] flex items-center justify-center">
+                        <Ticket className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl md:text-2xl font-display font-bold text-foreground mb-1">
+                          Already have a booking?
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Enter your booking ID or ticket code to track your trip
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Right: Input + Button */}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault()
+                        if (!trackingCode.trim()) {
+                          toast.error("Please enter your ticket or booking code")
+                          return
+                        }
+                        router.push(`/track/${trackingCode.trim().toUpperCase()}`)
+                      }}
+                      className="flex gap-3 w-full md:w-auto"
+                    >
+                      <Input
+                        type="text"
+                        placeholder="Enter code..."
+                        value={trackingCode}
+                        onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
+                        className="flex-1 md:w-64 h-12"
+                      />
+                      <Button
+                        type="submit"
+                        className="h-12 px-6 bg-gradient-to-r from-[#0e9494] to-[#0d4f5c] hover:from-[#20c4c4] hover:to-[#0e9494] text-white font-medium"
+                      >
+                        <Search className="h-4 w-4 mr-2" />
+                        Track
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           {/* Bus Companies - Enhanced with cooler blue-teal tones */}
           <section className="py-24 md:py-32 lg:py-36 relative overflow-hidden bg-gradient-to-br from-blue-100/80 via-cyan-100/70 to-teal-100/80 dark:from-blue-950/35 dark:via-cyan-950/30 dark:to-teal-950/35">
         {/* Ethiopian pattern background - more visible */}

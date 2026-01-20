@@ -4,12 +4,28 @@ import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
 
-// Validation schema
-const batchTripSchema = z.object({
-  origin: z.string().min(1, "Origin is required"),
-  destination: z.string().min(1, "Destination is required"),
+// Validation schema for same time mode
+const sameTimeModeSchema = z.object({
+  sameTimeForAll: z.literal(true),
   dates: z.array(z.string()).min(1, "At least one date required").max(10, "Maximum 10 trips per batch"),
   departureTime: z.string(), // HH:MM format
+  returnDepartureTime: z.string().optional(), // HH:MM format (required if createReturnTrips)
+})
+
+// Validation schema for individual time mode
+const individualTimeModeSchema = z.object({
+  sameTimeForAll: z.literal(false),
+  trips: z.array(z.object({
+    date: z.string(),
+    time: z.string(),
+    returnTime: z.string().optional(),
+  })).min(1, "At least one trip required").max(10, "Maximum 10 trips per batch"),
+})
+
+// Base schema shared by both modes
+const baseBatchTripSchema = z.object({
+  origin: z.string().min(1, "Origin is required"),
+  destination: z.string().min(1, "Destination is required"),
   estimatedDuration: z.number().int().positive(),
   distance: z.number().int().positive().optional(),
   price: z.number().positive(),
@@ -23,8 +39,13 @@ const batchTripSchema = z.object({
   manualTicketerId: z.string().optional().nullable(),
   vehicleId: z.string(),
   createReturnTrips: z.boolean().default(false),
-  returnDepartureTime: z.string().optional(), // HH:MM format (required if createReturnTrips)
 })
+
+// Combined schema
+const batchTripSchema = z.intersection(
+  baseBatchTripSchema,
+  z.union([sameTimeModeSchema, individualTimeModeSchema])
+)
 
 // Helper: Parse time string to hours/minutes
 function parseTime(timeStr: string): { hours: number; minutes: number } {
@@ -151,17 +172,38 @@ export async function POST(request: NextRequest) {
       : null
 
     // Create array of forward trip datetimes
-    const forwardDates = validated.dates.map(dateStr =>
-      createDateTime(dateStr, validated.departureTime)
-    )
+    let forwardDates: Date[]
+    let returnDates: Date[]
 
-    // Create array of return trip datetimes (if enabled)
-    const returnDates = validated.createReturnTrips && validated.returnDepartureTime
-      ? validated.dates.map(dateStr => {
-          const nextDay = addDays(new Date(dateStr), 1)
-          return createDateTime(nextDay.toISOString().split("T")[0], validated.returnDepartureTime!)
-        })
-      : []
+    if (validated.sameTimeForAll) {
+      // Same time for all trips
+      forwardDates = validated.dates.map(dateStr =>
+        createDateTime(dateStr, validated.departureTime)
+      )
+
+      // Create array of return trip datetimes (if enabled)
+      returnDates = validated.createReturnTrips && validated.returnDepartureTime
+        ? validated.dates.map(dateStr => {
+            const nextDay = addDays(new Date(dateStr), 1)
+            return createDateTime(nextDay.toISOString().split("T")[0], validated.returnDepartureTime!)
+          })
+        : []
+    } else {
+      // Individual times for each trip
+      forwardDates = validated.trips.map(trip =>
+        createDateTime(trip.date, trip.time)
+      )
+
+      // Create array of return trip datetimes (if enabled)
+      returnDates = validated.createReturnTrips
+        ? validated.trips
+            .filter(trip => trip.returnTime)
+            .map(trip => {
+              const nextDay = addDays(new Date(trip.date), 1)
+              return createDateTime(nextDay.toISOString().split("T")[0], trip.returnTime!)
+            })
+        : []
+    }
 
     // Combine all dates for validation
     const allDates = [...forwardDates, ...returnDates]

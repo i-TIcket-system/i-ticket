@@ -94,6 +94,9 @@ export default function NewTripPage() {
   const [selectedDates, setSelectedDates] = useState<Date[]>([])
   const [createReturnTrips, setCreateReturnTrips] = useState(false)
   const [returnDepartureTime, setReturnDepartureTime] = useState("")
+  const [sameTimeForAll, setSameTimeForAll] = useState(true)
+  const [individualTimes, setIndividualTimes] = useState<Map<string, string>>(new Map())
+  const [individualReturnTimes, setIndividualReturnTimes] = useState<Map<string, string>>(new Map())
 
   // Auto-fill totalSlots when vehicle is selected
   useEffect(() => {
@@ -228,15 +231,57 @@ export default function NewTripPage() {
         return
       }
 
-      if (createReturnTrips && !returnDepartureTime) {
-        setError("Please set return trip departure time")
-        setIsSubmitting(false)
-        return
+      // Validate times based on sameTimeForAll setting
+      if (sameTimeForAll) {
+        if (!formData.departureTime) {
+          setError("Please set departure time for all trips")
+          setIsSubmitting(false)
+          return
+        }
+        if (createReturnTrips && !returnDepartureTime) {
+          setError("Please set return trip departure time")
+          setIsSubmitting(false)
+          return
+        }
+      } else {
+        // Validate individual times
+        for (const date of selectedDates) {
+          const dateKey = date.toISOString().split('T')[0]
+          if (!individualTimes.get(dateKey)) {
+            setError(`Please set departure time for ${date.toLocaleDateString()}`)
+            setIsSubmitting(false)
+            return
+          }
+          if (createReturnTrips && !individualReturnTimes.get(dateKey)) {
+            setError(`Please set return time for ${date.toLocaleDateString()}`)
+            setIsSubmitting(false)
+            return
+          }
+        }
       }
 
       try {
         const finalOrigin = formData.origin || customOrigin
         const finalDestination = formData.destination || customDestination
+
+        // Build trips array with individual times
+        const tripsData = sameTimeForAll
+          ? {
+              dates: selectedDates.map(d => d.toISOString().split("T")[0]),
+              departureTime: formData.departureTime,
+              sameTimeForAll: true,
+            }
+          : {
+              trips: selectedDates.map(date => {
+                const dateKey = date.toISOString().split('T')[0]
+                return {
+                  date: dateKey,
+                  time: individualTimes.get(dateKey),
+                  returnTime: createReturnTrips ? individualReturnTimes.get(dateKey) : undefined,
+                }
+              }),
+              sameTimeForAll: false,
+            }
 
         const response = await fetch("/api/company/trips/batch", {
           method: "POST",
@@ -244,8 +289,7 @@ export default function NewTripPage() {
           body: JSON.stringify({
             origin: finalOrigin,
             destination: finalDestination,
-            dates: selectedDates.map(d => d.toISOString().split("T")[0]),
-            departureTime: formData.departureTime,
+            ...tripsData,
             estimatedDuration: parseInt(formData.estimatedDuration, 10),
             distance: formData.distance ? parseInt(formData.distance, 10) : undefined,
             price: parseFloat(formData.price),
@@ -259,7 +303,7 @@ export default function NewTripPage() {
             manualTicketerId: formData.manualTicketerId,
             vehicleId: formData.vehicleId,
             createReturnTrips,
-            returnDepartureTime: createReturnTrips ? returnDepartureTime : undefined,
+            returnDepartureTime: sameTimeForAll && createReturnTrips ? returnDepartureTime : undefined,
           }),
         })
 
@@ -467,6 +511,26 @@ export default function NewTripPage() {
                     </p>
                   </div>
 
+                  {/* Same Time for All Option */}
+                  <div className="flex items-start gap-3 p-3 rounded-md bg-teal-50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800">
+                    <Checkbox
+                      id="same-time-for-all"
+                      checked={sameTimeForAll}
+                      onCheckedChange={(checked) => setSameTimeForAll(checked as boolean)}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="same-time-for-all" className="cursor-pointer font-medium">
+                        Use same departure time for all trips
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {sameTimeForAll
+                          ? "All trips will depart at the same time. Uncheck to set individual times."
+                          : "Set custom departure time for each trip date."}
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Return Trips Option */}
                   <div className="flex items-start gap-3 p-3 rounded-md bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
                     <Checkbox
@@ -482,7 +546,7 @@ export default function NewTripPage() {
                       <p className="text-xs text-muted-foreground mt-1">
                         Automatically creates return trips (destination → origin) on the next day
                       </p>
-                      {createReturnTrips && (
+                      {createReturnTrips && sameTimeForAll && (
                         <div className="mt-3 space-y-2">
                           <Label className="text-xs">Return Trip Departure Time *</Label>
                           <Input
@@ -496,6 +560,56 @@ export default function NewTripPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* Individual Time Inputs (when sameTimeForAll is false) */}
+                  {!sameTimeForAll && selectedDates.length > 0 && (
+                    <div className="space-y-3 p-3 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                      <Label className="text-sm font-medium">Set Individual Departure Times *</Label>
+                      <div className="space-y-2">
+                        {selectedDates.map((date, index) => {
+                          const dateKey = date.toISOString().split('T')[0]
+                          return (
+                            <div key={`time-${index}`} className="flex items-center gap-3">
+                              <span className="text-sm min-w-[140px]">
+                                {date.toLocaleDateString("en-US", {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </span>
+                              <Input
+                                type="time"
+                                value={individualTimes.get(dateKey) || ""}
+                                onChange={(e) => {
+                                  const newMap = new Map(individualTimes)
+                                  newMap.set(dateKey, e.target.value)
+                                  setIndividualTimes(newMap)
+                                }}
+                                className="w-[120px]"
+                                required
+                              />
+                              {createReturnTrips && (
+                                <>
+                                  <span className="text-xs text-muted-foreground">Return:</span>
+                                  <Input
+                                    type="time"
+                                    value={individualReturnTimes.get(dateKey) || ""}
+                                    onChange={(e) => {
+                                      const newMap = new Map(individualReturnTimes)
+                                      newMap.set(dateKey, e.target.value)
+                                      setIndividualReturnTimes(newMap)
+                                    }}
+                                    className="w-[120px]"
+                                    required
+                                  />
+                                </>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Batch Preview */}
                   {selectedDates.length > 0 && (
@@ -620,26 +734,43 @@ export default function NewTripPage() {
               </div>
 
               {/* Date & Time */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Departure Date *</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="date"
-                      name="departureDate"
-                      value={formData.departureDate}
-                      onChange={handleChange}
-                      min={minDate}
-                      className="pl-10"
-                      required
-                    />
+              {!batchMode ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Departure Date *</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="date"
+                        name="departureDate"
+                        value={formData.departureDate}
+                        onChange={handleChange}
+                        min={minDate}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Departure Time *</Label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="time"
+                        name="departureTime"
+                        value={formData.departureTime}
+                        onChange={handleChange}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
-
+              ) : (
                 <div className="space-y-2">
-                  <Label>Departure Time *</Label>
-                  <div className="relative">
+                  <Label>Departure Time (for all selected dates) *</Label>
+                  <div className="relative max-w-xs">
                     <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       type="time"
@@ -650,8 +781,11 @@ export default function NewTripPage() {
                       required
                     />
                   </div>
+                  <p className="text-xs text-muted-foreground">
+                    This time will be used for all trips in the batch
+                  </p>
                 </div>
-              </div>
+              )}
 
               {/* Duration and Distance */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
