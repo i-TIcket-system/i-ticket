@@ -57,18 +57,19 @@ const features = [
   },
 ]
 
-const stats = [
-  { value: "1K+", label: "Happy Travelers", icon: Users },
-  { value: "100+", label: "Daily Trips", icon: Bus },
-  { value: "20+", label: "Destinations", icon: MapPin },
-  { value: "5+", label: "Partner Companies", icon: Sparkles },
-]
-
 export default function HomePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const refCode = searchParams.get('ref')
   const [isRedirecting, setIsRedirecting] = useState(false)
+
+  // Dynamic stats from API
+  const [stats, setStats] = useState([
+    { value: "1K+", label: "Happy Travelers", icon: Users },
+    { value: "100+", label: "Daily Trips", icon: Bus },
+    { value: "20+", label: "Destinations", icon: MapPin },
+    { value: "5+", label: "Partner Companies", icon: Sparkles },
+  ])
 
   // Redirect to register if ref code is present
   useEffect(() => {
@@ -129,6 +130,28 @@ export default function HomePage() {
       }
     }
     fetchPopularRoutes()
+  }, [])
+
+  // Fetch dynamic stats for trust indicators
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const response = await fetch("/api/homepage-stats")
+        const data = await response.json()
+        if (data.travelers && data.trips && data.destinations && data.companies) {
+          setStats([
+            { value: data.travelers, label: "Happy Travelers", icon: Users },
+            { value: data.trips, label: "Daily Trips", icon: Bus },
+            { value: data.destinations, label: "Destinations", icon: MapPin },
+            { value: data.companies, label: "Partner Companies", icon: Sparkles },
+          ])
+        }
+      } catch (error) {
+        console.error("Failed to fetch homepage stats:", error)
+        // Keep fallback values if fetch fails
+      }
+    }
+    fetchStats()
   }, [])
 
   // Fetch cities from API on mount

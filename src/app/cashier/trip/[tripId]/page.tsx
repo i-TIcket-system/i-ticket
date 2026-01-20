@@ -273,6 +273,7 @@ export default function CashierTripPage() {
             orientation="portrait"
             busType={trip.busType as "MINI" | "STANDARD" | "LUXURY"}
             refreshTrigger={seatRefreshTrigger}
+            pollingInterval={5000} // 5-second polling for real-time updates
           />
         </div>
 

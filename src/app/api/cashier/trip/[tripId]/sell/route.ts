@@ -106,7 +106,7 @@ export async function POST(
           )
         }
 
-        // Get currently occupied seats
+        // Get currently occupied seats with booking info
         const occupiedPassengers = await tx.passenger.findMany({
           where: {
             booking: {
@@ -115,13 +115,28 @@ export async function POST(
             },
             seatNumber: { not: null },
           },
-          select: { seatNumber: true },
+          select: {
+            seatNumber: true,
+            booking: {
+              select: { isQuickTicket: true }
+            }
+          },
         })
 
         const occupiedSeats = new Set(
           occupiedPassengers
             .map((p: { seatNumber: number | null }) => p.seatNumber)
             .filter((s: number | null): s is number => s !== null)
+        )
+
+        // Create map of seat to booking type for descriptive errors
+        const seatToBookingType = new Map(
+          occupiedPassengers
+            .filter((p: { seatNumber: number | null }) => p.seatNumber !== null)
+            .map((p: { seatNumber: number | null; booking: { isQuickTicket: boolean } }) => [
+              p.seatNumber as number,
+              p.booking.isQuickTicket ? "manual ticketing" : "online booking"
+            ])
         )
 
         // Determine seat numbers to assign
@@ -134,7 +149,8 @@ export async function POST(
               throw new Error(`Invalid seat number: ${seat}`)
             }
             if (occupiedSeats.has(seat)) {
-              throw new Error(`Seat ${seat} is already occupied`)
+              const saleType = seatToBookingType.get(seat) || "unknown source"
+              throw new Error(`Seat ${seat} is already sold (${saleType}). Please select another seat.`)
             }
           }
           seatsToAssign = selectedSeats.sort((a: number, b: number) => a - b)

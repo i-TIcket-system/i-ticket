@@ -58,6 +58,19 @@ function generateTempPassword(): string {
   return password.split('').sort(() => Math.random() - 0.5).join('')
 }
 
+// Generate unique phone number for default staff (Ethiopian format)
+function generateStaffPhone(companyId: string, staffIndex: number): string {
+  // Use company ID hash + staff index to generate unique phone number
+  const hash = companyId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const uniqueDigits = ((hash + staffIndex) % 100000000).toString().padStart(8, '0')
+  return `09${uniqueDigits}`
+}
+
+// Generate slug from company name
+function generateSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+}
+
 /**
  * Get all companies for admin management
  */
@@ -147,7 +160,7 @@ export async function POST(request: NextRequest) {
     const tempPassword = generateTempPassword()
     const hashedPassword = await bcrypt.hash(tempPassword, 12)
 
-    // Create company + admin in transaction
+    // Create company + default staff in transaction
     const result = await prisma.$transaction(async (tx) => {
       // Create company
       const company = await tx.company.create({
@@ -165,6 +178,8 @@ export async function POST(request: NextRequest) {
         },
       })
 
+      const companySlug = generateSlug(companyName)
+
       // Create admin user
       const admin = await tx.user.create({
         data: {
@@ -176,6 +191,38 @@ export async function POST(request: NextRequest) {
           staffRole: "ADMIN",
           companyId: company.id,
           mustChangePassword: true, // Force password change on first login
+        },
+      })
+
+      // Create default driver staff
+      const driverPassword = generateTempPassword()
+      const driverPhone = generateStaffPhone(company.id, 1)
+      const driver = await tx.user.create({
+        data: {
+          name: `${companyName} Driver`,
+          phone: driverPhone,
+          email: `driver@${companySlug}.et`,
+          password: await bcrypt.hash(driverPassword, 12),
+          role: "COMPANY_ADMIN",
+          staffRole: "DRIVER",
+          companyId: company.id,
+          mustChangePassword: true,
+        },
+      })
+
+      // Create default manual ticketer staff
+      const ticketerPassword = generateTempPassword()
+      const ticketerPhone = generateStaffPhone(company.id, 2)
+      const ticketer = await tx.user.create({
+        data: {
+          name: `${companyName} Ticketer`,
+          phone: ticketerPhone,
+          email: `ticketer@${companySlug}.et`,
+          password: await bcrypt.hash(ticketerPassword, 12),
+          role: "COMPANY_ADMIN",
+          staffRole: "MANUAL_TICKETER",
+          companyId: company.id,
+          mustChangePassword: true,
         },
       })
 
@@ -192,6 +239,7 @@ export async function POST(request: NextRequest) {
             adminName,
             adminPhone,
             adminEmail,
+            defaultStaffCreated: 3,
             createdBy: session!.user.name,
             createdByEmail: session!.user.email,
             timestamp: new Date().toISOString(),
@@ -199,7 +247,7 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      return { company, admin }
+      return { company, admin, driver, ticketer, driverPassword, ticketerPassword, driverPhone, ticketerPhone }
     })
 
     // Create ClickUp audit task (non-blocking)
@@ -214,17 +262,31 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Company created successfully",
+      message: "Company created successfully with 3 default staff members",
       company: result.company,
-      admin: {
-        name: result.admin.name,
-        phone: result.admin.phone,
-        email: result.admin.email,
-      },
-      credentials: {
-        phone: adminPhone,
-        tempPassword, // Super Admin can manually share this
-      },
+      staff: [
+        {
+          role: "Admin",
+          name: result.admin.name,
+          phone: result.admin.phone,
+          email: result.admin.email,
+          tempPassword: tempPassword,
+        },
+        {
+          role: "Driver",
+          name: result.driver.name,
+          phone: result.driverPhone,
+          email: result.driver.email,
+          tempPassword: result.driverPassword,
+        },
+        {
+          role: "Manual Ticketer",
+          name: result.ticketer.name,
+          phone: result.ticketerPhone,
+          email: result.ticketer.email,
+          tempPassword: result.ticketerPassword,
+        },
+      ],
     })
   } catch (error) {
     console.error("Company creation error:", error)

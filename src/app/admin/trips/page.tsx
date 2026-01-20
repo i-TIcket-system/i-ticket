@@ -164,6 +164,7 @@ export default function AllTripsPage() {
     setDateFrom("")
     setDateTo("")
     setPage(1)
+    fetchTrips()
   }
 
   const handleSort = (field: string) => {

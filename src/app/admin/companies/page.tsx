@@ -112,6 +112,12 @@ export default function CompaniesManagement() {
     adminEmail: "",
   })
 
+  // Staff Setup Dialog State
+  const [staffSetupOpen, setStaffSetupOpen] = useState(false)
+  const [settingUpStaff, setSettingUpStaff] = useState(false)
+  const [staffCredentials, setStaffCredentials] = useState<any[]>([])
+  const [selectedCompanyForStaff, setSelectedCompanyForStaff] = useState<Company | null>(null)
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
@@ -214,18 +220,21 @@ export default function CompaniesManagement() {
 
       toast.success(data.message)
 
-      // Show temporary password in development mode
-      if (process.env.NODE_ENV === "development" && data.credentials?.tempPassword) {
-        toast.info(`Temp Password: ${data.credentials.tempPassword}`, {
-          duration: 10000,
-          description: "Save this password - it will only be shown once!",
-        })
-      }
+      // Store staff credentials and show dialog
+      if (data.staff && Array.isArray(data.staff)) {
+        setStaffCredentials(data.staff)
+        setStaffSetupOpen(true)
 
-      // Copy credentials to clipboard
-      const credentials = `Company: ${newCompany.companyName}\nAdmin Phone: ${data.credentials.phone}\nTemporary Password: ${data.credentials.tempPassword}\n\nPlease change your password on first login.`
-      navigator.clipboard.writeText(credentials)
-      toast.success("Credentials copied to clipboard!")
+        // Copy all credentials to clipboard
+        const credentialsText = `Company: ${newCompany.companyName}\n\n` +
+          data.staff.map((staff: any) =>
+            `${staff.role}:\nName: ${staff.name}\nPhone: ${staff.phone}\nEmail: ${staff.email}\nPassword: ${staff.tempPassword}\n`
+          ).join('\n') +
+          '\nAll staff must change their password on first login.'
+
+        navigator.clipboard.writeText(credentialsText)
+        toast.success("All credentials copied to clipboard!")
+      }
 
       // Close dialog and reset form
       setAddCompanyOpen(false)
@@ -314,6 +323,50 @@ export default function CompaniesManagement() {
       toast.error(error instanceof Error ? error.message : "Failed to update company")
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const handleSetupStaff = async (company: Company) => {
+    setSelectedCompanyForStaff(company)
+    setSettingUpStaff(true)
+
+    try {
+      const response = await fetch(`/api/admin/companies/${company.id}/setup-staff`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to setup staff")
+      }
+
+      toast.success(data.message)
+
+      // Store staff credentials and show dialog
+      if (data.staff && Array.isArray(data.staff)) {
+        setStaffCredentials(data.staff)
+        setStaffSetupOpen(true)
+
+        // Copy all credentials to clipboard
+        const credentialsText = `Company: ${company.name}\n\n` +
+          data.staff.map((staff: any) =>
+            `${staff.role}:\nName: ${staff.name}\nPhone: ${staff.phone}\nEmail: ${staff.email}\nPassword: ${staff.tempPassword}\n`
+          ).join('\n') +
+          '\nAll staff must change their password on first login.'
+
+        navigator.clipboard.writeText(credentialsText)
+        toast.success("All credentials copied to clipboard!")
+      }
+
+      // Refresh companies list
+      fetchCompanies()
+    } catch (error) {
+      console.error("Staff setup error:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to setup staff")
+    } finally {
+      setSettingUpStaff(false)
     }
   }
 
@@ -678,6 +731,18 @@ export default function CompaniesManagement() {
                         </TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-2">
+                            {company._count.users === 0 && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleSetupStaff(company)}
+                                disabled={settingUpStaff}
+                                className="gap-2 bg-teal-600 hover:bg-teal-700"
+                              >
+                                <Users className="h-3 w-3" />
+                                Setup Staff
+                              </Button>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
@@ -969,6 +1034,68 @@ export default function CompaniesManagement() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Staff Credentials Dialog */}
+      <Dialog open={staffSetupOpen} onOpenChange={setStaffSetupOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-teal-600" />
+              Default Staff Created Successfully
+            </DialogTitle>
+            <DialogDescription>
+              Save these credentials securely. Staff members must change their passwords on first login.
+              <span className="block mt-2 text-xs text-green-600">Credentials have been copied to clipboard!</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {staffCredentials.map((staff, index) => (
+              <div key={index} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                <div className="font-semibold text-sm text-teal-700 mb-3">{staff.role}</div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Name:</span>
+                    <div className="font-medium">{staff.name}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Phone:</span>
+                    <div className="font-medium font-mono">{staff.phone}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Email:</span>
+                    <div className="font-medium">{staff.email}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Temp Password:</span>
+                    <div className="font-medium font-mono bg-yellow-100 px-2 py-1 rounded">
+                      {staff.tempPassword}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                const credentialsText = staffCredentials.map((staff: any) =>
+                  `${staff.role}:\nName: ${staff.name}\nPhone: ${staff.phone}\nEmail: ${staff.email}\nPassword: ${staff.tempPassword}\n`
+                ).join('\n')
+                navigator.clipboard.writeText(credentialsText)
+                toast.success("Credentials copied again!")
+              }}
+            >
+              Copy Again
+            </Button>
+            <Button onClick={() => setStaffSetupOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

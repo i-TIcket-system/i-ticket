@@ -24,6 +24,51 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ## Recent Development (Jan 2026)
 
+### Latest Updates (Jan 20, 2026 - Night Session - Bug Fixes)
+- **11 Critical Bug Fixes & UX Improvements** (✅ COMPLETE)
+  - **🔴 PRIORITY 1: Manual Ticketing Access (CRITICAL FIX)**:
+    - **Problem**: Newly created companies had NO default staff → manual ticketing impossible
+    - **Solution**: Auto-create 3 default staff when company is registered (Admin, Driver, Manual Ticketer)
+    - **Setup Staff API**: Existing companies with 0 staff can use "Setup Default Staff" button
+    - **Files**: `api/admin/companies/route.ts`, `api/admin/companies/[companyId]/setup-staff/route.ts`, `admin/companies/page.tsx`
+    - **Credentials Dialog**: Shows all 3 staff members' temp passwords, auto-copied to clipboard
+    - **Force Password Change**: All auto-created staff must change password on first login
+
+  - **Super Admin Clear Filters Fix**:
+    - Fixed: Clear filters button now refreshes trip data immediately
+    - File: `admin/trips/page.tsx` (added `fetchTrips()` call)
+
+  - **Auto-Halt Warning Fix**:
+    - Fixed: Warning only shows when booking is ACTUALLY halted (not just low seats)
+    - Condition changed: `availableSlots <= 10` → `availableSlots <= 10 && bookingHalted`
+    - File: `components/company/BookingControlCard.tsx`
+
+  - **Dynamic Homepage Stats**:
+    - Homepage trust indicators now show REAL database values (not hardcoded)
+    - New API: `/api/homepage-stats` - Returns travelers, trips, destinations, companies
+    - Graceful fallback to default values on API failure
+    - Files: `app/api/homepage-stats/route.ts`, `app/page.tsx`
+
+  - **Referral Dismissal**:
+    - Added X button to "Invited by X" banner on register page
+    - Dismiss action: Clears cookies + sets localStorage flag → banner stays hidden
+    - File: `app/register/page.tsx`
+
+  - **Real-Time Seat Updates (Manual Ticketing)**:
+    - **Polling**: SeatMap component now supports `pollingInterval` prop
+    - **Cashier Portal**: 5-second polling enabled for real-time seat updates
+    - Manual ticketers now see online bookings within 5 seconds
+    - Files: `components/booking/SeatMap.tsx`, `cashier/trip/[tripId]/page.tsx`
+
+  - **Enhanced Error Messages**:
+    - Seat conflict errors now specify source: "online booking" vs "manual ticketing"
+    - Example: "Seat 5 is already sold (online booking). Please select another seat."
+    - File: `api/cashier/trip/[tripId]/sell/route.ts`
+
+  - **Next.js Route Fix**:
+    - Fixed build error: Moved `[id]` → `[companyId]` for consistent dynamic routing
+    - File: `api/admin/companies/[companyId]/setup-staff/`
+
 ### Latest Updates (Jan 20, 2026 - Late Evening Session)
 - **Customer-Facing Fixes & Critical Security Patches** (✅ COMPLETE)
   - **Terms & Conditions**: Added booking change policy (Section 6.7 & 6.8)

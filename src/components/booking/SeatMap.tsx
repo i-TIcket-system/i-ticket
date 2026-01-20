@@ -14,6 +14,7 @@ interface SeatMapProps {
   busType?: "MINI" | "STANDARD" | "LUXURY"
   orientation?: "landscape" | "portrait"
   refreshTrigger?: number // Increment to force refresh after sales
+  pollingInterval?: number // Milliseconds, 0 = no polling (default)
 }
 
 type SeatStatus = "available" | "occupied" | "selected"
@@ -125,7 +126,8 @@ export function SeatMap({
   className,
   busType = "STANDARD",
   orientation = "landscape",
-  refreshTrigger = 0
+  refreshTrigger = 0,
+  pollingInterval = 0
 }: SeatMapProps) {
   const [seats, setSeats] = useState<SeatData[]>([])
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
@@ -143,6 +145,17 @@ export function SeatMap({
   useEffect(() => {
     onSeatsSelected(selectedSeats)
   }, [selectedSeats, onSeatsSelected])
+
+  // Polling for real-time seat updates (for manual ticketing portals)
+  useEffect(() => {
+    if (!pollingInterval || pollingInterval === 0) return
+
+    const interval = setInterval(() => {
+      fetchSeatAvailability()
+    }, pollingInterval)
+
+    return () => clearInterval(interval) // Cleanup on unmount
+  }, [pollingInterval, tripId])
 
   const fetchSeatAvailability = async () => {
     try {

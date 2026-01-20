@@ -5,14 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { signIn } from "next-auth/react"
 import Link from "next/link"
 import Image from "next/image"
-import { User, Lock, Mail, Loader2, Check, ArrowRight, Ticket, MapPin, Smartphone, Eye, EyeOff, Users, Info } from "lucide-react"
+import { User, Lock, Mail, Loader2, Check, ArrowRight, Ticket, MapPin, Smartphone, Eye, EyeOff, Users, Info, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PhoneInput } from "@/components/ui/phone-input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "sonner"
-import { getReferralCode } from "@/hooks/use-referral-tracking"
+import { getReferralCode, clearReferralTracking } from "@/hooks/use-referral-tracking"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -29,9 +29,17 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [registerAsSales, setRegisterAsSales] = useState(false)
   const [recruiterInfo, setRecruiterInfo] = useState<{ name: string; referralCode: string } | null>(null)
+  const [referralDismissed, setReferralDismissed] = useState(false)
 
   // Check for recruiter info on mount
   useEffect(() => {
+    // Check if referral was dismissed
+    const wasDismissed = localStorage.getItem('iticket_ref_dismissed')
+    if (wasDismissed) {
+      setReferralDismissed(true)
+      return
+    }
+
     const refCode = searchParams.get('ref') || getReferralCode()
     if (refCode) {
       // Fetch recruiter info to show recruitment banner
@@ -53,6 +61,14 @@ export default function RegisterPage() {
       ...prev,
       [e.target.name]: e.target.value,
     }))
+  }
+
+  const handleDismissReferral = () => {
+    clearReferralTracking()
+    localStorage.setItem('iticket_ref_dismissed', 'true')
+    setReferralDismissed(true)
+    setRecruiterInfo(null)
+    toast.info("Referral tracking cleared")
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -238,7 +254,7 @@ export default function RegisterPage() {
             </div>
 
           {/* Recruitment Banner */}
-          {recruiterInfo && (
+          {recruiterInfo && !referralDismissed && (
             <div className="mb-4 p-3 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/30 dark:to-indigo-950/30 border border-purple-200 dark:border-purple-800 rounded-lg">
               <div className="flex items-start gap-3">
                 <div className="p-2 bg-purple-100 dark:bg-purple-900/50 rounded-lg">
@@ -252,6 +268,14 @@ export default function RegisterPage() {
                     Register to start earning commissions on ticket sales
                   </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleDismissReferral}
+                  className="p-1 hover:bg-purple-200 dark:hover:bg-purple-900 rounded-full transition-colors"
+                  aria-label="Dismiss referral banner"
+                >
+                  <X className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                </button>
               </div>
             </div>
           )}

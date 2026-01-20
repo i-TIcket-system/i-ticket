@@ -70,11 +70,11 @@ export function BookingControlCard({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {availableSlots > 0 && availableSlots <= 10 && (
+        {availableSlots > 0 && availableSlots <= 10 && bookingHalted && (
           <div className="flex items-start gap-2 p-2 bg-yellow-100 border border-yellow-300 rounded text-xs">
             <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0 mt-0.5" />
             <p className="text-yellow-800">
-              <strong>Critical:</strong> Only {availableSlots} slots remaining. Online booking auto-halted for safety.
+              <strong>Critical:</strong> Online booking is auto-halted. Only {availableSlots} slots remaining.
             </p>
           </div>
         )}
