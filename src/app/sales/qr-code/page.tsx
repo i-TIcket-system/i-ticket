@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react"
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Loader2, Copy, Download, Share2, Users, QrCode as QrIcon, Link as LinkIcon, CheckCircle2 } from "lucide-react"
+import { Loader2, Copy, Download, Share2, Users, QrCode as QrIcon, Link as LinkIcon, CheckCircle2, Info, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 import Image from "next/image"
 
@@ -135,16 +135,52 @@ export default function QRCodePage() {
         </CardContent>
       </Card>
 
+      {/* What Happens When Someone Scans */}
+      <Card className="border-teal-200 dark:border-teal-800 bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-950/30 dark:to-cyan-950/30">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-teal-100 dark:bg-teal-900/50 rounded-lg flex-shrink-0">
+              <Info className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+            </div>
+            <div className="space-y-3 flex-1">
+              <h3 className="font-semibold text-teal-900 dark:text-teal-100">
+                What Happens When Someone Scans Your QR Code?
+              </h3>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm text-teal-700 dark:text-teal-300">
+                  <ExternalLink className="h-4 w-4 flex-shrink-0" />
+                  <span>They are taken directly to the registration page</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-teal-700 dark:text-teal-300">
+                  <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
+                  <span><strong>As a Customer:</strong> When they register and book tickets, you earn 5% commission</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-teal-700 dark:text-teal-300">
+                  <Users className="h-4 w-4 flex-shrink-0" />
+                  <span><strong>As a Sales Person:</strong> They can check "Register as Sales Person" to join your team (you earn 30% of their commissions)</span>
+                </div>
+              </div>
+              <div className="pt-2 border-t border-teal-200 dark:border-teal-800">
+                <p className="text-xs text-teal-600 dark:text-teal-400 flex items-center gap-1.5">
+                  <ExternalLink className="h-3 w-3" />
+                  QR code leads to: <code className="px-1.5 py-0.5 bg-teal-100 dark:bg-teal-900/50 rounded font-mono">{referralUrl}</code>
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid md:grid-cols-2 gap-6">
         {/* QR Code Card */}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <QrIcon className="h-5 w-5" style={{ color: "#0e9494" }} />
-              <CardTitle>Your Recruitment QR Code</CardTitle>
+              <CardTitle>Your Referral QR Code</CardTitle>
             </div>
             <CardDescription>
-              Let recruits scan this QR code to register under you
+              Share with potential customers and sales recruits
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -231,9 +267,9 @@ export default function QRCodePage() {
       {/* How It Works */}
       <Card>
         <CardHeader>
-          <CardTitle>How Recruitment Works</CardTitle>
+          <CardTitle>How Referrals Work</CardTitle>
           <CardDescription>
-            Earn 30% of commissions from your recruited team members
+            Earn commissions from customer bookings and team member sales
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -244,7 +280,7 @@ export default function QRCodePage() {
               </div>
               <h3 className="font-semibold">Share Your Link</h3>
               <p className="text-sm text-muted-foreground">
-                Share your QR code or referral link with people interested in earning commissions
+                Share your QR code or referral link with potential customers or people interested in becoming sales persons
               </p>
             </div>
             <div className="space-y-2">
@@ -253,16 +289,16 @@ export default function QRCodePage() {
               </div>
               <h3 className="font-semibold">They Register</h3>
               <p className="text-sm text-muted-foreground">
-                When they register using your link and check "Register as Sales Person", they join your team
+                They can register as a customer OR check "Register as Sales Person" to join your team
               </p>
             </div>
             <div className="space-y-2">
               <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: "#0e9494" }}>
                 3
               </div>
-              <h3 className="font-semibold">Earn Together</h3>
+              <h3 className="font-semibold">You Earn</h3>
               <p className="text-sm text-muted-foreground">
-                You earn 30% of every commission they make. They keep 70%. Everyone wins!
+                5% commission when customers book tickets, or 30% of commissions from team members who sell
               </p>
             </div>
           </div>

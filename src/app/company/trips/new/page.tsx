@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import {
   Bus,
@@ -19,7 +19,8 @@ import {
   Car,
   UserCheck,
   Ticket,
-  Truck
+  Truck,
+  CalendarDays
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,10 +35,16 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { BUS_TYPES } from "@/lib/utils"
+import { MultiDatePicker } from "@/components/ui/multi-date-picker"
+import { BatchPreview } from "@/components/trip/batch-preview"
+import { Switch } from "@/components/ui/switch"
+import { toast } from "sonner"
+import { getAllCities } from "@/lib/ethiopian-cities"
 
 export default function NewTripPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   const [formData, setFormData] = useState({
     origin: "",
@@ -82,6 +89,12 @@ export default function NewTripPage() {
     totalSeats: number;
   }>>([])
 
+  // Batch mode state
+  const [batchMode, setBatchMode] = useState(false)
+  const [selectedDates, setSelectedDates] = useState<Date[]>([])
+  const [createReturnTrips, setCreateReturnTrips] = useState(false)
+  const [returnDepartureTime, setReturnDepartureTime] = useState("")
+
   // Auto-fill totalSlots when vehicle is selected
   useEffect(() => {
     if (formData.vehicleId) {
@@ -95,18 +108,53 @@ export default function NewTripPage() {
     }
   }, [formData.vehicleId, vehicles])
 
-  // Fetch cities from API
+  // Auto-fill from template URL params
+  useEffect(() => {
+    const origin = searchParams.get("origin")
+    const destination = searchParams.get("destination")
+    const duration = searchParams.get("duration")
+    const distance = searchParams.get("distance")
+    const price = searchParams.get("price")
+    const busType = searchParams.get("busType")
+    const hasWater = searchParams.get("hasWater")
+    const hasFood = searchParams.get("hasFood")
+
+    if (origin || destination) {
+      setFormData(prev => ({
+        ...prev,
+        origin: origin || prev.origin,
+        destination: destination || prev.destination,
+        estimatedDuration: duration || prev.estimatedDuration,
+        distance: distance || prev.distance,
+        price: price || prev.price,
+        busType: busType || prev.busType,
+        hasWater: hasWater === "true",
+        hasFood: hasFood === "true",
+      }))
+    }
+  }, [searchParams])
+
+  // Fetch cities from API (combines static Ethiopian cities + organic DB cities)
   useEffect(() => {
     async function fetchCities() {
       try {
         const response = await fetch("/api/cities")
         const data = await response.json()
         if (data.cities) {
-          setCities(data.cities.map((c: any) => c.name))
+          const dbCities = data.cities.map((c: any) => c.name)
+          // Combine static Ethiopian cities with organic database cities
+          const allCities = getAllCities(dbCities)
+          setCities(allCities)
+        } else {
+          // Fallback to static cities if API fails
+          const allCities = getAllCities([])
+          setCities(allCities)
         }
       } catch (error) {
         console.error("Failed to fetch cities:", error)
-        setCities([])
+        // Fallback to static cities
+        const allCities = getAllCities([])
+        setCities(allCities)
       }
     }
     fetchCities()
@@ -171,6 +219,72 @@ export default function NewTripPage() {
     setError("")
 
     setIsSubmitting(true)
+
+    // BATCH MODE SUBMISSION
+    if (batchMode) {
+      if (selectedDates.length === 0) {
+        setError("Please select at least one date for batch creation")
+        setIsSubmitting(false)
+        return
+      }
+
+      if (createReturnTrips && !returnDepartureTime) {
+        setError("Please set return trip departure time")
+        setIsSubmitting(false)
+        return
+      }
+
+      try {
+        const finalOrigin = formData.origin || customOrigin
+        const finalDestination = formData.destination || customDestination
+
+        const response = await fetch("/api/company/trips/batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            origin: finalOrigin,
+            destination: finalDestination,
+            dates: selectedDates.map(d => d.toISOString().split("T")[0]),
+            departureTime: formData.departureTime,
+            estimatedDuration: parseInt(formData.estimatedDuration, 10),
+            distance: formData.distance ? parseInt(formData.distance, 10) : undefined,
+            price: parseFloat(formData.price),
+            busType: formData.busType,
+            totalSlots: parseInt(formData.totalSlots, 10),
+            hasWater: formData.hasWater,
+            hasFood: formData.hasFood,
+            intermediateStops: intermediateStops.length > 0 ? JSON.stringify(intermediateStops) : null,
+            driverId: formData.driverId,
+            conductorId: formData.conductorId,
+            manualTicketerId: formData.manualTicketerId,
+            vehicleId: formData.vehicleId,
+            createReturnTrips,
+            returnDepartureTime: createReturnTrips ? returnDepartureTime : undefined,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          toast.success(`Successfully created ${data.tripsCreated} trips!`)
+          router.push("/company/trips")
+          return
+        } else {
+          let errorMsg = data.error || "Failed to create batch trips"
+          if (data.conflicts && data.conflicts.length > 0) {
+            errorMsg += ":\n• " + data.conflicts.join("\n• ")
+          }
+          setError(errorMsg)
+        }
+      } catch (error) {
+        setError("Failed to create batch trips")
+      } finally {
+        setIsSubmitting(false)
+      }
+      return
+    }
+
+    // SINGLE TRIP SUBMISSION (original logic continues below)
 
     try {
       // Combine date and time
@@ -313,7 +427,88 @@ export default function NewTripPage() {
               {error && (
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                   <AlertCircle className="h-4 w-4" />
-                  {error}
+                  <span className="whitespace-pre-wrap">{error}</span>
+                </div>
+              )}
+
+              {/* Batch Mode Toggle */}
+              <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
+                <div className="flex items-center gap-3">
+                  <CalendarDays className="h-5 w-5 text-primary" />
+                  <div>
+                    <Label htmlFor="batch-mode" className="text-base font-medium cursor-pointer">
+                      Batch Creation Mode
+                    </Label>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Create multiple trips at once (up to 10 dates)
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="batch-mode"
+                  checked={batchMode}
+                  onCheckedChange={setBatchMode}
+                />
+              </div>
+
+              {/* Batch Mode: Multi-Date Picker */}
+              {batchMode && (
+                <div className="space-y-4 p-4 rounded-lg border border-blue-200 bg-blue-50/30 dark:bg-blue-950/20 dark:border-blue-800">
+                  <div className="space-y-2">
+                    <Label>Select Trip Dates *</Label>
+                    <MultiDatePicker
+                      selectedDates={selectedDates}
+                      onChange={setSelectedDates}
+                      maxSelections={10}
+                      minDate={tomorrow}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Click multiple dates to create trips. All trips will use the same departure time and details below.
+                    </p>
+                  </div>
+
+                  {/* Return Trips Option */}
+                  <div className="flex items-start gap-3 p-3 rounded-md bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800">
+                    <Checkbox
+                      id="create-return-trips"
+                      checked={createReturnTrips}
+                      onCheckedChange={(checked) => setCreateReturnTrips(checked as boolean)}
+                      className="mt-0.5"
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="create-return-trips" className="cursor-pointer font-medium">
+                        Also create return trips
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Automatically creates return trips (destination → origin) on the next day
+                      </p>
+                      {createReturnTrips && (
+                        <div className="mt-3 space-y-2">
+                          <Label className="text-xs">Return Trip Departure Time *</Label>
+                          <Input
+                            type="time"
+                            value={returnDepartureTime}
+                            onChange={(e) => setReturnDepartureTime(e.target.value)}
+                            className="max-w-[150px]"
+                            required
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Batch Preview */}
+                  {selectedDates.length > 0 && (
+                    <BatchPreview
+                      origin={formData.origin || customOrigin}
+                      destination={formData.destination || customDestination}
+                      selectedDates={selectedDates}
+                      departureTime={formData.departureTime}
+                      createReturnTrips={createReturnTrips}
+                      returnDepartureTime={returnDepartureTime}
+                      price={formData.price}
+                    />
+                  )}
                 </div>
               )}
 

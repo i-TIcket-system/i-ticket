@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useReferralTracking } from "@/hooks/use-referral-tracking"
 import Link from "next/link"
 import {
@@ -66,9 +66,27 @@ const stats = [
 
 export default function HomePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const refCode = searchParams.get('ref')
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
-  // Track referral codes from QR scans (first-come attribution)
+  // Redirect to register if ref code is present
+  useEffect(() => {
+    if (refCode && !isRedirecting) {
+      setIsRedirecting(true)
+      // Redirect to register with ref code for better conversion
+      router.push(`/register?ref=${refCode}`)
+    }
+  }, [refCode, router, isRedirecting])
+
+  // Track referral codes (only called on register page now via redirect)
+  // This hook does nothing on homepage when ref is present since we redirect
   useReferralTracking()
+
+  // Don't render page content if redirecting
+  if (isRedirecting) {
+    return null
+  }
 
   const [origin, setOrigin] = useState("")
   const [destination, setDestination] = useState("")
@@ -549,18 +567,18 @@ export default function HomePage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/search">
-              <Button size="lg" variant="secondary" className="h-14 px-8 text-base font-medium shadow-xl hover:shadow-2xl coffee-ripple">
+            <Button size="lg" variant="secondary" className="h-14 px-8 text-base font-medium shadow-xl hover:shadow-2xl coffee-ripple" asChild>
+              <Link href="/search">
                 <Search className="h-5 w-5 mr-2" />
                 Find Trips
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="lg" variant="outline" className="h-14 px-8 text-base font-medium border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/50 backdrop-blur-md hover:backdrop-blur-lg transition-all duration-300">
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" className="h-14 px-8 text-base font-medium border-white/30 bg-white/10 text-white hover:bg-white/20 hover:border-white/50 backdrop-blur-md hover:backdrop-blur-lg transition-all duration-300" asChild>
+              <Link href="/register">
                 <UserPlus className="h-5 w-5 mr-2" />
                 Create Account
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       </section>

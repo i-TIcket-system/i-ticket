@@ -114,7 +114,7 @@ export default function RegisterPage() {
           password: formData.password,
           redirect: false,
         })
-        router.push("/sales")
+        router.push("/sales/dashboard")
       } else {
         toast.success("Account created successfully! Signing you in...")
         // Auto-login for regular customer

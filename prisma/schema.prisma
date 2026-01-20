@@ -90,9 +90,41 @@ model Company {
   users     User[]
   trips     Trip[]
   vehicles  Vehicle[]
+  tripTemplates TripTemplate[]
   companyMessages CompanyMessage[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Trip templates for quick trip creation
+model TripTemplate {
+  id              String   @id @default(cuid())
+  companyId       String
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Template identification
+  name            String   // User-defined name (e.g., "Addis-Dire Standard Route")
+  origin          String
+  destination     String
+
+  // Default values (all editable when used)
+  estimatedDuration Int    // hours
+  distance          Int?   // km
+  price             Float
+  busType           String
+  hasWater          Boolean @default(false)
+  hasFood           Boolean @default(false)
+  intermediateStops String? // JSON array
+
+  // Usage tracking
+  timesUsed       Int      @default(0)
+  lastUsedAt      DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([companyId, origin, destination])
+  @@index([companyId, name])
 }
 
 model Trip {
