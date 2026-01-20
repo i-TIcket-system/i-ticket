@@ -72,8 +72,33 @@ export default function TrackBookingPage() {
     setError("")
 
     try {
+      // Validate code format before making API call
+      const trimmedCode = code.trim()
+
+      // Strict validation: Must match proper ticket patterns
+      // Pattern 1: TKT-XXXXXX (6+ chars after prefix)
+      // Pattern 2: BKG-XXXXXX (6+ chars after prefix)
+      // Pattern 3: CLK-XXXXXXXXXX (10+ chars - ClickUp IDs)
+      // Pattern 4: Booking ID from DB (25+ alphanumeric - e.g., clm1abc2def3ghi4jkl5mnop6)
+      const ticketPattern = /^TKT-[A-Z0-9]{6,}$/i
+      const bookingCodePattern = /^BKG-[A-Z0-9]{6,}$/i
+      const clickupPattern = /^CLK-[A-Z0-9]{10,}$/i
+      const bookingIdPattern = /^[A-Z0-9]{25,}$/i  // Database booking IDs are long
+
+      const isValidPattern =
+        ticketPattern.test(trimmedCode) ||
+        bookingCodePattern.test(trimmedCode) ||
+        clickupPattern.test(trimmedCode) ||
+        bookingIdPattern.test(trimmedCode)
+
+      if (!isValidPattern) {
+        setError("Not a valid ticket number or booking code. Please use format: TKT-ABC123, BKG-ABC123, or your booking ID")
+        setIsLoading(false)
+        return
+      }
+
       // Try to fetch booking by ID or ticket code
-      const response = await fetch(`/api/track/${code}`)
+      const response = await fetch(`/api/track/${encodeURIComponent(trimmedCode)}`)
       const data = await response.json()
 
       if (response.ok) {
@@ -128,12 +153,12 @@ export default function TrackBookingPage() {
             </ul>
           </div>
           <Separator className="my-6" />
-          <Link href="/">
-            <Button variant="outline" className="w-full">
+          <Button variant="outline" className="w-full" asChild>
+            <Link href="/">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Home
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </Card>
       </div>
     )
@@ -313,26 +338,26 @@ export default function TrackBookingPage() {
         {/* Actions */}
         {isPaid && (
           <div className="flex gap-3">
-            <Link href={`/tickets/${booking.id}`} className="flex-1">
-              <Button className="w-full" size="lg">
+            <Button className="w-full flex-1" size="lg" asChild>
+              <Link href={`/tickets/${booking.id}`}>
                 <Download className="h-4 w-4 mr-2" />
                 View Tickets
-              </Button>
-            </Link>
-            <Link href="/search" className="flex-1">
-              <Button variant="outline" size="lg" className="w-full">
+              </Link>
+            </Button>
+            <Button variant="outline" size="lg" className="w-full flex-1" asChild>
+              <Link href="/search">
                 Book Another Trip
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         )}
 
         {!isPaid && (
-          <Link href={`/payment/${booking.id}`}>
-            <Button className="w-full" size="lg">
+          <Button className="w-full" size="lg" asChild>
+            <Link href={`/payment/${booking.id}`}>
               Complete Payment
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         )}
       </div>
     </div>

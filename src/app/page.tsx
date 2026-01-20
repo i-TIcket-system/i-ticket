@@ -94,6 +94,7 @@ export default function HomePage() {
   const [cities, setCities] = useState<string[]>([])
   const [citiesLoading, setCitiesLoading] = useState(true)
   const [trackingCode, setTrackingCode] = useState("")
+  const [isTrackingLoading, setIsTrackingLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
   const [belowFoldVisible, setBelowFoldVisible] = useState(false)
   const [popularRoutes, setPopularRoutes] = useState<{ from: string; to: string }[]>([
@@ -412,27 +413,52 @@ export default function HomePage() {
                     <form
                       onSubmit={(e) => {
                         e.preventDefault()
-                        if (!trackingCode.trim()) {
+                        const code = trackingCode.trim()
+
+                        // Validation
+                        if (!code) {
                           toast.error("Please enter your ticket or booking code")
                           return
                         }
-                        router.push(`/track/${trackingCode.trim().toUpperCase()}`)
+
+                        // Strict validation: Must match proper ticket patterns
+                        const ticketPattern = /^TKT-[A-Z0-9]{6,}$/i
+                        const bookingCodePattern = /^BKG-[A-Z0-9]{6,}$/i
+                        const clickupPattern = /^CLK-[A-Z0-9]{10,}$/i
+                        const bookingIdPattern = /^[A-Z0-9]{25,}$/i
+
+                        const isValidPattern =
+                          ticketPattern.test(code) ||
+                          bookingCodePattern.test(code) ||
+                          clickupPattern.test(code) ||
+                          bookingIdPattern.test(code)
+
+                        if (!isValidPattern) {
+                          toast.error("Not a valid ticket pattern. Use: TKT-ABC123, BKG-ABC123, or booking ID")
+                          return
+                        }
+
+                        setIsTrackingLoading(true)
+                        router.push(`/track/${code.toUpperCase()}`)
                       }}
                       className="flex gap-3 w-full md:w-auto"
                     >
                       <Input
                         type="text"
-                        placeholder="Enter code..."
+                        placeholder="Enter code (e.g., TKT-ABC123)"
                         value={trackingCode}
                         onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
                         className="flex-1 md:w-64 h-12"
+                        disabled={isTrackingLoading}
+                        maxLength={20}
                       />
                       <Button
                         type="submit"
-                        className="h-12 px-6 bg-gradient-to-r from-[#0e9494] to-[#0d4f5c] hover:from-[#20c4c4] hover:to-[#0e9494] text-white font-medium"
+                        disabled={isTrackingLoading || !trackingCode.trim()}
+                        className="h-12 px-6 bg-gradient-to-r from-[#0e9494] to-[#0d4f5c] hover:from-[#20c4c4] hover:to-[#0e9494] text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Search className="h-4 w-4 mr-2" />
-                        Track
+                        {isTrackingLoading ? "Tracking..." : "Track"}
                       </Button>
                     </form>
                   </div>
