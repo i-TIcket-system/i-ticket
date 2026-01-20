@@ -10,6 +10,7 @@ interface BookingControlCardProps {
   tripId: string
   bookingHalted: boolean
   availableSlots: number
+  currentAutoResumeEnabled: boolean
   onUpdate: () => void
 }
 
@@ -17,11 +18,12 @@ export function BookingControlCard({
   tripId,
   bookingHalted,
   availableSlots,
+  currentAutoResumeEnabled,
   onUpdate,
 }: BookingControlCardProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
-  const [autoResumeEnabled, setAutoResumeEnabled] = useState(false)
+  const [autoResumeEnabled, setAutoResumeEnabled] = useState(currentAutoResumeEnabled)
 
   const toggleBooking = async (action: "RESUME" | "HALT") => {
     setIsLoading(true)
@@ -33,7 +35,7 @@ export function BookingControlCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action,
-          ...(action === "RESUME" && { autoResumeEnabled }),
+          autoResumeEnabled, // Send for both RESUME and HALT
         }),
       })
 
@@ -57,6 +59,34 @@ export function BookingControlCard({
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const updateAutoHaltSetting = async (enabled: boolean) => {
+    try {
+      const response = await fetch(`/api/company/trips/${tripId}/auto-halt-setting`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoResumeEnabled: enabled }),
+      })
+
+      if (response.ok) {
+        setMessage({
+          type: "success",
+          text: enabled ? "Auto-halt disabled for this trip" : "Auto-halt enabled for this trip"
+        })
+        setTimeout(() => {
+          onUpdate()
+          setMessage(null)
+        }, 2000)
+      }
+    } catch (error) {
+      console.error("Failed to update auto-halt setting:", error)
+    }
+  }
+
+  const handleCheckboxChange = (checked: boolean) => {
+    setAutoResumeEnabled(checked)
+    updateAutoHaltSetting(checked)
   }
 
   return (
@@ -125,26 +155,26 @@ export function BookingControlCard({
             )}
           </div>
 
-          {bookingHalted && (
-            <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded">
-              <input
-                type="checkbox"
-                id="autoResumeEnabled"
-                checked={autoResumeEnabled}
-                onChange={(e) => setAutoResumeEnabled(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-              />
-              <label
-                htmlFor="autoResumeEnabled"
-                className="text-xs text-blue-900 cursor-pointer select-none"
-              >
-                <strong>Don't auto-halt this trip again</strong>
-                <p className="text-blue-700 mt-1">
-                  Online booking will continue even below 10 seats. Other trips are not affected.
-                </p>
-              </label>
-            </div>
-          )}
+          <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded">
+            <input
+              type="checkbox"
+              id="autoResumeEnabled"
+              checked={autoResumeEnabled}
+              onChange={(e) => handleCheckboxChange(e.target.checked)}
+              className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            />
+            <label
+              htmlFor="autoResumeEnabled"
+              className="text-xs text-blue-900 cursor-pointer select-none"
+            >
+              <strong>Disable auto-halt for this trip</strong>
+              <p className="text-blue-700 mt-1">
+                {bookingHalted
+                  ? "When resumed, booking will continue even below 10 seats."
+                  : "Prevents auto-halt when slots drop to 10. Manual ticketing unaffected."}
+              </p>
+            </label>
+          </div>
         </div>
 
         <p className="text-xs text-muted-foreground text-center">

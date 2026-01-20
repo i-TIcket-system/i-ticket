@@ -638,6 +638,7 @@ export default function TripDetailPage() {
               tripId={trip.id}
               bookingHalted={trip.bookingHalted}
               availableSlots={trip.availableSlots}
+              currentAutoResumeEnabled={trip.autoResumeEnabled || false}
               onUpdate={fetchTrip}
             />
 
