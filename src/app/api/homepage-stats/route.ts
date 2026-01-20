@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { db } from "@/lib/db"
+import prisma from "@/lib/db"
+import { ETHIOPIAN_CITIES } from "@/lib/ethiopian-cities"
 
 // Helper to format large numbers
 function formatStat(num: number): string {
@@ -15,17 +16,21 @@ function formatStat(num: number): string {
  */
 export async function GET() {
   try {
-    const [customers, trips, cities, companies] = await Promise.all([
-      db.user.count({ where: { role: "CUSTOMER" } }),
-      db.trip.count(),
-      db.city.count(),
-      db.company.count({ where: { isActive: true } })
+    const [customers, trips, dbCities, companies] = await Promise.all([
+      prisma.user.count({ where: { role: "CUSTOMER" } }),
+      prisma.trip.count(),
+      prisma.city.findMany({ select: { name: true } }),
+      prisma.company.count({ where: { isActive: true } })
     ])
+
+    // Combine static Ethiopian cities + organic database cities
+    const allCities = new Set([...ETHIOPIAN_CITIES, ...dbCities.map(c => c.name)])
+    const totalCities = allCities.size
 
     return NextResponse.json({
       travelers: formatStat(customers),
       trips: formatStat(trips),
-      destinations: formatStat(cities),
+      destinations: formatStat(totalCities),
       companies: `${companies}+`
     })
   } catch (error) {
