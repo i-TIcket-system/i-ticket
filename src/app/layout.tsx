@@ -65,7 +65,24 @@ export default function RootLayout({
             <main id="main-content" className="flex-1">{children}</main>
             <Footer />
           </div>
-          <Toaster position="top-center" richColors closeButton />
+          <Toaster
+            position="top-center"
+            closeButton
+            toastOptions={{
+              classNames: {
+                toast: '!text-gray-900',
+                title: '!text-gray-900 !font-semibold',
+                description: '!text-gray-800',
+                success: '!bg-[#0e9494] !text-gray-900 !border-[#20c4c4]',
+                error: '!bg-[#0d4f5c] !text-gray-900 !border-[#0e9494]',
+                info: '!bg-[#20c4c4] !text-gray-900 !border-[#0e9494]',
+                warning: '!bg-[#0d7a7a] !text-gray-900 !border-[#20c4c4]',
+              },
+              style: {
+                borderRadius: '0.75rem',
+              },
+            }}
+          />
         </SessionProvider>
         </ThemeProvider>
       </body>

@@ -12,6 +12,14 @@
     --teal-light: 180 73% 45%;   /* #20c4c4 - Bright cyan */
     --teal-pale: 180 50% 90%;    /* Light teal tint */
 
+    /* Sonner Toast Colors - Teal Theme */
+    --toast-success-bg: hsl(var(--teal-medium));
+    --toast-success-text: white;
+    --toast-success-border: hsl(var(--teal-light));
+    --toast-info-bg: hsl(var(--teal-light));
+    --toast-info-text: white;
+    --toast-info-border: hsl(var(--teal-medium));
+
     /* ACCENT - Ethiopian Sun & Earth (for highlights only) */
     --sun-gold: 40 95% 55%;          /* Sunrise gold - highlights */
     --earth-terracotta: 12 75% 50%;  /* Red earth - optional CTAs */
@@ -76,6 +84,14 @@
     --teal-medium: 180 82% 32%;
     --teal-light: 180 73% 45%;
     --teal-pale: 189 40% 20%;
+
+    /* Sonner Toast Colors - Dark Mode */
+    --toast-success-bg: hsl(var(--teal-light));
+    --toast-success-text: hsl(var(--teal-dark));
+    --toast-success-border: hsl(var(--teal-medium));
+    --toast-info-bg: hsl(var(--teal-medium));
+    --toast-info-text: white;
+    --toast-info-border: hsl(var(--teal-light));
   }
 }
 
@@ -1081,7 +1097,5 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   .fade-in-up,
   .stagger-fade-in > * {
     animation: none !important;
-    opacity: 1;
-    transform: none;
   }
 }
