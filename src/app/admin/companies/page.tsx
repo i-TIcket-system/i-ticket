@@ -630,7 +630,7 @@ export default function CompaniesManagement() {
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 text-sm">
                               <Phone className="h-3 w-3 text-muted-foreground" />
-                              <span>{company.phone}</span>
+                              <span>{company.phones}</span>
                             </div>
                             {company.email && (
                               <div className="flex items-center gap-2 text-sm">
