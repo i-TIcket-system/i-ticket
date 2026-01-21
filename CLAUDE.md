@@ -1,8 +1,10 @@
 # i-Ticket Platform
 
+> **Current Version**: v2.3.0 (January 21, 2026)
 > **Full History**: See `docs/business-logic/CLAUDE-BACKUP-v3.md` for complete changelog details.
 > **🚨 CRITICAL**: See `CLAUDE-STABLE-REFERENCE.md` before making any code changes!
 > **Additional Documentation**: See `/docs` folder for organized documentation (test reports, guides, presentations, etc.)
+> **Changelog**: See `CHANGELOG.md` for version history
 
 ---
 
@@ -26,6 +28,52 @@
 
 ## Tech Stack
 Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth.js + Tailwind/shadcn/ui
+
+---
+
+## Recent Development (Jan 2026)
+
+### Latest Updates (Jan 21, 2026 - v2.3.0 Release) 🎯
+- **🚨 CRITICAL: View-Only Trip Mode** (✅ COMPLETE)
+  - **Problem**: DEPARTED, COMPLETED, CANCELLED trips could still be edited
+  - **Business Rule**: Final-status trips must be READ-ONLY for data integrity and audit compliance
+  - **Solution**: Comprehensive protection at API and UI levels
+  - **API Protection**:
+    - Manual ticket sales: BLOCKED for view-only trips
+    - Cashier ticket sales: BLOCKED for view-only trips
+    - Trip updates (PUT): BLOCKED for view-only trips
+    - Resume booking: BLOCKED for view-only trips
+    - Status changes: Only DEPARTED → COMPLETED allowed
+  - **UI Protection**:
+    - ViewOnlyBanner component shows status-specific messages
+    - Edit Trip button disabled on detail page
+    - Edit page redirects with error toast notification
+    - Resume button disabled with tooltip explanation
+    - Booking badge forced "HALTED" display
+  - **Database Fix**: 42 trips corrected (bookingHalted sync)
+  - **Files**: Created 11 new files, modified 17 files
+  - **Documentation**: 3 comprehensive docs (VIEW-ONLY, TRIP-SORTING, OLD-TRIP-CLEANUP)
+  - **Commit**: d6cd6f9
+
+- **Trip Sorting - Active First** (✅ COMPLETE)
+  - **Problem**: Completed/cancelled trips mixed with active trips in listings
+  - **Solution**: Sort by status priority, then departure time
+  - **Priority Order**:
+    1. SCHEDULED (top - needs attention)
+    2. BOARDING (near top - imminent)
+    3. DEPARTED (middle - in progress)
+    4. COMPLETED (bottom - historical)
+    5. CANCELLED (bottom - historical)
+  - **Applied To**: 5 trip listing endpoints (company, admin, staff, cashier, public)
+  - **Files**: Created `lib/sort-trips.ts`, modified 5 API routes
+
+- **Old Trip Status Cleanup** (✅ COMPLETE)
+  - **Problem**: 44 trips with dates before current date had incorrect status
+  - **Solution**: Manual script + automated cron job cleanup
+  - **Results**: 4 marked COMPLETED (had bookings), 40 marked CANCELLED (no bookings)
+  - **Automation**: Cron job runs every 15 minutes
+  - **Audit**: Creates `TRIP_STATUS_AUTO_UPDATE` log entries
+  - **Files**: Created 2 scripts (`check-old-trips.ts`, `cleanup-old-trips.ts`)
 
 ---
 
