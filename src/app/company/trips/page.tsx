@@ -111,6 +111,15 @@ export default function CompanyTripsPage() {
       }
       fetchTrips()
       fetchCompanySettings()
+
+      // Auto-refresh trips every 10 seconds
+      const interval = setInterval(() => {
+        if (!document.hidden) {
+          fetchTrips()
+        }
+      }, 10000)
+
+      return () => clearInterval(interval)
     }
   }, [status, session])
 
