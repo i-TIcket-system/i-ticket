@@ -3,6 +3,7 @@ import prisma from "@/lib/db"
 import { searchTripsSchema, validateQueryParams } from "@/lib/validations"
 import { createAuditLogTask } from "@/lib/clickup"
 import { handleApiError } from "@/lib/utils"
+import { sortTripsByStatusAndTime } from "@/lib/sort-trips"
 
 export async function GET(request: NextRequest) {
   try {
@@ -99,6 +100,7 @@ export async function GET(request: NextRequest) {
         availableSlots: true,
         hasWater: true,
         hasFood: true,
+        status: true, // Add status for sorting
         company: {
           select: {
             id: true,
@@ -110,8 +112,14 @@ export async function GET(request: NextRequest) {
       skip: (page - 1) * limit,
     })
 
+    // If sorting by departureTime (default), apply status priority sorting
+    // This ensures SCHEDULED trips appear before BOARDING trips
+    const finalTrips = sortBy === "departureTime"
+      ? sortTripsByStatusAndTime(trips, "asc")
+      : trips
+
     return NextResponse.json({
-      trips,
+      trips: finalTrips,
       pagination: {
         page,
         limit,

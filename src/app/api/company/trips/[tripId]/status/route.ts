@@ -4,20 +4,12 @@ import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
 import { generateAndStoreManifest } from "@/lib/manifest-generator"
+import { getAllowedStatusTransitions } from "@/lib/trip-status"
 
 const statusUpdateSchema = z.object({
   status: z.enum(["SCHEDULED", "BOARDING", "DEPARTED", "COMPLETED", "CANCELLED"]),
   notes: z.string().optional(),
 })
-
-// Valid status transitions
-const validTransitions: Record<string, string[]> = {
-  SCHEDULED: ["BOARDING", "CANCELLED"],
-  BOARDING: ["DEPARTED", "CANCELLED"],
-  DEPARTED: ["COMPLETED"],
-  COMPLETED: [], // Final state
-  CANCELLED: [], // Final state
-}
 
 /**
  * PATCH - Update trip status (start boarding, depart, complete, cancel)
@@ -89,9 +81,9 @@ export async function PATCH(
       }
     }
 
-    // Check valid status transition
+    // Check valid status transition using helper function
     const currentStatus = trip.status || "SCHEDULED"
-    const allowedTransitions = validTransitions[currentStatus] || []
+    const allowedTransitions = getAllowedStatusTransitions(currentStatus)
 
     if (!allowedTransitions.includes(validatedData.status)) {
       return NextResponse.json(
@@ -121,9 +113,15 @@ export async function PATCH(
       updateData.bookingHalted = true as boolean // Explicit boolean assignment
     }
 
-    // Record actual arrival time when status changes to COMPLETED
+    // Record actual arrival time and force halt when status changes to COMPLETED
     if (validatedData.status === "COMPLETED") {
       updateData.actualArrivalTime = new Date()
+      updateData.bookingHalted = true as boolean // Force halt - trip is complete
+    }
+
+    // Force halt when status changes to CANCELLED
+    if (validatedData.status === "CANCELLED") {
+      updateData.bookingHalted = true as boolean // Force halt - trip is cancelled
     }
 
     // Update the trip status
@@ -254,7 +252,7 @@ export async function GET(
     }
 
     const currentStatus = trip.status || "SCHEDULED"
-    const allowedTransitions = validTransitions[currentStatus] || []
+    const allowedTransitions = getAllowedStatusTransitions(currentStatus)
 
     return NextResponse.json({
       currentStatus,

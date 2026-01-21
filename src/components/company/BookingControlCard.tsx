@@ -11,6 +11,7 @@ interface BookingControlCardProps {
   bookingHalted: boolean
   availableSlots: number
   currentAutoResumeEnabled: boolean
+  tripStatus: string
   onUpdate: () => void
 }
 
@@ -19,8 +20,13 @@ export function BookingControlCard({
   bookingHalted,
   availableSlots,
   currentAutoResumeEnabled,
+  tripStatus,
   onUpdate,
 }: BookingControlCardProps) {
+  // 🚨 CRITICAL: Cannot resume booking for DEPARTED, COMPLETED, or CANCELLED trips
+  const isStatusBlocked = ["DEPARTED", "COMPLETED", "CANCELLED"].includes(tripStatus)
+  // Force halted display for blocked statuses
+  const displayHalted = isStatusBlocked || bookingHalted
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [autoResumeEnabled, setAutoResumeEnabled] = useState(currentAutoResumeEnabled)
@@ -90,12 +96,12 @@ export function BookingControlCard({
   }
 
   return (
-    <Card className={bookingHalted ? "border-red-500 bg-red-50" : "border-green-500 bg-green-50"}>
+    <Card className={displayHalted ? "border-red-500 bg-red-50" : "border-green-500 bg-green-50"}>
       <CardHeader className="pb-3">
         <CardTitle className="text-sm flex items-center justify-between">
           <span>Online Booking Status</span>
-          <Badge variant={bookingHalted ? "destructive" : "default"}>
-            {bookingHalted ? "HALTED" : "ACTIVE"}
+          <Badge variant={displayHalted ? "destructive" : "default"}>
+            {displayHalted ? "HALTED" : "ACTIVE"}
           </Badge>
         </CardTitle>
       </CardHeader>
@@ -121,14 +127,24 @@ export function BookingControlCard({
           </div>
         )}
 
+        {isStatusBlocked && bookingHalted && (
+          <div className="flex items-start gap-2 p-2 bg-gray-100 border border-gray-300 rounded text-xs">
+            <AlertTriangle className="h-4 w-4 text-gray-600 flex-shrink-0 mt-0.5" />
+            <p className="text-gray-800">
+              <strong>Trip Status:</strong> {tripStatus}. Online booking cannot be resumed for {tripStatus.toLowerCase()} trips.
+            </p>
+          </div>
+        )}
+
         <div className="space-y-3">
           <div className="flex gap-2">
-            {bookingHalted ? (
+            {displayHalted ? (
               <Button
-                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
                 size="sm"
                 onClick={() => toggleBooking("RESUME")}
-                disabled={isLoading}
+                disabled={isLoading || isStatusBlocked}
+                title={isStatusBlocked ? `Cannot resume booking for ${tripStatus} trips` : undefined}
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -44,6 +44,9 @@ model User {
   // Company-platform messages
   companyMessages CompanyMessage[]
 
+  // Platform staff (if user is i-Ticket employee)
+  platformStaff   PlatformStaff?
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -1081,3 +1084,89 @@ model CompanyMessage {
   @@index([companyId, isReadByAdmin])
   @@index([companyId, isReadByCompany])
 }
+
+// ==================== PLATFORM STAFF MANAGEMENT ====================
+
+// i-Ticket Platform Staff (separate from company staff)
+// These are employees of the i-Ticket platform itself
+model PlatformStaff {
+  id            String   @id @default(cuid())
+  userId        String   @unique // Links to User model
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Staff role/department
+  role          String   // See PLATFORM_STAFF_ROLES enum below
+  department    String   // FINANCE, OPERATIONS, SUPPORT, MARKETING, TECHNICAL, COMPLIANCE, MANAGEMENT
+
+  // Contact info
+  employeeId    String   @unique // Employee ID (e.g., "iTKT-001")
+  email         String   @unique
+  phone         String
+
+  // Employment details
+  position      String   // Job title (e.g., "Senior Accountant", "Customer Support Agent")
+  hireDate      DateTime
+  status        String   @default("ACTIVE") // ACTIVE, ON_LEAVE, SUSPENDED, TERMINATED
+
+  // Reporting structure
+  reportsTo     String?  // userId of manager/supervisor
+
+  // Permissions (JSON)
+  // {canViewFinance: true, canManageStaff: false, canAccessReports: true}
+  permissions   String   @default("{}") @db.Text
+
+  // Additional info
+  notes         String?  @db.Text
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([role, status])
+  @@index([department])
+  @@index([employeeId])
+  @@index([status])
+}
+
+// PLATFORM STAFF ROLES:
+// ===================
+//
+// FINANCE DEPARTMENT:
+// - ACCOUNTANT: General accounting, bookkeeping, financial records
+// - FINANCIAL_ANALYST: Financial planning, analysis, forecasting
+// - BILLING_MANAGER: Invoice management, payment processing
+// - REVENUE_MANAGER: Revenue analysis, commission tracking, VAT management
+// - PAYROLL_SPECIALIST: Staff payroll, commission payouts
+//
+// OPERATIONS DEPARTMENT:
+// - OPERATIONS_MANAGER: Overall operations oversight
+// - DISPATCH_COORDINATOR: Monitor trips, coordinate with companies
+// - SYSTEM_ADMINISTRATOR: Platform configuration, system settings
+// - QA_SPECIALIST: Quality assurance, testing, bug reporting
+//
+// CUSTOMER SUCCESS/SUPPORT:
+// - SUPPORT_AGENT: Handle customer inquiries, tickets
+// - SUPPORT_TEAM_LEAD: Manage support team, escalations
+// - CUSTOMER_SUCCESS_MANAGER: Onboard companies, relationship management
+// - TECHNICAL_SUPPORT: Technical troubleshooting, integration help
+//
+// MARKETING & BUSINESS:
+// - MARKETING_MANAGER: Marketing strategy, campaigns
+// - CONTENT_MANAGER: Content creation, social media
+// - BUSINESS_ANALYST: Data analysis, insights, reporting
+// - PARTNERSHIP_MANAGER: Bus company partnerships
+//
+// TECHNICAL DEPARTMENT:
+// - PLATFORM_ADMIN: IT administration, user management
+// - DATABASE_ADMIN: Database maintenance, backups
+// - DEVOPS_ENGINEER: Deployment, monitoring, infrastructure
+// - SECURITY_ANALYST: Security audits, compliance
+//
+// COMPLIANCE & LEGAL:
+// - COMPLIANCE_OFFICER: Regulatory compliance, ERA reporting
+// - LEGAL_ADVISOR: Legal matters, contracts
+// - DATA_PROTECTION_OFFICER: GDPR/data privacy compliance
+//
+// MANAGEMENT:
+// - PLATFORM_ADMIN: CEO/Founder (Abel Assefa) - full platform access
+// - GENERAL_MANAGER: Day-to-day operations
+// - DEPARTMENT_HEAD: Department leadership

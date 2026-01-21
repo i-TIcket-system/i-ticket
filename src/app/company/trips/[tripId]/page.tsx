@@ -46,6 +46,8 @@ import { formatCurrency, formatDate, formatDuration, getSlotsPercentage, isLowSl
 import { BookingControlCard } from "@/components/company/BookingControlCard"
 import { TripChat } from "@/components/trip/TripChat"
 import { TripLogCard } from "@/components/trip/TripLogCard"
+import { ViewOnlyBanner } from "@/components/company/ViewOnlyBanner"
+import { isTripViewOnly } from "@/lib/trip-status"
 
 interface Passenger {
   id: string
@@ -274,13 +276,29 @@ export default function TripDetailPage() {
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Trips
           </Link>
-          <Button variant="outline" asChild>
-            <Link href={`/company/trips/${tripId}/edit`}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit Trip
-            </Link>
+          <Button
+            variant="outline"
+            asChild={!isTripViewOnly(trip.status)}
+            disabled={isTripViewOnly(trip.status)}
+          >
+            {isTripViewOnly(trip.status) ? (
+              <span className="cursor-not-allowed opacity-50">
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Trip (View-Only)
+              </span>
+            ) : (
+              <Link href={`/company/trips/${tripId}/edit`}>
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Trip
+              </Link>
+            )}
           </Button>
         </div>
+
+        {/* View-Only Banner for DEPARTED, COMPLETED, CANCELLED trips */}
+        {isTripViewOnly(trip.status) && (
+          <ViewOnlyBanner tripStatus={trip.status} />
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Trip Info */}
@@ -640,6 +658,7 @@ export default function TripDetailPage() {
               bookingHalted={trip.bookingHalted}
               availableSlots={trip.availableSlots}
               currentAutoResumeEnabled={trip.autoResumeEnabled || false}
+              tripStatus={trip.status}
               onUpdate={fetchTrip}
             />
 

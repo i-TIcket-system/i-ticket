@@ -8,6 +8,7 @@ import { calculateBookingAmounts } from "@/lib/commission"
 import QRCode from "qrcode"
 import { createErrorResponse } from "@/lib/error-handler"
 import { createLowSlotAlertTask } from "@/lib/clickup"
+import { canSellManualTickets, getViewOnlyMessage } from "@/lib/trip-status"
 
 /**
  * POST /api/cashier/trip/[tripId]/sell
@@ -101,9 +102,10 @@ export async function POST(
           throw new Error("Trip not found or not assigned to you")
         }
 
-        // CRITICAL: Block ticket sales on departed, completed, or cancelled trips
-        if (trip.status === "DEPARTED" || trip.status === "COMPLETED" || trip.status === "CANCELLED") {
-          throw new Error(`Cannot sell tickets for this trip. Trip status: ${trip.status}`)
+        // 🚨 CRITICAL: Block ticket sales on departed, completed, or cancelled trips
+        // These trips are VIEW-ONLY - no modifications allowed
+        if (!canSellManualTickets(trip.status)) {
+          throw new Error(`Cannot sell tickets for ${trip.status.toLowerCase()} trips. ${getViewOnlyMessage(trip.status)}`)
         }
 
         // Check available slots

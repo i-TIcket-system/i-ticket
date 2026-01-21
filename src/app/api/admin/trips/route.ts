@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/db'
+import { sortTripsByStatusAndTime } from '@/lib/sort-trips'
 
 /**
  * GET /api/admin/trips
@@ -134,8 +135,14 @@ export async function GET(request: NextRequest) {
 
     const totalPages = Math.ceil(totalCount / limit)
 
+    // If sorting by departureTime (default), apply status priority sorting
+    // Otherwise, respect custom sorting
+    const finalTrips = sortBy === 'departureTime'
+      ? sortTripsByStatusAndTime(trips, sortOrder)
+      : trips
+
     return NextResponse.json({
-      trips,
+      trips: finalTrips,
       pagination: {
         page,
         limit,

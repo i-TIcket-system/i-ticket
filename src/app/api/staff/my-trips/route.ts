@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { sortTripsByStatusAndTime } from "@/lib/sort-trips"
 
 /**
  * Get trips assigned to the authenticated staff member
@@ -105,7 +106,10 @@ export async function GET(request: NextRequest) {
       orderBy: { departureTime: "asc" },
     })
 
-    return NextResponse.json({ trips })
+    // Sort by status priority (active first), then departure time
+    const sortedTrips = sortTripsByStatusAndTime(trips, "asc")
+
+    return NextResponse.json({ trips: sortedTrips })
   } catch (error) {
     console.error("Staff trips fetch error:", error)
     return NextResponse.json(

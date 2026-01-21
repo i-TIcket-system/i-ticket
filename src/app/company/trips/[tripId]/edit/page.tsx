@@ -48,6 +48,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { BUS_TYPES } from "@/lib/utils"
+import { isTripViewOnly } from "@/lib/trip-status"
+import { ViewOnlyBanner } from "@/components/company/ViewOnlyBanner"
 
 interface Trip {
   id: string
@@ -64,6 +66,7 @@ interface Trip {
   hasFood: boolean
   bookingHalted: boolean
   isActive: boolean
+  status: string
   company: {
     name: string
   }
@@ -203,6 +206,16 @@ export default function EditTripPage() {
       const data = await response.json()
 
       if (response.ok) {
+        // 🚨 CRITICAL: Redirect if trip is view-only (DEPARTED, COMPLETED, CANCELLED)
+        if (isTripViewOnly(data.trip.status)) {
+          import("sonner").then(({ toast }) => {
+            toast.error(`Cannot edit ${data.trip.status.toLowerCase()} trips`, {
+              description: "This trip is view-only. All modifications are blocked for data integrity.",
+            })
+          })
+          router.push(`/company/trips/${tripId}`)
+          return
+        }
         setTrip(data.trip)
         // Parse departure time
         const dt = new Date(data.trip.departureTime)

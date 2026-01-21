@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth"
 import { createAuditLogTask } from "@/lib/clickup"
 import { validateTripUpdate } from "@/lib/trip-update-validator"
 import { createNotification } from "@/lib/notifications"
+import { isTripViewOnly, getViewOnlyMessage } from "@/lib/trip-status"
 
 export async function GET(
   request: NextRequest,
@@ -165,6 +166,19 @@ export async function PUT(
     if (session.user.role === "COMPANY_ADMIN" && existingTrip.companyId !== session.user.companyId) {
       return NextResponse.json(
         { error: "Access denied" },
+        { status: 403 }
+      )
+    }
+
+    // 🚨 CRITICAL: Block all modifications to DEPARTED, COMPLETED, or CANCELLED trips
+    // These trips are VIEW-ONLY - no edits allowed for data integrity and audit compliance
+    if (isTripViewOnly(existingTrip.status)) {
+      return NextResponse.json(
+        {
+          error: `Cannot modify ${existingTrip.status.toLowerCase()} trips`,
+          message: getViewOnlyMessage(existingTrip.status),
+          tripStatus: existingTrip.status,
+        },
         { status: 403 }
       )
     }

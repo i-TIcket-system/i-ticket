@@ -4,6 +4,7 @@ import { requireCompanyAdmin, handleAuthError } from "@/lib/auth-helpers"
 import { createLowSlotAlertTask } from "@/lib/clickup"
 import { getAvailableSeatNumbers } from "@/lib/utils"
 import { createErrorResponse } from "@/lib/error-handler"
+import { canSellManualTickets, getViewOnlyMessage } from "@/lib/trip-status"
 
 /**
  * Record a manual ticket sale (sold at company office)
@@ -63,10 +64,15 @@ export async function POST(
       )
     }
 
-    // CRITICAL: Block manual ticket sales on departed, completed, or cancelled trips
-    if (trip.status === "DEPARTED" || trip.status === "COMPLETED" || trip.status === "CANCELLED") {
+    // 🚨 CRITICAL: Block manual ticket sales on departed, completed, or cancelled trips
+    // These trips are VIEW-ONLY - no modifications allowed
+    if (!canSellManualTickets(trip.status)) {
       return NextResponse.json(
-        { error: `Cannot sell tickets for this trip. Trip status: ${trip.status}` },
+        {
+          error: `Cannot sell tickets for ${trip.status.toLowerCase()} trips`,
+          message: getViewOnlyMessage(trip.status),
+          tripStatus: trip.status,
+        },
         { status: 400 }
       )
     }

@@ -43,6 +43,7 @@ export async function POST(
         origin: true,
         destination: true,
         departureTime: true,
+        status: true,
         driverId: true,
         conductorId: true,
         manualTicketerId: true,
@@ -57,6 +58,19 @@ export async function POST(
       return NextResponse.json(
         { error: "You can only manage your company's trips" },
         { status: 403 }
+      )
+    }
+
+    // 🚨 CRITICAL: Cannot resume booking for trips that are DEPARTED, COMPLETED, or CANCELLED
+    // Trip status ALWAYS overrides booking control settings
+    if (action === "RESUME" && ["DEPARTED", "COMPLETED", "CANCELLED"].includes(trip.status)) {
+      return NextResponse.json(
+        {
+          error: `Cannot resume booking for ${trip.status.toLowerCase()} trips`,
+          message: `This trip has status "${trip.status}". Online booking is permanently halted for departed, completed, or cancelled trips.`,
+          tripStatus: trip.status,
+        },
+        { status: 400 }
       )
     }
 

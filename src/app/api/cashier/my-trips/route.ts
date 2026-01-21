@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
+import { sortTripsByStatusAndTime } from "@/lib/sort-trips"
 
 /**
  * GET /api/cashier/my-trips
@@ -48,6 +49,7 @@ export async function GET(request: NextRequest) {
         busType: true,
         totalSlots: true,
         availableSlots: true,
+        status: true,
         vehicle: {
           select: {
             plateNumber: true,
@@ -59,6 +61,9 @@ export async function GET(request: NextRequest) {
         departureTime: "asc",
       },
     })
+
+    // Sort by status priority (active first), then departure time
+    const sortedTrips = sortTripsByStatusAndTime(trips, "asc")
 
     // Calculate today's stats for this ticketer
     const todayStart = new Date()
@@ -96,7 +101,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      trips,
+      trips: sortedTrips,
       stats,
     })
   } catch (error) {

@@ -34,6 +34,8 @@ export async function GET(request: NextRequest) {
       paymentsTimedOut: 0,
       bookingsCancelled: 0,
       notificationsSent: 0,
+      tripsCompleted: 0,
+      tripsCancelled: 0,
       timestamp: new Date().toISOString()
     };
 
@@ -88,6 +90,11 @@ export async function GET(request: NextRequest) {
       await cancelStaleBooking(booking);
       results.bookingsCancelled++;
     }
+
+    // 4. Auto-update status of old trips (past departure date)
+    const oldTripsResult = await updateOldTripStatuses();
+    results.tripsCompleted = oldTripsResult.completed;
+    results.tripsCancelled = oldTripsResult.cancelled;
 
     console.log('[Cron] Cleanup completed:', results);
 
@@ -203,6 +210,102 @@ async function cancelStaleBooking(booking: any) {
       }
     });
   });
+}
+
+/**
+ * Update old trip statuses (trips with past departure dates)
+ * - DEPARTED trips → COMPLETED
+ * - SCHEDULED/BOARDING trips with bookings → COMPLETED
+ * - SCHEDULED/BOARDING trips without bookings → CANCELLED
+ */
+async function updateOldTripStatuses() {
+  const now = new Date();
+  let completed = 0;
+  let cancelled = 0;
+
+  try {
+    // Find trips with past departure dates that need status updates
+    const oldTrips = await prisma.trip.findMany({
+      where: {
+        departureTime: {
+          lt: now,
+        },
+        status: {
+          notIn: ['COMPLETED', 'CANCELLED'],
+        },
+      },
+      include: {
+        bookings: {
+          where: {
+            status: {
+              in: ['PAID', 'COMPLETED'],
+            },
+          },
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    for (const trip of oldTrips) {
+      try {
+        const hasBookings = trip.bookings.length > 0;
+        const newStatus = hasBookings || trip.status === 'DEPARTED' ? 'COMPLETED' : 'CANCELLED';
+
+        // Calculate actual times based on estimated duration
+        const actualDepartureTime = trip.departureTime;
+        const actualArrivalTime = new Date(
+          actualDepartureTime.getTime() + trip.estimatedDuration * 60 * 60 * 1000
+        );
+
+        await prisma.$transaction(async (tx) => {
+          // Update trip status
+          await tx.trip.update({
+            where: { id: trip.id },
+            data: {
+              status: newStatus,
+              actualDepartureTime,
+              actualArrivalTime,
+            },
+          });
+
+          // Create audit log
+          await tx.adminLog.create({
+            data: {
+              userId: 'SYSTEM',
+              action: 'TRIP_STATUS_AUTO_UPDATE',
+              tripId: trip.id,
+              companyId: trip.companyId,
+              details: JSON.stringify({
+                oldStatus: trip.status,
+                newStatus,
+                reason: 'Automatic cleanup - departure date in the past',
+                departureTime: trip.departureTime.toISOString(),
+                hasBookings,
+              }),
+            },
+          });
+        });
+
+        if (newStatus === 'COMPLETED') {
+          completed++;
+          console.log(`[Cron] Trip ${trip.id} marked as COMPLETED`);
+        } else {
+          cancelled++;
+          console.log(`[Cron] Trip ${trip.id} marked as CANCELLED (no bookings)`);
+        }
+      } catch (error) {
+        console.error(`[Cron] Failed to update trip ${trip.id}:`, error);
+      }
+    }
+
+    console.log(`[Cron] Old trip cleanup: ${completed} completed, ${cancelled} cancelled`);
+  } catch (error) {
+    console.error('[Cron] Error updating old trip statuses:', error);
+  }
+
+  return { completed, cancelled };
 }
 
 /**
