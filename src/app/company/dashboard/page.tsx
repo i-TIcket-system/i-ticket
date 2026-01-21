@@ -25,6 +25,7 @@ import {
   Gauge,
   Wrench,
   RefreshCw,
+  Info,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -344,14 +345,20 @@ export default function CompanyDashboard() {
 
             <Card>
               <CardHeader className="pb-2">
-                <CardDescription>Total Revenue</CardDescription>
+                <CardDescription className="flex items-center gap-2">
+                  Total Revenue
+                  <Info className="h-3 w-3 text-muted-foreground" />
+                </CardDescription>
                 <CardTitle className="text-3xl">{formatCurrency(stats.totalRevenue)}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center text-sm text-green-600">
                   <TrendingUp className="h-4 w-4 mr-1" />
-                  from bookings
+                  from ticket sales only
                 </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Excludes platform fees
+                </p>
               </CardContent>
             </Card>
 

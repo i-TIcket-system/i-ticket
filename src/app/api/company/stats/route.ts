@@ -41,6 +41,8 @@ export async function GET(request: NextRequest) {
     })
 
     // Get total bookings and revenue
+    // CRITICAL FIX: Aggregate commission and VAT to calculate ACTUAL company revenue
+    // Company revenue = totalAmount - commission - commissionVAT
     const bookingsData = await prisma.booking.aggregate({
       where: {
         trip: companyFilter,
@@ -49,6 +51,8 @@ export async function GET(request: NextRequest) {
       _count: true,
       _sum: {
         totalAmount: true,
+        commission: true,
+        commissionVAT: true,
       },
     })
 
@@ -92,11 +96,23 @@ export async function GET(request: NextRequest) {
       if (v.status === 'INACTIVE') vehicleCounts.inactive = v._count
     })
 
+    // CRITICAL FIX: Calculate actual company revenue (exclude platform fees)
+    // Company receives: Ticket price only
+    // Platform receives: Commission + VAT
+    const totalPaid = Number(bookingsData._sum.totalAmount) || 0
+    const platformCommission = Number(bookingsData._sum.commission) || 0
+    const platformVAT = Number(bookingsData._sum.commissionVAT) || 0
+    const actualCompanyRevenue = totalPaid - platformCommission - platformVAT
+
     const stats = {
       totalTrips,
       activeTrips,
       totalBookings: bookingsData._count,
-      totalRevenue: Number(bookingsData._sum.totalAmount) || 0,
+      totalRevenue: actualCompanyRevenue, // FIXED: Now shows actual revenue (excludes platform fees)
+      // Additional transparency fields
+      totalPassengerPayments: totalPaid, // Total amount passengers paid
+      platformCommission, // Amount paid to i-Ticket as commission
+      platformVAT, // VAT collected by i-Ticket
       // Fleet metrics
       vehicles: vehicleCounts,
       fleetMetrics: {

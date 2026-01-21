@@ -221,13 +221,18 @@ export async function generatePlatformRevenueReport(options: ReportOptions): Pro
   const telebirrPayments = filteredBookings.filter(b => b.payment?.method === 'TELEBIRR').length
   const demoPayments = filteredBookings.filter(b => b.payment?.method === 'DEMO').length
 
-  // Summary table
+  // Summary table - CRITICAL FIX: Enhanced VAT breakdown for tax transparency
   const summaryData = [
     ["Total Bookings:", totalBookings, "", "Total Paid by Passengers:", formatCurrency(totalAmountPaid)],
     ["Total Passengers:", totalPassengers, "", "Revenue to Companies:", formatCurrency(totalCompanyRevenue)],
-    ["Companies:", uniqueCompanies, "", "Base Commission (5%):", formatCurrency(totalBaseCommission)],
-    ["", "", "", "VAT on Commission (15%):", formatCurrency(totalCommissionVAT)],
-    ["", "", "", "Platform Revenue:", formatCurrency(totalPlatformRevenue)],
+    ["Companies:", uniqueCompanies, "", "", ""],
+    ["", "", "", "PLATFORM REVENUE BREAKDOWN:", ""],
+    ["", "", "", "Base Commission (5%):", formatCurrency(totalBaseCommission)],
+    ["", "", "", "VAT Collected (15%):", formatCurrency(totalCommissionVAT)],
+    ["", "", "", "Total Platform Revenue:", formatCurrency(totalPlatformRevenue)],
+    ["", "", "", "", ""],
+    ["", "", "", "GOVERNMENT TAX LIABILITY:", ""],
+    ["", "", "", "VAT to Remit (ERA):", formatCurrency(totalCommissionVAT)],
     ["", "", "", "", ""],
     ["Web Bookings:", `${webBookings} (${Math.round(webBookings/totalBookings*100)}%)`, "", "TeleBirr Payments:", `${telebirrPayments} (${Math.round(telebirrPayments/totalBookings*100)}%)`],
     ["SMS Bookings:", `${smsBookings} (${Math.round(smsBookings/totalBookings*100)}%)`, "", "Demo Payments:", `${demoPayments} (${Math.round(demoPayments/totalBookings*100)}%)`],
@@ -477,35 +482,68 @@ export async function generatePlatformRevenueReport(options: ReportOptions): Pro
   sheet.getRow(currentRow).height = 28
   currentRow++
 
+  // CRITICAL FIX: Enhanced grand totals with clear VAT breakdown for tax compliance
   const grandTotalsData = [
     ["Total Paid by Passengers:", formatCurrency(totalAmountPaid)],
-    ["Revenue to Companies:", formatCurrency(totalCompanyRevenue)],
-    ["Base Commission (5%):", formatCurrency(totalBaseCommission)],
-    ["VAT on Commission (15%):", formatCurrency(totalCommissionVAT)],
-    ["Total Platform Revenue:", formatCurrency(totalPlatformRevenue)]
+    ["Revenue to Bus Companies:", formatCurrency(totalCompanyRevenue)],
+    ["", ""],
+    ["PLATFORM REVENUE:", ""],
+    ["Platform Commission (5%):", formatCurrency(totalBaseCommission)],
+    ["VAT Collected (15%):", formatCurrency(totalCommissionVAT)],
+    ["Total Platform Revenue:", formatCurrency(totalPlatformRevenue)],
+    ["", ""],
+    ["ETHIOPIAN REVENUE AUTHORITY:", ""],
+    ["VAT Tax Liability:", formatCurrency(totalCommissionVAT)]
   ]
 
   grandTotalsData.forEach((rowData, index) => {
-    sheet.mergeCells(`A${currentRow}:J${currentRow}`)
-    sheet.getCell(`A${currentRow}`).value = rowData[0]
-    sheet.getCell(`A${currentRow}`).font = { bold: true, size: 13 }
-    sheet.getCell(`A${currentRow}`).alignment = { horizontal: "right" }
+    // Section headers (bold, no value column)
+    const isSectionHeader = rowData[0].includes("PLATFORM REVENUE:") ||
+                           rowData[0].includes("ETHIOPIAN REVENUE AUTHORITY:")
 
-    sheet.mergeCells(`K${currentRow}:L${currentRow}`)
-    sheet.getCell(`K${currentRow}`).value = rowData[1]
-    sheet.getCell(`K${currentRow}`).font = {
-      bold: true,
-      size: 14,
-      color: { argb: index === 1 ? colors.success : colors.darkGray }
-    }
-    sheet.getCell(`K${currentRow}`).alignment = { horizontal: "center", vertical: "middle" }
-    sheet.getCell(`K${currentRow}`).fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: index === 1 ? "FFD1FAE5" : colors.lightGray }
+    if (isSectionHeader) {
+      sheet.mergeCells(`A${currentRow}:L${currentRow}`)
+      sheet.getCell(`A${currentRow}`).value = rowData[0]
+      sheet.getCell(`A${currentRow}`).font = { bold: true, size: 13, color: { argb: colors.primary } }
+      sheet.getCell(`A${currentRow}`).alignment = { horizontal: "center" }
+      sheet.getCell(`A${currentRow}`).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: colors.lightTeal }
+      }
+      sheet.getRow(currentRow).height = 24
+    } else if (rowData[0] === "") {
+      // Empty row for spacing
+      sheet.getRow(currentRow).height = 10
+    } else {
+      // Regular data row
+      sheet.mergeCells(`A${currentRow}:J${currentRow}`)
+      sheet.getCell(`A${currentRow}`).value = rowData[0]
+      sheet.getCell(`A${currentRow}`).font = { bold: true, size: 13 }
+      sheet.getCell(`A${currentRow}`).alignment = { horizontal: "right" }
+
+      sheet.mergeCells(`K${currentRow}:L${currentRow}`)
+      sheet.getCell(`K${currentRow}`).value = rowData[1]
+
+      // Highlight company revenue and VAT liability
+      const isCompanyRevenue = rowData[0].includes("Revenue to Bus Companies")
+      const isVATLiability = rowData[0].includes("VAT Tax Liability")
+
+      sheet.getCell(`K${currentRow}`).font = {
+        bold: true,
+        size: 14,
+        color: { argb: isCompanyRevenue ? colors.success : (isVATLiability ? colors.warning : colors.darkGray) }
+      }
+      sheet.getCell(`K${currentRow}`).alignment = { horizontal: "center", vertical: "middle" }
+      sheet.getCell(`K${currentRow}`).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: isCompanyRevenue ? "FFD1FAE5" : (isVATLiability ? "FFFEF9C3" : colors.lightGray) }
+      }
+
+      sheet.getRow(currentRow).height = 26
     }
 
-    sheet.getRow(currentRow).height = 26
     currentRow++
   })
 

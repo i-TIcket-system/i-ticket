@@ -59,26 +59,26 @@ export async function GET(request: NextRequest) {
       prisma.booking.count({ where: { status: "PENDING" } }),
       prisma.booking.count({ where: { status: "CANCELLED" } }),
 
-      // Revenue totals
+      // Revenue totals - CRITICAL FIX: Include commissionVAT for government tax tracking
       prisma.booking.aggregate({
         where: { status: "PAID" },
-        _sum: { totalAmount: true, commission: true },
+        _sum: { totalAmount: true, commission: true, commissionVAT: true },
       }),
       prisma.booking.aggregate({
         where: { status: "PAID", createdAt: { gte: todayStart } },
-        _sum: { totalAmount: true, commission: true },
+        _sum: { totalAmount: true, commission: true, commissionVAT: true },
       }),
       prisma.booking.aggregate({
         where: { status: "PAID", createdAt: { gte: yesterdayStart, lt: todayStart } },
-        _sum: { totalAmount: true, commission: true },
+        _sum: { totalAmount: true, commission: true, commissionVAT: true },
       }),
       prisma.booking.aggregate({
         where: { status: "PAID", createdAt: { gte: weekAgo } },
-        _sum: { totalAmount: true, commission: true },
+        _sum: { totalAmount: true, commission: true, commissionVAT: true },
       }),
       prisma.booking.aggregate({
         where: { status: "PAID", createdAt: { gte: monthAgo } },
-        _sum: { totalAmount: true, commission: true },
+        _sum: { totalAmount: true, commission: true, commissionVAT: true },
       }),
 
       // Channel breakdown
@@ -139,11 +139,12 @@ export async function GET(request: NextRequest) {
     const paidBookings = getValue(results[9], 0)
     const pendingBookings = getValue(results[10], 0)
     const cancelledBookings = getValue(results[11], 0)
-    const totalRevenue = getValue(results[12], { _sum: { totalAmount: 0, commission: 0 } })
-    const todayRevenue = getValue(results[13], { _sum: { totalAmount: 0, commission: 0 } })
-    const yesterdayRevenue = getValue(results[14], { _sum: { totalAmount: 0, commission: 0 } })
-    const weekRevenue = getValue(results[15], { _sum: { totalAmount: 0, commission: 0 } })
-    const monthRevenue = getValue(results[16], { _sum: { totalAmount: 0, commission: 0 } })
+    // CRITICAL FIX: Include commissionVAT in default values
+    const totalRevenue = getValue(results[12], { _sum: { totalAmount: 0, commission: 0, commissionVAT: 0 } })
+    const todayRevenue = getValue(results[13], { _sum: { totalAmount: 0, commission: 0, commissionVAT: 0 } })
+    const yesterdayRevenue = getValue(results[14], { _sum: { totalAmount: 0, commission: 0, commissionVAT: 0 } })
+    const weekRevenue = getValue(results[15], { _sum: { totalAmount: 0, commission: 0, commissionVAT: 0 } })
+    const monthRevenue = getValue(results[16], { _sum: { totalAmount: 0, commission: 0, commissionVAT: 0 } })
     const webBookings = getValue(results[17], 0)
     const smsBookings = getValue(results[18], 0)
     const telebirrPayments = getValue(results[19], 0)
@@ -240,11 +241,20 @@ export async function GET(request: NextRequest) {
         revenue: {
           total: totalRevenue._sum.totalAmount || 0,
           commission: totalRevenue._sum.commission || 0,
+          // CRITICAL FIX: Add VAT tracking for government tax reporting
+          commissionVAT: totalRevenue._sum.commissionVAT || 0,
+          platformRevenue: (totalRevenue._sum.commission || 0) + (totalRevenue._sum.commissionVAT || 0),
+          governmentTax: totalRevenue._sum.commissionVAT || 0, // VAT owed to Ethiopian Revenue Authority
           today: todayRevenueValue,
           todayCommission: todayRevenue._sum.commission || 0,
+          todayVAT: todayRevenue._sum.commissionVAT || 0,
           yesterday: yesterdayRevenueValue,
           thisWeek: weekRevenue._sum.totalAmount || 0,
+          thisWeekCommission: weekRevenue._sum.commission || 0,
+          thisWeekVAT: weekRevenue._sum.commissionVAT || 0,
           thisMonth: monthRevenue._sum.totalAmount || 0,
+          thisMonthCommission: monthRevenue._sum.commission || 0,
+          thisMonthVAT: monthRevenue._sum.commissionVAT || 0,
           change: revenueChange,
         },
         channels: {
