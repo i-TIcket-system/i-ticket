@@ -16,7 +16,8 @@ import {
   Coffee,
   Droplets,
   Search,
-  X
+  X,
+  RefreshCw
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -117,11 +118,38 @@ function SearchContent() {
     fetchCities()
   }, [])
 
+  // Fetch trips when URL params change or on mount
   useEffect(() => {
-    if (origin || destination || date) {
+    const urlOrigin = searchParams.get("from") || ""
+    const urlDestination = searchParams.get("to") || ""
+    const urlDate = searchParams.get("date") || ""
+    const urlBusType = searchParams.get("type") || ""
+
+    // Update state from URL
+    setOrigin(urlOrigin)
+    setDestination(urlDestination)
+    setDate(urlDate)
+    setBusType(urlBusType)
+
+    // Search if we have any filters
+    if (urlOrigin || urlDestination || urlDate) {
       searchTrips()
     }
-  }, [])
+  }, [searchParams])
+
+  // Auto-refresh search results every 15 seconds
+  useEffect(() => {
+    if (trips.length === 0) return // Don't poll if no results
+
+    const interval = setInterval(() => {
+      if (!document.hidden && (origin || destination || date)) {
+        // Refresh without showing loading state
+        searchTrips(pagination.page, false)
+      }
+    }, 15000) // 15 seconds
+
+    return () => clearInterval(interval)
+  }, [trips.length, origin, destination, date, pagination.page])
 
   const searchTrips = async (pageNum = 1, append = false) => {
     if (append) {
@@ -295,14 +323,25 @@ function SearchContent() {
                 "Search Results"
               )}
             </h1>
-            <p className="text-muted-foreground">
-              {trips.length} trip{trips.length !== 1 ? "s" : ""} found
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span>
+                {trips.length} trip{trips.length !== 1 ? "s" : ""} found
+              </span>
+              {trips.length > 0 && (
+                <>
+                  <span>•</span>
+                  <Badge variant="outline" className="gap-1 bg-blue-50 border-blue-200 text-blue-700">
+                    <RefreshCw className="h-3 w-3 animate-spin" style={{ animationDuration: '4s' }} />
+                    <span className="text-xs">Auto-refresh (15s)</span>
+                  </Badge>
+                </>
+              )}
               {selectedTripsForComparison.length > 0 && (
-                <span className="ml-2 text-primary font-medium">
-                  • {selectedTripsForComparison.length} of 4 selected for comparison
+                <span className="text-primary font-medium">
+                  • {selectedTripsForComparison.length} of 4 selected
                 </span>
               )}
-            </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
