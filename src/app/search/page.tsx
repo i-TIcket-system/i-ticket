@@ -137,9 +137,10 @@ function SearchContent() {
     }
   }, [searchParams])
 
-  // Auto-refresh search results every 15 seconds
+  // Auto-refresh search results every 15 seconds (paused during comparison)
   useEffect(() => {
     if (trips.length === 0) return // Don't poll if no results
+    if (compareMode) return // Don't auto-refresh during comparison
 
     const interval = setInterval(() => {
       if (!document.hidden && (origin || destination || date)) {
@@ -149,7 +150,7 @@ function SearchContent() {
     }, 15000) // 15 seconds
 
     return () => clearInterval(interval)
-  }, [trips.length, origin, destination, date, pagination.page])
+  }, [trips.length, origin, destination, date, pagination.page, compareMode])
 
   const searchTrips = async (pageNum = 1, append = false) => {
     if (append) {
@@ -330,10 +331,17 @@ function SearchContent() {
               {trips.length > 0 && (
                 <>
                   <span>•</span>
-                  <Badge variant="outline" className="gap-1 bg-blue-50 border-blue-200 text-blue-700">
-                    <RefreshCw className="h-3 w-3 animate-spin" style={{ animationDuration: '4s' }} />
-                    <span className="text-xs">Auto-refresh (15s)</span>
-                  </Badge>
+                  {compareMode ? (
+                    <Badge variant="outline" className="gap-1 bg-gray-50 border-gray-200 text-gray-500">
+                      <RefreshCw className="h-3 w-3" />
+                      <span className="text-xs">Auto-refresh paused</span>
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="gap-1 bg-blue-50 border-blue-200 text-blue-700">
+                      <RefreshCw className="h-3 w-3 animate-spin" style={{ animationDuration: '4s' }} />
+                      <span className="text-xs">Auto-refresh (15s)</span>
+                    </Badge>
+                  )}
                 </>
               )}
               {selectedTripsForComparison.length > 0 && (
@@ -345,6 +353,20 @@ function SearchContent() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Manual Refresh Button */}
+            {trips.length > 0 && (
+              <Button
+                onClick={() => searchTrips(pagination.page, false)}
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            )}
+
             {/* Compare Results Button */}
             <Button
               onClick={() => {
