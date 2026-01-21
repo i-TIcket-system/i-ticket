@@ -24,10 +24,8 @@ import {
   Fuel,
   Gauge,
   Wrench,
-  Wifi,
-  WifiOff,
+  RefreshCw,
 } from "lucide-react"
-import { useSSE } from "@/hooks/useSSE"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -94,6 +92,7 @@ export default function CompanyDashboard() {
   const [isLoading, setIsLoading] = useState(true)
   const [alertTrip, setAlertTrip] = useState<Trip | null>(null)
   const [isProcessingAlert, setIsProcessingAlert] = useState(false)
+  const [isPolling, setIsPolling] = useState(false)
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => {
     // Load dismissed alerts from localStorage on mount
     if (typeof window !== 'undefined') {
@@ -103,75 +102,41 @@ export default function CompanyDashboard() {
     return new Set()
   })
 
-  // Real-time updates via SSE
-  const { isConnected: sseConnected, error: sseError } = useSSE({
-    url: "/api/events/company-trips",
-    enabled: status === "authenticated",
-    onMessage: (message) => {
-      if (message.type === "connected") {
-        console.log("SSE connected at", new Date(message.timestamp))
-      } else if (message.type === "update" && message.changes) {
-        // Update trips in real-time
-        setTrips((currentTrips) => {
-          const updatedTrips = [...currentTrips]
-
-          message.changes?.forEach((change: any) => {
-            if (change.type === "trip-updated") {
-              const tripIndex = updatedTrips.findIndex(t => t.id === change.tripId)
-              if (tripIndex !== -1) {
-                // Update specific fields that changed
-                if (change.changes.availableSlots !== undefined) {
-                  updatedTrips[tripIndex] = {
-                    ...updatedTrips[tripIndex],
-                    availableSlots: change.changes.availableSlots
-                  }
-                }
-                if (change.changes.bookingHalted !== undefined) {
-                  updatedTrips[tripIndex] = {
-                    ...updatedTrips[tripIndex],
-                    bookingHalted: change.changes.bookingHalted
-                  }
-                }
-                if (change.changes.bookingsCount !== undefined) {
-                  updatedTrips[tripIndex] = {
-                    ...updatedTrips[tripIndex],
-                    _count: {
-                      ...updatedTrips[tripIndex]._count,
-                      bookings: change.changes.bookingsCount
-                    }
-                  }
-                }
-              }
-            } else if (change.type === "trip-added" || change.type === "trip-removed") {
-              // Refetch full data for added/removed trips
-              fetchDashboardData()
-            }
-          })
-
-          return updatedTrips
-        })
-
-        // Also refresh stats when trips update
-        fetchStats()
-      }
-    },
-    onConnect: () => {
-      console.log("SSE connection established")
-    },
-    onError: (error) => {
-      console.error("SSE error:", error)
-    },
-  })
-
+  // Auto-refresh with polling
   useEffect(() => {
     if (status === "authenticated") {
       if (session.user.role !== "COMPANY_ADMIN" && session.user.role !== "SUPER_ADMIN") {
         router.push("/")
         return
       }
+
+      // Initial fetch
       fetchDashboardData()
+      setIsPolling(true)
+
+      // Poll every 10 seconds for updates
+      const interval = setInterval(() => {
+        if (!document.hidden) {
+          fetchDashboardData()
+        }
+      }, 10000)
+
+      // Handle visibility change (pause when tab hidden)
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          // Tab became visible, refresh immediately
+          fetchDashboardData()
+        }
+      }
+
+      document.addEventListener('visibilitychange', handleVisibilityChange)
+
+      return () => {
+        clearInterval(interval)
+        document.removeEventListener('visibilitychange', handleVisibilityChange)
+        setIsPolling(false)
+      }
     }
-    // Layout handles unauthenticated redirect
   }, [status, session])
 
   // Persist dismissed alerts to localStorage
@@ -293,21 +258,16 @@ export default function CompanyDashboard() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">Company Dashboard</h1>
-            <p className="text-muted-foreground flex items-center gap-2">
-              {session?.user.companyName || "Manage your trips and bookings"}
+            <div className="text-muted-foreground flex items-center gap-2">
+              <span>{session?.user.companyName || "Manage your trips and bookings"}</span>
               <span className="mx-2">•</span>
-              {sseConnected ? (
-                <Badge variant="outline" className="gap-1 bg-green-50 border-green-200 text-green-700">
-                  <Wifi className="h-3 w-3" />
-                  <span className="text-xs">Real-time</span>
-                </Badge>
-              ) : (
-                <Badge variant="outline" className="gap-1 bg-gray-50 border-gray-200 text-gray-500">
-                  <WifiOff className="h-3 w-3" />
-                  <span className="text-xs">Connecting...</span>
+              {isPolling && (
+                <Badge variant="outline" className="gap-1 bg-blue-50 border-blue-200 text-blue-700">
+                  <RefreshCw className="h-3 w-3 animate-spin" style={{ animationDuration: '3s' }} />
+                  <span className="text-xs">Auto-refresh (10s)</span>
                 </Badge>
               )}
-            </p>
+            </div>
           </div>
           <Button asChild>
             <Link href="/company/trips/new">

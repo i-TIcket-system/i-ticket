@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
 
     const stream = new ReadableStream({
       async start(controller) {
+        console.log(`[SSE] New connection from user ${session.user.id} (${session.user.role})`)
+
         // Send initial connection message
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "connected", timestamp: Date.now() })}\n\n`))
 
@@ -61,6 +63,8 @@ export async function GET(request: NextRequest) {
                 },
               },
             })
+
+            console.log(`[SSE] Checked ${trips.length} trips for company ${session.user.companyId || 'ALL'}`)
 
             // Create snapshot
             const currentSnapshot: TripSnapshot[] = trips.map(trip => ({
@@ -117,7 +121,8 @@ export async function GET(request: NextRequest) {
             // Send heartbeat every cycle (keeps connection alive)
             controller.enqueue(encoder.encode(`: heartbeat\n\n`))
           } catch (error) {
-            console.error("SSE update check error:", error)
+            console.error("[SSE] Update check error:", error)
+            console.error("[SSE] Error details:", error instanceof Error ? error.message : String(error))
             // Don't close connection on error, just log and continue
           }
         }
