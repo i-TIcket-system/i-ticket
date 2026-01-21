@@ -39,9 +39,20 @@ export async function GET(request: NextRequest) {
       const endOfDay = new Date(date)
       endOfDay.setHours(23, 59, 59, 999)
 
-      where.departureTime = {
-        gte: startOfDay,
-        lte: endOfDay,
+      const now = new Date()
+
+      // If searching for today, only show trips that haven't departed yet
+      if (startOfDay.toDateString() === now.toDateString()) {
+        where.departureTime = {
+          gte: now, // Only future trips today
+          lte: endOfDay,
+        }
+      } else {
+        // For future dates, show all trips on that date
+        where.departureTime = {
+          gte: startOfDay,
+          lte: endOfDay,
+        }
       }
     } else {
       // Default: show future trips only

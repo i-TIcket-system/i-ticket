@@ -24,7 +24,10 @@ import {
   Fuel,
   Gauge,
   Wrench,
+  Wifi,
+  WifiOff,
 } from "lucide-react"
+import { useSSE } from "@/hooks/useSSE"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -100,6 +103,66 @@ export default function CompanyDashboard() {
     return new Set()
   })
 
+  // Real-time updates via SSE
+  const { isConnected: sseConnected, error: sseError } = useSSE({
+    url: "/api/events/company-trips",
+    enabled: status === "authenticated",
+    onMessage: (message) => {
+      if (message.type === "connected") {
+        console.log("SSE connected at", new Date(message.timestamp))
+      } else if (message.type === "update" && message.changes) {
+        // Update trips in real-time
+        setTrips((currentTrips) => {
+          const updatedTrips = [...currentTrips]
+
+          message.changes?.forEach((change: any) => {
+            if (change.type === "trip-updated") {
+              const tripIndex = updatedTrips.findIndex(t => t.id === change.tripId)
+              if (tripIndex !== -1) {
+                // Update specific fields that changed
+                if (change.changes.availableSlots !== undefined) {
+                  updatedTrips[tripIndex] = {
+                    ...updatedTrips[tripIndex],
+                    availableSlots: change.changes.availableSlots
+                  }
+                }
+                if (change.changes.bookingHalted !== undefined) {
+                  updatedTrips[tripIndex] = {
+                    ...updatedTrips[tripIndex],
+                    bookingHalted: change.changes.bookingHalted
+                  }
+                }
+                if (change.changes.bookingsCount !== undefined) {
+                  updatedTrips[tripIndex] = {
+                    ...updatedTrips[tripIndex],
+                    _count: {
+                      ...updatedTrips[tripIndex]._count,
+                      bookings: change.changes.bookingsCount
+                    }
+                  }
+                }
+              }
+            } else if (change.type === "trip-added" || change.type === "trip-removed") {
+              // Refetch full data for added/removed trips
+              fetchDashboardData()
+            }
+          })
+
+          return updatedTrips
+        })
+
+        // Also refresh stats when trips update
+        fetchStats()
+      }
+    },
+    onConnect: () => {
+      console.log("SSE connection established")
+    },
+    onError: (error) => {
+      console.error("SSE error:", error)
+    },
+  })
+
   useEffect(() => {
     if (status === "authenticated") {
       if (session.user.role !== "COMPANY_ADMIN" && session.user.role !== "SUPER_ADMIN") {
@@ -153,6 +216,16 @@ export default function CompanyDashboard() {
       console.error("Failed to fetch dashboard data:", error)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const fetchStats = async () => {
+    try {
+      const statsRes = await fetch("/api/company/stats")
+      const statsData = await statsRes.json()
+      if (statsRes.ok) setStats(statsData.stats)
+    } catch (error) {
+      console.error("Failed to fetch stats:", error)
     }
   }
 
@@ -220,8 +293,20 @@ export default function CompanyDashboard() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold">Company Dashboard</h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground flex items-center gap-2">
               {session?.user.companyName || "Manage your trips and bookings"}
+              <span className="mx-2">•</span>
+              {sseConnected ? (
+                <Badge variant="outline" className="gap-1 bg-green-50 border-green-200 text-green-700">
+                  <Wifi className="h-3 w-3" />
+                  <span className="text-xs">Real-time</span>
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="gap-1 bg-gray-50 border-gray-200 text-gray-500">
+                  <WifiOff className="h-3 w-3" />
+                  <span className="text-xs">Connecting...</span>
+                </Badge>
+              )}
             </p>
           </div>
           <Button asChild>
