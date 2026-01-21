@@ -122,6 +122,14 @@ i-ticket/
 ├── prisma/
 │   ├── schema.prisma        # Database schema
 │   └── seed.ts              # Demo data seeder
+├── docs/                    # Additional documentation
+│   ├── business-logic/      # Technical specifications
+│   ├── test-reports/        # Testing documentation
+│   ├── guides/              # Implementation guides
+│   ├── audits/              # Code audit reports
+│   ├── presentations/       # Project presentations
+│   └── design-assets/       # UI/UX mockups and assets
+├── scripts/                 # Utility and test scripts
 └── public/                  # Static assets, PWA manifest
 ```
 

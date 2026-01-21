@@ -1,7 +1,8 @@
 # i-Ticket Platform
 
-> **Full History**: See `CLAUDE-BACKUP-v3.md` for complete changelog details.
+> **Full History**: See `docs/business-logic/CLAUDE-BACKUP-v3.md` for complete changelog details.
 > **🚨 CRITICAL**: See `CLAUDE-STABLE-REFERENCE.md` before making any code changes!
+> **Additional Documentation**: See `/docs` folder for organized documentation (test reports, guides, presentations, etc.)
 
 ---
 

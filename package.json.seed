@@ -1,5 +1,0 @@
-{
-  "scripts": {
-    "seed:cities": "npx tsx scripts/seed-city-coordinates.ts"
-  }
-}
