@@ -68,6 +68,18 @@ export default function StaffLayout({
       if (session.user.staffRole === "ADMIN") {
         router.push("/company/dashboard")
       }
+      // CRITICAL: Redirect staff with dedicated portals to their specific portal
+      // This prevents them from getting stuck in the generic /staff portal
+      if (session.user.staffRole === "MANUAL_TICKETER") {
+        router.replace("/cashier") // Dedicated ticket selling portal
+      }
+      if (session.user.staffRole === "MECHANIC") {
+        router.replace("/mechanic") // Dedicated work order portal
+      }
+      if (session.user.staffRole === "FINANCE") {
+        router.replace("/finance") // Dedicated finance portal
+      }
+      // DRIVER, CONDUCTOR, and custom roles stay on /staff portal
     } else if (status === "unauthenticated") {
       router.replace("/login")
     }

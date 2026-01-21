@@ -163,6 +163,7 @@ export async function POST(
           availableSlots: updatedTrip.availableSlots,
           totalSlots: updatedTrip.totalSlots,
           companyName: trip.company.name,
+          triggeredBy: "manual_ticket_sale",
         })
       }
 

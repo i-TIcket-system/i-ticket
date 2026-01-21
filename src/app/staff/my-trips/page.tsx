@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge"
 import { formatCurrency, formatDate, formatDuration, BUS_TYPES } from "@/lib/utils"
 import { TripChat } from "@/components/trip/TripChat"
 import { TripLogCard } from "@/components/trip/TripLogCard"
+import { TripStatusControl } from "@/components/trip/TripStatusControl"
 
 interface Trip {
   id: string
@@ -289,6 +290,12 @@ function TripCard({ trip, highlight = false, past = false, forceExpand = false }
   // Auto-expand active trips (today's trips) or trips from notifications, collapse others by default
   const [expanded, setExpanded] = useState(highlight || forceExpand)
 
+  // Trip status state - allows driver to update and UI to reflect changes
+  const [tripStatus, setTripStatus] = useState(trip.status)
+
+  // Auto-open odometer popup when trip departs
+  const [autoOpenOdometer, setAutoOpenOdometer] = useState(false)
+
   // Force expand when forceExpand prop changes (from notification)
   useEffect(() => {
     if (forceExpand) {
@@ -452,13 +459,28 @@ function TripCard({ trip, highlight = false, past = false, forceExpand = false }
           </div>
         </div>
 
+        {/* Driver Controls - Update trip status (SCHEDULED → BOARDING → DEPARTED → COMPLETED) */}
+        {!past && (
+          <div className="mt-4 pt-4 border-t">
+            <TripStatusControl
+              tripId={trip.id}
+              currentStatus={tripStatus}
+              hasVehicle={!!trip.vehicle}
+              onStatusChange={(newStatus) => setTripStatus(newStatus)}
+              onDeparted={() => setAutoOpenOdometer(true)}
+            />
+          </div>
+        )}
+
         {/* Trip Log - Odometer & Fuel (visible for all, editable by driver/admin) */}
         {!past && trip.vehicle && (
           <div className="mt-4 pt-4 border-t">
             <TripLogCard
               tripId={trip.id}
               vehicleId={trip.vehicle.id}
-              tripStatus={trip.status}
+              tripStatus={tripStatus}
+              autoOpenStart={autoOpenOdometer}
+              onDialogClose={() => setAutoOpenOdometer(false)}
             />
           </div>
         )}

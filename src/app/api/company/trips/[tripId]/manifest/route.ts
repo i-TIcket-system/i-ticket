@@ -5,7 +5,15 @@ import prisma from "@/lib/db"
 
 /**
  * Download passenger manifest for a trip
- * Available when bus is full or for past trips
+ * Companies can download manifest ANYTIME (no seat restriction)
+ * - Trip doesn't need to be full
+ * - Trip doesn't need to be departed
+ * - This is for company operational use
+ *
+ * NOTE: Auto-generated manifests (for Super Admin) are separate
+ * - Companies NEVER see auto-generated manifests
+ * - Companies ONLY see their own manual downloads
+ *
  * SECURITY: Verifies trip belongs to requesting company
  */
 export async function GET(
