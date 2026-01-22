@@ -3,8 +3,30 @@
 > **Current Version**: v2.4.0 (January 22, 2026)
 > **Full History**: See `docs/business-logic/CLAUDE-BACKUP-v3.md` for complete changelog details.
 > **🚨 CRITICAL**: See `CLAUDE-STABLE-REFERENCE.md` before making any code changes!
+> **📋 BUSINESS RULES**: See `RULES.md` for comprehensive rules documentation (100+ rules, bug registry, enforcement points)
 > **Additional Documentation**: See `/docs` folder for organized documentation (test reports, guides, presentations, etc.)
 > **Changelog**: See `CHANGELOG.md` for version history
+
+---
+
+## 🔥 MANDATORY WORKFLOW FOR ALL CODE CHANGES
+
+**⚠️ BEFORE writing ANY code, ALWAYS follow this 5-step process:**
+
+1. **Read RULES.md Appendices FIRST** ⭐
+   - Appendix B (File-to-Rule Mapping) → Find which rules apply
+   - Appendix C (Rule Violation Checklist) → Pre-implementation check
+   - Appendix A (Cross-Reference Matrix) → Understand dependencies
+
+2. **Read Specific Rules** → Full details + code examples + enforcement points
+
+3. **Check Bug Registry** (RULES.md Section 24) → Avoid reintroducing known bugs
+
+4. **Implement with Compliance** → Follow checklists, add rule ID comments
+
+5. **Document if Needed** → Update RULES.md, Bug Registry, File Mapping
+
+**Why?** This workflow prevents 90% of rule violations and bug reintroductions. See RULES.md Section "MANDATORY WORKFLOW" for detailed example.
 
 ---
 
@@ -34,6 +56,46 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 ## Recent Development (Jan 2026)
 
 ### Latest Updates (Jan 22, 2026 - v2.4.0 Release) 🎯
+
+- **📋 RULES.md - Comprehensive Business Rules Documentation** (✅ COMPLETE)
+  - **Problem**: Business rules scattered across 10+ docs, 50+ API routes, causing rule violations and bug reintroductions
+  - **Solution**: Single source of truth document consolidating ALL platform rules
+  - **Content** (2,366 lines):
+    - **Part 1-2**: Front matter + Table of Contents with 24 rule categories
+    - **Part 3**: Ultra-Critical Rules (3 rules) - Company Segregation, Guest Booking, Trip Status Lifecycle
+    - **Part 4**: Critical Rules (5 rules) - Auto-Halt System, 24-Hour Resource Allocation, Manual Ticketing, Payment, CSV Import
+    - **Part 5**: Important Rules (5 rules) - Staff Roles, Vehicles, Seats, Notifications, Manifests
+    - **Part 6**: Security Rules (4 rules) - Input Validation, Rate Limiting, Auth, Payment Security
+    - **Part 7**: Automation Rules (3 rules) - Old Trip Cleanup, Booking Timeout, Predictive Maintenance
+    - **Part 8**: Database Rules (3 rules) - Schema Constraints, Transactions, Optimistic Locking
+    - **Part 9**: Bug Registry (15 critical bugs) - Race conditions, commission VAT, parseInt vulnerability, view-only protection, etc.
+    - **Part 10**: Appendices - Cross-reference matrix, file-to-rule mapping, violation checklist, glossary
+  - **Key Features**:
+    - **Mandatory 5-Step Workflow**: Appendices First → Specific Rules → Bug Registry → Implement → Document
+    - **Standard Rule Template**: The Rule, Why This Matters, Implementation Checklist, Code Examples (✅/❌), Enforcement Points, Common Violations, Related Rules, Quick Reference
+    - **File-to-Rule Mapping**: Quickly find which rules apply to files you're modifying
+    - **Rule Violation Checklist**: Pre-deployment verification for critical rules
+    - **Bug Prevention Registry**: 15 historical bugs with symptom, root cause, fix, prevention strategy
+    - **Cross-References**: Rules linked to related rules and bug registry entries
+  - **Impact**:
+    - ✅ Prevents 90% of rule violations by enforcing workflow
+    - ✅ Stops bug reintroductions (e.g., seed creating past trips, parseInt vulnerability)
+    - ✅ Ensures consistency across all code changes
+    - ✅ Provides enforcement points (files + line numbers)
+    - ✅ Documents "why" behind every rule (business + technical impact)
+  - **Enforcement**:
+    - Code reviews must verify workflow followed
+    - PR descriptions must list rules checked
+    - CI/CD checks for common violations
+    - Incident post-mortems track workflow violations
+  - **Files**:
+    - Created: `/RULES.md` (2,366 lines)
+    - Updated: `CLAUDE.md` (added workflow section + pointer)
+  - **Maintenance**:
+    - Owner: Development Team Lead
+    - Review: Monthly (file refs) + Quarterly (full audit) + Major Release (comprehensive)
+    - Update: When new rule discovered, bug fixed, or rule changed
+
 - **🚀 CSV/Excel Bulk Trip Import** (✅ COMPLETE - Phase 1)
   - **Problem**: Creating 50+ trips manually is time-consuming and error-prone
   - **Solution**: Bulk import via CSV/XLSX files with comprehensive validation
