@@ -158,6 +158,9 @@ async function createTrip(
   // Create trip with intermediate stops (if provided)
   const intermediateStops = trip.intermediateStops?.join(',') || '';
 
+  // Apply auto-halt rule: trips with ≤10 total slots start halted
+  const shouldAutoHalt = trip.totalSlots <= 10;
+
   const createdTrip = await prisma.trip.create({
     data: {
       origin: trip.origin,
@@ -178,7 +181,7 @@ async function createTrip(
       vehicleId: trip.vehicleId,
       companyId,
       status: 'SCHEDULED',
-      bookingHalted: false,
+      bookingHalted: shouldAutoHalt,
     },
   });
 

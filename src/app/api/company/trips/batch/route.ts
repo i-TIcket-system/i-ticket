@@ -233,6 +233,9 @@ export async function POST(request: NextRequest) {
 
       // Create forward trips
       for (const departureTime of forwardDates) {
+        // Apply auto-halt rule: trips with ≤10 total slots start halted
+        const shouldAutoHalt = validated.totalSlots <= 10;
+
         const trip = await tx.trip.create({
           data: {
             companyId: user.companyId!,
@@ -247,6 +250,7 @@ export async function POST(request: NextRequest) {
             busType: validated.busType,
             totalSlots: validated.totalSlots,
             availableSlots: validated.totalSlots,
+            bookingHalted: shouldAutoHalt,
             hasWater: validated.hasWater,
             hasFood: validated.hasFood,
             driverId: validated.driverId,
@@ -261,6 +265,9 @@ export async function POST(request: NextRequest) {
       // Create return trips (if enabled)
       if (validated.createReturnTrips && returnDates.length > 0) {
         for (const departureTime of returnDates) {
+          // Apply auto-halt rule: trips with ≤10 total slots start halted
+          const shouldAutoHalt = validated.totalSlots <= 10;
+
           const trip = await tx.trip.create({
             data: {
               companyId: user.companyId!,
@@ -277,6 +284,7 @@ export async function POST(request: NextRequest) {
               busType: validated.busType,
               totalSlots: validated.totalSlots,
               availableSlots: validated.totalSlots,
+              bookingHalted: shouldAutoHalt,
               hasWater: validated.hasWater,
               hasFood: validated.hasFood,
               driverId: validated.driverId,

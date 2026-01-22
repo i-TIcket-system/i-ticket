@@ -125,7 +125,10 @@
       "Bash(move:*)",
       "Bash(git mv:*)",
       "Bash(tree:*)",
-      "Bash(exit 0)"
+      "Bash(exit 0)",
+      "Bash(tsx scripts/test-auto-halt.ts:*)",
+      "Bash(ssh:*)",
+      "Bash(rsync:*)"
     ]
   }
 }

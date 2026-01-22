@@ -72,9 +72,21 @@ export async function parseXLSX(buffer: ArrayBuffer): Promise<ParseResult> {
           if (cell.value !== null && cell.value !== undefined) {
             // Handle different cell types
             if (cell.type === ExcelJS.ValueType.Date) {
-              // Format date as YYYY-MM-DD
               const date = cell.value as Date;
-              value = date.toISOString().split('T')[0];
+
+              // Check if this is a TIME-only cell (Excel base date: 1899-12-30)
+              // Time-only cells have year 1899 or 1900
+              const isTimeOnly = date.getFullYear() <= 1900;
+
+              if (isTimeOnly) {
+                // Format as HH:MM (24-hour format)
+                const hours = date.getHours().toString().padStart(2, '0');
+                const minutes = date.getMinutes().toString().padStart(2, '0');
+                value = `${hours}:${minutes}`;
+              } else {
+                // Format date as YYYY-MM-DD
+                value = date.toISOString().split('T')[0];
+              }
             } else if (cell.type === ExcelJS.ValueType.Boolean) {
               // Convert boolean to string
               value = cell.value ? 'TRUE' : 'FALSE';

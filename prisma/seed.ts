@@ -82,13 +82,13 @@ async function main() {
     prisma.user.create({
       data: {
         name: "Abebe Kebede",
-        phone: "0911234567",
+        phone: "0912345678",
         email: "abebe@example.com",
         password: customerPassword,
         role: "CUSTOMER",
         nationalId: "ET123456789",
         nextOfKinName: "Tigist Kebede",
-        nextOfKinPhone: "0912345678",
+        nextOfKinPhone: "0911234567",
       },
     }),
     // Company admin for Selam Bus
@@ -505,10 +505,25 @@ async function main() {
 
         const totalSlots = busType === "luxury" ? 30 : 50
         const bookedSlots = Math.floor(Math.random() * (totalSlots * 0.7))
+        const availableSlots = totalSlots - bookedSlots
 
         // Price varies by bus type
         const priceMultiplier = busType === "luxury" ? 1.5 : 1
         const price = Math.round(route.basePrice * priceMultiplier)
+
+        // Determine trip status based on departure time
+        const now = new Date()
+        let tripStatus = "SCHEDULED"
+        let bookingHalted = false
+
+        if (departure < now) {
+          // Past trips should be COMPLETED or CANCELLED based on bookings
+          tripStatus = bookedSlots > 0 ? "COMPLETED" : "CANCELLED"
+          bookingHalted = true // ALWAYS halt booking for past trips
+        } else {
+          // Future trips: check auto-halt rule (≤10 seats)
+          bookingHalted = availableSlots <= 10
+        }
 
         trips.push({
           companyId: company.id,
@@ -528,7 +543,9 @@ async function main() {
           price,
           busType,
           totalSlots,
-          availableSlots: totalSlots - bookedSlots,
+          availableSlots,
+          status: tripStatus,
+          bookingHalted,
           hasWater: busType !== "standard",
           hasFood: busType === "luxury",
           isActive: true,
@@ -618,7 +635,7 @@ async function main() {
   console.log("\n=== LOGIN CREDENTIALS ===\n")
 
   console.log("👤 CUSTOMERS:")
-  console.log("   Phone: 0911234567 / Password: demo123")
+  console.log("   Phone: 0912345678 / Password: demo123")
   console.log("   Phone: 0912222222 / Password: demo123")
   console.log("   Phone: 0913333333 / Password: demo123\n")
 

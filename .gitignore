@@ -38,3 +38,5 @@ next-env.d.ts
 # prisma
 prisma/*.db
 prisma/*.db-journal
+deployment-secrets.env
+deployment-configs/

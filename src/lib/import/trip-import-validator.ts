@@ -195,6 +195,15 @@ function transformRow(row: ParsedRow): Partial<TripImportData> {
     transformed.manualTicketerPhone = normalizePhone(row.manualTicketerPhone);
   }
 
+  // Normalize time format (add leading zeros: 8:00 → 08:00)
+  if (row.departureTime) {
+    transformed.departureTime = normalizeTime(row.departureTime);
+  }
+
+  if (row.returnTripTime) {
+    transformed.returnTripTime = normalizeTime(row.returnTripTime);
+  }
+
   return transformed;
 }
 
@@ -213,6 +222,27 @@ function normalizePhone(phone: string): string {
 
   // Already in correct format or invalid (will be caught by validation)
   return digits.startsWith('0') ? digits : '0' + digits;
+}
+
+/**
+ * Normalize time format to HH:MM (add leading zero if needed)
+ * Handles formats: 8:00 → 08:00, 08:00 → 08:00, 23:45 → 23:45
+ */
+function normalizeTime(time: string): string {
+  // Trim whitespace
+  const trimmed = time.trim();
+
+  // Match time pattern (allows single or double-digit hours)
+  const match = trimmed.match(/^(\d{1,2}):(\d{2})$/);
+
+  if (!match) {
+    return trimmed; // Return as-is if invalid format (will be caught by validation)
+  }
+
+  const hours = match[1].padStart(2, '0'); // Add leading zero if needed
+  const minutes = match[2];
+
+  return `${hours}:${minutes}`;
 }
 
 /**
