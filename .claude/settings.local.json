@@ -124,7 +124,8 @@
       "Bash(npm run db:push:*)",
       "Bash(move:*)",
       "Bash(git mv:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(exit 0)"
     ]
   }
 }

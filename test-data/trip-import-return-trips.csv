@@ -1,0 +1,6 @@
+origin,destination,departureDate,departureTime,estimatedDuration,distance,price,busType,totalSlots,driverPhone,conductorPhone,vehiclePlateNumber,preparedBy,hasWater,hasFood,intermediateStops,manualTicketerPhone,returnTripDate,returnTripTime
+Addis Ababa,Dire Dawa,2026-02-01,08:00,540,515,850,standard,45,0914444444,0914444445,3-12345,Scheduler,TRUE,FALSE,"Adama,Awash",,2026-02-02,08:00
+Addis Ababa,Bahir Dar,2026-02-10,06:00,600,565,900,luxury,40,0914444444,0914444445,3-12345,Scheduler,TRUE,TRUE,Dejen,,2026-02-12,06:00
+Addis Ababa,Hawassa,2026-02-20,07:30,240,275,500,mini,15,0914444444,0914444445,3-12345,Scheduler,FALSE,FALSE,,,2026-02-21,14:00
+Addis Ababa,Mekelle,2026-03-01,05:00,720,780,1200,luxury,42,0914444444,0914444445,3-12345,Scheduler,TRUE,TRUE,"Dessie,Woldiya",,2026-03-03,05:00
+Addis Ababa,Jimma,2026-03-15,07:00,360,346,600,standard,45,0914444444,0914444445,3-12345,Scheduler,FALSE,FALSE,,,2026-03-16,15:00

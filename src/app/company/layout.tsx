@@ -22,6 +22,7 @@ import {
   ChevronRight,
   FileText,
   MessageSquare,
+  Upload,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -51,6 +52,11 @@ const sidebarItems = [
     title: "Add Trip",
     href: "/company/trips/new",
     icon: PlusCircle,
+  },
+  {
+    title: "Import Trips",
+    href: "/company/trips/import",
+    icon: Upload,
   },
   {
     title: "Reports",

@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Current Version**: v2.3.0 (January 21, 2026)
+> **Current Version**: v2.4.0 (January 22, 2026)
 > **Full History**: See `docs/business-logic/CLAUDE-BACKUP-v3.md` for complete changelog details.
 > **🚨 CRITICAL**: See `CLAUDE-STABLE-REFERENCE.md` before making any code changes!
 > **Additional Documentation**: See `/docs` folder for organized documentation (test reports, guides, presentations, etc.)
@@ -33,7 +33,59 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ## Recent Development (Jan 2026)
 
-### Latest Updates (Jan 21, 2026 - v2.3.0 Release) 🎯
+### Latest Updates (Jan 22, 2026 - v2.4.0 Release) 🎯
+- **🚀 CSV/Excel Bulk Trip Import** (✅ COMPLETE - Phase 1)
+  - **Problem**: Creating 50+ trips manually is time-consuming and error-prone
+  - **Solution**: Bulk import via CSV/XLSX files with comprehensive validation
+  - **Two-Tier System**:
+    1. **Smart Template** (Recommended): Pre-filled with company data
+       - Auto-populated dropdowns (vehicles, drivers, conductors, cities)
+       - Auto-fill formulas (totalSlots, busType from selected vehicle)
+       - Real-time data from database (download fresh when you add vehicles/staff)
+       - Comprehensive instructions sheet included
+       - Excel data validation with dropdown menus
+    2. **Basic Template** (Generic): Standard CSV/Excel with example data
+  - **Features**:
+    - Upload CSV or XLSX files (max 50 trips, 5MB)
+    - Schema validation (data types, formats, required fields)
+    - Business rule validation (future dates, 24-hour staff/vehicle gaps)
+    - Database lookups (staff by phone, vehicles by plate)
+    - Auto-city creation (cities not in DB are created automatically)
+    - Seat capacity validation (totalSlots cannot exceed vehicle capacity)
+    - Return trip support (optional returnTripDate/returnTripTime columns)
+    - Atomic transactions (all-or-nothing import)
+    - Preview table with color-coded validation results
+    - Clear, actionable error messages with fix instructions
+  - **Smart Template API**: `GET /api/company/trips/import/template`
+    - Fetches: Vehicles, drivers, conductors, ticketers, cities (company-specific)
+    - Generates: 7-sheet Excel workbook with hidden lookup sheets
+    - Personalized: Company name in filename and welcome message
+  - **Import API**: `POST /api/company/trips/import`
+    - Validation: All rows validated before any database writes
+    - 24-hour conflict detection: Same driver/vehicle cannot be used within 24 hours
+    - Staff role validation: Ensures drivers have DRIVER role, conductors have CONDUCTOR role
+    - Audit logging: Creates TRIP_CREATED_VIA_IMPORT and TRIP_IMPORT_COMPLETED logs
+  - **UI/UX**:
+    - Featured smart template section (teal border, ✨ icon)
+    - Drag-and-drop file upload with validation
+    - 4-step workflow: Upload → Validate → Preview → Import
+    - Real-time progress indicators
+    - Success redirect to trips list
+  - **Files Created** (15 total):
+    - Utilities: `csv-parser.ts`, `xlsx-parser.ts`, `trip-import-validator.ts`, `trip-import-mapper.ts`
+    - API: `import/route.ts`, `import/validate/route.ts`, `import/template/route.ts`
+    - Components: `ImportTemplateDownload.tsx`, `ImportPreviewTable.tsx`
+    - Page: `company/trips/import/page.tsx`
+    - Test Data: 4 CSV files with various scenarios
+  - **Phase 2 Planned**:
+    - Conditional formatting for 24-hour rule violations in Excel
+    - Web-based trip planner with real-time validation
+    - "+" button to duplicate rows with auto-increment dates
+  - **Dependencies Added**: papaparse (CSV parsing), exceljs (already existed for XLSX)
+  - **Navigation**: Added "Import Trips" to company sidebar with Upload icon
+  - **Commit**: [Current session]
+
+### Previous Updates (Jan 21, 2026 - v2.3.0 Release) 🎯
 - **🚨 CRITICAL: View-Only Trip Mode** (✅ COMPLETE)
   - **Problem**: DEPARTED, COMPLETED, CANCELLED trips could still be edited
   - **Business Rule**: Final-status trips must be READ-ONLY for data integrity and audit compliance

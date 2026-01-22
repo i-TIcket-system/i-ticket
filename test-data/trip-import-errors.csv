@@ -1,0 +1,6 @@
+origin,destination,departureDate,departureTime,estimatedDuration,distance,price,busType,totalSlots,driverPhone,conductorPhone,vehiclePlateNumber,preparedBy,hasWater,hasFood,intermediateStops,manualTicketerPhone,returnTripDate,returnTripTime
+Addis Ababa,Addis Ababa,2026-02-01,08:00,540,515,850,standard,45,0914444444,0914444445,3-12345,John Doe,TRUE,FALSE,"Adama,Awash",0933333333,,
+Addis Ababa,Bahir Dar,2025-01-01,06:00,600,565,900,deluxe,40,123456,0914444445,3-12345,Jane Smith,TRUE,TRUE,Dejen,,,
+Addis Ababa,Hawassa,2026-02-10,25:30,240,275,-500,mini,150,0914444444,0914444444,INVALID-PLATE,Admin,FALSE,FALSE,,,,
+Addis Ababa,Mekelle,2026-02-15,05:00,10,780,1200,luxury,42,0999999999,0988888888,3-99999,Dispatcher,TRUE,TRUE,"Dessie,Woldiya",0933333333,2026-02-14,05:00
+,,2026-02-20,09:00,90,50,200,mini,12,0914444444,0914444445,3-12345,,FALSE,FALSE,,,2026-02-21,14:00

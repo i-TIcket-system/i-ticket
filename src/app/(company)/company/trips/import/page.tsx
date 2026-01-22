@@ -1,0 +1,349 @@
+'use client';
+
+/**
+ * Trip Import Page
+ * Bulk import trips from CSV/Excel files
+ */
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Upload, Loader2, FileUp, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { ImportTemplateDownload } from '@/components/trip/ImportTemplateDownload';
+import { ImportPreviewTable, ValidatedRow } from '@/components/trip/ImportPreviewTable';
+import { toast } from 'sonner';
+
+type Step = 'upload' | 'validating' | 'preview' | 'importing' | 'success';
+
+export default function TripImportPage() {
+  const router = useRouter();
+  const [step, setStep] = useState<Step>('upload');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [validatedRows, setValidatedRows] = useState<ValidatedRow[]>([]);
+  const [validCount, setValidCount] = useState(0);
+  const [errorCount, setErrorCount] = useState(0);
+  const [importedCount, setImportedCount] = useState(0);
+
+  /**
+   * Handle file selection
+   */
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    // Validate file type
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    if (!fileExtension || !['csv', 'xlsx'].includes(fileExtension)) {
+      toast.error('Invalid file type. Please upload a .csv or .xlsx file');
+      return;
+    }
+
+    // Validate file size (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      toast.error(`File too large (${sizeMB}MB). Maximum size is 5MB`);
+      return;
+    }
+
+    setSelectedFile(file);
+    validateFile(file);
+  };
+
+  /**
+   * Handle drag and drop
+   */
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+
+    if (!file) return;
+
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    if (!fileExtension || !['csv', 'xlsx'].includes(fileExtension)) {
+      toast.error('Invalid file type. Please upload a .csv or .xlsx file');
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      toast.error(`File too large (${sizeMB}MB). Maximum size is 5MB`);
+      return;
+    }
+
+    setSelectedFile(file);
+    validateFile(file);
+  };
+
+  /**
+   * Validate uploaded file
+   */
+  const validateFile = async (file: File) => {
+    setStep('validating');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/company/trips/import/validate', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.errors && Array.isArray(data.errors)) {
+          toast.error(data.errors[0] || 'Validation failed');
+        } else {
+          toast.error(data.error || 'Validation failed');
+        }
+        setStep('upload');
+        setSelectedFile(null);
+        return;
+      }
+
+      if (data.success) {
+        setValidatedRows(data.validatedRows || []);
+        setValidCount(data.validCount || 0);
+        setErrorCount(data.errorCount || 0);
+        setStep('preview');
+        toast.success(`Validated ${data.validCount} trips successfully`);
+      } else {
+        setValidatedRows(data.validatedRows || []);
+        setValidCount(data.validCount || 0);
+        setErrorCount(data.errorCount || 0);
+        setStep('preview');
+        toast.error(`Found ${data.errorCount} errors. Please fix and re-upload`);
+      }
+    } catch (error) {
+      console.error('Validation error:', error);
+      toast.error('Failed to validate file. Please try again');
+      setStep('upload');
+      setSelectedFile(null);
+    }
+  };
+
+  /**
+   * Import trips
+   */
+  const handleImport = async () => {
+    if (!selectedFile) return;
+
+    setStep('importing');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch('/api/company/trips/import', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.errors && Array.isArray(data.errors)) {
+          toast.error(data.errors[0] || 'Import failed');
+        } else {
+          toast.error(data.error || 'Import failed');
+        }
+        setStep('preview');
+        return;
+      }
+
+      if (data.success) {
+        setImportedCount(data.tripsCreated || 0);
+        setStep('success');
+        toast.success(`Successfully imported ${data.tripsCreated} trips!`);
+
+        // Redirect to trips page after 2 seconds
+        setTimeout(() => {
+          router.push('/company/trips?imported=true');
+        }, 2000);
+      } else {
+        toast.error('Import failed. Please check for errors and try again');
+        setStep('preview');
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      toast.error('Failed to import trips. Please try again');
+      setStep('preview');
+    }
+  };
+
+  /**
+   * Reset and start over
+   */
+  const handleReset = () => {
+    setStep('upload');
+    setSelectedFile(null);
+    setValidatedRows([]);
+    setValidCount(0);
+    setErrorCount(0);
+    setImportedCount(0);
+  };
+
+  return (
+    <div className="container max-w-7xl py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Bulk Import Trips</h1>
+        <p className="text-muted-foreground">
+          Upload a CSV or Excel file to create multiple trips at once. Download a template to get
+          started.
+        </p>
+      </div>
+
+      {/* Step Indicator */}
+      <div className="mb-8 flex items-center gap-4">
+        <div className={`flex items-center gap-2 ${step === 'upload' || step === 'validating' ? 'text-teal-600 font-semibold' : 'text-muted-foreground'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'upload' || step === 'validating' ? 'bg-teal-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+            1
+          </div>
+          <span>Upload File</span>
+        </div>
+        <div className="h-px flex-1 bg-gray-300 dark:bg-gray-700" />
+        <div className={`flex items-center gap-2 ${step === 'preview' ? 'text-teal-600 font-semibold' : 'text-muted-foreground'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'preview' ? 'bg-teal-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+            2
+          </div>
+          <span>Review</span>
+        </div>
+        <div className="h-px flex-1 bg-gray-300 dark:bg-gray-700" />
+        <div className={`flex items-center gap-2 ${step === 'importing' || step === 'success' ? 'text-teal-600 font-semibold' : 'text-muted-foreground'}`}>
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step === 'importing' || step === 'success' ? 'bg-teal-600 text-white' : 'bg-gray-200 dark:bg-gray-700'}`}>
+            3
+          </div>
+          <span>Import</span>
+        </div>
+      </div>
+
+      {/* Step 1: Upload */}
+      {(step === 'upload' || step === 'validating') && (
+        <div className="space-y-6">
+          <ImportTemplateDownload />
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Upload File</CardTitle>
+              <CardDescription>
+                Select a CSV or Excel file with your trip data (max 50 rows, 5MB)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div
+                className="border-2 border-dashed rounded-lg p-12 text-center cursor-pointer hover:border-teal-500 transition-colors"
+                onDrop={handleDrop}
+                onDragOver={(e) => e.preventDefault()}
+                onClick={() => document.getElementById('file-input')?.click()}
+              >
+                {step === 'validating' ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-12 w-12 animate-spin text-teal-600" />
+                    <p className="text-lg font-medium">Validating file...</p>
+                    <p className="text-sm text-muted-foreground">
+                      Checking {selectedFile?.name}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-4">
+                    <Upload className="h-12 w-12 text-muted-foreground" />
+                    <div>
+                      <p className="text-lg font-medium mb-1">
+                        Drop your file here or click to browse
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Accepts .csv and .xlsx files up to 5MB
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <input
+                id="file-input"
+                type="file"
+                accept=".csv,.xlsx"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Step 2: Preview */}
+      {step === 'preview' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Preview and Review</h2>
+              <p className="text-sm text-muted-foreground">
+                File: {selectedFile?.name}
+              </p>
+            </div>
+            <Button variant="outline" onClick={handleReset}>
+              Upload Different File
+            </Button>
+          </div>
+
+          <ImportPreviewTable
+            validatedRows={validatedRows}
+            validCount={validCount}
+            errorCount={errorCount}
+          />
+
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={handleReset}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleImport}
+              disabled={errorCount > 0}
+              className="bg-teal-600 hover:bg-teal-700"
+            >
+              <FileUp className="h-4 w-4 mr-2" />
+              Import {validCount} Trips
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Importing */}
+      {step === 'importing' && (
+        <Card>
+          <CardContent className="pt-12 pb-12">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="h-16 w-16 animate-spin text-teal-600" />
+              <h2 className="text-2xl font-semibold">Importing trips...</h2>
+              <p className="text-muted-foreground">
+                Creating {validCount} trips in the database. Please wait...
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 4: Success */}
+      {step === 'success' && (
+        <Card>
+          <CardContent className="pt-12 pb-12">
+            <div className="flex flex-col items-center gap-4">
+              <CheckCircle2 className="h-16 w-16 text-green-600" />
+              <h2 className="text-2xl font-semibold">Import Successful!</h2>
+              <p className="text-muted-foreground">
+                Successfully imported {importedCount} trips
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Redirecting to trips page...
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
