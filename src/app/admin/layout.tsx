@@ -34,49 +34,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { NotificationBell } from "@/components/notifications"
-
-const sidebarItems = [
-  {
-    title: "Dashboard",
-    href: "/admin/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "Companies",
-    href: "/admin/companies",
-    icon: Building2,
-  },
-  {
-    title: "All Trips",
-    href: "/admin/trips",
-    icon: Bus,
-  },
-  {
-    title: "Manifests",
-    href: "/admin/manifests",
-    icon: FileDown,
-  },
-  {
-    title: "Sales Team",
-    href: "/admin/sales-persons",
-    icon: UserCheck,
-  },
-  {
-    title: "Support Tickets",
-    href: "/admin/support",
-    icon: HeadphonesIcon,
-  },
-  {
-    title: "Company Support",
-    href: "/admin/company-support",
-    icon: MessageSquare,
-  },
-  {
-    title: "Audit Logs",
-    href: "/admin/audit-logs",
-    icon: FileText,
-  },
-]
+import { getFilteredNavigation } from "@/lib/admin-navigation"
 
 export default function AdminLayout({
   children,
@@ -155,6 +113,31 @@ export default function AdminLayout({
     )
   }
 
+  // FEATURE 4: Get role-based navigation items
+  const isCEO = session.user.platformStaffRole === "CEO"
+  const sidebarItems = getFilteredNavigation(
+    session.user.platformStaffDepartment,
+    session.user.platformStaffPermissions,
+    isCEO
+  )
+
+  // FEATURE 4: Get role display text
+  const getRoleDisplay = () => {
+    if (!session.user.platformStaffRole) {
+      return "Super Administrator"
+    }
+    if (isCEO) {
+      return "Chief Executive Officer"
+    }
+    // Format role: "SENIOR_ACCOUNTANT" → "Senior Accountant"
+    const role = session.user.platformStaffRole
+      .split("_")
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(" ")
+    const dept = session.user.platformStaffDepartment
+    return `${role} • ${dept}`
+  }
+
   return (
     <div className="min-h-screen flex" style={{ background: "linear-gradient(135deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
       {/* Mobile sidebar backdrop */}
@@ -215,8 +198,8 @@ export default function AdminLayout({
               {!collapsed && (
                 <div className="mt-3 flex items-center gap-2 px-1">
                   <Sparkles className="h-3 w-3" style={{ color: "#20c4c4" }} />
-                  <p className="text-xs text-white/60 font-medium tracking-wide uppercase">
-                    Super Administrator
+                  <p className="text-xs text-white/60 font-medium tracking-wide">
+                    {getRoleDisplay()}
                   </p>
                 </div>
               )}
@@ -226,7 +209,8 @@ export default function AdminLayout({
             <nav className={cn("flex-1 p-4 space-y-1.5", collapsed && "p-2")}>
               {sidebarItems.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
-                const showBadge = item.href === "/admin/company-support" && unreadMessagesCount > 0
+                // FEATURE 4: Show unread badge for company support
+                const showBadge = (item.href === "/admin/company-support" || item.href === "/admin/company-messages") && unreadMessagesCount > 0
 
                 const linkContent = (
                   <Link

@@ -221,6 +221,29 @@ export const authOptions: NextAuthOptions = {
         token.profilePicture = user.profilePicture
         token.nationalId = user.nationalId
         token.mustChangePassword = user.mustChangePassword
+
+        // FEATURE 4: Load platform staff data for Super Admins
+        if (user.role === 'SUPER_ADMIN') {
+          try {
+            const platformStaff = await prisma.platformStaff.findUnique({
+              where: { userId: user.id },
+              select: { role: true, department: true, permissions: true }
+            })
+
+            if (platformStaff) {
+              token.platformStaffRole = platformStaff.role
+              token.platformStaffDepartment = platformStaff.department
+              // Parse permissions JSON string
+              try {
+                token.platformStaffPermissions = JSON.parse(platformStaff.permissions)
+              } catch {
+                token.platformStaffPermissions = {}
+              }
+            }
+          } catch (error) {
+            console.error('Failed to load platform staff data:', error)
+          }
+        }
       }
 
       // Refresh user data when session is manually updated
@@ -238,6 +261,28 @@ export const authOptions: NextAuthOptions = {
             // Update company name if user is associated with a company
             if (token.companyId && freshUser.company) {
               token.companyName = freshUser.company.name
+            }
+
+            // FEATURE 4: Refresh platform staff data for Super Admins
+            if (freshUser.role === 'SUPER_ADMIN') {
+              try {
+                const platformStaff = await prisma.platformStaff.findUnique({
+                  where: { userId: freshUser.id },
+                  select: { role: true, department: true, permissions: true }
+                })
+
+                if (platformStaff) {
+                  token.platformStaffRole = platformStaff.role
+                  token.platformStaffDepartment = platformStaff.department
+                  try {
+                    token.platformStaffPermissions = JSON.parse(platformStaff.permissions)
+                  } catch {
+                    token.platformStaffPermissions = {}
+                  }
+                }
+              } catch (error) {
+                console.error('Failed to refresh platform staff data:', error)
+              }
             }
           }
         } catch (error) {
@@ -258,6 +303,13 @@ export const authOptions: NextAuthOptions = {
         session.user.profilePicture = token.profilePicture as string | null
         session.user.nationalId = token.nationalId as string | null
         session.user.mustChangePassword = token.mustChangePassword as boolean | undefined
+
+        // FEATURE 4: Add platform staff data to session
+        if (token.platformStaffRole) {
+          session.user.platformStaffRole = token.platformStaffRole as string
+          session.user.platformStaffDepartment = token.platformStaffDepartment as string
+          session.user.platformStaffPermissions = token.platformStaffPermissions as Record<string, boolean>
+        }
       }
       return session
     }

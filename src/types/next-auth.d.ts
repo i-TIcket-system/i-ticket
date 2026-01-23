@@ -12,6 +12,10 @@ declare module "next-auth" {
       profilePicture: string | null
       nationalId: string | null
       mustChangePassword?: boolean
+      // FEATURE 4: Platform Staff Management
+      platformStaffRole?: string
+      platformStaffDepartment?: string
+      platformStaffPermissions?: Record<string, boolean>
     } & DefaultSession["user"]
   }
 
@@ -39,5 +43,9 @@ declare module "next-auth/jwt" {
     profilePicture: string | null
     nationalId: string | null
     mustChangePassword?: boolean
+    // FEATURE 4: Platform Staff Management
+    platformStaffRole?: string
+    platformStaffDepartment?: string
+    platformStaffPermissions?: Record<string, boolean>
   }
 }
