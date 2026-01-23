@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Current Version**: v2.4.0 (January 22, 2026)
+> **Current Version**: v2.5.0 (January 23, 2026)
 > **Full History**: See `docs/business-logic/CLAUDE-BACKUP-v3.md` for complete changelog details.
 > **🚨 CRITICAL**: See `CLAUDE-STABLE-REFERENCE.md` before making any code changes!
 > **📋 BUSINESS RULES**: See `RULES.md` for comprehensive rules documentation (100+ rules, bug registry, enforcement points)
@@ -55,7 +55,128 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ## Recent Development (Jan 2026)
 
-### Latest Updates (Jan 22, 2026 - v2.4.0 Release) 🎯
+### Latest Updates (Jan 23, 2026 - v2.5.0 Release) 🚀
+
+- **📊 Dashboard Redesign - Modern Visual Analytics** (✅ COMPLETE)
+  - **Problem**: Basic stats-only dashboards lacked visual insights and data trends
+  - **Solution**: Comprehensive dashboard redesign with charts, graphs, and milestone tracking
+  - **Company Admin Dashboard** (9 files):
+    - **Passenger Milestone Bar**: Horizontal progress tracker (100 → 1K → 10K → 100K → 1M passengers)
+    - **Revenue Trend Chart**: 30-day daily revenue with Recharts LineChart (teal gradient)
+    - **Booking Status Pie**: PAID/PENDING/CANCELLED breakdown (donut chart with percentages)
+    - **Occupancy Bar Chart**: 8-week average occupancy rates with 80% target line
+    - **Top Routes Card**: Top 5 routes by bookings/revenue with medal emojis (🥇🥈🥉)
+    - **4 Analytics APIs**: Revenue, bookings, routes, passengers endpoints
+    - **Color Theme**: i-Ticket teal (#14B8A6, #0D9488, #5EEAD4) with glassmorphism
+  - **Super Admin Dashboard** (9 files):
+    - **Profit Margin Chart**: Large circular chart showing platform profitability
+    - **Income/Expenses Chart**: 12-month ComposedChart with bars + line (net profit)
+    - **Budget Progress Charts**: Two circular charts (income budget vs expense budget)
+    - **Financial Stat Cards**: Platform revenue, settlements owed, sales commissions, monthly trends
+    - **5 Financial APIs**: Platform revenue, settlements, commissions, monthly trends, budget progress
+  - **Technical Details**:
+    - All APIs enforce RULE-001 (company data segregation)
+    - Charts use React.memo for performance optimization
+    - Recharts v3.6.0 with responsive containers
+    - Currency formatting with Ethiopian Birr (ETB)
+    - Real-time data fetching with 10-second polling
+  - **Files**: 18 total (9 company, 9 admin) - 13 new components, 5 APIs
+  - **Commits**: d231be9 (initial), bb70337 (platform staff integration)
+
+- **📋 CSV Import Enhancement - Staff Name Columns** (✅ COMPLETE)
+  - **Problem**: Import templates only showed phone numbers, causing user confusion during bulk trip creation
+  - **Solution**: Added optional staff NAME columns with VLOOKUP auto-fill and mismatch warnings
+  - **New Columns** (3 added):
+    - `driverName` (optional, auto-fills from Drivers sheet)
+    - `conductorName` (optional, auto-fills from Conductors sheet)
+    - `manualTicketerName` (optional, auto-fills from Manual Ticketers sheet)
+  - **Smart Validation**:
+    - Phone numbers remain PRIMARY lookup key (database constraint)
+    - Names are INFORMATIONAL only (validated but not required)
+    - Name mismatch = WARNING (non-blocking, allows import to proceed)
+    - Example: "Row 5: Driver name mismatch. You entered 'John' but database shows 'Jonathan'. Phone 0912345678 is correct."
+  - **VLOOKUP Formulas**: `=IFERROR(VLOOKUP(J2,Drivers!A:B,2,FALSE),"")`
+  - **Backward Compatibility**: Old templates (phone only) still work perfectly
+  - **UI Enhancement**: Yellow warning alert with expand/collapse for name mismatches
+  - **Files**: 4 modified (template API, validator, mapper, import UI)
+  - **Commit**: d231be9
+
+- **👮 Supervisor Role - Operational Staff Permissions** (✅ COMPLETE)
+  - **Problem**: Company admins needed to delegate operational tasks without granting full administrative access
+  - **Solution**: New `staffRole="SUPERVISOR"` with expanded operational permissions
+  - **Architecture**: `role = "COMPANY_ADMIN"` + `staffRole = "SUPERVISOR"` (not a new user role)
+  - **Supervisor CAN**:
+    - Access company portal (not redirected to staff portals)
+    - Create, edit, delete trips (full trip management)
+    - Halt/resume bookings, manual ticket sales
+    - Create/manage work orders (maintenance operations)
+    - Assign staff to trips, download manifests
+    - View staff and vehicles (read-only)
+    - View reports and dashboard analytics
+  - **Supervisor CANNOT**:
+    - Add/edit/delete staff members
+    - Change company settings (name, bank info, contacts, signatories)
+    - View or download audit logs (admin accountability)
+    - Manage vehicles (read-only access only)
+  - **Implementation**:
+    - **Auth Helpers**: `requireCompanyAdminOrSupervisor()`, `requireFullAdmin()`
+    - **Company Layout**: Sidebar filters items based on supervisor role
+    - **API Protection**: 42 routes evaluated, 16 blocked for supervisors (settings, audit logs, staff CRUD, vehicles)
+    - **UI Restrictions**: Audit logs redirect with toast, profile page read-only with banner
+  - **UX Features**:
+    - Yellow "Read-Only Access" banner with Shield icon
+    - All form inputs disabled for supervisors
+    - Hidden action buttons (Save, Add Staff, Delete) with tooltips
+    - Clear role badge: "Supervisor" instead of "Company Admin"
+  - **Files**: 6 total (2 auth helpers, 1 layout, 3 API routes)
+  - **Commits**: d231be9 (API/layout), 78277f2 (UI restrictions)
+
+- **🔐 Platform Staff Management - Permission System** (✅ COMPLETE)
+  - **Problem**: Platform employees (finance, support, operations) needed role-specific access controls
+  - **Solution**: Comprehensive permission-based access control system for i-Ticket platform staff
+  - **Session Enhancement** (2 files):
+    - Added `platformStaffRole`, `platformStaffDepartment`, `platformStaffPermissions` to JWT/Session
+    - Loads PlatformStaff data on login for all SUPER_ADMIN users
+    - Refreshes platform staff data on session update
+    - Parses permissions JSON from database
+  - **Permission Library** (1 file - `platform-staff-permissions.ts`):
+    - **Core Functions**: `hasPermission()`, `requirePermission()`, `hasAnyPermission()`, `hasAllPermissions()`
+    - **25+ Standard Permissions**: Finance, support, operations, marketing, technical, compliance, audit
+    - **Role-Based Defaults**: CEO (wildcard), Accountant, Support Agent, Operations Manager, etc.
+    - **Utility Functions**: `permissionsArrayToObject()`, `permissionsObjectToArray()`
+  - **Navigation System** (1 file - `admin-navigation.ts`):
+    - **7 Department Templates**: FINANCE, SUPPORT, OPERATIONS, MARKETING, TECHNICAL, COMPLIANCE, MANAGEMENT
+    - **Permission-Based Filtering**: `getFilteredNavigation()` shows only authorized items
+    - **Finance Navigation**: Reports, Commissions, Settlements, Companies, Trips, Manifests
+    - **Support Navigation**: Tickets, Company Support, Companies, Trips
+    - **Operations Navigation**: Trips, Manifests, Companies
+  - **Admin Layout Updates** (1 file):
+    - Replaced static sidebar with dynamic role-based navigation
+    - Shows department-specific items based on permissions
+    - Updated role display: "Senior Accountant • FINANCE" or "Chief Executive Officer"
+    - Backward compatible (Super Admin without PlatformStaff = full access)
+  - **Permission Gate Component** (1 file):
+    - UI-level permission control: `<PermissionGate permission="view_finance">...</PermissionGate>`
+    - OR/AND logic: `<PermissionGate permissions={[...]} requireAny>...</PermissionGate>`
+    - Optional disabled state with tooltip (shows locked icon)
+    - React hooks: `usePermission()`, `useAnyPermission()`, `useAllPermissions()`
+  - **Usage Examples**:
+    - API Route: `requirePermission(session, PLATFORM_PERMISSIONS.VIEW_FINANCE)`
+    - UI Hiding: `<PermissionGate permission="manage_companies"><DeleteButton /></PermissionGate>`
+    - Disabled State: `<PermissionGate permission="approve_settlements" showDisabled><Button>Approve</Button></PermissionGate>`
+  - **Files**: 6 total (3 new libs, 3 modified files)
+  - **Commit**: bb70337
+
+**v2.5.0 Summary**:
+- **4 Major Features**: Dashboard redesign, CSV enhancement, supervisor role, platform staff permissions
+- **Total Files**: 35 files (20 new, 15 modified)
+- **Lines Changed**: ~3,100 insertions, ~100 deletions
+- **Build Status**: ✅ Passing (138/138 pages generated)
+- **Commits**: 3 commits (d231be9, 78277f2, bb70337)
+
+---
+
+### Previous Updates (Jan 22, 2026 - v2.4.0 Release) 🎯
 
 - **📋 RULES.md - Comprehensive Business Rules Documentation** (✅ COMPLETE)
   - **Problem**: Business rules scattered across 10+ docs, 50+ API routes, causing rule violations and bug reintroductions
