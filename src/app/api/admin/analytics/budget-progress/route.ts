@@ -70,7 +70,7 @@ export async function GET() {
       },
       expenses: {
         actual: actualExpenses,
-        budget: monthlyExpenseTarget,
+        target: monthlyExpenseTarget,
         progress: Math.round(expenseProgress),
         expectedProgress: Math.round(expectedProgressPercent),
         status:
