@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.6.0] - 2026-01-24
+
+### 🚀 Production Deployment
+
+**i-Ticket is now LIVE at https://i-ticket.et**
+
+#### Infrastructure
+- Deployed to AWS EC2 (t2.micro) running Ubuntu 22.04 LTS
+- Node.js 20.20.0 with PM2 process manager (cluster mode)
+- Nginx reverse proxy with rate limiting
+- PostgreSQL 16.11 database with automated daily backups
+- Cloudflare CDN with Full (strict) SSL mode
+
+#### SSL/Security
+- Cloudflare Universal SSL (auto-renewed edge certificate)
+- Cloudflare Origin CA certificate (valid until 2041)
+- TLS 1.2/1.3 encryption
+- DDoS protection via Cloudflare
+- Security headers (X-Frame-Options, X-Content-Type-Options, etc.)
+
+#### Monitoring & Automation
+- Health checks every 2 minutes with auto-restart
+- System monitoring every 5 minutes (CPU, memory, disk)
+- Database backups daily at 3 AM UTC (7-day retention)
+- PM2 auto-restart on crash and daily at 3 AM
+
+### Changed
+- Disabled Google Fonts optimization for offline builds (`next.config.js`)
+
+### Technical Details
+- Server IP: 54.147.33.168
+- Domain: i-ticket.et (Cloudflare DNS)
+- PM2 app name: i-ticket
+- Nginx config: /etc/nginx/sites-available/i-ticket
+- SSL certs: /etc/ssl/cloudflare/origin.pem
+
+---
+
 ## [2.3.0] - 2026-01-21
 
 ### 🚨 Critical Features

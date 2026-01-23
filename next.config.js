@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  optimizeFonts: false, // Disable font optimization for offline builds
   images: {
     domains: ['localhost', 'api.qrserver.com'],
   },

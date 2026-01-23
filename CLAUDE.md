@@ -1,11 +1,53 @@
 # i-Ticket Platform
 
-> **Current Version**: v2.5.0 (January 23, 2026)
+> **Current Version**: v2.6.0 (January 24, 2026)
+> **Production URL**: https://i-ticket.et
 > **Full History**: See `docs/business-logic/CLAUDE-BACKUP-v3.md` for complete changelog details.
 > **🚨 CRITICAL**: See `CLAUDE-STABLE-REFERENCE.md` before making any code changes!
 > **📋 BUSINESS RULES**: See `RULES.md` for comprehensive rules documentation (100+ rules, bug registry, enforcement points)
 > **Additional Documentation**: See `/docs` folder for organized documentation (test reports, guides, presentations, etc.)
 > **Changelog**: See `CHANGELOG.md` for version history
+
+---
+
+## 🚀 PRODUCTION DEPLOYMENT (v2.6.0)
+
+**Live URL**: https://i-ticket.et
+
+### Infrastructure
+| Component | Details |
+|-----------|---------|
+| **Server** | AWS EC2 (t2.micro) - 54.147.33.168 |
+| **OS** | Ubuntu 22.04 LTS |
+| **Runtime** | Node.js 20.20.0 |
+| **Process Manager** | PM2 (cluster mode) |
+| **Web Server** | Nginx (reverse proxy) |
+| **Database** | PostgreSQL 16.11 |
+| **CDN/SSL** | Cloudflare (Full strict mode) |
+
+### SSL Certificates
+- **Edge**: Cloudflare Universal SSL (auto-renewed)
+- **Origin**: Cloudflare Origin CA (valid until 2041)
+
+### Server Access
+```bash
+ssh -i mela-shared-key.pem ubuntu@54.147.33.168
+```
+
+### Useful Commands
+```bash
+pm2 status                    # App status
+pm2 logs i-ticket             # View logs
+pm2 restart i-ticket          # Restart app
+sudo systemctl status nginx   # Nginx status
+i-ticket-dashboard            # Monitoring dashboard
+```
+
+### Automated Tasks
+- **Database Backup**: Daily at 3 AM UTC (7-day retention)
+- **Health Checks**: Every 2 minutes (auto-restart on failure)
+- **System Monitoring**: Every 5 minutes (CPU, memory, disk)
+- **App Auto-restart**: Daily at 3 AM UTC via PM2
 
 ---
 
