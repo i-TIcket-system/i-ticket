@@ -48,6 +48,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { formatCurrency, formatDate, getSlotsPercentage, isLowSlots } from "@/lib/utils"
+import { PassengerMilestone } from "@/components/company/PassengerMilestone"
+import { RevenueChart } from "@/components/company/RevenueChart"
+import { BookingPieChart } from "@/components/company/BookingPieChart"
+import { OccupancyBarChart } from "@/components/company/OccupancyBarChart"
+import { TopRoutesCard } from "@/components/company/TopRoutesCard"
 
 interface Trip {
   id: string
@@ -94,6 +99,14 @@ export default function CompanyDashboard() {
   const [alertTrip, setAlertTrip] = useState<Trip | null>(null)
   const [isProcessingAlert, setIsProcessingAlert] = useState(false)
   const [isPolling, setIsPolling] = useState(false)
+
+  // Analytics data
+  const [revenueData, setRevenueData] = useState<any[]>([])
+  const [bookingStats, setBookingStats] = useState<any>(null)
+  const [occupancyData, setOccupancyData] = useState<any[]>([])
+  const [topRoutes, setTopRoutes] = useState<any[]>([])
+  const [passengerMilestone, setPassengerMilestone] = useState<any>(null)
+
   const [dismissedAlerts, setDismissedAlerts] = useState<Set<string>>(() => {
     // Load dismissed alerts from localStorage on mount
     if (typeof window !== 'undefined') {
@@ -168,16 +181,31 @@ export default function CompanyDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const [tripsRes, statsRes] = await Promise.all([
+      const [tripsRes, statsRes, revenueRes, bookingsRes, routesRes, passengersRes] = await Promise.all([
         fetch("/api/company/trips"),
         fetch("/api/company/stats"),
+        fetch("/api/company/analytics/revenue"),
+        fetch("/api/company/analytics/bookings"),
+        fetch("/api/company/analytics/routes"),
+        fetch("/api/company/analytics/passengers"),
       ])
 
       const tripsData = await tripsRes.json()
       const statsData = await statsRes.json()
+      const revenueDataRes = await revenueRes.json()
+      const bookingsDataRes = await bookingsRes.json()
+      const routesDataRes = await routesRes.json()
+      const passengersDataRes = await passengersRes.json()
 
       if (tripsRes.ok) setTrips(tripsData.trips)
       if (statsRes.ok) setStats(statsData.stats)
+      if (revenueRes.ok) setRevenueData(revenueDataRes.data || [])
+      if (bookingsRes.ok) {
+        setBookingStats(bookingsDataRes.bookingStats)
+        setOccupancyData(bookingsDataRes.occupancyData || [])
+      }
+      if (routesRes.ok) setTopRoutes(routesDataRes.topRoutes || [])
+      if (passengersRes.ok) setPassengerMilestone(passengersDataRes)
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error)
     } finally {
@@ -311,6 +339,19 @@ export default function CompanyDashboard() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+
+        {/* Passenger Milestone */}
+        {passengerMilestone && (
+          <div className="mb-6">
+            <PassengerMilestone
+              totalPassengers={passengerMilestone.totalPassengers}
+              currentMilestone={passengerMilestone.currentMilestone}
+              nextMilestone={passengerMilestone.nextMilestone}
+              progressPercent={passengerMilestone.progressPercent}
+              companyId={session?.user.companyId || undefined}
+            />
           </div>
         )}
 
@@ -484,6 +525,18 @@ export default function CompanyDashboard() {
             </Card>
           </div>
         )}
+
+        {/* Analytics Charts Row 1 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {revenueData.length > 0 && <RevenueChart data={revenueData} />}
+          {bookingStats && <BookingPieChart stats={bookingStats} />}
+        </div>
+
+        {/* Analytics Charts Row 2 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {occupancyData.length > 0 && <OccupancyBarChart data={occupancyData} />}
+          {topRoutes.length > 0 && <TopRoutesCard routes={topRoutes} />}
+        </div>
 
         {/* Trips Table */}
         <Card>

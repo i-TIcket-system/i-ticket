@@ -33,12 +33,16 @@ export interface MappedTrip {
     departureDate: string;
     departureTime: string;
   };
+
+  // Metadata for validation warnings (non-blocking)
+  _warnings?: string[];
 }
 
 export interface MappingResult {
   success: boolean;
   mappedTrips: MappedTrip[];
   errors: ValidationError[];
+  warnings?: string[]; // Non-blocking warnings (e.g., name mismatches)
 }
 
 export interface StaffMap {
@@ -170,6 +174,7 @@ export async function mapTripsToDatabase(
 ): Promise<MappingResult> {
   const errors: ValidationError[] = [];
   const mappedTrips: MappedTrip[] = [];
+  const allWarnings: string[] = [];
 
   try {
     // Extract all unique phone numbers and plate numbers
@@ -215,6 +220,17 @@ export async function mapTripsToDatabase(
         continue;
       }
 
+      // Check driver name mismatch (non-blocking warning)
+      if (trip.driverName && driver.name) {
+        const providedName = trip.driverName.trim().toLowerCase();
+        const dbName = driver.name.trim().toLowerCase();
+
+        if (providedName !== dbName) {
+          const warning = `Row ${rowNumber}: Driver name mismatch. You entered "${trip.driverName}" but database shows "${driver.name}". Phone ${trip.driverPhone} is correct - name is informational only.`;
+          allWarnings.push(warning);
+        }
+      }
+
       // Validate and map conductor
       const conductor = staffMap[trip.conductorPhone];
       if (!conductor) {
@@ -232,6 +248,17 @@ export async function mapTripsToDatabase(
           message: `Staff ${trip.conductorPhone} exists but role is ${conductor.staffRole || 'ADMIN'}, not CONDUCTOR. Assign a conductor or update staff role`,
         });
         continue;
+      }
+
+      // Check conductor name mismatch (non-blocking warning)
+      if (trip.conductorName && conductor.name) {
+        const providedName = trip.conductorName.trim().toLowerCase();
+        const dbName = conductor.name.trim().toLowerCase();
+
+        if (providedName !== dbName) {
+          const warning = `Row ${rowNumber}: Conductor name mismatch. You entered "${trip.conductorName}" but database shows "${conductor.name}". Phone ${trip.conductorPhone} is correct - name is informational only.`;
+          allWarnings.push(warning);
+        }
       }
 
       // Validate and map manual ticketer (optional)
@@ -254,6 +281,18 @@ export async function mapTripsToDatabase(
           });
           continue;
         }
+
+        // Check manual ticketer name mismatch (non-blocking warning)
+        if (trip.manualTicketerName && ticketer.name) {
+          const providedName = trip.manualTicketerName.trim().toLowerCase();
+          const dbName = ticketer.name.trim().toLowerCase();
+
+          if (providedName !== dbName) {
+            const warning = `Row ${rowNumber}: Manual ticketer name mismatch. You entered "${trip.manualTicketerName}" but database shows "${ticketer.name}". Phone ${trip.manualTicketerPhone} is correct - name is informational only.`;
+            allWarnings.push(warning);
+          }
+        }
+
         manualTicketerId = ticketer.id;
       }
 
@@ -348,6 +387,7 @@ export async function mapTripsToDatabase(
       success: errors.length === 0,
       mappedTrips,
       errors,
+      warnings: allWarnings.length > 0 ? allWarnings : undefined,
     };
   } catch (error) {
     errors.push({
@@ -360,6 +400,7 @@ export async function mapTripsToDatabase(
       success: false,
       mappedTrips: [],
       errors,
+      warnings: allWarnings.length > 0 ? allWarnings : undefined,
     };
   }
 }

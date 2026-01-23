@@ -125,9 +125,12 @@ export default function CompanyLayout({
       // Check if user is authorized for company portal
       const isCompanyAdmin = session.user.role === "COMPANY_ADMIN" &&
         (!session.user.staffRole || session.user.staffRole === "ADMIN")
+      const isSupervisor = session.user.role === "COMPANY_ADMIN" &&
+        session.user.staffRole === "SUPERVISOR"
       const isSuperAdmin = session.user.role === "SUPER_ADMIN"
 
-      if (!isCompanyAdmin && !isSuperAdmin) {
+      // Allow access for: full admins, supervisors, super admins
+      if (!isCompanyAdmin && !isSupervisor && !isSuperAdmin) {
         // Redirect staff members to their specific portals
         if (session.user.role === "COMPANY_ADMIN" && session.user.staffRole) {
           switch (session.user.staffRole) {
@@ -185,12 +188,14 @@ export default function CompanyLayout({
     )
   }
 
-  // Check authorization - only allow company admins and super admins
+  // Check authorization - allow company admins, supervisors, and super admins
   const isCompanyAdmin = session?.user.role === "COMPANY_ADMIN" &&
     (!session.user.staffRole || session.user.staffRole === "ADMIN")
+  const isSupervisor = session?.user.role === "COMPANY_ADMIN" &&
+    session.user.staffRole === "SUPERVISOR"
   const isSuperAdmin = session?.user.role === "SUPER_ADMIN"
 
-  if (!session || (!isCompanyAdmin && !isSuperAdmin)) {
+  if (!session || (!isCompanyAdmin && !isSupervisor && !isSuperAdmin)) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
         <div className="text-center">
@@ -200,6 +205,17 @@ export default function CompanyLayout({
       </div>
     )
   }
+
+  // Filter sidebar items based on role
+  const filteredSidebarItems = sidebarItems.filter((item) => {
+    // Supervisors cannot access: Audit Logs, Settings
+    if (isSupervisor) {
+      if (item.href === "/company/audit-logs" || item.href === "/company/profile") {
+        return false
+      }
+    }
+    return true
+  })
 
   return (
     <div className="min-h-screen flex" style={{ background: "linear-gradient(135deg, #f0fafa 0%, #e6f7f7 50%, #f5f5f5 100%)" }}>
@@ -272,7 +288,7 @@ export default function CompanyLayout({
 
             {/* Navigation */}
             <nav className={cn("flex-1 p-4 space-y-1.5", collapsed && "p-2")}>
-              {sidebarItems.map((item) => {
+              {filteredSidebarItems.map((item) => {
                 // Exact match for the href, OR sub-routes (e.g., /company/trips/123)
                 // Special handling: /company/trips should NOT match /company/trips/new
                 const isExactMatch = pathname === item.href
@@ -365,7 +381,11 @@ export default function CompanyLayout({
                 <div className="px-3 py-2 bg-white/10 rounded-xl">
                   <p className="text-sm font-semibold truncate text-white">{session.user.name}</p>
                   <p className="text-xs text-white/60">
-                    {session.user.role === "COMPANY_ADMIN" ? "Company Admin" : "Super Admin"}
+                    {session.user.role === "SUPER_ADMIN"
+                      ? "Super Admin"
+                      : isSupervisor
+                        ? "Supervisor"
+                        : "Company Admin"}
                   </p>
                 </div>
               )}

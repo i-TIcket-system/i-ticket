@@ -2,20 +2,17 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/db'
+import { requireFullAdmin } from '@/lib/auth-helpers'
 
 /**
  * GET /api/company/audit-logs/download
  * Download company audit logs as CSV with date range filtering
+ * RULE-009: Blocked for supervisors - only full admins can download audit logs
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user || session.user.role !== 'COMPANY_ADMIN' || !session.user.companyId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
-    }
-
-    const companyId = session.user.companyId
+    // Block supervisors - only full admins can download audit logs
+    const { companyId } = await requireFullAdmin()
     const { searchParams } = new URL(request.url)
 
     const action = searchParams.get('action')

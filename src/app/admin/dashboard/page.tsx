@@ -29,6 +29,9 @@ import { formatCurrency, formatDate } from "@/lib/utils"
 import { exportBookingsToCSV } from "@/lib/csv-export"
 import { StatCardSkeleton, TableRowSkeleton, TodayActivityCardSkeleton, InsightsCardSkeleton } from "@/components/ui/skeleton"
 import { DateRangeSelector } from "@/components/ui/date-range-selector"
+import { ProfitMarginChart } from "@/components/admin/ProfitMarginChart"
+import { IncomeExpensesChart } from "@/components/admin/IncomeExpensesChart"
+import { BudgetProgressChart } from "@/components/admin/BudgetProgressChart"
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -43,6 +46,13 @@ export default function AdminDashboard() {
   const [revenueData, setRevenueData] = useState<any[]>([])
   const [topRoutes, setTopRoutes] = useState<any[]>([])
   const [topCompanies, setTopCompanies] = useState<any[]>([])
+
+  // Financial analytics data
+  const [platformRevenue, setPlatformRevenue] = useState<any>(null)
+  const [settlements, setSettlements] = useState<any>(null)
+  const [salesCommissions, setSalesCommissions] = useState<any>(null)
+  const [monthlyTrends, setMonthlyTrends] = useState<any[]>([])
+  const [budgetProgress, setBudgetProgress] = useState<any>(null)
 
   // Memoize date range callback to prevent infinite loop
   const handleDateRangeChange = useCallback((start: string, end: string) => {
@@ -85,10 +95,24 @@ export default function AdminDashboard() {
       if (dateRangeEnd) params.set('endDate', dateRangeEnd)
 
       const queryString = params.toString()
-      const [revenueRes, routesRes, companiesRes] = await Promise.all([
+      const [
+        revenueRes,
+        routesRes,
+        companiesRes,
+        platformRevenueRes,
+        settlementsRes,
+        salesCommissionsRes,
+        monthlyTrendsRes,
+        budgetProgressRes,
+      ] = await Promise.all([
         fetch(`/api/admin/analytics/revenue${queryString ? '?' + queryString : ''}`),
         fetch(`/api/admin/analytics/top-routes${queryString ? '?' + queryString : ''}`),
-        fetch(`/api/admin/analytics/top-companies${queryString ? '?' + queryString : ''}`)
+        fetch(`/api/admin/analytics/top-companies${queryString ? '?' + queryString : ''}`),
+        fetch('/api/admin/analytics/platform-revenue'),
+        fetch('/api/admin/analytics/settlements'),
+        fetch('/api/admin/analytics/sales-commissions'),
+        fetch('/api/admin/analytics/monthly-trends'),
+        fetch('/api/admin/analytics/budget-progress'),
       ])
 
       if (revenueRes.ok) {
@@ -104,6 +128,31 @@ export default function AdminDashboard() {
       if (companiesRes.ok) {
         const data = await companiesRes.json()
         setTopCompanies(data.topCompanies || [])
+      }
+
+      if (platformRevenueRes.ok) {
+        const data = await platformRevenueRes.json()
+        setPlatformRevenue(data)
+      }
+
+      if (settlementsRes.ok) {
+        const data = await settlementsRes.json()
+        setSettlements(data)
+      }
+
+      if (salesCommissionsRes.ok) {
+        const data = await salesCommissionsRes.json()
+        setSalesCommissions(data)
+      }
+
+      if (monthlyTrendsRes.ok) {
+        const data = await monthlyTrendsRes.json()
+        setMonthlyTrends(data.monthlyTrends || [])
+      }
+
+      if (budgetProgressRes.ok) {
+        const data = await budgetProgressRes.json()
+        setBudgetProgress(data)
       }
     } catch (error) {
       console.error('Failed to fetch analytics:', error)
@@ -663,6 +712,119 @@ export default function AdminDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Financial Overview */}
+      {platformRevenue && settlements && salesCommissions && (
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+            <DollarSign className="h-5 w-5 text-primary" />
+            Financial Overview
+          </h2>
+
+          {/* Financial Stat Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <Card className="backdrop-blur-xl bg-gradient-to-br from-blue-50 to-blue-100/80 border-blue-200 shadow-xl">
+              <CardHeader className="pb-2">
+                <CardDescription>Platform Revenue</CardDescription>
+                <CardTitle className="text-3xl">
+                  {formatCurrency(platformRevenue.totalRevenue)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-sm">
+                  {platformRevenue.percentChange >= 0 ? (
+                    <ArrowUp className="h-4 w-4 text-green-600 mr-1" />
+                  ) : (
+                    <ArrowDown className="h-4 w-4 text-red-600 mr-1" />
+                  )}
+                  <span className={platformRevenue.percentChange >= 0 ? "text-green-600" : "text-red-600"}>
+                    {Math.abs(platformRevenue.percentChange)}% vs last month
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Commission: {formatCurrency(platformRevenue.totalCommission)} + VAT: {formatCurrency(platformRevenue.totalVAT)}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="backdrop-blur-xl bg-gradient-to-br from-orange-50 to-orange-100/80 border-orange-200 shadow-xl">
+              <CardHeader className="pb-2">
+                <CardDescription>Pending Settlements</CardDescription>
+                <CardTitle className="text-3xl">
+                  {formatCurrency(settlements.totalPending)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Building2 className="h-4 w-4 mr-1" />
+                  {settlements.companiesCount} companies
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Owed to bus companies
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="backdrop-blur-xl bg-gradient-to-br from-purple-50 to-purple-100/80 border-purple-200 shadow-xl">
+              <CardHeader className="pb-2">
+                <CardDescription>Sales Commissions</CardDescription>
+                <CardTitle className="text-3xl">
+                  {formatCurrency(salesCommissions.totalPayable)}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Users className="h-4 w-4 mr-1" />
+                  {salesCommissions.salesPersonsCount} sales persons
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pending: {formatCurrency(salesCommissions.pending)} • Approved: {formatCurrency(salesCommissions.approved)}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="backdrop-blur-xl bg-gradient-to-br from-green-50 to-green-100/80 border-green-200 shadow-xl">
+              <CardHeader className="pb-2">
+                <CardDescription>Total Passengers</CardDescription>
+                <CardTitle className="text-3xl">
+                  {platformRevenue.totalPassengers.toLocaleString()}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Bus className="h-4 w-4 mr-1" />
+                  {platformRevenue.totalBookings.toLocaleString()} bookings
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Platform-wide total
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Financial Charts Row 1 */}
+          {monthlyTrends.length > 0 && (
+            <div className="mb-6">
+              <IncomeExpensesChart data={monthlyTrends} />
+            </div>
+          )}
+
+          {/* Financial Charts Row 2 */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            {monthlyTrends.length > 0 && (
+              <ProfitMarginChart
+                profitMargin={monthlyTrends[0] ? (monthlyTrends.reduce((sum, m) => sum + m.netProfit, 0) / monthlyTrends.reduce((sum, m) => sum + m.income, 0)) * 100 : 0}
+                netProfit={monthlyTrends.reduce((sum, m) => sum + m.netProfit, 0)}
+              />
+            )}
+            {budgetProgress && (
+              <div className="lg:col-span-2">
+                <BudgetProgressChart income={budgetProgress.income} expenses={budgetProgress.expenses} />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Analytics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

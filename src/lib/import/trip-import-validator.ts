@@ -29,6 +29,9 @@ export const OPTIONAL_COLUMNS = [
   'hasWater',
   'hasFood',
   'manualTicketerPhone',
+  'manualTicketerName', // NEW - informational only
+  'driverName', // NEW - informational only
+  'conductorName', // NEW - informational only
   'returnTripDate',
   'returnTripTime',
 ];
@@ -67,6 +70,9 @@ export interface TripImportData {
   hasWater?: boolean;
   hasFood?: boolean;
   manualTicketerPhone?: string; // 09XXXXXXXX
+  manualTicketerName?: string; // NEW - informational only
+  driverName?: string; // NEW - informational only
+  conductorName?: string; // NEW - informational only
   returnTripDate?: string; // YYYY-MM-DD
   returnTripTime?: string; // HH:MM
 }
@@ -121,6 +127,10 @@ const tripImportSchema = z.object({
     .string()
     .regex(/^09\d{8}$/, 'Invalid format. Required: 09XXXXXXXX (Ethiopian format)')
     .optional(),
+  // Optional name fields (informational only)
+  driverName: z.string().max(100).optional(),
+  conductorName: z.string().max(100).optional(),
+  manualTicketerName: z.string().max(100).optional(),
   returnTripDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format')

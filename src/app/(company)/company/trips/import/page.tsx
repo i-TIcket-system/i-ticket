@@ -7,9 +7,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, Loader2, FileUp, CheckCircle2 } from 'lucide-react';
+import { Upload, Loader2, FileUp, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ImportTemplateDownload } from '@/components/trip/ImportTemplateDownload';
 import { ImportPreviewTable, ValidatedRow } from '@/components/trip/ImportPreviewTable';
 import { toast } from 'sonner';
@@ -24,6 +25,7 @@ export default function TripImportPage() {
   const [validCount, setValidCount] = useState(0);
   const [errorCount, setErrorCount] = useState(0);
   const [importedCount, setImportedCount] = useState(0);
+  const [warnings, setWarnings] = useState<string[]>([]);
 
   /**
    * Handle file selection
@@ -110,12 +112,19 @@ export default function TripImportPage() {
         setValidatedRows(data.validatedRows || []);
         setValidCount(data.validCount || 0);
         setErrorCount(data.errorCount || 0);
+        setWarnings(data.warnings || []);
         setStep('preview');
-        toast.success(`Validated ${data.validCount} trips successfully`);
+
+        if (data.warnings && data.warnings.length > 0) {
+          toast.success(`Validated ${data.validCount} trips with ${data.warnings.length} warning(s)`);
+        } else {
+          toast.success(`Validated ${data.validCount} trips successfully`);
+        }
       } else {
         setValidatedRows(data.validatedRows || []);
         setValidCount(data.validCount || 0);
         setErrorCount(data.errorCount || 0);
+        setWarnings(data.warnings || []);
         setStep('preview');
         toast.error(`Found ${data.errorCount} errors. Please fix and re-upload`);
       }
@@ -186,6 +195,7 @@ export default function TripImportPage() {
     setValidCount(0);
     setErrorCount(0);
     setImportedCount(0);
+    setWarnings([]);
   };
 
   return (
@@ -289,6 +299,27 @@ export default function TripImportPage() {
               Upload Different File
             </Button>
           </div>
+
+          {/* Display Warnings (Non-Blocking) */}
+          {warnings && warnings.length > 0 && (
+            <Alert className="bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
+              <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+              <AlertTitle className="text-yellow-800 dark:text-yellow-400">
+                Warnings ({warnings.length})
+              </AlertTitle>
+              <AlertDescription className="text-yellow-700 dark:text-yellow-300">
+                <p className="mb-2 text-sm">
+                  The following issues were detected. These are non-blocking warnings - you can still
+                  proceed with the import:
+                </p>
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  {warnings.map((warning, i) => (
+                    <li key={i}>{warning}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <ImportPreviewTable
             validatedRows={validatedRows}

@@ -164,6 +164,7 @@ export async function POST(request: NextRequest) {
         errorCount: mappingResult.errors.length,
         errors: mappingResult.errors,
         validatedRows: validationResult.validatedRows,
+        warnings: mappingResult.warnings,
       });
     }
 
@@ -175,6 +176,7 @@ export async function POST(request: NextRequest) {
       errors: [],
       validatedRows: validationResult.validatedRows,
       mappedTrips: mappingResult.mappedTrips,
+      warnings: mappingResult.warnings,
     });
   } catch (error) {
     console.error('Trip import validation error:', error);

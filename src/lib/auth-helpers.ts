@@ -10,6 +10,7 @@ export interface AuthSession {
     phone: string;
     role: string;
     companyId?: string;
+    staffRole?: string | null;
   };
 }
 
@@ -46,6 +47,50 @@ export async function requireCompanyAdmin(): Promise<{ session: AuthSession; com
   const session = await requireRole(["COMPANY_ADMIN"]);
 
   if (!session.user.companyId) {
+    throw new Error("FORBIDDEN");
+  }
+
+  return { session, companyId: session.user.companyId, userId: session.user.id };
+}
+
+/**
+ * Require company admin OR supervisor (operational staff with expanded permissions)
+ * Use for trip/work order/staff/vehicle operations
+ */
+export async function requireCompanyAdminOrSupervisor(): Promise<{
+  session: AuthSession;
+  companyId: string;
+  userId: string;
+  isSupervisor: boolean;
+}> {
+  const session = await requireRole(["COMPANY_ADMIN"]);
+
+  if (!session.user.companyId) {
+    throw new Error("FORBIDDEN");
+  }
+
+  const isSupervisor = session.user.staffRole === "SUPERVISOR";
+
+  return { session, companyId: session.user.companyId, userId: session.user.id, isSupervisor };
+}
+
+/**
+ * Require FULL admin (not supervisor)
+ * Use for company settings, audit logs, company deletion
+ */
+export async function requireFullAdmin(): Promise<{
+  session: AuthSession;
+  companyId: string;
+  userId: string;
+}> {
+  const session = await requireRole(["COMPANY_ADMIN"]);
+
+  if (!session.user.companyId) {
+    throw new Error("FORBIDDEN");
+  }
+
+  // Block supervisors - only pure admins allowed
+  if (session.user.staffRole !== null && session.user.staffRole !== "ADMIN") {
     throw new Error("FORBIDDEN");
   }
 

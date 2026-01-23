@@ -137,13 +137,16 @@ export async function GET(request: NextRequest) {
       { header: 'busType', key: 'busType', width: 15 },
       { header: 'totalSlots', key: 'totalSlots', width: 12 },
       { header: 'driverPhone', key: 'driverPhone', width: 20 },
+      { header: 'driverName', key: 'driverName', width: 25 }, // NEW - Auto-filled
       { header: 'conductorPhone', key: 'conductorPhone', width: 20 },
+      { header: 'conductorName', key: 'conductorName', width: 25 }, // NEW - Auto-filled
       { header: 'vehiclePlateNumber', key: 'vehiclePlateNumber', width: 20 },
       { header: 'preparedBy', key: 'preparedBy', width: 20 },
       { header: 'hasWater', key: 'hasWater', width: 12 },
       { header: 'hasFood', key: 'hasFood', width: 12 },
       { header: 'intermediateStops', key: 'intermediateStops', width: 25 },
       { header: 'manualTicketerPhone', key: 'manualTicketerPhone', width: 20 },
+      { header: 'manualTicketerName', key: 'manualTicketerName', width: 25 }, // NEW - Auto-filled
       { header: 'returnTripDate', key: 'returnTripDate', width: 15 },
       { header: 'returnTripTime', key: 'returnTripTime', width: 15 },
     ];
@@ -350,10 +353,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Conductor Phone dropdown (K2:K50)
+    // Conductor Phone dropdown (L2:L50) - Updated from K
     if (conductors.length > 0) {
       for (let row = 2; row <= 50; row++) {
-        tripSheet.getCell(`K${row}`).dataValidation = {
+        tripSheet.getCell(`L${row}`).dataValidation = {
           type: 'list',
           allowBlank: false,
           formulae: [`Conductors!$A$2:$A$${conductors.length + 1}`],
@@ -364,10 +367,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Vehicle Plate dropdown (L2:L50)
+    // Vehicle Plate dropdown (N2:N50) - Updated from L
     if (vehicles.length > 0) {
       for (let row = 2; row <= 50; row++) {
-        tripSheet.getCell(`L${row}`).dataValidation = {
+        tripSheet.getCell(`N${row}`).dataValidation = {
           type: 'list',
           allowBlank: false,
           formulae: [`Vehicles!$A$2:$A$${vehicles.length + 1}`],
@@ -378,10 +381,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Manual Ticketer Phone dropdown (Q2:Q50)
+    // Manual Ticketer Phone dropdown (S2:S50) - Updated from Q
     if (ticketers.length > 0) {
       for (let row = 2; row <= 50; row++) {
-        tripSheet.getCell(`Q${row}`).dataValidation = {
+        tripSheet.getCell(`S${row}`).dataValidation = {
           type: 'list',
           allowBlank: true,
           formulae: [`ManualTicketers!$A$2:$A$${ticketers.length + 1}`],
@@ -389,14 +392,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Boolean dropdowns (N2:O50)
+    // Boolean dropdowns (P2:Q50) - Updated from N2:O50
     for (let row = 2; row <= 50; row++) {
-      tripSheet.getCell(`N${row}`).dataValidation = {
+      tripSheet.getCell(`P${row}`).dataValidation = {
         type: 'list',
         allowBlank: true,
         formulae: ['"TRUE,FALSE"'],
       };
-      tripSheet.getCell(`O${row}`).dataValidation = {
+      tripSheet.getCell(`Q${row}`).dataValidation = {
         type: 'list',
         allowBlank: true,
         formulae: ['"TRUE,FALSE"'],
@@ -410,14 +413,35 @@ export async function GET(request: NextRequest) {
     // Total Slots (I2:I50) - Auto-fill from vehicle
     for (let row = 2; row <= 50; row++) {
       tripSheet.getCell(`I${row}`).value = {
-        formula: `IFERROR(VLOOKUP(L${row},Vehicles!A:B,2,FALSE),"")`,
+        formula: `IFERROR(VLOOKUP(N${row},Vehicles!A:B,2,FALSE),"")`,
       };
     }
 
     // Bus Type (H2:H50) - Auto-fill from vehicle
     for (let row = 2; row <= 50; row++) {
       tripSheet.getCell(`H${row}`).value = {
-        formula: `IFERROR(VLOOKUP(L${row},Vehicles!A:C,3,FALSE),"")`,
+        formula: `IFERROR(VLOOKUP(N${row},Vehicles!A:C,3,FALSE),"")`,
+      };
+    }
+
+    // Driver Name (K2:K50) - Auto-fill from Drivers sheet
+    for (let row = 2; row <= 50; row++) {
+      tripSheet.getCell(`K${row}`).value = {
+        formula: `IFERROR(VLOOKUP(J${row},Drivers!A:B,2,FALSE),"")`,
+      };
+    }
+
+    // Conductor Name (M2:M50) - Auto-fill from Conductors sheet
+    for (let row = 2; row <= 50; row++) {
+      tripSheet.getCell(`M${row}`).value = {
+        formula: `IFERROR(VLOOKUP(L${row},Conductors!A:B,2,FALSE),"")`,
+      };
+    }
+
+    // Manual Ticketer Name (T2:T50) - Auto-fill from ManualTicketers sheet
+    for (let row = 2; row <= 50; row++) {
+      tripSheet.getCell(`T${row}`).value = {
+        formula: `IFERROR(VLOOKUP(S${row},ManualTicketers!A:B,2,FALSE),"")`,
       };
     }
 
@@ -439,8 +463,10 @@ export async function GET(request: NextRequest) {
     instructionsSheet.addRow(['• All dropdowns are populated with YOUR company data (updated in real-time)']);
     instructionsSheet.addRow(['• Total Slots auto-fills when you select a vehicle']);
     instructionsSheet.addRow(['• Bus Type auto-fills when you select a vehicle']);
+    instructionsSheet.addRow(['• Driver/Conductor/Ticketer Names auto-fill when you select phone numbers']);
     instructionsSheet.addRow(['• Origin/Destination show all active Ethiopian cities']);
     instructionsSheet.addRow(['• Staff dropdowns show only YOUR drivers, conductors, and ticketers']);
+    instructionsSheet.addRow(['• Names are informational only - phone numbers are used for lookup']);
     instructionsSheet.addRow([]);
     instructionsSheet.addRow(['📝 HOW TO USE:']).font = { bold: true, size: 12 };
     instructionsSheet.addRow(['1. Go to "Trip Data" sheet']);
@@ -456,6 +482,7 @@ export async function GET(request: NextRequest) {
     instructionsSheet.addRow(['• Origin and Destination must be DIFFERENT']);
     instructionsSheet.addRow(['• Max 50 trips per file']);
     instructionsSheet.addRow(['• All required fields must be filled']);
+    instructionsSheet.addRow(['• If a name doesn\'t match the phone number, you\'ll get a warning (not an error)']);
     instructionsSheet.addRow([]);
     instructionsSheet.addRow(['🔄 NEED UPDATED DATA?']).font = { bold: true, size: 12 };
     instructionsSheet.addRow(['If you added new vehicles, drivers, or cities:']);

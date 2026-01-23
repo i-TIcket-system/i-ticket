@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { z } from "zod"
+import { requireFullAdmin } from "@/lib/auth-helpers"
 
 // Validation schema
 const updateCompanySchema = z.object({
@@ -105,21 +106,9 @@ export async function GET(req: NextRequest) {
 // PATCH /api/company/profile - Update company information
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // RULE-009: Block supervisors - only full admins can update company settings
+    const { session, companyId, userId } = await requireFullAdmin()
 
-    if (!session?.user || session.user.role !== "COMPANY_ADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized - Company admin access required" },
-        { status: 401 }
-      )
-    }
-
-    if (!session.user.companyId) {
-      return NextResponse.json(
-        { error: "No company associated with this account" },
-        { status: 404 }
-      )
-    }
 
     const body = await req.json()
 
@@ -172,7 +161,7 @@ export async function PATCH(req: NextRequest) {
 
     // Update company
     const company = await prisma.company.update({
-      where: { id: session.user.companyId },
+      where: { id: companyId },
       data: updateData
     })
 
@@ -181,10 +170,10 @@ export async function PATCH(req: NextRequest) {
     // Log the update
     await prisma.adminLog.create({
       data: {
-        userId: session.user.id,
+        userId: userId,
         action: "COMPANY_PROFILE_UPDATED",
         details: `Updated company profile: ${updatedFields.join(", ")}`,
-        companyId: session.user.companyId
+        companyId: companyId
       }
     })
 

@@ -3,25 +3,17 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { paginationSchema } from "@/lib/validations"
+import { requireFullAdmin } from "@/lib/auth-helpers"
 
 /**
  * Get audit logs for the company admin's company
  * Filtered to show only logs related to their company
+ * RULE-009: Blocked for supervisors - only full admins can view audit logs
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    // Only company admins can access
-    if (session.user.role !== "COMPANY_ADMIN" || !session.user.companyId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
-
-    const companyId = session.user.companyId
+    // Block supervisors - only full admins can access audit logs
+    const { companyId } = await requireFullAdmin()
 
     const { searchParams } = new URL(request.url)
     const action = searchParams.get("action")
