@@ -129,6 +129,10 @@ export default function CompanyProfilePage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false)
 
+  // Check if user is supervisor
+  const isSupervisor = session?.user.role === "COMPANY_ADMIN" &&
+    session.user.staffRole === "SUPERVISOR"
+
   // Company info form
   const [companyForm, setCompanyForm] = useState({
     name: "",
@@ -322,8 +326,30 @@ export default function CompanyProfilePage() {
     <div className="container mx-auto py-12 px-4 max-w-6xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">Company Profile</h1>
-        <p className="text-muted-foreground">Manage your company information and staff members</p>
+        <p className="text-muted-foreground">
+          {isSupervisor
+            ? "View your company information (read-only)"
+            : "Manage your company information and staff members"}
+        </p>
       </div>
+
+      {/* Supervisor Read-Only Banner */}
+      {isSupervisor && (
+        <Card className="mb-6 border-yellow-200 bg-yellow-50/50">
+          <CardContent className="pt-6">
+            <div className="flex items-start gap-3">
+              <Shield className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div>
+                <p className="font-medium text-yellow-900">Read-Only Access</p>
+                <p className="text-sm text-yellow-700 mt-1">
+                  As a supervisor, you can view company settings but cannot make changes.
+                  Contact your company administrator to update profile information or manage staff members.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Company Logo */}
       <Card className="mb-6">
@@ -364,6 +390,7 @@ export default function CompanyProfilePage() {
                     value={companyForm.name}
                     onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
                     required
+                    disabled={isSupervisor}
                   />
                 </div>
 
@@ -378,6 +405,7 @@ export default function CompanyProfilePage() {
                       value={companyForm.email}
                       onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })}
                       required
+                      disabled={isSupervisor}
                     />
                   </div>
                 </div>
@@ -392,6 +420,7 @@ export default function CompanyProfilePage() {
                       placeholder="Tax Identification Number"
                       value={companyForm.tinNumber}
                       onChange={(e) => setCompanyForm({ ...companyForm, tinNumber: e.target.value })}
+                      disabled={isSupervisor}
                     />
                   </div>
                 </div>
@@ -406,6 +435,7 @@ export default function CompanyProfilePage() {
                       placeholder="https://www.example.com"
                       value={companyForm.website}
                       onChange={(e) => setCompanyForm({ ...companyForm, website: e.target.value })}
+                      disabled={isSupervisor}
                     />
                   </div>
                 </div>
@@ -431,6 +461,7 @@ export default function CompanyProfilePage() {
                       placeholder="+251-XX-XXX-XXXX"
                       value={companyForm.fax}
                       onChange={(e) => setCompanyForm({ ...companyForm, fax: e.target.value })}
+                      disabled={isSupervisor}
                     />
                   </div>
                 </div>
@@ -445,6 +476,7 @@ export default function CompanyProfilePage() {
                       placeholder="P.O. Box 12345"
                       value={companyForm.poBox}
                       onChange={(e) => setCompanyForm({ ...companyForm, poBox: e.target.value })}
+                      disabled={isSupervisor}
                     />
                   </div>
                 </div>
@@ -459,6 +491,7 @@ export default function CompanyProfilePage() {
                       placeholder="Bole, Addis Ababa"
                       value={companyForm.address}
                       onChange={(e) => setCompanyForm({ ...companyForm, address: e.target.value })}
+                      disabled={isSupervisor}
                     />
                   </div>
                 </div>
@@ -481,6 +514,7 @@ export default function CompanyProfilePage() {
                     placeholder="Commercial Bank of Ethiopia"
                     value={companyForm.bankName}
                     onChange={(e) => setCompanyForm({ ...companyForm, bankName: e.target.value })}
+                    disabled={isSupervisor}
                   />
                 </div>
 
@@ -494,6 +528,7 @@ export default function CompanyProfilePage() {
                       placeholder="1000XXXXXXXXXX"
                       value={companyForm.bankAccount}
                       onChange={(e) => setCompanyForm({ ...companyForm, bankAccount: e.target.value })}
+                      disabled={isSupervisor}
                     />
                   </div>
                 </div>
@@ -505,6 +540,7 @@ export default function CompanyProfilePage() {
                     placeholder="Main Branch"
                     value={companyForm.bankBranch}
                     onChange={(e) => setCompanyForm({ ...companyForm, bankBranch: e.target.value })}
+                    disabled={isSupervisor}
                   />
                 </div>
               </div>
@@ -530,6 +566,7 @@ export default function CompanyProfilePage() {
                       placeholder="John Doe"
                       value={companyForm.adminName}
                       onChange={(e) => setCompanyForm({ ...companyForm, adminName: e.target.value })}
+                      disabled={isSupervisor}
                     />
                   </div>
 
@@ -543,6 +580,7 @@ export default function CompanyProfilePage() {
                         placeholder="+251-9XX-XXX-XXX"
                         value={companyForm.adminPhone}
                         onChange={(e) => setCompanyForm({ ...companyForm, adminPhone: e.target.value })}
+                        disabled={isSupervisor}
                       />
                     </div>
                   </div>
@@ -558,6 +596,7 @@ export default function CompanyProfilePage() {
                         placeholder="admin@company.com"
                         value={companyForm.adminEmail}
                         onChange={(e) => setCompanyForm({ ...companyForm, adminEmail: e.target.value })}
+                        disabled={isSupervisor}
                       />
                     </div>
                   </div>
@@ -578,6 +617,7 @@ export default function CompanyProfilePage() {
                       placeholder="Support Team"
                       value={companyForm.supportName}
                       onChange={(e) => setCompanyForm({ ...companyForm, supportName: e.target.value })}
+                      disabled={isSupervisor}
                     />
                   </div>
 
@@ -591,6 +631,7 @@ export default function CompanyProfilePage() {
                         placeholder="+251-9XX-XXX-XXX"
                         value={companyForm.supportPhone}
                         onChange={(e) => setCompanyForm({ ...companyForm, supportPhone: e.target.value })}
+                        disabled={isSupervisor}
                       />
                     </div>
                   </div>
@@ -618,6 +659,7 @@ export default function CompanyProfilePage() {
                     placeholder="Finance Officer"
                     value={companyForm.preparedBy}
                     onChange={(e) => setCompanyForm({ ...companyForm, preparedBy: e.target.value })}
+                    disabled={isSupervisor}
                   />
                 </div>
 
@@ -628,6 +670,7 @@ export default function CompanyProfilePage() {
                     placeholder="Finance Manager"
                     value={companyForm.reviewedBy}
                     onChange={(e) => setCompanyForm({ ...companyForm, reviewedBy: e.target.value })}
+                    disabled={isSupervisor}
                   />
                 </div>
 
@@ -638,24 +681,27 @@ export default function CompanyProfilePage() {
                     placeholder="CEO / Director"
                     value={companyForm.approvedBy}
                     onChange={(e) => setCompanyForm({ ...companyForm, approvedBy: e.target.value })}
+                    disabled={isSupervisor}
                   />
                 </div>
               </div>
             </div>
 
-            <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
-              {isSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </>
-              )}
-            </Button>
+            {!isSupervisor && (
+              <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            )}
           </form>
         </CardContent>
       </Card>
@@ -669,12 +715,18 @@ export default function CompanyProfilePage() {
                 <Users className="h-5 w-5" />
                 Staff Management
               </CardTitle>
-              <CardDescription>Manage drivers, conductors, and ticketing staff</CardDescription>
+              <CardDescription>
+                {isSupervisor
+                  ? "View company staff members (read-only)"
+                  : "Manage drivers, conductors, and ticketing staff"}
+              </CardDescription>
             </div>
-            <Button onClick={() => setIsAddStaffOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Staff Member
-            </Button>
+            {!isSupervisor && (
+              <Button onClick={() => setIsAddStaffOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Staff Member
+              </Button>
+            )}
           </div>
         </CardHeader>
         <CardContent>
@@ -714,13 +766,15 @@ export default function CompanyProfilePage() {
                       <TableCell>{member.email || "-"}</TableCell>
                       <TableCell>{member.employeeId || "-"}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteStaff(member.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        {!isSupervisor && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteStaff(member.id)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        )}
                       </TableCell>
                     </TableRow>
                   )

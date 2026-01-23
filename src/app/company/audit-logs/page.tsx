@@ -121,13 +121,24 @@ export default function CompanyAuditLogsPage() {
     endDate: "",
   })
 
+  // Check if user is supervisor
+  const isSupervisor = session?.user.role === "COMPANY_ADMIN" &&
+    session.user.staffRole === "SUPERVISOR"
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login")
     } else if (session?.user?.role !== "COMPANY_ADMIN") {
       router.push("/")
+    } else if (isSupervisor) {
+      // Supervisors cannot access audit logs
+      router.push("/company/dashboard")
+      // Show toast notification (imported at top)
+      import("sonner").then(({ toast }) => {
+        toast.error("Audit logs are only accessible to full administrators")
+      })
     }
-  }, [status, session, router])
+  }, [status, session, router, isSupervisor])
 
   useEffect(() => {
     if (session?.user?.role === "COMPANY_ADMIN") {
