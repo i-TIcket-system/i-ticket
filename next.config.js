@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   optimizeFonts: false, // Disable font optimization for offline builds
+  output: 'standalone', // Required for production deployment
   images: {
     remotePatterns: [
       {
