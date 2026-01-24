@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Loader2, CheckCircle2, Info, Bus } from "lucide-react"
+import { Loader2, CheckCircle2, Info, Bus, RotateCcw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
@@ -12,9 +13,10 @@ interface SeatMapProps {
   onSeatsSelected: (seats: number[]) => void
   className?: string
   busType?: "MINI" | "STANDARD" | "LUXURY"
-  orientation?: "landscape" | "portrait"
+  orientation?: "landscape" | "portrait" | "auto" // "auto" = detect device
   refreshTrigger?: number // Increment to force refresh after sales
   pollingInterval?: number // Milliseconds, 0 = no polling (default)
+  showOrientationToggle?: boolean // Allow user to switch orientation
 }
 
 type SeatStatus = "available" | "occupied" | "selected"
@@ -125,14 +127,58 @@ export function SeatMap({
   onSeatsSelected,
   className,
   busType = "STANDARD",
-  orientation = "landscape",
+  orientation = "auto",
   refreshTrigger = 0,
-  pollingInterval = 0
+  pollingInterval = 0,
+  showOrientationToggle = true
 }: SeatMapProps) {
   const [seats, setSeats] = useState<SeatData[]>([])
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
   const [totalSlots, setTotalSlots] = useState(0)
+
+  // Auto-detect orientation based on device
+  const [currentOrientation, setCurrentOrientation] = useState<"landscape" | "portrait">(() => {
+    if (orientation === "auto") {
+      // Will be set properly in useEffect
+      return "landscape"
+    }
+    return orientation
+  })
+
+  // Detect mobile device and set initial orientation
+  useEffect(() => {
+    if (orientation !== "auto") {
+      setCurrentOrientation(orientation)
+      return
+    }
+
+    // Detect mobile: check screen width and touch capability
+    const detectMobile = () => {
+      const isMobileWidth = window.innerWidth < 768
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0
+      return isMobileWidth && isTouchDevice
+    }
+
+    const isMobile = detectMobile()
+    setCurrentOrientation(isMobile ? "portrait" : "landscape")
+
+    // Listen for resize to update orientation
+    const handleResize = () => {
+      if (orientation === "auto") {
+        const isMobile = detectMobile()
+        setCurrentOrientation(isMobile ? "portrait" : "landscape")
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [orientation])
+
+  // Toggle orientation handler
+  const toggleOrientation = () => {
+    setCurrentOrientation(prev => prev === "landscape" ? "portrait" : "landscape")
+  }
 
   useEffect(() => {
     fetchSeatAvailability()
@@ -258,7 +304,7 @@ export function SeatMap({
   })
 
   const numColumns = columns.size > 0 ? Math.max(...Array.from(columns.keys())) + 1 : 0
-  const isPortrait = orientation === "portrait"
+  const isPortrait = currentOrientation === "portrait"
   const seatSize = isPortrait ? "small" : "normal"
 
   return (
@@ -282,7 +328,19 @@ export function SeatMap({
                 Complete
               </Badge>
             )}
-            <OrientationIcon orientation={orientation} />
+            {showOrientationToggle && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleOrientation}
+                className="gap-2 h-8 px-2 text-xs"
+                title={`Switch to ${isPortrait ? 'landscape' : 'portrait'} view`}
+              >
+                <RotateCcw className="h-3 w-3" />
+                <span className="hidden sm:inline">{isPortrait ? 'Landscape' : 'Portrait'}</span>
+              </Button>
+            )}
+            <OrientationIcon orientation={currentOrientation} />
           </div>
         </div>
       </CardHeader>

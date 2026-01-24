@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
@@ -27,7 +27,8 @@ import {
   Play,
   Square,
   Flag,
-  Ban
+  Ban,
+  RefreshCw
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -134,10 +135,40 @@ export default function TripDetailPage() {
 
   const [trip, setTrip] = useState<Trip | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [error, setError] = useState("")
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [showTripLogPopup, setShowTripLogPopup] = useState(false)  // Auto-show trip log on DEPARTED
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
 
+  // Fetch trip data (with optional silent mode for auto-refresh)
+  const fetchTrip = useCallback(async (silent = false) => {
+    if (!silent) {
+      setIsRefreshing(true)
+    }
+    try {
+      const response = await fetch(`/api/company/trips/${tripId}`)
+      const data = await response.json()
+
+      if (response.ok) {
+        setTrip(data.trip)
+        setLastRefresh(new Date())
+      } else {
+        if (!silent) {
+          setError(data.error || "Trip not found")
+        }
+      }
+    } catch (err) {
+      if (!silent) {
+        setError("Failed to load trip details")
+      }
+    } finally {
+      setIsLoading(false)
+      setIsRefreshing(false)
+    }
+  }, [tripId])
+
+  // Initial load
   useEffect(() => {
     if (status === "authenticated") {
       if (session.user.role !== "COMPANY_ADMIN" && session.user.role !== "SUPER_ADMIN") {
@@ -146,23 +177,24 @@ export default function TripDetailPage() {
       }
       fetchTrip()
     }
-  }, [status, session, tripId])
+  }, [status, session, tripId, fetchTrip])
 
-  const fetchTrip = async () => {
-    try {
-      const response = await fetch(`/api/company/trips/${tripId}`)
-      const data = await response.json()
+  // Auto-refresh every 30 seconds (silent refresh - no loading state)
+  useEffect(() => {
+    if (!trip) return // Don't poll if no trip loaded
 
-      if (response.ok) {
-        setTrip(data.trip)
-      } else {
-        setError(data.error || "Trip not found")
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        fetchTrip(true) // Silent refresh
       }
-    } catch (err) {
-      setError("Failed to load trip details")
-    } finally {
-      setIsLoading(false)
-    }
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [trip, fetchTrip])
+
+  // Manual refresh handler
+  const handleManualRefresh = () => {
+    fetchTrip(false) // Show loading state
   }
 
   const updateTripStatus = async (newStatus: string) => {
@@ -276,23 +308,40 @@ export default function TripDetailPage() {
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Trips
           </Link>
-          <Button
-            variant="outline"
-            asChild={!isTripViewOnly(trip.status)}
-            disabled={isTripViewOnly(trip.status)}
-          >
-            {isTripViewOnly(trip.status) ? (
-              <span className="cursor-not-allowed opacity-50">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Trip (View-Only)
-              </span>
-            ) : (
-              <Link href={`/company/trips/${tripId}/edit`}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Trip
-              </Link>
-            )}
-          </Button>
+          <div className="flex items-center gap-3">
+            {/* Manual Refresh Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualRefresh}
+              disabled={isRefreshing}
+              className="gap-2"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <Badge variant="outline" className="gap-1 bg-blue-50 border-blue-200 text-blue-700 hidden sm:flex">
+              <RefreshCw className="h-3 w-3 animate-spin" style={{ animationDuration: '6s' }} />
+              <span className="text-xs">Live updates</span>
+            </Badge>
+            <Button
+              variant="outline"
+              asChild={!isTripViewOnly(trip.status)}
+              disabled={isTripViewOnly(trip.status)}
+            >
+              {isTripViewOnly(trip.status) ? (
+                <span className="cursor-not-allowed opacity-50">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Trip (View-Only)
+                </span>
+              ) : (
+                <Link href={`/company/trips/${tripId}/edit`}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit Trip
+                </Link>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* View-Only Banner for DEPARTED, COMPLETED, CANCELLED trips */}

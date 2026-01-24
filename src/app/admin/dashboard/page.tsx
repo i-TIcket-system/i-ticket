@@ -32,6 +32,7 @@ import { DateRangeSelector } from "@/components/ui/date-range-selector"
 import { ProfitMarginChart } from "@/components/admin/ProfitMarginChart"
 import { IncomeExpensesChart } from "@/components/admin/IncomeExpensesChart"
 import { BudgetProgressChart } from "@/components/admin/BudgetProgressChart"
+import { PassengerMilestone } from "@/components/company/PassengerMilestone"
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession()
@@ -212,6 +213,28 @@ export default function AdminDashboard() {
     }
   }, [session])
 
+  // Calculate milestone values for passenger progress bar
+  const calculateMilestone = (passengers: number) => {
+    const milestones = [100, 1000, 10000, 100000, 1000000]
+    let currentMilestone = 0
+    let nextMilestone = milestones[0]
+
+    for (let i = 0; i < milestones.length; i++) {
+      if (passengers >= milestones[i]) {
+        currentMilestone = milestones[i]
+        nextMilestone = milestones[i + 1] || milestones[i] * 10
+      } else {
+        break
+      }
+    }
+
+    const progressPercent = currentMilestone === 0
+      ? Math.min(100, Math.round((passengers / nextMilestone) * 100))
+      : Math.min(100, Math.round(((passengers - currentMilestone) / (nextMilestone - currentMilestone)) * 100))
+
+    return { currentMilestone, nextMilestone, progressPercent }
+  }
+
   if (status === "loading" || loading) {
     return (
       <div className="container mx-auto py-12 px-4">
@@ -369,7 +392,7 @@ export default function AdminDashboard() {
 
           <Card className="backdrop-blur-xl bg-gradient-to-br from-blue-50 to-blue-100/80 border-blue-200 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Today's Commission</CardTitle>
+              <CardTitle className="text-sm font-medium">Today's Service Charge</CardTitle>
               <div className="p-2 rounded-lg bg-blue-500/20">
                 <TrendingUp className="h-5 w-5 text-blue-700" />
               </div>
@@ -385,6 +408,24 @@ export default function AdminDashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Platform Passenger Milestone */}
+      {platformRevenue?.totalPassengers > 0 && (
+        <div className="mb-6">
+          {(() => {
+            const { currentMilestone, nextMilestone, progressPercent } = calculateMilestone(platformRevenue.totalPassengers)
+            return (
+              <PassengerMilestone
+                totalPassengers={platformRevenue.totalPassengers}
+                currentMilestone={currentMilestone}
+                nextMilestone={nextMilestone}
+                progressPercent={progressPercent}
+                companyId="platform"
+              />
+            )
+          })()}
+        </div>
+      )}
 
       {/* NEW: Business Insights */}
       <div className="mb-6">

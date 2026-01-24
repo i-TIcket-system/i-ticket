@@ -63,12 +63,12 @@ export default function PricingGuidePage() {
               </div>
 
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Platform commission (5% of 850):</span>
+                <span className="text-muted-foreground">Platform service charge (5% of 850):</span>
                 <span className="font-mono">+ 42.50 ETB</span>
               </div>
 
               <div className="flex justify-between items-center pb-2 border-b">
-                <span className="text-muted-foreground">VAT on commission (15% of 42.50):</span>
+                <span className="text-muted-foreground">VAT on service charge (15% of 42.50):</span>
                 <span className="font-mono">+ 6.38 ETB</span>
               </div>
 

@@ -1115,3 +1115,123 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     animation: none !important;
   }
 }
+
+/* ===================================
+   PWA MOBILE OPTIMIZATIONS
+   =================================== */
+
+/* Safe area insets for notched phones (iPhone X+, etc.) */
+@supports (padding: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* Fixed bottom elements need safe area */
+  .fixed-bottom, [class*="fixed"][class*="bottom-0"] {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* PWA standalone mode optimizations */
+@media (display-mode: standalone) {
+  /* Remove address bar spacing in PWA mode */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Better touch handling in PWA */
+  html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  /* Disable pull-to-refresh (can interfere with scrolling) */
+  body {
+    overscroll-behavior-y: contain;
+  }
+
+  /* Make sure buttons are easier to tap */
+  button, a, [role="button"], .clickable {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 640px) {
+  /* Prevent zoom on input focus (iOS) */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+
+  /* Better touch targets */
+  button:not(.icon-button),
+  a:not(.inline-link),
+  [role="button"] {
+    min-height: 44px;
+  }
+
+  /* Improve text readability */
+  body {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Better scrolling */
+  .overflow-auto, .overflow-scroll, .overflow-y-auto, .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent horizontal overflow */
+  main, section, article {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Fix table overflow on mobile */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Smaller scrollbar on mobile */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  /* Better modal positioning on mobile */
+  [role="dialog"] {
+    max-height: 90vh;
+    max-height: 90dvh;
+  }
+}
+
+/* Portrait phone specific */
+@media (max-width: 480px) and (orientation: portrait) {
+  /* Ensure cards don't overflow */
+  .card, [class*="Card"] {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Stack horizontal layouts on very small screens */
+  .flex-row-mobile-stack {
+    flex-direction: column;
+  }
+}
+
+/* Fix iOS momentum scrolling */
+.scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Disable user-select on interactive elements for better touch experience */
+button, a, [role="button"], .nav-item, .menu-item {
+  -webkit-user-select: none;
+  user-select: none;
+}

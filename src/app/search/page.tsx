@@ -137,26 +137,30 @@ function SearchContent() {
     }
   }, [searchParams])
 
-  // Auto-refresh search results every 15 seconds (paused during comparison)
+  // Auto-refresh search results every 30 seconds (paused during comparison)
+  // Silent refresh: no loading state, preserves scroll position
   useEffect(() => {
     if (trips.length === 0) return // Don't poll if no results
     if (compareMode) return // Don't auto-refresh during comparison
 
     const interval = setInterval(() => {
       if (!document.hidden && (origin || destination || date)) {
-        // Refresh without showing loading state
-        searchTrips(pagination.page, false)
+        // Silent refresh - no loading state, preserves scroll
+        searchTrips(pagination.page, false, true)
       }
-    }, 15000) // 15 seconds
+    }, 30000) // 30 seconds
 
     return () => clearInterval(interval)
   }, [trips.length, origin, destination, date, pagination.page, compareMode])
 
-  const searchTrips = async (pageNum = 1, append = false) => {
-    if (append) {
-      setIsLoadingMore(true)
-    } else {
-      setIsLoading(true)
+  const searchTrips = async (pageNum = 1, append = false, silentRefresh = false) => {
+    // Silent refresh: skip loading state to make refresh invisible to user
+    if (!silentRefresh) {
+      if (append) {
+        setIsLoadingMore(true)
+      } else {
+        setIsLoading(true)
+      }
     }
 
     try {
@@ -176,15 +180,27 @@ function SearchContent() {
         if (append) {
           setTrips(prev => [...prev, ...data.trips])
         } else {
-          setTrips(data.trips)
+          // For silent refresh, merge data without triggering re-render flash
+          // Only update if data actually changed (by comparing IDs)
+          if (silentRefresh) {
+            const newIds = data.trips.map((t: Trip) => t.id).join(',')
+            const oldIds = trips.map(t => t.id).join(',')
+            if (newIds !== oldIds || JSON.stringify(data.trips) !== JSON.stringify(trips)) {
+              setTrips(data.trips)
+            }
+          } else {
+            setTrips(data.trips)
+          }
         }
         setPagination(data.pagination)
       }
     } catch (error) {
       console.error("Search error:", error)
     } finally {
-      setIsLoading(false)
-      setIsLoadingMore(false)
+      if (!silentRefresh) {
+        setIsLoading(false)
+        setIsLoadingMore(false)
+      }
     }
   }
 
@@ -338,8 +354,8 @@ function SearchContent() {
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="gap-1 bg-blue-50 border-blue-200 text-blue-700">
-                      <RefreshCw className="h-3 w-3 animate-spin" style={{ animationDuration: '4s' }} />
-                      <span className="text-xs">Auto-refresh (15s)</span>
+                      <RefreshCw className="h-3 w-3 animate-spin" style={{ animationDuration: '6s' }} />
+                      <span className="text-xs">Live updates</span>
                     </Badge>
                   )}
                 </>

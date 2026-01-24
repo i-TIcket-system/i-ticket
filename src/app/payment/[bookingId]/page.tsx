@@ -257,11 +257,11 @@ export default function PaymentPage() {
                     <span>{formatCurrency(ticketPrice)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">i-Ticket Commission (5%)</span>
+                    <span className="text-muted-foreground">i-Ticket Service Charge (5%)</span>
                     <span>{formatCurrency(commission)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">VAT on Commission (15%)</span>
+                    <span className="text-muted-foreground">VAT on Service Charge (15%)</span>
                     <span>{formatCurrency(commissionVAT)}</span>
                   </div>
                 </div>

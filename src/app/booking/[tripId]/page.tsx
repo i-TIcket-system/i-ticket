@@ -785,12 +785,12 @@ export default function BookingPage() {
                   </div>
 
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-muted-foreground">i-Ticket commission (5%)</span>
+                    <span className="text-muted-foreground">i-Ticket service charge (5%)</span>
                     <span>{formatCurrency(baseCommission)}</span>
                   </div>
 
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">VAT on commission (15%)</span>
+                    <span className="text-muted-foreground">VAT on service charge (15%)</span>
                     <span>{formatCurrency(commissionVAT)}</span>
                   </div>
                 </div>
