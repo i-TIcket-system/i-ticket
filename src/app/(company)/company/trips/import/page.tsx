@@ -334,7 +334,7 @@ export default function TripImportPage() {
             <Button
               onClick={handleImport}
               disabled={errorCount > 0}
-              className="bg-teal-600 hover:bg-teal-700"
+              className="bg-teal-600 hover:bg-teal-700 !text-white"
             >
               <FileUp className="h-4 w-4 mr-2" />
               Import {validCount} Trips

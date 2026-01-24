@@ -737,7 +737,7 @@ export default function CompaniesManagement() {
                                 size="sm"
                                 onClick={() => handleSetupStaff(company)}
                                 disabled={settingUpStaff}
-                                className="gap-2 bg-teal-600 hover:bg-teal-700"
+                                className="gap-2 bg-teal-600 hover:bg-teal-700 !text-white"
                               >
                                 <Users className="h-3 w-3" />
                                 Setup Staff

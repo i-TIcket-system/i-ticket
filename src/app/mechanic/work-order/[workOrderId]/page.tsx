@@ -424,7 +424,7 @@ export default function MechanicWorkOrderDetailPage() {
                         Mark as Blocked
                       </Button>
                       <Button
-                        className="w-full bg-green-600 hover:bg-green-700"
+                        className="w-full bg-green-600 hover:bg-green-700 !text-white"
                         onClick={() => updateStatus("COMPLETED")}
                         disabled={isUpdating || !mechanicSignature}
                       >
