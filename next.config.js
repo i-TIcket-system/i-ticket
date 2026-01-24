@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  optimizeFonts: false, // Disable font optimization for offline builds
   // Suppress useSearchParams() CSR bailout warnings for client components
   experimental: {
     missingSuspenseWithCSRBailout: false,
@@ -58,9 +57,9 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-inline/eval
-              "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // Tailwind + Google Fonts
               "img-src 'self' data: https:", // Allow data URIs for QR codes
-              "font-src 'self' data:",
+              "font-src 'self' data: https://fonts.gstatic.com", // Google Fonts CDN
               "connect-src 'self' https://api.telebirr.com https://api.webirr.com",
               "frame-ancestors 'self'",
               "base-uri 'self'",

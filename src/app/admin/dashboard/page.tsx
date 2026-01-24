@@ -333,6 +333,24 @@ export default function AdminDashboard() {
         )}
       </div>
 
+      {/* Platform Passenger Milestone - Moved to top for visibility */}
+      {platformRevenue?.totalPassengers > 0 && (
+        <div className="mb-6">
+          {(() => {
+            const { currentMilestone, nextMilestone, progressPercent } = calculateMilestone(platformRevenue.totalPassengers)
+            return (
+              <PassengerMilestone
+                totalPassengers={platformRevenue.totalPassengers}
+                currentMilestone={currentMilestone}
+                nextMilestone={nextMilestone}
+                progressPercent={progressPercent}
+                companyId="platform"
+              />
+            )
+          })()}
+        </div>
+      )}
+
       {/* Today's Pulse */}
       <div className="mb-6">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -408,24 +426,6 @@ export default function AdminDashboard() {
           </Card>
         </div>
       </div>
-
-      {/* Platform Passenger Milestone */}
-      {platformRevenue?.totalPassengers > 0 && (
-        <div className="mb-6">
-          {(() => {
-            const { currentMilestone, nextMilestone, progressPercent } = calculateMilestone(platformRevenue.totalPassengers)
-            return (
-              <PassengerMilestone
-                totalPassengers={platformRevenue.totalPassengers}
-                currentMilestone={currentMilestone}
-                nextMilestone={nextMilestone}
-                progressPercent={progressPercent}
-                companyId="platform"
-              />
-            )
-          })()}
-        </div>
-      )}
 
       {/* NEW: Business Insights */}
       <div className="mb-6">
