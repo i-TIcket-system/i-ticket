@@ -1,5 +1,8 @@
 "use client"
 
+// Force dynamic rendering to avoid static generation errors with useSearchParams
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
