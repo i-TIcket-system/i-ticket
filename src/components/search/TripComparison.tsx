@@ -141,7 +141,7 @@ export function TripComparison({ trips, open, onClose }: TripComparisonProps) {
                     >
                       {value}
                       {isHighlight && (
-                        <Badge className="ml-2 bg-green-500 text-xs">Cheapest</Badge>
+                        <Badge className="ml-2 bg-green-500 text-white text-xs">Cheapest</Badge>
                       )}
                     </div>
                   )

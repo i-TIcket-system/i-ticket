@@ -79,11 +79,11 @@ interface Stats {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  OPEN: "bg-blue-100 text-blue-800",
-  IN_PROGRESS: "bg-yellow-100 text-yellow-800",
-  BLOCKED: "bg-red-100 text-red-800",
-  COMPLETED: "bg-green-100 text-green-800",
-  CANCELLED: "bg-gray-100 text-gray-800",
+  OPEN: "bg-blue-100 text-blue-900 border border-blue-300",
+  IN_PROGRESS: "bg-yellow-100 text-yellow-900 border border-yellow-300",
+  BLOCKED: "bg-red-100 text-red-900 border border-red-300",
+  COMPLETED: "bg-green-100 text-green-900 border border-green-300",
+  CANCELLED: "bg-gray-100 text-gray-900 border border-gray-300",
 }
 
 const PRIORITY_LABELS: Record<number, string> = {

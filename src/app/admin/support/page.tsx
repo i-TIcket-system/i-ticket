@@ -64,26 +64,26 @@ interface SupportTicket {
 }
 
 const PRIORITY_LABELS = {
-  1: { label: "Low", color: "bg-gray-500" },
-  2: { label: "Medium", color: "bg-blue-500" },
-  3: { label: "High", color: "bg-orange-500" },
-  4: { label: "Urgent", color: "bg-red-500" },
+  1: { label: "Low", color: "bg-gray-500 text-white" },
+  2: { label: "Medium", color: "bg-blue-500 text-white" },
+  3: { label: "High", color: "bg-orange-500 text-white" },
+  4: { label: "Urgent", color: "bg-red-500 text-white" },
 }
 
 const STATUS_COLORS = {
-  OPEN: "bg-yellow-500",
-  IN_PROGRESS: "bg-blue-500",
-  RESOLVED: "bg-green-500",
-  CLOSED: "bg-gray-500",
+  OPEN: "bg-yellow-500 text-white",
+  IN_PROGRESS: "bg-blue-500 text-white",
+  RESOLVED: "bg-green-500 text-white",
+  CLOSED: "bg-gray-500 text-white",
 }
 
 const CATEGORY_COLORS = {
-  GENERAL: "bg-gray-100 text-gray-800",
-  TECHNICAL: "bg-red-100 text-red-800",
-  BOOKING: "bg-blue-100 text-blue-800",
-  PAYMENT: "bg-green-100 text-green-800",
-  ACCOUNT: "bg-purple-100 text-purple-800",
-  FEEDBACK: "bg-yellow-100 text-yellow-800",
+  GENERAL: "bg-gray-100 text-gray-900 border border-gray-300",
+  TECHNICAL: "bg-red-100 text-red-900 border border-red-300",
+  BOOKING: "bg-blue-100 text-blue-900 border border-blue-300",
+  PAYMENT: "bg-green-100 text-green-900 border border-green-300",
+  ACCOUNT: "bg-purple-100 text-purple-900 border border-purple-300",
+  FEEDBACK: "bg-yellow-100 text-yellow-900 border border-yellow-300",
 }
 
 export default function AdminSupportPage() {

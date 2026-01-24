@@ -329,7 +329,7 @@ export default function CashierTripPage() {
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {selectedSeats.sort((a, b) => a - b).map((seat) => (
-                      <Badge key={seat} className="bg-blue-500">
+                      <Badge key={seat} className="bg-blue-500 text-white">
                         {seat}
                       </Badge>
                     ))}

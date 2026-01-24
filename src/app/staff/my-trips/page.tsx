@@ -332,7 +332,7 @@ function TripCard({ trip, highlight = false, past = false, forceExpand = false }
             <CardTitle className="text-lg flex items-center gap-2">
               {trip.origin} → {trip.destination}
               {highlight && (
-                <Badge className="bg-orange-500">
+                <Badge className="bg-orange-500 text-white">
                   Departing Today
                 </Badge>
               )}
@@ -422,25 +422,25 @@ function TripCard({ trip, highlight = false, past = false, forceExpand = false }
               <p className="text-xs text-muted-foreground mb-2">Crew & Vehicle:</p>
               <div className="flex flex-wrap gap-2">
                 {trip.driver && (
-                  <Badge variant="outline" className="bg-blue-50">
+                  <Badge variant="outline" className="bg-blue-100 text-blue-900 border-blue-300">
                     <Car className="h-3 w-3 mr-1" />
                     Driver: {trip.driver.name}
                   </Badge>
                 )}
                 {trip.conductor && (
-                  <Badge variant="outline" className="bg-green-50">
+                  <Badge variant="outline" className="bg-green-100 text-green-900 border-green-300">
                     <UserCheck className="h-3 w-3 mr-1" />
                     Conductor: {trip.conductor.name}
                   </Badge>
                 )}
                 {trip.manualTicketer && (
-                  <Badge variant="outline" className="bg-orange-50">
+                  <Badge variant="outline" className="bg-orange-100 text-orange-900 border-orange-300">
                     <Ticket className="h-3 w-3 mr-1" />
                     Ticketer: {trip.manualTicketer.name}
                   </Badge>
                 )}
                 {trip.vehicle && (
-                  <Badge variant="outline" className="bg-purple-50">
+                  <Badge variant="outline" className="bg-purple-100 text-purple-900 border-purple-300">
                     <Bus className="h-3 w-3 mr-1" />
                     {trip.vehicle.plateNumber}
                     {trip.vehicle.sideNumber && ` (${trip.vehicle.sideNumber})`}

@@ -58,31 +58,31 @@ interface AuditLog {
 
 const ACTION_COLORS: Record<string, string> = {
   // Company profile
-  COMPANY_PROFILE_UPDATED: "bg-blue-100 text-blue-800",
+  COMPANY_PROFILE_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
   // Staff actions
-  STAFF_MEMBER_ADDED: "bg-purple-100 text-purple-800",
-  STAFF_MEMBER_UPDATED: "bg-blue-100 text-blue-800",
-  STAFF_MEMBER_REMOVED: "bg-orange-100 text-orange-800",
+  STAFF_MEMBER_ADDED: "bg-purple-100 text-purple-900 border border-purple-300",
+  STAFF_MEMBER_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
+  STAFF_MEMBER_REMOVED: "bg-orange-100 text-orange-900 border border-orange-300",
   // Trip actions
-  TRIP_CREATED: "bg-green-100 text-green-800",
-  TRIP_UPDATED: "bg-blue-100 text-blue-800",
-  TRIP_DELETED: "bg-red-100 text-red-800",
-  TRIP_HALTED: "bg-yellow-100 text-yellow-800",
-  TRIP_RESUMED: "bg-teal-100 text-teal-800",
+  TRIP_CREATED: "bg-green-100 text-green-900 border border-green-300",
+  TRIP_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
+  TRIP_DELETED: "bg-red-100 text-red-900 border border-red-300",
+  TRIP_HALTED: "bg-yellow-100 text-yellow-900 border border-yellow-300",
+  TRIP_RESUMED: "bg-teal-100 text-teal-900 border border-teal-300",
   // Vehicle actions
-  VEHICLE_ADDED: "bg-emerald-100 text-emerald-800",
-  VEHICLE_UPDATED: "bg-cyan-100 text-cyan-800",
-  VEHICLE_REMOVED: "bg-rose-100 text-rose-800",
+  VEHICLE_ADDED: "bg-emerald-100 text-emerald-900 border border-emerald-300",
+  VEHICLE_UPDATED: "bg-cyan-100 text-cyan-900 border border-cyan-300",
+  VEHICLE_REMOVED: "bg-rose-100 text-rose-900 border border-rose-300",
   // Work order actions
-  WORK_ORDER_CREATED: "bg-indigo-100 text-indigo-800",
-  WORK_ORDER_UPDATED: "bg-violet-100 text-violet-800",
-  WORK_ORDER_COMPLETED: "bg-green-100 text-green-800",
-  WORK_ORDER_CANCELLED: "bg-red-100 text-red-800",
+  WORK_ORDER_CREATED: "bg-indigo-100 text-indigo-900 border border-indigo-300",
+  WORK_ORDER_UPDATED: "bg-violet-100 text-violet-900 border border-violet-300",
+  WORK_ORDER_COMPLETED: "bg-green-100 text-green-900 border border-green-300",
+  WORK_ORDER_CANCELLED: "bg-red-100 text-red-900 border border-red-300",
   // Trip log actions
-  TRIP_LOG_START: "bg-sky-100 text-sky-800",
-  TRIP_LOG_END: "bg-lime-100 text-lime-800",
+  TRIP_LOG_START: "bg-sky-100 text-sky-900 border border-sky-300",
+  TRIP_LOG_END: "bg-lime-100 text-lime-900 border border-lime-300",
   // Manual ticketing
-  MANUAL_TICKET_SOLD: "bg-amber-100 text-amber-800",
+  MANUAL_TICKET_SOLD: "bg-amber-100 text-amber-900 border border-amber-300",
 }
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {

@@ -323,7 +323,7 @@ export function SeatMap({
           </div>
           <div className="flex items-center gap-3">
             {selectedSeats.length === passengerCount && (
-              <Badge className="bg-green-500">
+              <Badge className="bg-green-500 text-white">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
                 Complete
               </Badge>
@@ -523,7 +523,7 @@ export function SeatMap({
             <p className="text-sm font-medium mb-2 text-blue-900">Selected Seats:</p>
             <div className="flex flex-wrap gap-2">
               {selectedSeats.sort((a, b) => a - b).map((seatNum) => (
-                <Badge key={seatNum} className="bg-blue-500 hover:bg-blue-600">
+                <Badge key={seatNum} className="bg-blue-500 hover:bg-blue-600 text-white">
                   Seat {seatNum}
                 </Badge>
               ))}
@@ -533,7 +533,7 @@ export function SeatMap({
 
         {/* Warning if not enough seats selected */}
         {passengerCount > selectedSeats.length && selectedSeats.length > 0 && !isPortrait && (
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-50 border border-yellow-200 text-xs text-yellow-800">
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-100 border border-yellow-300 text-xs text-yellow-900">
             <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
             <p>
               Please select {passengerCount - selectedSeats.length} more seat{passengerCount - selectedSeats.length > 1 ? "s" : ""}.

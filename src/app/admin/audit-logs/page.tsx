@@ -55,21 +55,21 @@ interface AuditLog {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-  COMPANY_ACTIVATED: "bg-green-100 text-green-800",
-  COMPANY_DEACTIVATED: "bg-red-100 text-red-800",
-  COMPANY_PROFILE_UPDATED: "bg-blue-100 text-blue-800",
-  STAFF_MEMBER_ADDED: "bg-purple-100 text-purple-800",
-  STAFF_MEMBER_UPDATED: "bg-blue-100 text-blue-800",
-  STAFF_MEMBER_REMOVED: "bg-orange-100 text-orange-800",
-  TRIP_CREATED: "bg-green-100 text-green-800",
-  TRIP_UPDATED: "bg-blue-100 text-blue-800",
-  TRIP_DELETED: "bg-red-100 text-red-800",
+  COMPANY_ACTIVATED: "bg-green-100 text-green-900 border border-green-300",
+  COMPANY_DEACTIVATED: "bg-red-100 text-red-900 border border-red-300",
+  COMPANY_PROFILE_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
+  STAFF_MEMBER_ADDED: "bg-purple-100 text-purple-900 border border-purple-300",
+  STAFF_MEMBER_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
+  STAFF_MEMBER_REMOVED: "bg-orange-100 text-orange-900 border border-orange-300",
+  TRIP_CREATED: "bg-green-100 text-green-900 border border-green-300",
+  TRIP_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
+  TRIP_DELETED: "bg-red-100 text-red-900 border border-red-300",
   // Sales Person actions
-  SALES_PERSON_CREATED: "bg-teal-100 text-teal-800",
-  SALES_PERSON_UPDATED: "bg-cyan-100 text-cyan-800",
-  SALES_PERSON_DEACTIVATED: "bg-rose-100 text-rose-800",
-  SALES_PAYOUT_PROCESSED: "bg-emerald-100 text-emerald-800",
-  SALES_REFERRAL_CONVERSION: "bg-indigo-100 text-indigo-800",
+  SALES_PERSON_CREATED: "bg-teal-100 text-teal-900 border border-teal-300",
+  SALES_PERSON_UPDATED: "bg-cyan-100 text-cyan-900 border border-cyan-300",
+  SALES_PERSON_DEACTIVATED: "bg-rose-100 text-rose-900 border border-rose-300",
+  SALES_PAYOUT_PROCESSED: "bg-emerald-100 text-emerald-900 border border-emerald-300",
+  SALES_REFERRAL_CONVERSION: "bg-indigo-100 text-indigo-900 border border-indigo-300",
 }
 
 export default function AuditLogsPage() {

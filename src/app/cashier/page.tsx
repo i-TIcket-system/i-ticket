@@ -251,12 +251,12 @@ function TripCard({ trip }: { trip: AssignedTrip }) {
                 {/* Status Badges */}
                 <div className="flex items-center gap-2 mt-2">
                   {isToday && !isPast && (
-                    <Badge className="bg-teal-500">Today</Badge>
+                    <Badge className="bg-teal-500 text-white">Today</Badge>
                   )}
                   {isPast && <Badge variant="secondary">Departed</Badge>}
                   {isSoldOut && <Badge variant="destructive">Sold Out</Badge>}
                   {!isPast && !isSoldOut && trip.availableSlots <= 5 && (
-                    <Badge className="bg-orange-500">Only {trip.availableSlots} left!</Badge>
+                    <Badge className="bg-orange-500 text-white">Only {trip.availableSlots} left!</Badge>
                   )}
                 </div>
               </div>

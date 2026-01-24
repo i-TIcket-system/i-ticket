@@ -259,16 +259,16 @@ export function TripLogCard({
             Trip Log
           </CardTitle>
           {hasStarted && hasEnded ? (
-            <Badge variant="outline" className="bg-green-50 text-green-700">
+            <Badge variant="outline" className="bg-green-100 text-green-900 border-green-300">
               <CheckCircle className="h-3 w-3 mr-1" />
               Complete
             </Badge>
           ) : hasStarted ? (
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700">
+            <Badge variant="outline" className="bg-yellow-100 text-yellow-900 border-yellow-300">
               In Progress
             </Badge>
           ) : (
-            <Badge variant="outline" className="bg-gray-50 text-gray-600">
+            <Badge variant="outline" className="bg-gray-100 text-gray-900 border-gray-300">
               Not Started
             </Badge>
           )}

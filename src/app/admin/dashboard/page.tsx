@@ -645,7 +645,7 @@ export default function AdminDashboard() {
                 <span className="text-sm">Paid</span>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-bold text-green-600">{stats?.stats?.bookings?.paid || 0}</span>
-                  <Badge className="bg-green-500/10 text-green-700">
+                  <Badge className="bg-green-100 text-green-900 border border-green-300">
                     {Math.round((stats?.stats?.bookings?.paid || 0) / (stats?.stats?.bookings?.total || 1) * 100)}%
                   </Badge>
                 </div>
@@ -654,7 +654,7 @@ export default function AdminDashboard() {
                 <span className="text-sm">Pending</span>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-bold text-yellow-600">{stats?.stats?.bookings?.pending || 0}</span>
-                  <Badge className="bg-yellow-500/10 text-yellow-700">
+                  <Badge className="bg-yellow-100 text-yellow-900 border border-yellow-300">
                     {Math.round((stats?.stats?.bookings?.pending || 0) / (stats?.stats?.bookings?.total || 1) * 100)}%
                   </Badge>
                 </div>

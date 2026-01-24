@@ -104,11 +104,11 @@ export default function SuperAdminManifests() {
   const getDownloadTypeBadge = (type: string) => {
     switch (type) {
       case "AUTO_DEPARTED":
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Auto (Departed)</Badge>
+        return <Badge variant="outline" className="bg-blue-100 text-blue-900 border-blue-300">Auto (Departed)</Badge>
       case "AUTO_FULL_CAPACITY":
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Auto (Full)</Badge>
+        return <Badge variant="outline" className="bg-green-100 text-green-900 border-green-300">Auto (Full)</Badge>
       case "MANUAL_COMPANY":
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Manual</Badge>
+        return <Badge variant="outline" className="bg-gray-100 text-gray-900 border-gray-300">Manual</Badge>
       default:
         return <Badge variant="outline">{type}</Badge>
     }
