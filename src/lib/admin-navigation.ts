@@ -72,7 +72,7 @@ export const FULL_ADMIN_NAVIGATION: NavigationItem[] = [
   },
   {
     title: "Company Support",
-    href: "/admin/company-messages",
+    href: "/admin/company-support",
     icon: Headphones,
     permission: PLATFORM_PERMISSIONS.VIEW_SUPPORT,
   },
@@ -144,7 +144,7 @@ export const SUPPORT_NAVIGATION: NavigationItem[] = [
   },
   {
     title: "Company Support",
-    href: "/admin/company-messages",
+    href: "/admin/company-support",
     icon: Headphones,
     permission: PLATFORM_PERMISSIONS.VIEW_SUPPORT,
   },

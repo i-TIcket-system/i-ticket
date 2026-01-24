@@ -210,7 +210,7 @@ export default function AdminLayout({
               {sidebarItems.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
                 // FEATURE 4: Show unread badge for company support
-                const showBadge = (item.href === "/admin/company-support" || item.href === "/admin/company-messages") && unreadMessagesCount > 0
+                const showBadge = item.href === "/admin/company-support" && unreadMessagesCount > 0
 
                 const linkContent = (
                   <Link

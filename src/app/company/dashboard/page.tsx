@@ -182,12 +182,30 @@ export default function CompanyDashboard() {
   const fetchDashboardData = async () => {
     try {
       const [tripsRes, statsRes, revenueRes, bookingsRes, routesRes, passengersRes] = await Promise.all([
-        fetch("/api/company/trips"),
-        fetch("/api/company/stats"),
-        fetch("/api/company/analytics/revenue"),
-        fetch("/api/company/analytics/bookings"),
-        fetch("/api/company/analytics/routes"),
-        fetch("/api/company/analytics/passengers"),
+        fetch("/api/company/trips").catch(e => {
+          console.error("Trips API error:", e)
+          return { ok: false, json: async () => ({}) } as Response
+        }),
+        fetch("/api/company/stats").catch(e => {
+          console.error("Stats API error:", e)
+          return { ok: false, json: async () => ({}) } as Response
+        }),
+        fetch("/api/company/analytics/revenue").catch(e => {
+          console.error("Revenue API error:", e)
+          return { ok: false, json: async () => ({}) } as Response
+        }),
+        fetch("/api/company/analytics/bookings").catch(e => {
+          console.error("Bookings API error:", e)
+          return { ok: false, json: async () => ({}) } as Response
+        }),
+        fetch("/api/company/analytics/routes").catch(e => {
+          console.error("Routes API error:", e)
+          return { ok: false, json: async () => ({}) } as Response
+        }),
+        fetch("/api/company/analytics/passengers").catch(e => {
+          console.error("Passengers API error:", e)
+          return { ok: false, json: async () => ({}) } as Response
+        }),
       ])
 
       const tripsData = await tripsRes.json()
@@ -197,17 +215,18 @@ export default function CompanyDashboard() {
       const routesDataRes = await routesRes.json()
       const passengersDataRes = await passengersRes.json()
 
-      if (tripsRes.ok) setTrips(tripsData.trips)
-      if (statsRes.ok) setStats(statsData.stats)
+      if (tripsRes.ok) setTrips(tripsData.trips || [])
+      if (statsRes.ok) setStats(statsData.stats || null)
       if (revenueRes.ok) setRevenueData(revenueDataRes.data || [])
       if (bookingsRes.ok) {
-        setBookingStats(bookingsDataRes.bookingStats)
+        setBookingStats(bookingsDataRes.bookingStats || null)
         setOccupancyData(bookingsDataRes.occupancyData || [])
       }
       if (routesRes.ok) setTopRoutes(routesDataRes.topRoutes || [])
-      if (passengersRes.ok) setPassengerMilestone(passengersDataRes)
+      if (passengersRes.ok) setPassengerMilestone(passengersDataRes || null)
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error)
+      toast.error("Failed to load dashboard data. Please refresh the page.")
     } finally {
       setIsLoading(false)
     }
