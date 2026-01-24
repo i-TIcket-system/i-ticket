@@ -1,0 +1,46 @@
+# Render Blueprint - i-Ticket Staging Environment
+# This is the STAGING environment for testing before deploying to AWS EC2 production
+# Production: https://i-ticket.et (AWS EC2)
+# Staging: https://i-ticket-staging.onrender.com
+
+databases:
+  - name: iticket-staging-db
+    databaseName: iticket_staging
+    user: iticket_app
+    plan: free # Use 'starter' for paid plan with more resources
+    region: frankfurt # Closest to Ethiopia
+
+services:
+  - type: web
+    name: i-ticket-staging
+    runtime: node
+    region: frankfurt
+    plan: free # Use 'starter' for paid plan
+    buildCommand: npm ci && npx prisma generate && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 20
+      - key: DATABASE_URL
+        fromDatabase:
+          name: iticket-staging-db
+          property: connectionString
+      - key: NEXTAUTH_URL
+        value: https://i-ticket-staging.onrender.com
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: DEMO_MODE
+        value: "true"
+      - key: NEXT_PUBLIC_DEMO_MODE
+        value: "true"
+      - key: SMS_MOCK
+        value: "true"
+      - key: CRON_SECRET
+        generateValue: true
+      - key: TELEBIRR_APP_ID
+        value: demo
+      - key: TELEBIRR_APP_KEY
+        value: demo

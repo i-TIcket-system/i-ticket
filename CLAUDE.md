@@ -51,6 +51,37 @@ i-ticket-dashboard            # Monitoring dashboard
 
 ---
 
+## 🧪 STAGING ENVIRONMENT (Render)
+
+**Staging URL**: https://i-ticket-staging.onrender.com
+
+### Two-Environment Workflow
+```
+LOCAL DEV → RENDER STAGING → AWS EC2 PRODUCTION
+localhost    Testing/QA        Live Users
+```
+
+| Environment | URL | Purpose |
+|-------------|-----|---------|
+| **Render Staging** | i-ticket-staging.onrender.com | Testing, bug fixes, features, QA |
+| **AWS Production** | i-ticket.et | Live platform, real users |
+
+### Staging Features
+- **Database**: Separate staging PostgreSQL (seeded test data)
+- **Payments**: Demo mode only (no real transactions)
+- **SMS**: Mock mode (console logging)
+- **Auto-deploy**: Pushes to main branch auto-deploy to Render
+
+### Deploy to Production Workflow
+1. Test changes on Render staging
+2. Verify everything works
+3. SSH to AWS EC2: `ssh -i mela-shared-key.pem ubuntu@54.147.33.168`
+4. Pull, build, restart: `cd /var/www/i-ticket && git pull && npm ci && npm run build && pm2 restart i-ticket`
+
+**Full details**: See `DEPLOYMENT-WORKFLOW.md`
+
+---
+
 ## 🔥 MANDATORY WORKFLOW FOR ALL CODE CHANGES
 
 **⚠️ BEFORE writing ANY code, ALWAYS follow this 5-step process:**
