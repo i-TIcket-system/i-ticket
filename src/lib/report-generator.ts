@@ -445,18 +445,24 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   currentRow++
 
   // Only count revenue from online bookings (manual sales have commission 0)
+  // RULE-007: Commission = 5% of ticket price, VAT = 15% of commission
   const onlineRevenue = trip.bookings
     .filter((b) => !b.isQuickTicket)
     .reduce((sum, b) => sum + Number(b.totalAmount), 0)
   const totalCommission = trip.bookings.reduce((sum, b) => sum + Number(b.commission), 0)
+  const totalCommissionVAT = trip.bookings.reduce((sum, b) => sum + Number(b.commissionVAT || 0), 0)
+
+  // Company Net = Online Revenue - Service Charge - VAT on Service Charge
+  // Example: 105.75 - 5.00 - 0.75 = 100.00 ETB (company receives full ticket price)
+  const companyNetRevenue = onlineRevenue - totalCommission - totalCommissionVAT
 
   // Summary table with professional layout
   const summaryData = [
     ["Capacity Information", "", "Revenue Information", ""],
     ["Total Capacity:", `${trip.totalSlots} seats`, "Online Revenue (i-Ticket):", formatCurrency(onlineRevenue)],
-    ["Online Bookings:", `${onlineCount} passengers`, "Platform Commission:", formatCurrency(totalCommission)],
-    ["Manual/Office Sales:", `${manualCount} tickets`, "Company Net (Online):", formatCurrency(onlineRevenue - totalCommission)],
-    ["Total Booked:", `${totalBooked}/${trip.totalSlots}`, "Average per Seat:", formatCurrency(Number(trip.price))],
+    ["Online Bookings:", `${onlineCount} passengers`, "Service Charge (5%):", formatCurrency(totalCommission)],
+    ["Manual/Office Sales:", `${manualCount} tickets`, "VAT on Service Charge (15%):", formatCurrency(totalCommissionVAT)],
+    ["Total Booked:", `${totalBooked}/${trip.totalSlots}`, "Company Net Revenue:", formatCurrency(companyNetRevenue)],
     ["Available Seats:", `${trip.availableSlots}`, "Bus Occupancy:", `${Math.round((totalBooked / trip.totalSlots) * 100)}%`],
   ]
 
