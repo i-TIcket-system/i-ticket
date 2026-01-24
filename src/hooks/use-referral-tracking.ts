@@ -12,15 +12,20 @@ const COOKIE_DURATION_DAYS = 90
  * This ID stays the same forever for this browser/device
  */
 function getOrCreateVisitorId(): string {
-  let visitorId = localStorage.getItem(VISITOR_ID_KEY)
+  try {
+    let visitorId = localStorage.getItem(VISITOR_ID_KEY)
 
-  if (!visitorId) {
-    // Generate a unique ID that persists forever
-    visitorId = `v_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
-    localStorage.setItem(VISITOR_ID_KEY, visitorId)
+    if (!visitorId) {
+      // Generate a unique ID that persists forever
+      visitorId = `v_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
+      localStorage.setItem(VISITOR_ID_KEY, visitorId)
+    }
+
+    return visitorId
+  } catch {
+    // localStorage not available (private browsing, etc.)
+    return `v_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`
   }
-
-  return visitorId
 }
 
 /**
@@ -37,11 +42,27 @@ async function generateVisitorHash(): Promise<string> {
     screen.height.toString(),
   ].join('|')
 
-  const encoder = new TextEncoder()
-  const dataBuffer = encoder.encode(data)
-  const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32)
+  // Try crypto.subtle first (requires HTTPS), fallback to simple hash
+  try {
+    if (typeof crypto !== 'undefined' && crypto.subtle) {
+      const encoder = new TextEncoder()
+      const dataBuffer = encoder.encode(data)
+      const hashBuffer = await crypto.subtle.digest('SHA-256', dataBuffer)
+      const hashArray = Array.from(new Uint8Array(hashBuffer))
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32)
+    }
+  } catch {
+    // crypto.subtle not available
+  }
+
+  // Fallback: simple hash function
+  let hash = 0
+  for (let i = 0; i < data.length; i++) {
+    const char = data.charCodeAt(i)
+    hash = ((hash << 5) - hash) + char
+    hash = hash & hash
+  }
+  return Math.abs(hash).toString(16).padStart(32, '0').substring(0, 32)
 }
 
 /**
@@ -95,11 +116,15 @@ function setReferralCookie(code: string): void {
 export function getReferralCode(): string | null {
   if (typeof document === 'undefined') return null
 
-  const match = document.cookie.match(new RegExp(`(^| )${COOKIE_NAME}=([^;]+)`))
-  if (match) return match[2]
+  try {
+    const match = document.cookie.match(new RegExp(`(^| )${COOKIE_NAME}=([^;]+)`))
+    if (match) return match[2]
 
-  // Fallback to localStorage
-  return localStorage.getItem(COOKIE_NAME)
+    // Fallback to localStorage
+    return localStorage.getItem(COOKIE_NAME)
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -144,35 +169,43 @@ export function useReferralTracking(): void {
   useEffect(() => {
     if (hasTracked.current) return
 
-    const newRefCode = searchParams.get('ref')
-    if (!newRefCode) return
+    try {
+      const newRefCode = searchParams?.get('ref')
+      if (!newRefCode) return
 
-    hasTracked.current = true
+      hasTracked.current = true
 
-    // FIRST-COME ATTRIBUTION: Check if user already has a referral
-    const existingRefCode = getReferralCode()
+      // FIRST-COME ATTRIBUTION: Check if user already has a referral
+      const existingRefCode = getReferralCode()
 
-    if (existingRefCode) {
-      // User already attributed to another sales person - don't overwrite
-      // Just clean the URL and exit
+      if (existingRefCode) {
+        // User already attributed to another sales person - don't overwrite
+        // Just clean the URL and exit
+        const url = new URL(window.location.href)
+        url.searchParams.delete('ref')
+        window.history.replaceState({}, '', url.pathname + url.search)
+        return
+      }
+
+      // New referral - store and track
+      setReferralCookie(newRefCode)
+      try {
+        localStorage.setItem(COOKIE_NAME, newRefCode)
+        localStorage.setItem(`${COOKIE_NAME}_time`, Date.now().toString())
+      } catch {
+        // localStorage not available
+      }
+
+      // Track the scan
+      trackScan(newRefCode)
+
+      // Clean URL (remove ?ref= from address bar)
       const url = new URL(window.location.href)
       url.searchParams.delete('ref')
       window.history.replaceState({}, '', url.pathname + url.search)
-      return
+    } catch (error) {
+      console.error('Referral tracking error:', error)
     }
-
-    // New referral - store and track
-    setReferralCookie(newRefCode)
-    localStorage.setItem(COOKIE_NAME, newRefCode)
-    localStorage.setItem(`${COOKIE_NAME}_time`, Date.now().toString())
-
-    // Track the scan
-    trackScan(newRefCode)
-
-    // Clean URL (remove ?ref= from address bar)
-    const url = new URL(window.location.href)
-    url.searchParams.delete('ref')
-    window.history.replaceState({}, '', url.pathname + url.search)
   }, [searchParams])
 }
 

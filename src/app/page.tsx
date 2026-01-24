@@ -60,35 +60,10 @@ const features = [
 export default function HomePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const refCode = searchParams.get('ref')
+  const refCode = searchParams?.get('ref')
+
+  // ALL hooks must be at the top, before any conditional returns
   const [isRedirecting, setIsRedirecting] = useState(false)
-
-  // Dynamic stats from API
-  const [stats, setStats] = useState([
-    { value: "1K+", label: "Happy Travelers", icon: Users },
-    { value: "100+", label: "Daily Trips", icon: Bus },
-    { value: "20+", label: "Destinations", icon: MapPin },
-    { value: "5+", label: "Partner Companies", icon: Sparkles },
-  ])
-
-  // Redirect to register if ref code is present
-  useEffect(() => {
-    if (refCode && !isRedirecting) {
-      setIsRedirecting(true)
-      // Redirect to register with ref code for better conversion
-      router.push(`/register?ref=${refCode}`)
-    }
-  }, [refCode, router, isRedirecting])
-
-  // Track referral codes (only called on register page now via redirect)
-  // This hook does nothing on homepage when ref is present since we redirect
-  useReferralTracking()
-
-  // Don't render page content if redirecting
-  if (isRedirecting) {
-    return null
-  }
-
   const [origin, setOrigin] = useState("")
   const [destination, setDestination] = useState("")
   const [date, setDate] = useState("")
@@ -103,6 +78,23 @@ export default function HomePage() {
     { from: "Addis Ababa", to: "Hawassa" },
     { from: "Addis Ababa", to: "Gondar" },
   ])
+  const [stats, setStats] = useState([
+    { value: "1K+", label: "Happy Travelers", icon: Users },
+    { value: "100+", label: "Daily Trips", icon: Bus },
+    { value: "20+", label: "Destinations", icon: MapPin },
+    { value: "5+", label: "Partner Companies", icon: Sparkles },
+  ])
+
+  // Track referral codes
+  useReferralTracking()
+
+  // Redirect to register if ref code is present
+  useEffect(() => {
+    if (refCode && !isRedirecting) {
+      setIsRedirecting(true)
+      router.push(`/register?ref=${refCode}`)
+    }
+  }, [refCode, router, isRedirecting])
 
   useEffect(() => {
     setMounted(true)
@@ -211,6 +203,11 @@ export default function HomePage() {
   }
 
   const today = new Date().toISOString().split("T")[0]
+
+  // Don't render page content if redirecting (AFTER all hooks)
+  if (isRedirecting) {
+    return null
+  }
 
   return (
     <div className="flex flex-col overflow-hidden">
