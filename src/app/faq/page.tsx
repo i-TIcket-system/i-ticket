@@ -299,7 +299,7 @@ export default function FAQPage() {
                   <AccordionTrigger>What is the service fee?</AccordionTrigger>
                   <AccordionContent>
                     <p className="mb-2">
-                      i-Ticket charges a <strong>5% service fee</strong> on all bookings. This fee covers:
+                      i-Ticket charges a <strong>5% service charge</strong> on all bookings, plus <strong>15% VAT on the service charge</strong>. This fee covers:
                     </p>
                     <ul className="list-disc list-inside space-y-1 ml-2">
                       <li>Platform maintenance and development</li>
@@ -309,10 +309,16 @@ export default function FAQPage() {
                       <li>QR code and ticket generation</li>
                     </ul>
                     <p className="mt-2">
-                      <strong>Example:</strong> If the ticket price is 500 ETB, the total charge will be 525 ETB (500 + 5% = 525 ETB).
+                      <strong>Example:</strong> For a 500 ETB ticket:
                     </p>
+                    <ul className="list-none ml-4 text-sm space-y-1 mt-1">
+                      <li>Base Fare: 500 ETB</li>
+                      <li>Service Charge (5%): 25 ETB</li>
+                      <li>VAT (15% on service charge): 3.75 ETB</li>
+                      <li className="font-bold border-t pt-1 mt-1">Total: 528.75 ETB</li>
+                    </ul>
                     <p className="mt-2 text-sm text-red-600">
-                      <strong>Note:</strong> The service fee is <strong>non-refundable</strong> under all circumstances, including cancellations.
+                      <strong>Note:</strong> The service charge and VAT are <strong>non-refundable</strong> under all circumstances, including cancellations.
                     </p>
                   </AccordionContent>
                 </AccordionItem>
@@ -389,8 +395,9 @@ export default function FAQPage() {
                       The price displayed during search shows the <strong>base ticket price</strong> set by the bus company. During checkout, we add:
                     </p>
                     <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li><strong>5% service fee</strong> (i-Ticket platform fee)</li>
-                      <li>Any applicable taxes (included in base price)</li>
+                      <li><strong>5% service charge</strong> (i-Ticket platform fee)</li>
+                      <li><strong>15% VAT on the service charge</strong></li>
+                      <li>Any bus company taxes (already included in base price)</li>
                     </ul>
                     <p className="mt-2">
                       The <strong>total amount</strong> you see at checkout is the <strong>final price</strong> - no hidden charges.
@@ -398,8 +405,9 @@ export default function FAQPage() {
                     <p className="mt-2 text-sm text-green-600">
                       <strong>Example Breakdown:</strong><br />
                       Base Fare: 500 ETB<br />
-                      Service Fee (5%): 25 ETB<br />
-                      <strong>Total: 525 ETB</strong>
+                      Service Charge (5%): 25 ETB<br />
+                      VAT (15% on service charge): 3.75 ETB<br />
+                      <strong>Total: 528.75 ETB</strong>
                     </p>
                   </AccordionContent>
                 </AccordionItem>
