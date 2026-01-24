@@ -139,6 +139,37 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ---
 
+## BUILD ERROR: useSearchParams() CSR Bailout
+
+**Error**: `useSearchParams() should be wrapped in a suspense boundary`
+
+**Symptom**: Build shows 140/140 pages generated but fails with:
+```
+> Export encountered errors on following paths:
+    /login/page: /login
+    /page: /
+    /register/page: /register
+```
+PM2 shows `errored` status with `ENOENT: prerender-manifest.json`
+
+**Root Cause**: Client components (`"use client"`) using `useSearchParams()` without Suspense boundary causes static generation to fail. The `prerender-manifest.json` is not created.
+
+**Solution** (Jan 24, 2026): Add to `next.config.js`:
+```javascript
+experimental: {
+  missingSuspenseWithCSRBailout: false,
+},
+```
+
+This suppresses the error for client components using useSearchParams without requiring Suspense boundaries.
+
+**Alternative Solutions** (not used):
+1. Wrap useSearchParams in Suspense boundary
+2. Add `export const dynamic = 'force-dynamic'` to each page (doesn't work in client components)
+3. Convert pages to server components with client child components
+
+---
+
 ## MANDATORY WORKFLOW
 
 Before ANY code change:
