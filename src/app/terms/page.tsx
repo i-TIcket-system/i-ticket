@@ -53,7 +53,7 @@ export default function TermsPage() {
                 <li><strong>"TeleBirr"</strong> means the mobile payment service operated by Ethio Telecom used for payment processing.</li>
                 <li><strong>"SMS Channel"</strong> means the text message-based booking service accessible via feature phones.</li>
                 <li><strong>"Guest User"</strong> means a user created automatically via SMS booking without formal account registration.</li>
-                <li><strong>"Service Fee"</strong> means the platform commission charge of 5% added to all bookings.</li>
+                <li><strong>"Service Charge"</strong> means the platform commission charge of 5% of the ticket price, with an additional 15% VAT applied to the service charge.</li>
               </ul>
             </div>
 
@@ -167,15 +167,21 @@ export default function TermsPage() {
               Prices are set by individual Bus Companies and may vary by route, departure time, and bus type.
             </p>
 
-            <h3 className="text-xl font-semibold mt-6 mb-3">5.2 Service Fee</h3>
+            <h3 className="text-xl font-semibold mt-6 mb-3">5.2 Service Charge and VAT</h3>
             <p>
-              A <strong>5% platform service fee</strong> is added to the base ticket price. This fee covers platform
-              maintenance, payment processing, customer support, and technology infrastructure. The service fee is
-              <strong>non-refundable</strong> under all circumstances.
+              A <strong>5% platform service charge</strong> is added to the base ticket price, plus an additional
+              <strong> 15% VAT</strong> calculated on the service charge amount. This charge covers platform
+              maintenance, payment processing, customer support, and technology infrastructure. The service charge
+              and VAT are <strong>non-refundable</strong> under all circumstances.
             </p>
             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 my-4">
+              <p className="text-sm text-blue-900 font-semibold mb-2">Payment Breakdown Example:</p>
               <p className="text-sm text-blue-900">
-                <strong>Example:</strong> If the base ticket price is 500 ETB, the total charge will be 525 ETB (500 + 5% service fee).
+                For a 500 ETB base ticket price:<br/>
+                • Base Fare: 500.00 ETB<br/>
+                • Service Charge (5%): 25.00 ETB<br/>
+                • VAT (15% of service charge): 3.75 ETB<br/>
+                • <strong>Total: 528.75 ETB</strong>
               </p>
             </div>
 
@@ -240,11 +246,19 @@ export default function TermsPage() {
               </table>
             </div>
 
-            <h3 className="text-xl font-semibold mt-6 mb-3">6.2 Non-Refundable Service Fee</h3>
+            <h3 className="text-xl font-semibold mt-6 mb-3">6.2 Non-Refundable Service Charge and VAT</h3>
             <p>
-              The 5% platform service fee is <strong>non-refundable</strong> under all circumstances, including cancellations,
-              no-shows, trip delays, or any other reason.
+              The 5% platform service charge and its associated 15% VAT are <strong>non-refundable</strong> under all circumstances,
+              including cancellations, no-shows, trip delays, or any other reason. Only the base ticket fare is eligible for refund
+              according to the cancellation policy.
             </p>
+            <div className="bg-amber-50 border-l-4 border-amber-500 p-4 my-4">
+              <p className="text-sm text-amber-900">
+                <strong>Refund Example:</strong> For a 500 ETB ticket (528.75 ETB total paid), if you cancel 48 hours before
+                departure and receive a 90% refund, you get back 450 ETB (90% of 500 ETB base fare only). The 28.75 ETB
+                service charge and VAT are not refunded.
+              </p>
+            </div>
 
             <h3 className="text-xl font-semibold mt-6 mb-3">6.3 Refund Processing</h3>
             <p>

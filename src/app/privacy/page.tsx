@@ -111,13 +111,17 @@ export default function PrivacyPage() {
             <ul>
               <li>TeleBirr phone number (wallet ID)</li>
               <li>Transaction reference numbers</li>
-              <li>Payment amount and timestamp</li>
+              <li>Payment amount and timestamp (including base fare, 5% service charge, and 15% VAT on service charge)</li>
               <li>Payment status (successful, failed, pending)</li>
             </ul>
             <div className="bg-amber-50 border-l-4 border-amber-500 p-4 my-4">
-              <p className="text-sm text-amber-900">
+              <p className="text-sm text-amber-900 mb-2">
                 <strong>Important:</strong> We do NOT store your TeleBirr PIN, credit card numbers, or full financial
                 account details. Payment processing is handled securely by TeleBirr with industry-standard encryption.
+              </p>
+              <p className="text-sm text-amber-800">
+                <strong>Payment Structure:</strong> All payments include the base ticket price + 5% service charge + 15% VAT
+                (calculated on the service charge). For example, a 500 ETB ticket costs 528.75 ETB total (500 + 25 + 3.75).
               </p>
             </div>
 
