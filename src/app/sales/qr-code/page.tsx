@@ -13,9 +13,11 @@ export default function QRCodePage() {
   const [loading, setLoading] = useState(true)
   const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null)
   const [referralCode, setReferralCode] = useState<string>("")
+  const [referralUrl, setReferralUrl] = useState<string>("")
   const [recruitsCount, setRecruitsCount] = useState(0)
   const [tier, setTier] = useState(1)
   const [copied, setCopied] = useState(false)
+  const [qrImageError, setQrImageError] = useState(false)
 
   useEffect(() => {
     fetchSalesPersonData()
@@ -24,25 +26,25 @@ export default function QRCodePage() {
   async function fetchSalesPersonData() {
     try {
       const response = await fetch("/api/sales/my-qr-code")
+      const data = await response.json()
+
       if (response.ok) {
-        const data = await response.json()
         setQrCodeUrl(data.qrCodeUrl)
         setReferralCode(data.referralCode)
+        setReferralUrl(data.referralUrl || `${window.location.origin}/register?ref=${data.referralCode}`)
         setRecruitsCount(data.recruitsCount || 0)
         setTier(data.tier || 1)
       } else {
-        toast.error("Failed to load QR code")
+        console.error("API error:", data.error)
+        toast.error(data.error || "Failed to load QR code")
       }
     } catch (error) {
-      toast.error("Failed to load QR code")
+      console.error("Network error:", error)
+      toast.error("Network error. Please check your connection.")
     } finally {
       setLoading(false)
     }
   }
-
-  const referralUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/register?ref=${referralCode}`
-    : ""
 
   const copyReferralLink = async () => {
     try {
@@ -68,6 +70,12 @@ export default function QRCodePage() {
   }
 
   const shareReferralLink = async () => {
+    // Ensure referral code is loaded before sharing
+    if (!referralCode) {
+      toast.error("Please wait for QR code to load")
+      return
+    }
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -75,8 +83,15 @@ export default function QRCodePage() {
           text: `Join me as a sales person on i-Ticket and start earning commissions! Use my referral code: ${referralCode}`,
           url: referralUrl,
         })
-      } catch (error) {
-        // User cancelled or error
+        toast.success("Shared successfully!")
+      } catch (error: any) {
+        // User cancelled sharing - this is normal, don't show error
+        if (error?.name === 'AbortError') {
+          return
+        }
+        // For other errors, fall back to copy
+        console.error("Share failed:", error)
+        copyReferralLink()
       }
     } else {
       copyReferralLink()
@@ -184,7 +199,7 @@ export default function QRCodePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {qrCodeUrl ? (
+            {qrCodeUrl && !qrImageError ? (
               <div className="flex flex-col items-center">
                 <div className="p-4 bg-white rounded-lg border-2 border-gray-200">
                   <Image
@@ -193,6 +208,8 @@ export default function QRCodePage() {
                     width={200}
                     height={200}
                     className="w-48 h-48"
+                    onError={() => setQrImageError(true)}
+                    unoptimized
                   />
                 </div>
                 <div className="mt-3 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-md">
@@ -200,15 +217,25 @@ export default function QRCodePage() {
                 </div>
               </div>
             ) : (
-              <div className="text-center text-muted-foreground py-8">
-                QR code not available
+              <div className="text-center py-8">
+                <div className="flex flex-col items-center gap-3">
+                  <QrIcon className="h-16 w-16 text-muted-foreground/50" />
+                  <p className="text-muted-foreground">
+                    {qrImageError ? "QR code failed to load. Use your referral link instead." : "QR code not available"}
+                  </p>
+                  {referralCode && (
+                    <div className="px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-md">
+                      <code className="text-sm font-mono font-semibold">{referralCode}</code>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             <Button
               onClick={downloadQRCode}
               className="w-full"
               variant="outline"
-              disabled={!qrCodeUrl}
+              disabled={!qrCodeUrl || qrImageError}
             >
               <Download className="mr-2 h-4 w-4" />
               Download QR Code

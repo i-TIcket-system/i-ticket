@@ -3,7 +3,17 @@ const nextConfig = {
   reactStrictMode: true,
   optimizeFonts: false, // Disable font optimization for offline builds
   images: {
-    domains: ['localhost', 'api.qrserver.com'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.qrserver.com',
+        pathname: '/v1/create-qr-code/**',
+      },
+    ],
   },
   async headers() {
     return [
