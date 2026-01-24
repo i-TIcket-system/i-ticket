@@ -2,6 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   optimizeFonts: false, // Disable font optimization for offline builds
+  // Suppress useSearchParams() CSR bailout warnings for client components
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
   images: {
     remotePatterns: [
       {
