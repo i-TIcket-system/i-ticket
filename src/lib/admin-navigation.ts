@@ -77,6 +77,12 @@ export const FULL_ADMIN_NAVIGATION: NavigationItem[] = [
     permission: PLATFORM_PERMISSIONS.VIEW_SUPPORT,
   },
   {
+    title: "Customer Support",
+    href: "/admin/support",
+    icon: Headphones,
+    permission: PLATFORM_PERMISSIONS.VIEW_TICKETS,
+  },
+  {
     title: "Audit Logs",
     href: "/admin/audit-logs",
     icon: Shield,
