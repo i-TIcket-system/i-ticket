@@ -175,16 +175,11 @@ export function initializeBot() {
   // Seats confirmation
   bot.action("seats_confirm", handleSeatsConfirm);
 
-  // Booking confirmation
+  // Booking confirmation - initiate payment
   bot.action("confirm_pay", async (ctx) => {
     await ctx.answerCbQuery();
-    // TODO: Implement payment flow
-    const lang = ctx.session?.language || "EN";
-    await ctx.reply(
-      lang === "EN"
-        ? "💳 Payment integration coming soon! This will initiate TeleBirr payment."
-        : "💳 የክፍያ ውህደት ብቻ ይመጣል! ይህ TeleBirr ክፍያን ይጀምራል።"
-    );
+    const { handleConfirmPayment } = await import("./handlers/payment");
+    await handleConfirmPayment(ctx);
   });
 
   // Booking edit
@@ -227,14 +222,9 @@ export function initializeBot() {
   // Ticket viewing
   bot.action(/^ticket_(.+)$/, async (ctx) => {
     const bookingId = ctx.match[1];
-    // TODO: Implement ticket viewing
     await ctx.answerCbQuery();
-    const lang = ctx.session?.language || "EN";
-    await ctx.reply(
-      lang === "EN"
-        ? `📥 Fetching tickets for booking ${bookingId}...`
-        : `📥 ትኬቶችን በማውረድ ላይ ${bookingId}...`
-    );
+    const { handleViewTickets } = await import("./handlers/tickets");
+    await handleViewTickets(ctx, bookingId);
   });
 
   // ==================== TEXT MESSAGES ====================

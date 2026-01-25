@@ -307,6 +307,45 @@ export async function resetSession(chatId: number) {
 }
 
 /**
+ * Reset session but preserve language preference
+ * Use this when starting a new booking flow
+ */
+export async function resetSessionPreserveLanguage(chatId: number) {
+  try {
+    // Get current language first
+    const session = await prisma.telegramSession.findUnique({
+      where: { chatId: BigInt(chatId) },
+      select: { language: true },
+    });
+
+    const currentLanguage = session?.language || "EN";
+
+    await prisma.telegramSession.update({
+      where: { chatId: BigInt(chatId) },
+      data: {
+        state: "IDLE",
+        origin: null,
+        destination: null,
+        date: null,
+        selectedTripId: null,
+        passengerCount: 0,
+        seatPreference: null,
+        passengerData: null,
+        currentPassengerIndex: 0,
+        selectedSeats: null,
+        bookingId: null,
+        paymentTransactionId: null,
+        // Keep language unchanged
+        language: currentLanguage,
+      },
+    });
+  } catch (error) {
+    console.error("[Telegram Auth] Reset session (preserve lang) error:", error);
+    throw error;
+  }
+}
+
+/**
  * Get session data helper
  */
 export function getSessionData<T = any>(ctx: TelegramContext, key: string): T | null {

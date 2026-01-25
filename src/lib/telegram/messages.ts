@@ -11,7 +11,9 @@ interface Messages {
 }
 
 // Helper function to get message in user's language
-export function getMessage(key: keyof typeof MESSAGES, lang: Language = "EN"): string {
+// Returns string for simple messages, function for messages with parameters
+// For function messages (tripsFound, myTickets, etc.), access MESSAGES directly
+export function getMessage(key: keyof typeof MESSAGES, lang: Language = "EN"): any {
   return MESSAGES[key][lang] || MESSAGES[key].EN;
 }
 

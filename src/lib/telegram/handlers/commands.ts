@@ -4,7 +4,7 @@
  */
 
 import { TelegramContext } from "../middleware/auth";
-import { getMessage } from "../messages";
+import { getMessage, MESSAGES, Language } from "../messages";
 import {
   languageKeyboard,
   mainMenuKeyboard,
@@ -16,6 +16,7 @@ import {
   updateSessionLanguage,
   verifyPhoneNumber,
   resetSession,
+  resetSessionPreserveLanguage,
   isAuthenticated,
 } from "../middleware/auth";
 import { prisma } from "@/lib/db";
@@ -64,9 +65,9 @@ export async function handleBook(ctx: TelegramContext) {
       return;
     }
 
-    // Reset session and start booking flow
+    // Reset session (preserve language) and start booking flow
     if (ctx.chat) {
-      await resetSession(ctx.chat.id);
+      await resetSessionPreserveLanguage(ctx.chat.id);
       await updateSessionState(ctx.chat.id, "SEARCH_ORIGIN");
     }
 
@@ -116,7 +117,9 @@ export async function handleMyTickets(ctx: TelegramContext) {
     });
 
     if (bookings.length === 0) {
-      await ctx.reply(getMessage("myTickets", lang)(0), {
+      // Access MESSAGES directly for function-type messages
+      const myTicketsMsg = MESSAGES.myTickets[lang as Language];
+      await ctx.reply(myTicketsMsg(0), {
         parse_mode: "Markdown",
       });
       return;
@@ -132,7 +135,9 @@ export async function handleMyTickets(ctx: TelegramContext) {
       status: formatBookingStatus(b.status, lang),
     }));
 
-    await ctx.reply(getMessage("myTickets", lang)(bookings.length), {
+    // Access MESSAGES directly for function-type messages
+    const myTicketsMsg = MESSAGES.myTickets[lang as Language];
+    await ctx.reply(myTicketsMsg(bookings.length), {
       parse_mode: "Markdown",
       ...myTicketsKeyboard(bookingsData, lang),
     });

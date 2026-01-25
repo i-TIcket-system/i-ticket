@@ -269,41 +269,55 @@ ${formatPaymentBreakdown(booking.ticketTotal, booking.commission, booking.vat, l
 
 /**
  * Format trip card for search results
+ * Handles both string company names and company objects
  */
 export function formatTripCard(
   trip: {
-    company: string;
+    company: string | { name: string };
     origin: string;
     destination: string;
     departureTime: Date | string;
-    estimatedDuration: number;
+    estimatedDuration?: number;
     price: number;
     availableSlots: number;
-    busType: string;
-    hasWater: boolean;
-    hasFood: boolean;
+    busType?: string;
+    hasWater?: boolean;
+    hasFood?: boolean;
   },
   lang: Language = "EN"
 ): string {
+  // Handle company as string or object
+  const companyName = typeof trip.company === "string" ? trip.company : trip.company.name;
+
+  // Handle optional fields with defaults
+  const duration = trip.estimatedDuration ?? 0;
+  const busType = trip.busType ?? "STANDARD";
+  const hasWater = trip.hasWater ?? false;
+  const hasFood = trip.hasFood ?? false;
+
+  // Build duration string only if duration is available
+  const durationStr = duration > 0 ? ` • ${formatDuration(duration, lang)}` : "";
+
+  // Build amenities string only if any amenities exist
+  const amenitiesStr = (hasWater || hasFood) ? `\n${formatAmenities(hasWater, hasFood, lang)}` : "";
+
   if (lang === "AM") {
-    return `🚌 *${trip.company}*
+    return `🚌 *${companyName}*
 
 📍 ${formatRoute(trip.origin, trip.destination)}
-🕐 ${formatTime(trip.departureTime)} • ${formatDuration(trip.estimatedDuration, lang)}
+🕐 ${formatTime(trip.departureTime)}${durationStr}
 💺 ${trip.availableSlots} መቀመጫዎች አሉ
-🚌 ${formatBusType(trip.busType, lang)}
-${formatAmenities(trip.hasWater, trip.hasFood, lang)}
+🚌 ${formatBusType(busType, lang)}${amenitiesStr}
 
 💰 *ዋጋ:* ${formatCurrency(trip.price)} በአንድ ሰው`;
   }
 
-  return `🚌 *${trip.company}*
+  return `🚌 *${companyName}*
 
 📍 ${formatRoute(trip.origin, trip.destination)}
-🕐 ${formatTime(trip.departureTime)} • ${formatDuration(trip.estimatedDuration, lang)}
+🕐 ${formatTime(trip.departureTime)}${durationStr}
 💺 ${trip.availableSlots} seats available
-🚌 ${formatBusType(trip.busType, lang)}
-${formatAmenities(trip.hasWater, trip.hasFood, lang)}
+🚌 ${formatBusType(busType, lang)}${amenitiesStr}
 
 💰 *Price:* ${formatCurrency(trip.price)} per person`;
 }

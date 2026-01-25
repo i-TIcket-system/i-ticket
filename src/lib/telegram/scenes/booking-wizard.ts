@@ -273,17 +273,19 @@ export async function handleSeatSelection(ctx: TelegramContext) {
       return;
     }
 
-    // Fetch trip and occupied seats
+    // Fetch trip and occupied seats through bookings
     const trip = await prisma.trip.findUnique({
       where: { id: selectedTripId },
       include: {
-        passengers: {
+        bookings: {
           where: {
-            booking: {
-              status: { in: ["PENDING", "PAID"] },
+            status: { in: ["PENDING", "PAID"] },
+          },
+          include: {
+            passengers: {
+              select: { seatNumber: true },
             },
           },
-          select: { seatNumber: true },
         },
       },
     });
@@ -310,9 +312,15 @@ export async function handleSeatSelection(ctx: TelegramContext) {
       return;
     }
 
-    const occupiedSeats = trip.passengers
-      .map((p) => p.seatNumber)
-      .filter((s): s is number => s !== null);
+    // Get all occupied seats from bookings
+    const occupiedSeats: number[] = [];
+    trip.bookings.forEach((booking) => {
+      booking.passengers.forEach((p) => {
+        if (p.seatNumber !== null) {
+          occupiedSeats.push(p.seatNumber);
+        }
+      });
+    });
 
     const currentSelectedSeats = selectedSeats || [];
 
@@ -392,49 +400,112 @@ export async function handlePassengerPhone(ctx: TelegramContext) {
 export async function handleBookingConfirmation(ctx: TelegramContext) {
   try {
     const lang = ctx.session?.language || "EN";
-    const { selectedTripId, passengerCount, passengerData } = ctx.session?.data || {};
+    const { selectedTripId, passengerCount, passengerData, selectedSeats } = ctx.session?.data || {};
 
     if (!selectedTripId || !passengerCount || !passengerData) {
       await ctx.reply(getMessage("errorGeneral", lang));
       return;
     }
 
-    // Fetch trip details
-    const trip = await prisma.trip.findUnique({
+    // Re-check seat availability before showing confirmation
+    // (User may have spent 5+ minutes entering passenger details)
+    const tripCheck = await prisma.trip.findUnique({
       where: { id: selectedTripId },
-      include: { company: true },
+      include: {
+        company: true,
+        bookings: {
+          where: {
+            status: { in: ["PENDING", "PAID"] },
+          },
+          include: {
+            passengers: {
+              select: { seatNumber: true },
+            },
+          },
+        },
+      },
     });
 
-    if (!trip) {
+    if (!tripCheck) {
       await ctx.reply(getMessage("errorGeneral", lang));
       return;
     }
 
-    // Calculate amounts
-    const amounts = calculateBookingAmounts(trip.price, passengerCount);
+    // Check trip is still available
+    if (tripCheck.bookingHalted) {
+      await ctx.reply(
+        lang === "EN"
+          ? "❌ Booking for this trip has been temporarily halted. Please try another trip."
+          : "❌ የዚህ ጉዞ ማስያዝ ለጊዜው ቆሟል። እባክዎን ሌላ ጉዞ ይሞክሩ።",
+        { ...searchAgainKeyboard(lang) }
+      );
+      return;
+    }
 
-    // Build summary
+    if (tripCheck.availableSlots < passengerCount) {
+      await ctx.reply(
+        lang === "EN"
+          ? `❌ Not enough seats available. Only ${tripCheck.availableSlots} seat(s) left. Please search again.`
+          : `❌ በቂ መቀመጫዎች የሉም። ${tripCheck.availableSlots} መቀመጫ(ዎች) ብቻ ቀርተዋል። እባክዎን እንደገና ይፈልጉ።`,
+        { ...searchAgainKeyboard(lang) }
+      );
+      return;
+    }
+
+    // If manual seat selection was used, verify those seats are still available
+    if (selectedSeats && selectedSeats.length > 0) {
+      // Get all occupied seats from all bookings
+      const occupiedSeats: number[] = [];
+      tripCheck.bookings.forEach((booking) => {
+        booking.passengers.forEach((p) => {
+          if (p.seatNumber !== null) {
+            occupiedSeats.push(p.seatNumber);
+          }
+        });
+      });
+
+      const conflictingSeats = selectedSeats.filter((s: number) => occupiedSeats.includes(s));
+
+      if (conflictingSeats.length > 0) {
+        await ctx.reply(
+          lang === "EN"
+            ? `❌ Seat(s) ${conflictingSeats.join(", ")} have been taken. Please select different seats.`
+            : `❌ መቀመጫ(ዎች) ${conflictingSeats.join(", ")} ተይዘዋል። እባክዎን ሌላ መቀመጫዎች ይምረጡ።`,
+          { ...searchAgainKeyboard(lang) }
+        );
+        return;
+      }
+    }
+
+    // Calculate amounts
+    const amounts = calculateBookingAmounts(tripCheck.price, passengerCount);
+
+    // Build summary for formatBookingSummary
     const summary = {
-      company: trip.company.name,
-      origin: trip.origin,
-      destination: trip.destination,
-      departureTime: trip.departureTime,
+      company: tripCheck.company.name,
+      origin: tripCheck.origin,
+      destination: tripCheck.destination,
+      departureTime: tripCheck.departureTime,
       passengerCount,
       passengers: passengerData,
       ticketTotal: amounts.ticketTotal,
-      commission: amounts.commission,
-      vat: amounts.commissionVAT,
+      commission: amounts.commission.baseCommission,
+      vat: amounts.commission.vat,
     };
 
+    // Format summary text
     const summaryText = formatBookingSummary(summary, lang);
 
-    await ctx.reply(
-      getMessage("confirmBooking", lang)(summaryText),
-      {
-        parse_mode: "Markdown",
-        ...confirmBookingKeyboard(lang),
-      }
-    );
+    // Add confirmation header and question
+    const confirmationMessage =
+      lang === "EN"
+        ? `📋 *BOOKING SUMMARY*\n\n${summaryText}\n\n*Ready to proceed with payment?*`
+        : `📋 *የማስያዝ ማጠቃለያ*\n\n${summaryText}\n\n*ለመክፈል ዝግጁ ነዎት?*`;
+
+    await ctx.reply(confirmationMessage, {
+      parse_mode: "Markdown",
+      ...confirmBookingKeyboard(lang),
+    });
   } catch (error) {
     console.error("[Booking Wizard] Booking confirmation error:", error);
     await ctx.reply(getMessage("errorGeneral", ctx.session?.language || "EN"));

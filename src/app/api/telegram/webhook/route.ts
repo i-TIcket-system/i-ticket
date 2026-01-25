@@ -12,6 +12,56 @@ if (bot && process.env.TELEGRAM_BOT_ENABLED === "true") {
   initializeBot();
 }
 
+// ==================== RATE LIMITING ====================
+
+// In-memory rate limit storage (per chat ID)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+// Rate limit config
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute window
+const MAX_REQUESTS_PER_WINDOW = 30; // 30 requests per minute per chat
+
+/**
+ * Check rate limit for a chat
+ */
+function checkRateLimit(chatId: string | number): { allowed: boolean; remaining: number } {
+  const key = String(chatId);
+  const now = Date.now();
+
+  const entry = rateLimitMap.get(key);
+
+  if (!entry || now > entry.resetTime) {
+    // New window
+    rateLimitMap.set(key, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - 1 };
+  }
+
+  if (entry.count >= MAX_REQUESTS_PER_WINDOW) {
+    // Rate limit exceeded
+    return { allowed: false, remaining: 0 };
+  }
+
+  // Increment counter
+  entry.count++;
+  return { allowed: true, remaining: MAX_REQUESTS_PER_WINDOW - entry.count };
+}
+
+// Cleanup old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  const keysToDelete: string[] = [];
+
+  rateLimitMap.forEach((entry, key) => {
+    if (now > entry.resetTime) {
+      keysToDelete.push(key);
+    }
+  });
+
+  keysToDelete.forEach((key) => rateLimitMap.delete(key));
+}, 5 * 60 * 1000); // Cleanup every 5 minutes
+
+// ==================== END RATE LIMITING ====================
+
 /**
  * Verify webhook request is from Telegram
  */
@@ -62,6 +112,28 @@ export async function POST(request: NextRequest) {
 
     // Parse update
     const update = await request.json();
+
+    // Extract chat ID for rate limiting
+    const chatId =
+      update?.message?.chat?.id ||
+      update?.callback_query?.message?.chat?.id ||
+      update?.edited_message?.chat?.id;
+
+    // Apply rate limiting if we have a chat ID
+    if (chatId) {
+      const { allowed, remaining } = checkRateLimit(chatId);
+
+      if (!allowed) {
+        console.warn(`[Telegram Webhook] Rate limit exceeded for chat ${chatId}`);
+
+        // Silently accept but don't process (prevents Telegram from retrying)
+        // User will see no response for excessive spam
+        return NextResponse.json({
+          success: true,
+          rate_limited: true,
+        });
+      }
+    }
 
     console.log(
       `[Telegram Webhook] Received update:`,
