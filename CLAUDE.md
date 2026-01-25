@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.7.0 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.8.0 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md`
 
 ---
@@ -60,6 +60,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | **Fleet** | AI risk scoring, maintenance schedules, work orders, inspections |
 | **Manifests** | Auto-generate on DEPARTED + full capacity |
 | **Portals** | Super Admin, Company Admin, Staff, Cashier, Mechanic, Finance, Sales |
+| **Telegram Bot** | Bilingual booking via @i_ticket_busBot (see Telegram Bot section below) |
 
 ---
 
@@ -70,6 +71,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 **Comms**: TripMessage, Notification, SupportTicket, CompanyMessage
 **Sales**: SalesPerson, SalesReferral, SalesCommission
 **Security**: ProcessedCallback, AdminLog
+**Telegram**: TelegramSession
 
 ---
 
@@ -81,6 +83,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | **Company** | `/api/company/trips`, `/api/company/staff`, `/api/company/vehicles` |
 | **Admin** | `/api/admin/stats`, `/api/admin/companies`, `/api/admin/trips` |
 | **Cron** | `/api/cron/cleanup`, `/api/cron/trip-reminders` |
+| **Telegram** | `/api/telegram/webhook` (bot updates) |
 
 ---
 
@@ -113,7 +116,112 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ---
 
-## RECENT UPDATES (v2.7.0 - Jan 24, 2026)
+## TELEGRAM BOT (@i_ticket_busBot)
+
+### Overview
+Bilingual (English/Amharic) Telegram bot for bus ticket booking. Users can search trips, select seats, and pay via TeleBirr directly through Telegram.
+
+**Bot URL**: https://t.me/i_ticket_busBot
+**QR Codes**: `/public/telegram-bot-qr.png`, `/public/telegram-bot-qr.svg`
+
+### Commands
+| Command | Description |
+|---------|-------------|
+| `/start` | Welcome + language selection |
+| `/book` | Start booking flow |
+| `/mytickets` | View booked tickets |
+| `/help` | Show help message |
+| `/cancel` | Cancel current operation |
+
+### Key Files
+```
+src/lib/telegram/
+├── bot.ts                    # Main bot instance, handler registration
+├── messages.ts               # Bilingual message templates
+├── keyboards.ts              # Inline keyboard builders
+├── middleware/
+│   └── auth.ts               # Session management, phone verification
+├── handlers/
+│   ├── commands.ts           # Command handlers (/start, /book, etc.)
+│   ├── payment.ts            # Payment processing, SMS sending
+│   └── tickets.ts            # Ticket viewing with QR codes
+├── scenes/
+│   └── booking-wizard.ts     # Multi-step booking flow
+└── utils/
+    └── formatters.ts         # Currency, date, route formatting
+```
+
+### Booking Flow
+1. **Language Selection** → EN/AM
+2. **Phone Verification** → Links to User account
+3. **Origin City** → Button selection or text search (fuzzy matching)
+4. **Destination City** → Same as origin
+5. **Travel Date** → Today, Tomorrow, or date picker
+6. **Trip Selection** → Shows available trips with prices
+7. **Passenger Count** → 1-5 passengers
+8. **Seat Selection** → Auto-assign or manual selection
+9. **Passenger Details** → Name, ID, Phone for each passenger
+10. **Payment** → Demo mode or TeleBirr
+11. **Confirmation** → Tickets via Telegram + SMS
+
+### Features
+- **Fuzzy City Search**: Levenshtein distance for typo tolerance
+- **Seat Map**: Visual seat selection with availability
+- **Multi-passenger**: Up to 5 passengers per booking
+- **SMS Confirmation**: Tickets sent via SMS with shortcodes
+- **QR Tickets**: Each ticket has QR code for verification
+- **Session Persistence**: 30-minute session timeout
+
+### Environment Variables
+```bash
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_BOT_ENABLED=true
+DEMO_MODE=true  # Set to false for real TeleBirr payments
+```
+
+### Webhook Setup
+```bash
+# Set webhook (production)
+curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://i-ticket.et/api/telegram/webhook"
+
+# Check webhook status
+curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+```
+
+### Database Model
+```prisma
+model TelegramSession {
+  id        String   @id @default(cuid())
+  chatId    BigInt   @unique
+  phone     String?
+  userId    String?
+  language  String   @default("EN")
+  state     String   @default("IDLE")
+  data      Json?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+```
+
+### TODO (Next Session)
+- [ ] Send tickets to passenger's Telegram if they have an account (in addition to SMS)
+  - Lookup Telegram users by phone number
+  - May need user consent flow
+  - Send ticket images directly to their Telegram
+
+---
+
+## RECENT UPDATES (v2.8.0 - Jan 25, 2026)
+
+1. **Telegram Bot** - Full booking flow via @i_ticket_busBot with bilingual support
+2. **Fuzzy City Search** - Levenshtein distance algorithm for spelling error tolerance
+3. **SMS Confirmation** - Tickets sent via SMS after Telegram booking payment
+4. **Track Page Fix** - Now accepts 6-character shortcodes from Telegram tickets
+5. **Passenger Prompts** - Shows "Passenger 1 of 2" for multi-passenger bookings
+6. **Bot QR Codes** - QR codes for easy bot access at `/public/telegram-bot-qr.png`
+
+### Previous (v2.7.0 - Jan 24, 2026)
 
 1. **Silent Auto-Refresh** - Search results refresh every 30s without scroll jump or loading flash
 2. **Trip Detail Refresh** - Manual refresh button + 30s auto-refresh for company admin
