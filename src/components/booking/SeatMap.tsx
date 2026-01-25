@@ -210,7 +210,8 @@ export function SeatMap({
 
       if (response.ok) {
         setTotalSlots(data.totalSlots)
-        const seatLayout = generateSeatLayout(data.totalSlots, data.occupiedSeats)
+        // Preserve currently selected seats during polling updates
+        const seatLayout = generateSeatLayout(data.totalSlots, data.occupiedSeats, selectedSeats)
         setSeats(seatLayout)
       }
     } catch (error) {
@@ -220,9 +221,10 @@ export function SeatMap({
     }
   }
 
-  const generateSeatLayout = (total: number, occupied: number[]): SeatData[] => {
+  const generateSeatLayout = (total: number, occupied: number[], currentlySelected: number[] = []): SeatData[] => {
     const seatLayout: SeatData[] = []
     const occupiedSet = new Set(occupied)
+    const selectedSet = new Set(currentlySelected)
 
     for (let i = 1; i <= total; i++) {
       const columnIndex = Math.floor((i - 1) / 4)
@@ -237,9 +239,19 @@ export function SeatMap({
         default: visualRow = 0
       }
 
+      // Determine status: occupied takes priority, then selected, then available
+      let status: SeatStatus
+      if (occupiedSet.has(i)) {
+        status = "occupied"
+      } else if (selectedSet.has(i)) {
+        status = "selected"
+      } else {
+        status = "available"
+      }
+
       seatLayout.push({
         number: i,
-        status: occupiedSet.has(i) ? "occupied" : "available",
+        status,
         column: columnIndex,
         row: visualRow,
       })
