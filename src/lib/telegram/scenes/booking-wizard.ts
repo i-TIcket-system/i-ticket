@@ -671,7 +671,10 @@ export async function handleCitySelection(
   try {
     const lang = ctx.session?.language || "EN";
 
-    await ctx.answerCbQuery();
+    // Only answer callback query if this is a callback (not a text message)
+    if (ctx.callbackQuery) {
+      await ctx.answerCbQuery();
+    }
 
     if (!ctx.chat) return;
 
@@ -700,7 +703,9 @@ export async function handleCitySelection(
     }
   } catch (error) {
     console.error("[Booking Wizard] City selection error:", error);
-    await ctx.answerCbQuery("Error");
+    if (ctx.callbackQuery) {
+      await ctx.answerCbQuery("Error");
+    }
   }
 }
 
