@@ -28,6 +28,39 @@ import { getAvailableSeatNumbers } from "@/lib/utils";
 import { startOfDay, endOfDay, parseISO, format } from "date-fns";
 
 /**
+ * Calculate Levenshtein distance between two strings
+ * Used for fuzzy city name matching
+ */
+function levenshteinDistance(str1: string, str2: string): number {
+  const m = str1.length;
+  const n = str2.length;
+
+  // Create distance matrix
+  const dp: number[][] = Array(m + 1).fill(null).map(() => Array(n + 1).fill(0));
+
+  // Initialize first row and column
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+  // Fill the matrix
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (str1[i - 1] === str2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = 1 + Math.min(
+          dp[i - 1][j],     // deletion
+          dp[i][j - 1],     // insertion
+          dp[i - 1][j - 1]  // substitution
+        );
+      }
+    }
+  }
+
+  return dp[m][n];
+}
+
+/**
  * Handle origin city search
  */
 export async function handleOriginSearch(ctx: TelegramContext, showAll: boolean = false, editMessage: boolean = false) {
@@ -119,8 +152,11 @@ export async function handleCityTextSearch(ctx: TelegramContext, searchText: str
 
     if (!ctx.chat) return;
 
-    // Search for cities matching the text (case-insensitive)
-    const cities = await prisma.city.findMany({
+    // Normalize search text
+    const normalizedSearch = searchText.toLowerCase().trim();
+
+    // First try exact substring match (case-insensitive)
+    let cities = await prisma.city.findMany({
       where: {
         isActive: true,
         name: {
@@ -133,8 +169,46 @@ export async function handleCityTextSearch(ctx: TelegramContext, searchText: str
       select: { id: true, name: true },
     });
 
+    // If no exact match, try fuzzy matching
     if (cities.length === 0) {
-      // No matches found
+      // Fetch all active cities for fuzzy matching
+      const allCities = await prisma.city.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true },
+      });
+
+      // Calculate similarity scores using Levenshtein distance
+      const scoredCities = allCities.map(city => {
+        const cityName = city.name.toLowerCase();
+        const distance = levenshteinDistance(normalizedSearch, cityName);
+        // Also check if search is a prefix or suffix
+        const isPrefix = cityName.startsWith(normalizedSearch);
+        const isSuffix = cityName.endsWith(normalizedSearch);
+        const containsWord = cityName.split(/\s+/).some(word =>
+          word.startsWith(normalizedSearch) || levenshteinDistance(normalizedSearch, word) <= 2
+        );
+
+        // Score: lower is better (0 = exact match)
+        // Bonus for prefix/suffix/word matches
+        let score = distance;
+        if (isPrefix) score -= 3;
+        if (isSuffix) score -= 2;
+        if (containsWord) score -= 2;
+
+        return { ...city, score, distance };
+      });
+
+      // Filter cities with reasonable similarity (distance <= 3 or score <= 2)
+      const fuzzyMatches = scoredCities
+        .filter(c => c.distance <= 3 || c.score <= 2)
+        .sort((a, b) => a.score - b.score)
+        .slice(0, 10);
+
+      cities = fuzzyMatches;
+    }
+
+    if (cities.length === 0) {
+      // Still no matches found
       await ctx.reply(
         lang === "EN"
           ? `❌ No city found matching "${searchText}".\n\nPlease try again or select from popular cities:`
