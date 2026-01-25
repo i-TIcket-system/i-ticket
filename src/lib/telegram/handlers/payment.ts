@@ -12,6 +12,7 @@ import { getAvailableSeatNumbers, generateShortCode } from "@/lib/utils";
 import { initiateTelebirrPayment, formatPhoneForTelebirr } from "@/lib/payments/telebirr";
 import { formatCurrency, formatRoute, formatDateTime } from "../utils/formatters";
 import { searchAgainKeyboard, mainMenuKeyboard } from "../keyboards";
+import { getSmsGateway } from "@/lib/sms/gateway";
 import QRCode from "qrcode";
 
 /**
@@ -303,13 +304,18 @@ async function processDemoPayment(
         data: { status: "PAID" },
       });
 
-      // Get booking with passengers
+      // Get booking with passengers, user, trip details (for SMS)
       const booking = await tx.booking.findUnique({
         where: { id: bookingId },
         include: {
+          user: true,
           passengers: true,
           trip: {
-            include: { company: true },
+            include: {
+              company: true,
+              driver: true,
+              conductor: true,
+            },
           },
         },
       });
@@ -397,6 +403,15 @@ ${result.tickets.map((t, i) => `${i + 1}. ${t.passengerName} - መቀመጫ ${t.
       ...mainMenuKeyboard(lang),
     });
 
+    // Send SMS confirmation to passengers
+    try {
+      await sendTicketsSms(result.booking, result.tickets);
+      console.log(`[Telegram Payment] SMS sent for booking ${bookingId}`);
+    } catch (smsError) {
+      console.error("[Telegram Payment] SMS sending failed:", smsError);
+      // Don't fail the booking if SMS fails
+    }
+
     // Reset session
     if (ctx.chat) {
       const { resetSessionPreserveLanguage } = await import("../middleware/auth");
@@ -446,13 +461,18 @@ export async function handlePaymentCallback(
           data: { status: "PAID" },
         });
 
-        // Get booking with passengers
+        // Get booking with passengers, user, trip details (for SMS)
         const booking = await tx.booking.findUnique({
           where: { id: bookingId },
           include: {
+            user: true,
             passengers: true,
             trip: {
-              include: { company: true },
+              include: {
+                company: true,
+                driver: true,
+                conductor: true,
+              },
             },
           },
         });
@@ -507,6 +527,15 @@ export async function handlePaymentCallback(
 
         await bot.telegram.sendMessage(chatId, ticketMessage);
       }
+
+      // Send SMS confirmation to passengers
+      try {
+        await sendTicketsSms(result.booking, result.tickets);
+        console.log(`[Telegram Payment] SMS sent for callback booking ${bookingId}`);
+      } catch (smsError) {
+        console.error("[Telegram Payment] SMS sending failed:", smsError);
+        // Don't fail the callback if SMS fails
+      }
     } else {
       // Payment failed
       const { bot } = await import("../bot");
@@ -521,4 +550,82 @@ export async function handlePaymentCallback(
   } catch (error) {
     console.error("[Telegram Payment] Callback processing error:", error);
   }
+}
+
+/**
+ * Send tickets to user via SMS
+ * Matches the format from TeleBirr callback route
+ */
+async function sendTicketsSms(booking: any, tickets: any[]) {
+  const gateway = getSmsGateway();
+  const { user, trip, passengers } = booking;
+
+  // Format trip date/time
+  const departureTime = new Date(trip.departureTime);
+  const dateStr = departureTime.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const timeStr = departureTime.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  // Build staff contact info
+  let staffInfo = "";
+  if (trip.driver || trip.conductor) {
+    staffInfo = "\n\nTRIP STAFF:";
+    if (trip.driver) {
+      staffInfo += `\nDriver: ${trip.driver.name}\n📞 ${trip.driver.phone}`;
+    }
+    if (trip.conductor) {
+      staffInfo += `\nConductor: ${trip.conductor.name}\n📞 ${trip.conductor.phone}`;
+    }
+    staffInfo += "\n(Call for pickup location)";
+  }
+
+  // If single passenger, send single SMS with all details
+  if (tickets.length === 1) {
+    const ticket = tickets[0];
+    const message = `
+PAYMENT RECEIVED!
+
+YOUR TICKET
+Code: ${ticket.shortCode}
+Seat: ${ticket.seatNumber}
+Name: ${ticket.passengerName}
+
+Trip: ${trip.origin} → ${trip.destination}
+Date: ${dateStr}
+Time: ${timeStr}
+Bus: ${trip.company.name}${staffInfo}
+
+Show code ${ticket.shortCode} to conductor.
+
+i-Ticket
+    `.trim();
+
+    await gateway.send(user.phone, message);
+  } else {
+    // Multiple passengers - send summary
+    const summaryMessage = `
+PAYMENT RECEIVED!
+
+${tickets.length} TICKETS for ${trip.origin} → ${trip.destination}
+Date: ${dateStr}, ${timeStr}
+Bus: ${trip.company.name}${staffInfo}
+
+Ticket codes:
+${tickets.map((t, i) => `${i + 1}. ${t.passengerName}: ${t.shortCode} (Seat ${t.seatNumber})`).join("\n")}
+
+Show codes to conductor.
+i-Ticket
+    `.trim();
+
+    await gateway.send(user.phone, summaryMessage);
+  }
+
+  console.log(`[SMS] Sent ${tickets.length} ticket(s) to ${user.phone}`);
 }
