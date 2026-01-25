@@ -47,6 +47,9 @@ model User {
   // Platform staff (if user is i-Ticket employee)
   platformStaff   PlatformStaff?
 
+  // Telegram bot sessions
+  telegramSessions TelegramSession[]
+
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
@@ -486,6 +489,45 @@ model SmsSession {
 
   @@index([phone])
   @@index([sessionId])
+  @@index([expiresAt])
+}
+
+model TelegramSession {
+  id              String   @id @default(cuid())
+  chatId          BigInt   @unique
+  userId          String?
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  sessionId       String   @unique
+  state           String   @default("IDLE")
+  language        String   @default("EN")
+
+  // Journey data (accumulated during booking flow)
+  origin          String?
+  destination     String?
+  date            DateTime?
+  selectedTripId  String?
+  passengerCount  Int      @default(0)
+  seatPreference  String?  // AUTO or MANUAL
+  passengerData   String?  // JSON array
+  currentPassengerIndex Int @default(0)
+  selectedSeats   String?  // JSON array
+
+  // Booking state
+  bookingId       String?
+  paymentTransactionId String?
+
+  // Session management
+  lastMessageAt   DateTime @default(now())
+  expiresAt       DateTime
+  messageCount    Int      @default(0)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([chatId])
+  @@index([sessionId])
+  @@index([userId])
   @@index([expiresAt])
 }
 
