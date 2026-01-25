@@ -108,6 +108,9 @@ export default function PaymentPage() {
         setPaymentStatus("success")
         toast.success("Payment successful! Generating your tickets...")
 
+        // Scroll to top to show success message
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+
         // Trigger confetti animation
         paymentSuccessConfetti()
 
