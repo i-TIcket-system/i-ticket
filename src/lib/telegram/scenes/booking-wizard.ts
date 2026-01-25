@@ -536,10 +536,12 @@ export async function handlePassengerName(ctx: TelegramContext) {
 export async function handlePassengerID(ctx: TelegramContext) {
   try {
     const lang = ctx.session?.language || "EN";
+    const { currentPassengerIndex = 0, passengerCount = 1 } = ctx.session?.data || {};
 
-    await ctx.reply(getMessage("askPassengerID", lang), {
-      parse_mode: "Markdown",
-    });
+    await ctx.reply(
+      getMessage("askPassengerID", lang)(currentPassengerIndex, passengerCount),
+      { parse_mode: "Markdown" }
+    );
   } catch (error) {
     console.error("[Booking Wizard] Passenger ID error:", error);
     await ctx.reply(getMessage("errorGeneral", ctx.session?.language || "EN"));
@@ -552,10 +554,12 @@ export async function handlePassengerID(ctx: TelegramContext) {
 export async function handlePassengerPhone(ctx: TelegramContext) {
   try {
     const lang = ctx.session?.language || "EN";
+    const { currentPassengerIndex = 0, passengerCount = 1 } = ctx.session?.data || {};
 
-    await ctx.reply(getMessage("askPassengerPhone", lang), {
-      parse_mode: "Markdown",
-    });
+    await ctx.reply(
+      getMessage("askPassengerPhone", lang)(currentPassengerIndex, passengerCount),
+      { parse_mode: "Markdown" }
+    );
   } catch (error) {
     console.error("[Booking Wizard] Passenger phone error:", error);
     await ctx.reply(getMessage("errorGeneral", ctx.session?.language || "EN"));

@@ -239,21 +239,17 @@ Select your seats:`,
   },
 
   askPassengerID: {
-    EN: `🆔 *National ID*
-
-Please enter passenger's national ID number:`,
-    AM: `🆔 *የመታወቂያ ቁጥር*
-
-እባክዎን የተሳፋሪውን የመታወቂያ ቁጥር ያስገቡ:`,
+    EN: (index: number, total: number) =>
+      `🆔 *Passenger ${index + 1} of ${total} - National ID*\n\nPlease enter passenger's national ID number:`,
+    AM: (index: number, total: number) =>
+      `🆔 *ተሳፋሪ ${index + 1} ከ ${total} - የመታወቂያ ቁጥር*\n\nእባክዎን የተሳፋሪውን የመታወቂያ ቁጥር ያስገቡ:`,
   },
 
   askPassengerPhone: {
-    EN: `📱 *Phone Number*
-
-Please enter passenger's phone number:`,
-    AM: `📱 *የስልክ ቁጥር*
-
-እባክዎን የተሳፋሪውን የስልክ ቁጥር ያስገቡ:`,
+    EN: (index: number, total: number) =>
+      `📱 *Passenger ${index + 1} of ${total} - Phone Number*\n\nPlease enter passenger's phone number:`,
+    AM: (index: number, total: number) =>
+      `📱 *ተሳፋሪ ${index + 1} ከ ${total} - የስልክ ቁጥር*\n\nእባክዎን የተሳፋሪውን የስልክ ቁጥር ያስገቡ:`,
   },
 
   invalidName: {
