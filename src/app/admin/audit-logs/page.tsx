@@ -55,21 +55,23 @@ interface AuditLog {
 }
 
 const ACTION_COLORS: Record<string, string> = {
-  COMPANY_ACTIVATED: "bg-green-100 text-green-900 border border-green-300",
-  COMPANY_DEACTIVATED: "bg-red-100 text-red-900 border border-red-300",
-  COMPANY_PROFILE_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
-  STAFF_MEMBER_ADDED: "bg-purple-100 text-purple-900 border border-purple-300",
-  STAFF_MEMBER_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
-  STAFF_MEMBER_REMOVED: "bg-orange-100 text-orange-900 border border-orange-300",
-  TRIP_CREATED: "bg-green-100 text-green-900 border border-green-300",
-  TRIP_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
-  TRIP_DELETED: "bg-red-100 text-red-900 border border-red-300",
+  COMPANY_ACTIVATED: "bg-green-600 !text-white border-0",
+  COMPANY_DEACTIVATED: "bg-red-600 !text-white border-0",
+  COMPANY_PROFILE_UPDATED: "bg-blue-600 !text-white border-0",
+  STAFF_MEMBER_ADDED: "bg-purple-600 !text-white border-0",
+  STAFF_MEMBER_UPDATED: "bg-blue-600 !text-white border-0",
+  STAFF_MEMBER_REMOVED: "bg-orange-600 !text-white border-0",
+  TRIP_CREATED: "bg-green-600 !text-white border-0",
+  TRIP_UPDATED: "bg-blue-600 !text-white border-0",
+  TRIP_DELETED: "bg-red-600 !text-white border-0",
   // Sales Person actions
-  SALES_PERSON_CREATED: "bg-teal-100 text-teal-900 border border-teal-300",
-  SALES_PERSON_UPDATED: "bg-cyan-100 text-cyan-900 border border-cyan-300",
-  SALES_PERSON_DEACTIVATED: "bg-rose-100 text-rose-900 border border-rose-300",
-  SALES_PAYOUT_PROCESSED: "bg-emerald-100 text-emerald-900 border border-emerald-300",
-  SALES_REFERRAL_CONVERSION: "bg-indigo-100 text-indigo-900 border border-indigo-300",
+  SALES_PERSON_CREATED: "bg-teal-600 !text-white border-0",
+  SALES_PERSON_UPDATED: "bg-cyan-600 !text-white border-0",
+  SALES_PERSON_DEACTIVATED: "bg-rose-600 !text-white border-0",
+  SALES_PAYOUT_PROCESSED: "bg-emerald-600 !text-white border-0",
+  SALES_REFERRAL_CONVERSION: "bg-indigo-600 !text-white border-0",
+  // Default fallback for any undefined action types
+  DEFAULT: "bg-gray-600 !text-white border-0",
 }
 
 export default function AuditLogsPage() {
@@ -413,7 +415,7 @@ export default function AuditLogsPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge className={ACTION_COLORS[log.action] || "bg-gray-100 text-gray-800"}>
+                              <Badge className={ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT}>
                                 {log.action.replace(/_/g, " ")}
                               </Badge>
                             </TableCell>
@@ -505,7 +507,7 @@ export default function AuditLogsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Action</p>
-                  <Badge className={ACTION_COLORS[selectedLog.action] || "bg-gray-100 text-gray-800"}>
+                  <Badge className={ACTION_COLORS[selectedLog.action] || ACTION_COLORS.DEFAULT}>
                     {selectedLog.action.replace(/_/g, " ")}
                   </Badge>
                 </div>

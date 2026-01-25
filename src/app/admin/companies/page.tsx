@@ -715,12 +715,12 @@ export default function CompaniesManagement() {
                         </TableCell>
                         <TableCell className="text-center">
                           {company.isActive ? (
-                            <Badge className="bg-green-100 text-green-900 border border-green-300 hover:bg-green-200">
+                            <Badge className="bg-green-600 !text-white border-0 hover:bg-green-700">
                               <CheckCircle2 className="h-3 w-3 mr-1" />
                               Active
                             </Badge>
                           ) : (
-                            <Badge className="bg-red-100 text-red-900 border border-red-300 hover:bg-red-200">
+                            <Badge className="bg-red-600 !text-white border-0 hover:bg-red-700">
                               <XCircle className="h-3 w-3 mr-1" />
                               Inactive
                             </Badge>
