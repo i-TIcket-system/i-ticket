@@ -105,7 +105,7 @@ export function TripCountdown({ departureTime, className = "", variant = "defaul
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {timeRemaining.days > 0 && (
               <div className="flex flex-col items-center p-3 rounded-lg backdrop-blur-sm bg-white/40 dark:bg-gray-800/40 border border-white/50">
-                <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                <span className="text-2xl sm:text-3xl font-bold text-primary">
                   {timeRemaining.days}
                 </span>
                 <span className="text-xs text-muted-foreground mt-1">
@@ -114,19 +114,19 @@ export function TripCountdown({ departureTime, className = "", variant = "defaul
               </div>
             )}
             <div className="flex flex-col items-center p-3 rounded-lg backdrop-blur-sm bg-white/40 dark:bg-gray-800/40 border border-white/50">
-              <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+              <span className="text-2xl sm:text-3xl font-bold text-primary">
                 {String(timeRemaining.hours).padStart(2, "0")}
               </span>
               <span className="text-xs text-muted-foreground mt-1">Hours</span>
             </div>
             <div className="flex flex-col items-center p-3 rounded-lg backdrop-blur-sm bg-white/40 dark:bg-gray-800/40 border border-white/50">
-              <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+              <span className="text-2xl sm:text-3xl font-bold text-primary">
                 {String(timeRemaining.minutes).padStart(2, "0")}
               </span>
               <span className="text-xs text-muted-foreground mt-1">Mins</span>
             </div>
             <div className="flex flex-col items-center p-3 rounded-lg backdrop-blur-sm bg-white/40 dark:bg-gray-800/40 border border-white/50">
-              <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+              <span className="text-2xl sm:text-3xl font-bold text-primary">
                 {String(timeRemaining.seconds).padStart(2, "0")}
               </span>
               <span className="text-xs text-muted-foreground mt-1">Secs</span>
