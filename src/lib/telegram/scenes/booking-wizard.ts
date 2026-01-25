@@ -111,6 +111,100 @@ export async function handleDestinationSearch(ctx: TelegramContext, showAll: boo
 }
 
 /**
+ * Handle city text search (when user types city name)
+ */
+export async function handleCityTextSearch(ctx: TelegramContext, searchText: string, isOrigin: boolean) {
+  try {
+    const lang = ctx.session?.language || "EN";
+
+    if (!ctx.chat) return;
+
+    // Search for cities matching the text (case-insensitive)
+    const cities = await prisma.city.findMany({
+      where: {
+        isActive: true,
+        name: {
+          contains: searchText,
+          mode: "insensitive",
+        },
+      },
+      orderBy: { tripCount: "desc" },
+      take: 10,
+      select: { id: true, name: true },
+    });
+
+    if (cities.length === 0) {
+      // No matches found
+      await ctx.reply(
+        lang === "EN"
+          ? `❌ No city found matching "${searchText}".\n\nPlease try again or select from popular cities:`
+          : `❌ "${searchText}" የሚመሳሰል ከተማ አልተገኘም።\n\nእባክዎ እንደገና ይሞክሩ ወይም ከታዋቂ ከተሞች ይምረጡ:`,
+        { parse_mode: "Markdown" }
+      );
+
+      // Show the regular city selection again
+      if (isOrigin) {
+        await updateSessionState(ctx.chat.id, "SEARCH_ORIGIN");
+        await handleOriginSearch(ctx);
+      } else {
+        await updateSessionState(ctx.chat.id, "SEARCH_DESTINATION");
+        await handleDestinationSearch(ctx);
+      }
+      return;
+    }
+
+    if (cities.length === 1) {
+      // Exact match - select directly
+      const { handleCitySelection } = await import("./booking-wizard");
+      await handleCitySelection(ctx, cities[0].id, isOrigin);
+      return;
+    }
+
+    // Multiple matches - show as buttons
+    const { Markup } = await import("telegraf");
+    const buttons = [];
+
+    // Create 2-column layout
+    for (let i = 0; i < cities.length; i += 2) {
+      const row = [
+        Markup.button.callback(cities[i].name, `city_${cities[i].id}`),
+      ];
+      if (i + 1 < cities.length) {
+        row.push(Markup.button.callback(cities[i + 1].name, `city_${cities[i + 1].id}`));
+      }
+      buttons.push(row);
+    }
+
+    // Add "Try again" and "Cancel" buttons
+    buttons.push([
+      Markup.button.callback(
+        lang === "EN" ? "🔍 Search again" : "🔍 እንደገና ይፈልጉ",
+        "city_type"
+      ),
+    ]);
+    buttons.push([
+      Markup.button.callback(getMessage("cancelButton", lang), "action_cancel"),
+    ]);
+
+    // Update state back to search (so city selection works)
+    await updateSessionState(ctx.chat.id, isOrigin ? "SEARCH_ORIGIN" : "SEARCH_DESTINATION");
+
+    await ctx.reply(
+      lang === "EN"
+        ? `🔍 Found ${cities.length} cities matching "${searchText}":\n\nSelect your city:`
+        : `🔍 "${searchText}" የሚመሳሰሉ ${cities.length} ከተሞች ተገኝተዋል:\n\nከተማዎን ይምረጡ:`,
+      {
+        parse_mode: "Markdown",
+        ...Markup.inlineKeyboard(buttons),
+      }
+    );
+  } catch (error) {
+    console.error("[Booking Wizard] City text search error:", error);
+    await ctx.reply(getMessage("errorGeneral", ctx.session?.language || "EN"));
+  }
+}
+
+/**
  * Handle date selection
  */
 export async function handleDateSelection(ctx: TelegramContext) {

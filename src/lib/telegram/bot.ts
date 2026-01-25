@@ -117,6 +117,34 @@ export function initializeBot() {
     }
   });
 
+  // Type city name - switch to text input mode
+  bot.action("city_type", async (ctx) => {
+    await ctx.answerCbQuery();
+    const lang = ctx.session?.language || "EN";
+    const state = ctx.session?.state;
+
+    if (ctx.chat) {
+      // Switch to typing mode based on current state
+      if (state === "SEARCH_ORIGIN") {
+        await updateSessionState(ctx.chat.id, "TYPING_ORIGIN");
+        await ctx.reply(
+          lang === "EN"
+            ? "📝 Type the name of your *departure city*:\n\n_(e.g., Addis Ababa, Hawassa, Bahir Dar)_"
+            : "📝 *የመነሻ ከተማ* ስም ይፃፉ:\n\n_(ለምሳሌ: አዲስ አበባ፣ ሀዋሳ፣ ባህር ዳር)_",
+          { parse_mode: "Markdown" }
+        );
+      } else if (state === "SEARCH_DESTINATION") {
+        await updateSessionState(ctx.chat.id, "TYPING_DESTINATION");
+        await ctx.reply(
+          lang === "EN"
+            ? "📝 Type the name of your *destination city*:\n\n_(e.g., Addis Ababa, Hawassa, Bahir Dar)_"
+            : "📝 *የመድረሻ ከተማ* ስም ይፃፉ:\n\n_(ለምሳሌ: አዲስ አበባ፣ ሀዋሳ፣ ባህር ዳር)_",
+          { parse_mode: "Markdown" }
+        );
+      }
+    }
+  });
+
   // Date selection
   bot.action(/^date_(.+)$/, async (ctx) => {
     const dateStr = ctx.match[1];
@@ -242,6 +270,14 @@ export function initializeBot() {
 
     try {
       switch (state) {
+        case "TYPING_ORIGIN":
+        case "TYPING_DESTINATION": {
+          // Search for city by name
+          const { handleCityTextSearch } = await import("./scenes/booking-wizard");
+          await handleCityTextSearch(ctx, text.trim(), state === "TYPING_ORIGIN");
+          break;
+        }
+
         case "ASK_PASSENGER_NAME": {
           // Validate name
           if (text.trim().length < 2) {

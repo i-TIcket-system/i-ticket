@@ -42,7 +42,7 @@ export function phoneKeyboard(lang: Language = "EN") {
 }
 
 /**
- * City selection keyboard (2-column popular cities + "More" button)
+ * City selection keyboard (2-column popular cities + type option)
  */
 export function citiesKeyboard(cities: { id: string; name: string }[], showMore: boolean = true, lang: Language = "EN") {
   const buttons = [];
@@ -58,14 +58,13 @@ export function citiesKeyboard(cities: { id: string; name: string }[], showMore:
     buttons.push(row);
   }
 
-  if (showMore && cities.length > 10) {
-    buttons.push([
-      Markup.button.callback(
-        lang === "EN" ? "🔍 More cities..." : "🔍 ተጨማሪ ከተሞች...",
-        "cities_more"
-      ),
-    ]);
-  }
+  // Always show "Type city name" option for searching other cities
+  buttons.push([
+    Markup.button.callback(
+      lang === "EN" ? "🔍 Type city name..." : "🔍 የከተማ ስም ይፃፉ...",
+      "city_type"
+    ),
+  ]);
 
   buttons.push([
     Markup.button.callback(getMessage("cancelButton", lang), "action_cancel"),
