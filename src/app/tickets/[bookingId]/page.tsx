@@ -448,43 +448,48 @@ export default function TicketsPage() {
 
                       <Separator />
 
-                      <Button
-                        variant="default"
-                        className="w-full mb-2"
-                        onClick={addToCalendar}
-                      >
-                        <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
-                        <span>Add to Calendar</span>
-                      </Button>
+                      {/* Hide action buttons when downloading/capturing screenshot */}
+                      {!isDownloading && (
+                        <>
+                          <Button
+                            variant="default"
+                            className="w-full mb-2"
+                            onClick={addToCalendar}
+                          >
+                            <Calendar className="h-4 w-4 mr-2 flex-shrink-0" />
+                            <span>Add to Calendar</span>
+                          </Button>
 
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => downloadTicket(selectedTicket)}
-                          disabled={isDownloading}
-                        >
-                          {isDownloading ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin flex-shrink-0" />
-                              <span>Preparing...</span>
-                            </>
-                          ) : (
-                            <>
-                              <Download className="h-4 w-4 mr-2 flex-shrink-0" />
-                              <span>Download</span>
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => shareTicket(selectedTicket)}
-                        >
-                          <Share2 className="h-4 w-4 mr-2 flex-shrink-0" />
-                          <span>Share</span>
-                        </Button>
-                      </div>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => downloadTicket(selectedTicket)}
+                              disabled={isDownloading}
+                            >
+                              {isDownloading ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin flex-shrink-0" />
+                                  <span>Preparing...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Download className="h-4 w-4 mr-2 flex-shrink-0" />
+                                  <span>Download</span>
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              className="flex-1"
+                              onClick={() => shareTicket(selectedTicket)}
+                            >
+                              <Share2 className="h-4 w-4 mr-2 flex-shrink-0" />
+                              <span>Share</span>
+                            </Button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </CardContent>
