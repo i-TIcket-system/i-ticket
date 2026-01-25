@@ -91,33 +91,7 @@ export function initializeBot() {
     await handleActionCallback(ctx, `action_${action}`);
   });
 
-  // City selection (origin)
-  bot.action(/^city_(.+)$/, async (ctx) => {
-    const cityId = ctx.match[1];
-    const state = ctx.session?.state;
-
-    if (state === "SEARCH_ORIGIN") {
-      await handleCitySelection(ctx, cityId, true);
-    } else if (state === "SEARCH_DESTINATION") {
-      await handleCitySelection(ctx, cityId, false);
-    }
-  });
-
-  // More cities action
-  bot.action("cities_more", async (ctx) => {
-    await ctx.answerCbQuery();
-    const state = ctx.session?.state;
-
-    if (state === "SEARCH_ORIGIN") {
-      const { handleOriginSearch } = await import("./scenes/booking-wizard");
-      await handleOriginSearch(ctx, true, true); // showAll=true, editMessage=true
-    } else if (state === "SEARCH_DESTINATION") {
-      const { handleDestinationSearch } = await import("./scenes/booking-wizard");
-      await handleDestinationSearch(ctx, true, true); // showAll=true, editMessage=true
-    }
-  });
-
-  // Type city name - switch to text input mode
+  // Type city name - switch to text input mode (MUST be before city regex handler)
   bot.action("city_type", async (ctx) => {
     await ctx.answerCbQuery();
     const lang = ctx.session?.language || "EN";
@@ -142,6 +116,32 @@ export function initializeBot() {
           { parse_mode: "Markdown" }
         );
       }
+    }
+  });
+
+  // City selection (origin) - regex handler after specific handlers
+  bot.action(/^city_(.+)$/, async (ctx) => {
+    const cityId = ctx.match[1];
+    const state = ctx.session?.state;
+
+    if (state === "SEARCH_ORIGIN") {
+      await handleCitySelection(ctx, cityId, true);
+    } else if (state === "SEARCH_DESTINATION") {
+      await handleCitySelection(ctx, cityId, false);
+    }
+  });
+
+  // More cities action
+  bot.action("cities_more", async (ctx) => {
+    await ctx.answerCbQuery();
+    const state = ctx.session?.state;
+
+    if (state === "SEARCH_ORIGIN") {
+      const { handleOriginSearch } = await import("./scenes/booking-wizard");
+      await handleOriginSearch(ctx, true, true); // showAll=true, editMessage=true
+    } else if (state === "SEARCH_DESTINATION") {
+      const { handleDestinationSearch } = await import("./scenes/booking-wizard");
+      await handleDestinationSearch(ctx, true, true); // showAll=true, editMessage=true
     }
   });
 
