@@ -285,6 +285,23 @@ export function Navbar() {
 
               {session ? (
                 <>
+                  {/* User info for mobile */}
+                  <div className="flex items-center gap-3 px-3 py-3 mb-2 bg-muted/50 rounded-lg">
+                    <Avatar className="h-10 w-10 border-2 border-primary/30">
+                      <AvatarFallback className="text-white font-medium" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
+                        {(session.user.name?.charAt(0) || session.user.phone?.slice(-2) || "U").toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground">
+                        {session.user.name || session.user.phone || "User"}
+                      </span>
+                      {session.user.name && session.user.phone && (
+                        <span className="text-xs text-muted-foreground">{session.user.phone}</span>
+                      )}
+                    </div>
+                  </div>
+
                   <MobileNavLink href={getDashboardLink()} onClick={() => setMobileMenuOpen(false)}>Dashboard</MobileNavLink>
                   {session.user.role === "CUSTOMER" && (
                     <MobileNavLink href="/tickets" onClick={() => setMobileMenuOpen(false)}>My Tickets</MobileNavLink>
