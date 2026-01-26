@@ -157,7 +157,11 @@ export async function POST(request: NextRequest) {
       case "halt": {
         // Halt booking for multiple trips
         const whereClause: any = {
-          id: { in: tripIds }
+          id: { in: tripIds },
+          // RULE-003: Cannot modify view-only trips (DEPARTED, COMPLETED, CANCELLED)
+          // Also exclude past SCHEDULED trips (effectively DEPARTED)
+          status: { notIn: ["DEPARTED", "COMPLETED", "CANCELLED"] },
+          departureTime: { gte: new Date() }
         }
         if (session.user.role === "COMPANY_ADMIN" && session.user.companyId) {
           whereClause.companyId = session.user.companyId
@@ -187,7 +191,11 @@ export async function POST(request: NextRequest) {
       case "resume": {
         // Resume booking for multiple trips
         const whereClause: any = {
-          id: { in: tripIds }
+          id: { in: tripIds },
+          // RULE-003: Cannot modify view-only trips (DEPARTED, COMPLETED, CANCELLED)
+          // Also exclude past SCHEDULED trips (effectively DEPARTED)
+          status: { notIn: ["DEPARTED", "COMPLETED", "CANCELLED"] },
+          departureTime: { gte: new Date() }
         }
         if (session.user.role === "COMPANY_ADMIN" && session.user.companyId) {
           whereClause.companyId = session.user.companyId
@@ -318,6 +326,17 @@ export async function DELETE(request: NextRequest) {
           if (session.user.role === "COMPANY_ADMIN" && trip.companyId !== session.user.companyId) {
             failed++
             errors.push(`Trip ${tripId}: Access denied`)
+            continue
+          }
+
+          // RULE-003: Cannot delete view-only trips (DEPARTED, COMPLETED, CANCELLED)
+          // Also treat past SCHEDULED trips as view-only (effectively DEPARTED)
+          const isPastTrip = new Date(trip.departureTime) < new Date()
+          const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
+
+          if (["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)) {
+            failed++
+            errors.push(`Trip ${tripId}: Cannot delete ${effectiveStatus} trip (view-only)`)
             continue
           }
 

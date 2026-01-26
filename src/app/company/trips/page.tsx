@@ -235,7 +235,20 @@ export default function CompanyTripsPage() {
     [visibleSelectedCount, filteredTrips.length]
   )
 
-  // Selection handlers
+  // RULE-003: Helper to check if a trip is view-only
+  const isViewOnlyTrip = (trip: Trip) => {
+    const departureTime = new Date(trip.departureTime)
+    const isPastTrip = departureTime < new Date()
+    const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
+    return ["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)
+  }
+
+  // Selection handlers - RULE-003: Exclude view-only trips from selection
+  const selectableTrips = useMemo(
+    () => filteredTrips.filter(t => !isViewOnlyTrip(t)),
+    [filteredTrips]
+  )
+
   const toggleSelectAll = () => {
     if (allVisibleSelected) {
       // Deselect all visible trips
@@ -245,10 +258,10 @@ export default function CompanyTripsPage() {
         return newSet
       })
     } else {
-      // Select all visible trips
+      // Select all visible trips (RULE-003: Only selectable/non-view-only trips)
       setSelectedTrips((prev) => {
         const newSet = new Set(prev)
-        filteredTrips.forEach(t => newSet.add(t.id))
+        selectableTrips.forEach(t => newSet.add(t.id))
         return newSet
       })
     }
@@ -294,13 +307,22 @@ export default function CompanyTripsPage() {
         return
       }
 
-      // Ctrl/Cmd + A: Select all visible trips
+      // Ctrl/Cmd + A: Select all visible trips (RULE-003: Only selectable/non-view-only trips)
       if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
         e.preventDefault()
         const filtered = filteredTripsRef.current
-        if (filtered.length > 0) {
-          setSelectedTrips(new Set(filtered.map(t => t.id)))
-          toast.success(`Selected all ${filtered.length} trip(s)`)
+        // Filter out view-only trips
+        const selectable = filtered.filter(trip => {
+          const departureTime = new Date(trip.departureTime)
+          const isPastTrip = departureTime < new Date()
+          const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
+          return !["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)
+        })
+        if (selectable.length > 0) {
+          setSelectedTrips(new Set(selectable.map(t => t.id)))
+          toast.success(`Selected ${selectable.length} editable trip(s)${filtered.length > selectable.length ? ` (${filtered.length - selectable.length} view-only excluded)` : ''}`)
+        } else if (filtered.length > 0) {
+          toast.info("No editable trips to select (all are view-only)")
         }
       }
     }
@@ -649,6 +671,9 @@ export default function CompanyTripsPage() {
 
                   const isDeparted = effectiveStatus === "DEPARTED" || effectiveStatus === "COMPLETED"
 
+                  // RULE-003: View-only trips cannot be edited or selected for bulk operations
+                  const isViewOnly = ["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)
+
                   return (
                     <TableRow
                       key={trip.id}
@@ -660,7 +685,9 @@ export default function CompanyTripsPage() {
                         <Checkbox
                           checked={isSelected}
                           onCheckedChange={() => toggleSelectTrip(trip.id)}
+                          disabled={isViewOnly}
                           aria-label={`Select trip from ${trip.origin} to ${trip.destination}`}
+                          title={isViewOnly ? "View-only trips cannot be modified" : undefined}
                         />
                       </TableCell>
                       <TableCell>
@@ -745,12 +772,15 @@ export default function CompanyTripsPage() {
                               View
                             </Link>
                           </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/company/trips/${trip.id}/edit`}>
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Link>
-                          </Button>
+                          {/* RULE-003: Hide Edit button for view-only trips */}
+                          {!isViewOnly && (
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/company/trips/${trip.id}/edit`}>
+                                <Edit className="h-4 w-4 mr-1" />
+                                Edit
+                              </Link>
+                            </Button>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
