@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.8.1 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.8.2 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md`
 
 ---
@@ -210,7 +210,13 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.8.1 - Jan 26, 2026)
+## RECENT UPDATES (v2.8.2 - Jan 26, 2026)
+
+1. **CRITICAL: Telegram Timezone Fix** - Bot now displays dates/times in Ethiopia Time (EAT = UTC+3) instead of UTC. Trip times now match PWA exactly.
+2. **Track Page Validation** - Simplified validation to accept 6-character shortcodes from Telegram tickets
+3. **Telegram Welcome Message** - Restored formatting with emojis after cache-related display bug was identified
+
+### Previous (v2.8.1 - Jan 26, 2026)
 
 1. **Passenger Telegram Notifications** - Tickets sent directly to passengers who have Telegram accounts (by phone lookup)
 2. **Track API Fix** - Fixed missing fields (commission, commissionVAT, totalAmount, status, createdAt) in track API response
@@ -243,6 +249,7 @@ model TelegramSession {
 
 | Bug | Fix |
 |-----|-----|
+| Telegram timezone (v2.8.2) | Use `Intl.DateTimeFormat` with `timeZone: "Africa/Addis_Ababa"` in formatters.ts |
 | Staff API role filter | Use `role: "COMPANY_ADMIN"` + `staffRole` filter |
 | Auto-halt re-trigger | `adminResumedFromAutoHalt` flag |
 | Commission VAT | 106 ETB = 100 ticket + 5 commission + 1 VAT |
