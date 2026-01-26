@@ -368,6 +368,7 @@ async function processDemoPayment(
     // Send ticket details
     const booking = result.booking;
     const trip = booking.trip;
+    const baseUrl = process.env.NEXTAUTH_URL || "https://i-ticket.et";
 
     const ticketMessage =
       lang === "EN"
@@ -377,26 +378,28 @@ async function processDemoPayment(
 📍 ${formatRoute(trip.origin, trip.destination)}
 📅 ${formatDateTime(trip.departureTime, lang)}
 
-*Passengers:*
-${result.tickets.map((t, i) => `${i + 1}. ${t.passengerName} - Seat ${t.seatNumber}`).join("\n")}
+*Tickets:*
+${result.tickets.map((t, i) => `${i + 1}. ${t.passengerName} - Seat ${t.seatNumber}
+   🎟️ Code: \`${t.shortCode}\``).join("\n")}
 
-*Booking ID:* \`${booking.id.slice(0, 8)}\`
+📱 Show your ticket code when boarding.
 
-📱 Show your QR code when boarding.
-Track your ticket: ${process.env.NEXTAUTH_URL || "https://i-ticket.et"}/track/${result.tickets[0]?.shortCode}`
+🔗 *Track any ticket:*
+${baseUrl}/track/[CODE]`
         : `🎫 *ትኬቶችዎ*
 
 🚌 ${trip.company.name}
 📍 ${formatRoute(trip.origin, trip.destination)}
 📅 ${formatDateTime(trip.departureTime, lang)}
 
-*ተሳፋሪዎች:*
-${result.tickets.map((t, i) => `${i + 1}. ${t.passengerName} - መቀመጫ ${t.seatNumber}`).join("\n")}
+*ትኬቶች:*
+${result.tickets.map((t, i) => `${i + 1}. ${t.passengerName} - መቀመጫ ${t.seatNumber}
+   🎟️ ኮድ: \`${t.shortCode}\``).join("\n")}
 
-*የማስያዝ መለያ:* \`${booking.id.slice(0, 8)}\`
+📱 ሲጓዙ የትኬት ኮድዎን ያሳዩ።
 
-📱 ሲጓዙ QR ኮድዎን ያሳዩ።
-ትኬትዎን ይከታተሉ: ${process.env.NEXTAUTH_URL || "https://i-ticket.et"}/track/${result.tickets[0]?.shortCode}`;
+🔗 *ማንኛውንም ትኬት ይከታተሉ:*
+${baseUrl}/track/[CODE]`;
 
     await ctx.reply(ticketMessage, {
       parse_mode: "Markdown",

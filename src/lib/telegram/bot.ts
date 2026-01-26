@@ -292,35 +292,11 @@ export function initializeBot() {
             return;
           }
 
-          // Update passenger name
+          // Update passenger name and set placeholder for ID (ID verified at boarding)
           passengerData[currentPassengerIndex].name = text.trim();
+          passengerData[currentPassengerIndex].nationalId = "VERIFY_AT_BOARDING";
 
-          await updateSessionState(ctx.chat.id, "ASK_PASSENGER_ID", {
-            passengerData,
-          });
-
-          const { handlePassengerID } = await import("./scenes/booking-wizard");
-          await handlePassengerID(ctx);
-          break;
-        }
-
-        case "ASK_PASSENGER_ID": {
-          // Validate ID
-          if (text.trim().length < 3) {
-            await ctx.reply(getMessage("invalidID", lang));
-            return;
-          }
-
-          const { passengerData, currentPassengerIndex } = ctx.session?.data || {};
-
-          if (!passengerData) {
-            await ctx.reply(getMessage("errorGeneral", lang));
-            return;
-          }
-
-          // Update passenger ID
-          passengerData[currentPassengerIndex].nationalId = text.trim();
-
+          // Skip ID collection - go directly to phone
           await updateSessionState(ctx.chat.id, "ASK_PASSENGER_PHONE", {
             passengerData,
           });

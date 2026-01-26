@@ -64,7 +64,7 @@ This will be used for:
 • Payment verification
 • Booking notifications
 
-Tap the button below to share your number. 👇`,
+👇 *Look at your keyboard below* - tap the blue "📱 Share Phone Number" button that appeared at the bottom of your screen.`,
     AM: `📱 *የስልክ ማረጋገጫ ያስፈልጋል*
 
 ትኬት ለማስያዝ እባክዎን የስልክ ቁጥርዎን ያጋሩ።
@@ -74,7 +74,7 @@ Tap the button below to share your number. 👇`,
 • የክፍያ ማረጋገጫ
 • የማስያዝ ማሳወቂያዎች
 
-ቁጥርዎን ለማጋራት ከታች ያለውን ቁልፍ ይንኩ። 👇`,
+👇 *ከታች ያለውን ቁልፎን ይመልከቱ* - በስክሪንዎ ታችኛው ክፍል "📱 የስልክ ቁጥር ያጋሩ" የሚለውን ሰማያዊ ቁልፍ ይንኩ።`,
   },
 
   phoneVerified: {
@@ -240,16 +240,16 @@ Select your seats:`,
 
   askPassengerID: {
     EN: (index: number, total: number) =>
-      `🆔 *Passenger ${index + 1} of ${total} - National ID*\n\nPlease enter passenger's national ID number:`,
+      `🆔 *Passenger ${index + 1} of ${total} - National ID (Optional)*\n\nEnter passenger's ID number or tap "Skip" to continue.\n\n_(You'll need to show ID when boarding)_`,
     AM: (index: number, total: number) =>
-      `🆔 *ተሳፋሪ ${index + 1} ከ ${total} - የመታወቂያ ቁጥር*\n\nእባክዎን የተሳፋሪውን የመታወቂያ ቁጥር ያስገቡ:`,
+      `🆔 *ተሳፋሪ ${index + 1} ከ ${total} - የመታወቂያ ቁጥር (አማራጭ)*\n\nየተሳፋሪውን የመታወቂያ ቁጥር ያስገቡ ወይም ለመቀጠል "ዝለል" ይንኩ።\n\n_(ሲጓዙ መታወቂያ ማሳየት ያስፈልግዎታል)_`,
   },
 
   askPassengerPhone: {
     EN: (index: number, total: number) =>
-      `📱 *Passenger ${index + 1} of ${total} - Phone Number*\n\nPlease enter passenger's phone number:`,
+      `📱 *Passenger ${index + 1} of ${total} - Phone Number*\n\nPlease enter passenger's phone number:\n\n⚠️ _Note: You'll need to show ID matching your name when boarding._`,
     AM: (index: number, total: number) =>
-      `📱 *ተሳፋሪ ${index + 1} ከ ${total} - የስልክ ቁጥር*\n\nእባክዎን የተሳፋሪውን የስልክ ቁጥር ያስገቡ:`,
+      `📱 *ተሳፋሪ ${index + 1} ከ ${total} - የስልክ ቁጥር*\n\nእባክዎን የተሳፋሪውን የስልክ ቁጥር ያስገቡ:\n\n⚠️ _ማስታወሻ: ሲጓዙ ስምዎን የሚያሳይ መታወቂያ ማቅረብ ያስፈልግዎታል።_`,
   },
 
   invalidName: {
@@ -332,6 +332,8 @@ Your booking is confirmed!
 🎫 Your tickets have been generated.
 📧 Confirmation sent to your phone.
 
+💡 Use /mytickets anytime to view your QR codes.
+
 Downloading tickets... 📥`,
     AM: `✅ *ክፍያ ተሳክቷል!*
 
@@ -339,6 +341,8 @@ Downloading tickets... 📥`,
 
 🎫 ትኬቶችዎ ተፈጥረዋል።
 📧 ማረጋገጫ ወደ ስልክዎ ተልኳል።
+
+💡 QR ኮድዎን በማንኛውም ጊዜ ለማየት /mytickets ይጠቀሙ።
 
 ትኬቶች በማውረድ ላይ... 📥`,
   },

@@ -20,7 +20,10 @@ import {
   UserCheck,
   Ticket,
   Truck,
-  CalendarDays
+  CalendarDays,
+  FileText,
+  Save,
+  Search
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -88,6 +91,27 @@ export default function NewTripPage() {
     status: string;
     totalSeats: number;
   }>>([])
+
+  // Template state
+  const [templates, setTemplates] = useState<Array<{
+    id: string;
+    name: string;
+    origin: string;
+    destination: string;
+    estimatedDuration: number;
+    distance: number | null;
+    price: number;
+    busType: string;
+    hasWater: boolean;
+    hasFood: boolean;
+    intermediateStops: string | null;
+    timesUsed: number;
+  }>>([])
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("")
+  const [templateSearch, setTemplateSearch] = useState("")
+  const [showSaveTemplate, setShowSaveTemplate] = useState(false)
+  const [templateName, setTemplateName] = useState("")
+  const [savingTemplate, setSavingTemplate] = useState(false)
 
   // Batch mode state
   const [batchMode, setBatchMode] = useState(false)
@@ -198,6 +222,121 @@ export default function NewTripPage() {
     }
     fetchVehicles()
   }, [])
+
+  // Fetch trip templates
+  useEffect(() => {
+    async function fetchTemplates() {
+      try {
+        const response = await fetch("/api/company/trip-templates")
+        const data = await response.json()
+        if (data.templates) {
+          setTemplates(data.templates)
+        }
+      } catch (error) {
+        console.error("Failed to fetch templates:", error)
+      }
+    }
+    fetchTemplates()
+  }, [])
+
+  // Apply template to form
+  const applyTemplate = (templateId: string) => {
+    const template = templates.find(t => t.id === templateId)
+    if (!template) {
+      setSelectedTemplateId("")
+      return
+    }
+
+    setSelectedTemplateId(templateId)
+    setFormData(prev => ({
+      ...prev,
+      origin: template.origin,
+      destination: template.destination,
+      estimatedDuration: template.estimatedDuration.toString(),
+      distance: template.distance?.toString() || "",
+      price: template.price.toString(),
+      busType: template.busType,
+      hasWater: template.hasWater,
+      hasFood: template.hasFood,
+    }))
+
+    // Handle intermediate stops
+    if (template.intermediateStops) {
+      try {
+        const stops = JSON.parse(template.intermediateStops)
+        setIntermediateStops(Array.isArray(stops) ? stops : [])
+      } catch {
+        setIntermediateStops([])
+      }
+    } else {
+      setIntermediateStops([])
+    }
+
+    toast.success(`Template "${template.name}" loaded`)
+  }
+
+  // Save current form as template
+  const saveAsTemplate = async () => {
+    if (!templateName.trim()) {
+      toast.error("Please enter a template name")
+      return
+    }
+
+    const finalOrigin = formData.origin === "__custom__" ? customOrigin : formData.origin
+    const finalDestination = formData.destination === "__custom__" ? customDestination : formData.destination
+
+    if (!finalOrigin || !finalDestination || !formData.estimatedDuration || !formData.price) {
+      toast.error("Please fill in origin, destination, duration, and price first")
+      return
+    }
+
+    setSavingTemplate(true)
+    try {
+      const response = await fetch("/api/company/trip-templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: templateName.trim(),
+          origin: finalOrigin,
+          destination: finalDestination,
+          estimatedDuration: parseInt(formData.estimatedDuration),
+          distance: formData.distance ? parseInt(formData.distance) : null,
+          price: parseFloat(formData.price),
+          busType: formData.busType,
+          hasWater: formData.hasWater,
+          hasFood: formData.hasFood,
+          intermediateStops: intermediateStops.length > 0 ? JSON.stringify(intermediateStops) : null,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success(`Template "${templateName}" saved!`)
+        setShowSaveTemplate(false)
+        setTemplateName("")
+        // Refresh templates list
+        const templatesResponse = await fetch("/api/company/trip-templates")
+        const templatesData = await templatesResponse.json()
+        if (templatesData.templates) {
+          setTemplates(templatesData.templates)
+        }
+      } else {
+        toast.error(data.error || "Failed to save template")
+      }
+    } catch (error) {
+      toast.error("Failed to save template")
+    } finally {
+      setSavingTemplate(false)
+    }
+  }
+
+  // Filter templates by search
+  const filteredTemplates = templates.filter(t =>
+    t.name.toLowerCase().includes(templateSearch.toLowerCase()) ||
+    t.origin.toLowerCase().includes(templateSearch.toLowerCase()) ||
+    t.destination.toLowerCase().includes(templateSearch.toLowerCase())
+  )
 
   // Redirect if not company admin
   if (status === "authenticated" && session?.user?.role !== "COMPANY_ADMIN") {
@@ -472,6 +611,54 @@ export default function NewTripPage() {
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
                   <AlertCircle className="h-4 w-4" />
                   <span className="whitespace-pre-wrap">{error}</span>
+                </div>
+              )}
+
+              {/* Load Template Section */}
+              {templates.length > 0 && (
+                <div className="p-4 rounded-lg border bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    <Label className="text-base font-medium">Load from Template</Label>
+                    <span className="text-xs text-muted-foreground">({templates.length} saved)</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search templates by name or route..."
+                        value={templateSearch}
+                        onChange={(e) => setTemplateSearch(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    <Select
+                      value={selectedTemplateId}
+                      onValueChange={applyTemplate}
+                    >
+                      <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Select template" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">-- No template --</SelectItem>
+                        {filteredTemplates.map((template) => (
+                          <SelectItem key={template.id} value={template.id}>
+                            <div className="flex flex-col">
+                              <span>{template.name}</span>
+                              <span className="text-xs text-muted-foreground">
+                                {template.origin} → {template.destination}
+                              </span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {selectedTemplateId && selectedTemplateId !== "__none__" && (
+                    <p className="text-xs text-blue-600 mt-2">
+                      Template loaded. You can modify any field before creating the trip.
+                    </p>
+                  )}
                 </div>
               )}
 
@@ -1182,6 +1369,60 @@ export default function NewTripPage() {
                   )}
                 </div>
               )}
+
+              {/* Save as Template Option */}
+              <div className="p-4 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30">
+                {!showSaveTemplate ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setShowSaveTemplate(true)}
+                    className="w-full text-muted-foreground hover:text-foreground"
+                  >
+                    <Save className="h-4 w-4 mr-2" />
+                    Save route settings as template for future trips
+                  </Button>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Save className="h-4 w-4 text-green-600" />
+                      <Label className="font-medium">Save as Template</Label>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Save origin, destination, duration, price, and amenities as a reusable template.
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Template name (e.g., 'Addis-Dire Standard')"
+                        value={templateName}
+                        onChange={(e) => setTemplateName(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowSaveTemplate(false)
+                          setTemplateName("")
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        onClick={saveAsTemplate}
+                        disabled={savingTemplate || !templateName.trim()}
+                      >
+                        {savingTemplate ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Save"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Submit */}
               <div className="flex gap-4 pt-4">

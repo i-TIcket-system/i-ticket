@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.8.2 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.9.0 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md`
 
 ---
@@ -66,7 +66,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 ## DATABASE MODELS
 
-**Core**: User, Company, Trip, Booking, Passenger, Ticket, Payment, City
+**Core**: User, Company, Trip, TripTemplate, Booking, Passenger, Ticket, Payment, City
 **Fleet**: Vehicle, MaintenanceSchedule, WorkOrder, VehicleInspection
 **Comms**: TripMessage, Notification, SupportTicket, CompanyMessage
 **Sales**: SalesPerson, SalesReferral, SalesCommission
@@ -80,7 +80,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | Category | Routes |
 |----------|--------|
 | **Public** | `/api/trips`, `/api/track/[code]` |
-| **Company** | `/api/company/trips`, `/api/company/staff`, `/api/company/vehicles` |
+| **Company** | `/api/company/trips`, `/api/company/trip-templates`, `/api/company/staff`, `/api/company/vehicles` |
 | **Admin** | `/api/admin/stats`, `/api/admin/companies`, `/api/admin/trips` |
 | **Cron** | `/api/cron/cleanup`, `/api/cron/trip-reminders` |
 | **Telegram** | `/api/telegram/webhook` (bot updates) |
@@ -210,7 +210,15 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.8.2 - Jan 26, 2026)
+## RECENT UPDATES (v2.9.0 - Jan 26, 2026)
+
+1. **Trip Templates** - Save and load route templates for quick trip creation. Templates store origin, destination, duration, distance, price, bus type, and amenities.
+2. **CRITICAL: Telegram Duration Bug Fix** - Bot now correctly displays trip duration (was showing "540 ሰዓት" instead of "9h"). Fixed formatDuration to expect minutes.
+3. **ID Optional for Booking** - National ID is now optional for both Telegram bot and web booking. Message: "You'll need to show ID matching your name when boarding."
+4. **Telegram UX Improvements** - Clearer phone keyboard prompt, /mytickets hint after payment, individual ticket codes shown for each passenger.
+5. **Navbar Guest Display** - Customers without names now show phone number in navbar instead of blank.
+
+### Previous (v2.8.2 - Jan 26, 2026)
 
 1. **CRITICAL: Telegram Timezone Fix** - Bot now displays dates/times in Ethiopia Time (EAT = UTC+3) instead of UTC. Trip times now match PWA exactly.
 2. **Track Page Validation** - Simplified validation to accept 6-character shortcodes from Telegram tickets
@@ -249,6 +257,7 @@ model TelegramSession {
 
 | Bug | Fix |
 |-----|-----|
+| Telegram duration (v2.9.0) | `formatDuration()` now expects minutes (DB stores minutes, not hours) |
 | Telegram timezone (v2.8.2) | Use `Intl.DateTimeFormat` with `timeZone: "Africa/Addis_Ababa"` in formatters.ts |
 | Staff API role filter | Use `role: "COMPANY_ADMIN"` + `staffRole` filter |
 | Auto-halt re-trigger | `adminResumedFromAutoHalt` flag |

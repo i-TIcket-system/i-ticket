@@ -217,6 +217,16 @@ export function seatPreferenceKeyboard(lang: Language = "EN") {
 }
 
 /**
+ * Skip ID keyboard (for optional ID input)
+ */
+export function skipIdKeyboard(lang: Language = "EN") {
+  return Markup.inlineKeyboard([
+    [Markup.button.callback(lang === "EN" ? "⏭️ Skip" : "⏭️ ዝለል", "skip_id")],
+    [Markup.button.callback(getMessage("cancelButton", lang), "action_cancel")],
+  ]);
+}
+
+/**
  * Seat map keyboard (4-column layout with aisle spacing)
  * @param totalSeats - Total number of seats in the bus
  * @param occupiedSeats - Array of occupied seat numbers

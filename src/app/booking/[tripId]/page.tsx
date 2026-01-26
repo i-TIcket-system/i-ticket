@@ -287,12 +287,9 @@ export default function BookingPage() {
         errors[`passenger-${i}-name`] = "Name is required"
       }
 
-      // Non-child passengers need ID and phone
-      // First passenger always needs ID and phone (for booking contact)
+      // Non-child passengers need phone (ID is optional - verified at boarding)
+      // First passenger always needs phone (for booking contact)
       if (!passenger.isChild || i === 0) {
-        if (!passenger.nationalId || passenger.nationalId.trim() === "") {
-          errors[`passenger-${i}-nationalId`] = "ID is required"
-        }
         if (!passenger.phone || passenger.phone.trim() === "") {
           errors[`passenger-${i}-phone`] = "Phone is required"
         }
@@ -648,7 +645,7 @@ export default function BookingPage() {
 
                       <div className="space-y-2">
                         <Label>
-                          ID Number/Passport {passenger.isChild ? "(Optional)" : "*"}
+                          ID Number/Passport (Optional)
                         </Label>
                         <div className="relative">
                           <BadgeCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -658,13 +655,12 @@ export default function BookingPage() {
                             onChange={(e) => updatePassenger(index, "nationalId", e.target.value)}
                             className={`pl-10 ${passenger.isChild ? 'bg-gray-100 dark:bg-gray-800/60 cursor-not-allowed text-muted-foreground/70 border-dashed' : ''}`}
                             disabled={passenger.isChild}
-                            required={!passenger.isChild}
                           />
-                          {passenger.isChild && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Children under 12 don't need ID verification
-                            </p>
-                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {passenger.isChild
+                              ? "Children under 12 don't need ID verification"
+                              : "You'll need to show ID matching your name when boarding"}
+                          </p>
                         </div>
                       </div>
 

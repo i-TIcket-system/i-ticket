@@ -56,10 +56,11 @@ export function formatDateTime(date: Date | string, lang: Language = "EN"): stri
 
 /**
  * Format trip duration
+ * @param minutes - Duration in minutes (as stored in database)
  */
-export function formatDuration(hours: number, lang: Language = "EN"): string {
-  const h = Math.floor(hours);
-  const m = Math.round((hours - h) * 60);
+export function formatDuration(minutes: number, lang: Language = "EN"): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
 
   if (lang === "AM") {
     return m > 0 ? `${h} ሰዓት ${m} ደቂቃ` : `${h} ሰዓት`;

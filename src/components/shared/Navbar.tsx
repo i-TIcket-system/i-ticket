@@ -142,11 +142,11 @@ export function Navbar() {
                   <Button variant="ghost" className="relative h-10 gap-2 pl-2 pr-3 rounded-full hover:bg-muted">
                     <Avatar className="h-8 w-8 border-2 border-primary/30">
                       <AvatarFallback className="text-white text-sm font-medium" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
-                        {session.user.name?.charAt(0).toUpperCase()}
+                        {(session.user.name?.charAt(0) || session.user.phone?.slice(-2) || "U").toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium text-foreground hidden lg:block max-w-[100px] truncate">
-                      {session.user.name?.split(" ")[0]}
+                      {session.user.name?.split(" ")[0] || session.user.phone}
                     </span>
                     <ChevronDown className="h-4 w-4 text-muted-foreground" />
                   </Button>
@@ -155,12 +155,12 @@ export function Navbar() {
                   <div className="flex items-center gap-3 p-3 border-b">
                     <Avatar className="h-10 w-10 border-2 border-primary/30">
                       <AvatarFallback className="text-white font-medium" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
-                        {session.user.name?.charAt(0).toUpperCase()}
+                        {(session.user.name?.charAt(0) || session.user.phone?.slice(-2) || "U").toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col space-y-0.5 leading-none">
-                      <p className="font-medium text-foreground">{session.user.name}</p>
-                      <p className="text-xs text-muted-foreground">{session.user.phone}</p>
+                      <p className="font-medium text-foreground">{session.user.name || session.user.phone}</p>
+                      {session.user.name && <p className="text-xs text-muted-foreground">{session.user.phone}</p>}
                     </div>
                   </div>
                   <div className="p-1">

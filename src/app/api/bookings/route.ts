@@ -75,10 +75,10 @@ export async function POST(request: NextRequest) {
       // Guest checkout - create guest user from first passenger's phone
       const firstPassenger = passengers[0];
 
-      // Validate first passenger has required fields
-      if (!firstPassenger.name || !firstPassenger.nationalId || !firstPassenger.phone) {
+      // Validate first passenger has required fields (ID is optional - verified at boarding)
+      if (!firstPassenger.name || !firstPassenger.phone) {
         return NextResponse.json(
-          { error: "First passenger must have name, ID, and phone number" },
+          { error: "First passenger must have name and phone number" },
           { status: 400 }
         );
       }
@@ -138,19 +138,19 @@ export async function POST(request: NextRequest) {
     // SECURITY: Validate passenger data
     let childCount = 0
     for (const passenger of passengers) {
-      // Validate required fields for non-child passengers
+      // Validate required fields for non-child passengers (ID is optional - verified at boarding)
       if (!passenger.isChild) {
-        if (!passenger.name || !passenger.nationalId) {
+        if (!passenger.name) {
           return NextResponse.json(
-            { error: "All passengers must have name and national ID" },
+            { error: "All passengers must have a name" },
             { status: 400 }
           )
         }
 
-        // Validate national ID format (basic check)
-        if (passenger.nationalId.length < 4) {
+        // Validate national ID format (basic check) - only if provided
+        if (passenger.nationalId && passenger.nationalId.length > 0 && passenger.nationalId.length < 4) {
           return NextResponse.json(
-            { error: "Invalid national ID format" },
+            { error: "Invalid national ID format (minimum 4 characters)" },
             { status: 400 }
           )
         }
@@ -339,7 +339,7 @@ export async function POST(request: NextRequest) {
             passengers: {
               create: passengers.map((p: any, index: number) => ({
                 name: p.name,
-                nationalId: p.isChild ? `CHILD-${Date.now()}-${index}` : p.nationalId,
+                nationalId: p.isChild ? `CHILD-${Date.now()}-${index}` : (p.nationalId || "VERIFY_AT_BOARDING"),
                 phone: p.isChild ? (passengers[0]?.phone || smsSession?.phone || "CHILD") : (p.phone || smsSession?.phone || session?.user?.phone),
                 seatNumber: seatNumbers[index],
                 specialNeeds: p.isChild ? "child" : (p.specialNeeds || null),
@@ -386,7 +386,7 @@ export async function POST(request: NextRequest) {
             passengers: {
               create: passengers.map((p: any, index: number) => ({
                 name: p.name,
-                nationalId: p.isChild ? `CHILD-${Date.now()}-${index}` : p.nationalId,
+                nationalId: p.isChild ? `CHILD-${Date.now()}-${index}` : (p.nationalId || "VERIFY_AT_BOARDING"),
                 phone: p.isChild ? (passengers[0]?.phone || smsSession?.phone || "CHILD") : (p.phone || smsSession?.phone || session?.user?.phone),
                 seatNumber: seatNumbers[index],
                 specialNeeds: p.isChild ? "child" : (p.specialNeeds || null),
