@@ -33,13 +33,11 @@ export async function handleStart(ctx: TelegramContext) {
     if (isAuthenticated(ctx)) {
       // Existing user - show main menu
       await ctx.reply(getMessage("welcome", lang), {
-        parse_mode: "Markdown",
         ...mainMenuKeyboard(lang),
       });
     } else {
       // New user - welcome message + language selection
       await ctx.reply(getMessage("welcome", lang), {
-        parse_mode: "Markdown",
         ...languageKeyboard(),
       });
     }
@@ -213,7 +211,6 @@ export async function handleLanguageSelection(ctx: TelegramContext, language: "E
       const welcomeMsg = getMessage("welcome", language);
       console.log("[DEBUG] Welcome message:", welcomeMsg);
       await ctx.reply(welcomeMsg, {
-        parse_mode: "Markdown",
         ...mainMenuKeyboard(language),
       });
     }
@@ -251,7 +248,6 @@ export async function handlePhoneContact(ctx: TelegramContext) {
 
       // Welcome message
       await ctx.reply(getMessage("welcome", lang), {
-        parse_mode: "Markdown",
         ...mainMenuKeyboard(lang),
       });
 
@@ -320,11 +316,8 @@ export async function handleActionCallback(ctx: TelegramContext, action: string)
         if (ctx.chat) {
           await resetSession(ctx.chat.id);
         }
-        await ctx.editMessageText(getMessage("cancelled", lang), {
-          parse_mode: "Markdown",
-        });
+        await ctx.editMessageText(getMessage("cancelled", lang));
         await ctx.reply(getMessage("welcome", lang), {
-          parse_mode: "Markdown",
           ...mainMenuKeyboard(lang),
         });
         break;
