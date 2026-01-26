@@ -441,20 +441,9 @@ export default function HomePage() {
                           return
                         }
 
-                        // Strict validation: Must match proper ticket patterns
-                        const ticketPattern = /^TKT-[A-Z0-9]{6,}$/i
-                        const bookingCodePattern = /^BKG-[A-Z0-9]{6,}$/i
-                        const clickupPattern = /^CLK-[A-Z0-9]{10,}$/i
-                        const bookingIdPattern = /^[A-Z0-9]{25,}$/i
-
-                        const isValidPattern =
-                          ticketPattern.test(code) ||
-                          bookingCodePattern.test(code) ||
-                          clickupPattern.test(code) ||
-                          bookingIdPattern.test(code)
-
-                        if (!isValidPattern) {
-                          toast.error("Not a valid ticket pattern. Use: TKT-ABC123, BKG-ABC123, or booking ID")
+                        // Simple validation: minimum 6 characters
+                        if (code.length < 6) {
+                          toast.error("Ticket code must be at least 6 characters")
                           return
                         }
 
@@ -465,7 +454,7 @@ export default function HomePage() {
                     >
                       <Input
                         type="text"
-                        placeholder="Enter code (e.g., TKT-ABC123)"
+                        placeholder="Enter your 6-character ticket code"
                         value={trackingCode}
                         onChange={(e) => setTrackingCode(e.target.value.toUpperCase())}
                         className="flex-1 md:w-64 h-12"
