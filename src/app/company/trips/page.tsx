@@ -611,7 +611,15 @@ export default function CompanyTripsPage() {
               ) : (
                 filteredTrips
                   .sort((a, b) => {
-                    // Sort trips: SCHEDULED and BOARDING first, then DEPARTED, then COMPLETED/CANCELLED
+                    // Sort trips: future SCHEDULED first, then BOARDING, then past/DEPARTED, then COMPLETED/CANCELLED
+                    const now = new Date()
+                    const aIsPast = new Date(a.departureTime) < now
+                    const bIsPast = new Date(b.departureTime) < now
+
+                    // Derive effective status for sorting
+                    const aEffectiveStatus = aIsPast && a.status === "SCHEDULED" ? "DEPARTED" : a.status
+                    const bEffectiveStatus = bIsPast && b.status === "SCHEDULED" ? "DEPARTED" : b.status
+
                     const statusOrder: Record<string, number> = {
                       SCHEDULED: 0,
                       BOARDING: 1,
@@ -619,13 +627,27 @@ export default function CompanyTripsPage() {
                       COMPLETED: 3,
                       CANCELLED: 4,
                     }
-                    return (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0)
+                    return (statusOrder[aEffectiveStatus] || 0) - (statusOrder[bEffectiveStatus] || 0)
                   })
                   .map((trip) => {
                   const slotsPercentage = getSlotsPercentage(trip.availableSlots, trip.totalSlots)
                   const lowSlots = isLowSlots(trip.availableSlots, trip.totalSlots)
                   const isSelected = selectedTrips.has(trip.id)
-                  const isDeparted = trip.status === "DEPARTED" || trip.status === "COMPLETED"
+
+                  // RULE-003: Derive correct status based on departure time
+                  const departureTime = new Date(trip.departureTime)
+                  const now = new Date()
+                  const isPastTrip = departureTime < now
+
+                  // Derive effective status: past SCHEDULED trips should show as DEPARTED
+                  const effectiveStatus = isPastTrip && trip.status === "SCHEDULED"
+                    ? "DEPARTED"
+                    : trip.status
+
+                  // Past trips should always be halted (view-only per RULE-003)
+                  const effectiveHalted = isPastTrip || trip.bookingHalted
+
+                  const isDeparted = effectiveStatus === "DEPARTED" || effectiveStatus === "COMPLETED"
 
                   return (
                     <TableRow
@@ -680,33 +702,33 @@ export default function CompanyTripsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1.5">
-                          {/* Trip Status Badge - Primary */}
-                          <Badge className={`w-fit text-xs ${
-                            trip.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
-                            trip.status === 'BOARDING' ? 'bg-yellow-100 text-yellow-800' :
-                            trip.status === 'DEPARTED' ? 'bg-purple-100 text-purple-800' :
-                            trip.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                            trip.status === 'CANCELLED' ? 'bg-red-100 text-red-800' : ''
+                          {/* Trip Status Badge - Primary with high contrast colors */}
+                          <Badge className={`w-fit text-xs font-semibold ${
+                            effectiveStatus === 'SCHEDULED' ? 'bg-blue-600 text-white' :
+                            effectiveStatus === 'BOARDING' ? 'bg-amber-500 text-white' :
+                            effectiveStatus === 'DEPARTED' ? 'bg-purple-600 text-white' :
+                            effectiveStatus === 'COMPLETED' ? 'bg-emerald-600 text-white' :
+                            effectiveStatus === 'CANCELLED' ? 'bg-red-600 text-white' : ''
                           }`}>
-                            {trip.status}
+                            {effectiveStatus}
                           </Badge>
 
-                          {/* Secondary Status - Horizontal compact badges */}
+                          {/* Secondary Status - Booking availability */}
                           <div className="flex items-center gap-1">
-                            {trip.bookingHalted ? (
+                            {effectiveHalted ? (
                               <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5">
                                 <X className="h-2.5 w-2.5 mr-0.5" />
-                                Halted
+                                {isPastTrip ? 'Closed' : 'Halted'}
                               </Badge>
                             ) : trip.isActive ? (
-                              <Badge variant="default" className="text-[10px] px-1.5 py-0 h-5">
+                              <Badge className="text-[10px] px-1.5 py-0 h-5 bg-green-600 text-white">
                                 <Check className="h-2.5 w-2.5 mr-0.5" />
                                 Active
                               </Badge>
                             ) : (
                               <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">Inactive</Badge>
                             )}
-                            {lowSlots && !trip.bookingHalted && (
+                            {lowSlots && !effectiveHalted && (
                               <Badge variant="destructive" className="text-[10px] px-1.5 py-0 h-5">
                                 <AlertTriangle className="h-2.5 w-2.5 mr-0.5" />
                                 Low

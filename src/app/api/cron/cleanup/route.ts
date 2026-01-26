@@ -260,13 +260,14 @@ async function updateOldTripStatuses() {
         );
 
         await prisma.$transaction(async (tx) => {
-          // Update trip status
+          // RULE-003: Update trip status and force bookingHalted for view-only status
           await tx.trip.update({
             where: { id: trip.id },
             data: {
               status: newStatus,
               actualDepartureTime,
               actualArrivalTime,
+              bookingHalted: true, // RULE-003: Always halt booking for COMPLETED/CANCELLED
             },
           });
 
