@@ -3,8 +3,10 @@
  * Utilities for formatting data into user-friendly messages
  */
 
-import { format, parseISO } from "date-fns";
 import { Language } from "../messages";
+
+// Ethiopia timezone
+const ETHIOPIA_TIMEZONE = "Africa/Addis_Ababa";
 
 /**
  * Format currency (ETB)
@@ -14,32 +16,42 @@ export function formatCurrency(amount: number): string {
 }
 
 /**
- * Format date for display
+ * Format date for display (in Ethiopia timezone)
  */
 export function formatDate(date: Date | string, lang: Language = "EN"): string {
-  const dateObj = typeof date === "string" ? parseISO(date) : date;
+  const dateObj = typeof date === "string" ? new Date(date) : date;
 
-  if (lang === "AM") {
-    // Amharic date format
-    return format(dateObj, "MMM dd, yyyy", { locale: undefined });
-  }
-
-  return format(dateObj, "MMM dd, yyyy");
+  return new Intl.DateTimeFormat(lang === "AM" ? "am-ET" : "en-ET", {
+    dateStyle: "medium",
+    timeZone: ETHIOPIA_TIMEZONE,
+  }).format(dateObj);
 }
 
 /**
- * Format time for display
+ * Format time for display (in Ethiopia timezone)
  */
 export function formatTime(date: Date | string): string {
-  const dateObj = typeof date === "string" ? parseISO(date) : date;
-  return format(dateObj, "h:mm a");
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+
+  return new Intl.DateTimeFormat("en-ET", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: ETHIOPIA_TIMEZONE,
+  }).format(dateObj);
 }
 
 /**
- * Format date and time for display
+ * Format date and time for display (in Ethiopia timezone)
  */
 export function formatDateTime(date: Date | string, lang: Language = "EN"): string {
-  return `${formatDate(date, lang)} ${formatTime(date)}`;
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+
+  return new Intl.DateTimeFormat(lang === "AM" ? "am-ET" : "en-ET", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: ETHIOPIA_TIMEZONE,
+  }).format(dateObj);
 }
 
 /**
