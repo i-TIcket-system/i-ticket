@@ -403,13 +403,21 @@ ${result.tickets.map((t, i) => `${i + 1}. ${t.passengerName} - መቀመጫ ${t.
       ...mainMenuKeyboard(lang),
     });
 
-    // Send SMS confirmation to passengers
+    // Send SMS confirmation to booking user
     try {
       await sendTicketsSms(result.booking, result.tickets);
       console.log(`[Telegram Payment] SMS sent for booking ${bookingId}`);
     } catch (smsError) {
       console.error("[Telegram Payment] SMS sending failed:", smsError);
       // Don't fail the booking if SMS fails
+    }
+
+    // Send Telegram notifications to other passengers (if they have accounts)
+    try {
+      await sendTicketsToPassengersTelegram(result.booking, result.tickets);
+    } catch (telegramError) {
+      console.error("[Telegram Payment] Passenger Telegram notifications failed:", telegramError);
+      // Don't fail if passenger notifications fail
     }
 
     // Reset session
@@ -528,13 +536,21 @@ export async function handlePaymentCallback(
         await bot.telegram.sendMessage(chatId, ticketMessage);
       }
 
-      // Send SMS confirmation to passengers
+      // Send SMS confirmation to booking user
       try {
         await sendTicketsSms(result.booking, result.tickets);
         console.log(`[Telegram Payment] SMS sent for callback booking ${bookingId}`);
       } catch (smsError) {
         console.error("[Telegram Payment] SMS sending failed:", smsError);
         // Don't fail the callback if SMS fails
+      }
+
+      // Send Telegram notifications to other passengers (if they have accounts)
+      try {
+        await sendTicketsToPassengersTelegram(result.booking, result.tickets);
+      } catch (telegramError) {
+        console.error("[Telegram Payment] Passenger Telegram notifications failed:", telegramError);
+        // Don't fail if passenger notifications fail
       }
     } else {
       // Payment failed
@@ -549,6 +565,139 @@ export async function handlePaymentCallback(
     }
   } catch (error) {
     console.error("[Telegram Payment] Callback processing error:", error);
+  }
+}
+
+/**
+ * Send tickets to passengers via Telegram if they have accounts
+ * Looks up each passenger's phone in TelegramSession
+ */
+async function sendTicketsToPassengersTelegram(booking: any, tickets: any[]) {
+  const { bot } = await import("../bot");
+  if (!bot) {
+    console.log("[Telegram Tickets] Bot not available, skipping passenger notifications");
+    return;
+  }
+
+  const { trip, passengers } = booking;
+
+  // Format trip info
+  const departureTime = new Date(trip.departureTime);
+  const dateStr = departureTime.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const timeStr = departureTime.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  // Get the booking user's chat ID to avoid duplicate notifications
+  const bookingUserSession = await prisma.telegramSession.findFirst({
+    where: { userId: booking.userId },
+    select: { chatId: true },
+  });
+  const bookingUserChatId = bookingUserSession ? Number(bookingUserSession.chatId) : null;
+
+  // Process each passenger
+  for (const passenger of passengers) {
+    // Find ticket for this passenger
+    const ticket = tickets.find(
+      (t: any) => t.passengerName === passenger.name && t.seatNumber === passenger.seatNumber
+    );
+
+    if (!ticket) continue;
+
+    // Skip if passenger doesn't have a phone number
+    if (!passenger.phone) continue;
+
+    // Look up if this passenger has a Telegram session (by phone)
+    const passengerSession = await prisma.telegramSession.findFirst({
+      where: {
+        user: {
+          phone: passenger.phone,
+        },
+      },
+      select: {
+        chatId: true,
+        language: true,
+        userId: true,
+      },
+    });
+
+    if (!passengerSession) continue;
+
+    const passengerChatId = Number(passengerSession.chatId);
+    const lang = (passengerSession.language as Language) || "EN";
+
+    // Skip if this is the same user who made the booking (they already get notified)
+    if (bookingUserChatId && passengerChatId === bookingUserChatId) {
+      console.log(`[Telegram Tickets] Skipping booking user ${passenger.phone} - already notified`);
+      continue;
+    }
+
+    try {
+      // Build personalized ticket message
+      const ticketMessage =
+        lang === "EN"
+          ? `🎫 *Your Ticket Has Been Booked!*
+
+Someone has booked a ticket for you on i-Ticket.
+
+🚌 *${trip.company.name}*
+📍 ${trip.origin} → ${trip.destination}
+📅 ${dateStr} at ${timeStr}
+
+👤 *Passenger:* ${passenger.name}
+💺 *Seat:* ${ticket.seatNumber}
+🎟️ *Code:* \`${ticket.shortCode}\`
+
+📱 Track your ticket: ${process.env.NEXTAUTH_URL || "https://i-ticket.et"}/track/${ticket.shortCode}
+
+Show this code to the conductor when boarding.`
+          : `🎫 *ትኬትዎ ተይዟል!*
+
+አንድ ሰው በ i-Ticket ላይ ትኬት ለእርስዎ አስይዟል።
+
+🚌 *${trip.company.name}*
+📍 ${trip.origin} → ${trip.destination}
+📅 ${dateStr} በ ${timeStr}
+
+👤 *ተሳፋሪ:* ${passenger.name}
+💺 *መቀመጫ:* ${ticket.seatNumber}
+🎟️ *ኮድ:* \`${ticket.shortCode}\`
+
+📱 ትኬትዎን ይከታተሉ: ${process.env.NEXTAUTH_URL || "https://i-ticket.et"}/track/${ticket.shortCode}
+
+ሲጓዙ ይህን ኮድ ለኮንዳክተሩ ያሳዩ።`;
+
+      // Send QR code image with caption if available
+      if (ticket.qrCode && ticket.qrCode.startsWith("data:image")) {
+        const base64Data = ticket.qrCode.split(",")[1];
+        const imageBuffer = Buffer.from(base64Data, "base64");
+
+        await bot.telegram.sendPhoto(
+          passengerChatId,
+          { source: imageBuffer },
+          {
+            caption: ticketMessage,
+            parse_mode: "Markdown",
+          }
+        );
+      } else {
+        // Send text message only
+        await bot.telegram.sendMessage(passengerChatId, ticketMessage, {
+          parse_mode: "Markdown",
+        });
+      }
+
+      console.log(`[Telegram Tickets] Sent ticket to passenger ${passenger.phone} (chatId: ${passengerChatId})`);
+    } catch (error) {
+      console.error(`[Telegram Tickets] Failed to send to ${passenger.phone}:`, error);
+      // Continue with other passengers even if one fails
+    }
   }
 }
 

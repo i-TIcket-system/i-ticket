@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.8.0 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.8.1 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md`
 
 ---
@@ -205,14 +205,17 @@ model TelegramSession {
 ```
 
 ### TODO (Next Session)
-- [ ] Send tickets to passenger's Telegram if they have an account (in addition to SMS)
-  - Lookup Telegram users by phone number
-  - May need user consent flow
-  - Send ticket images directly to their Telegram
+- [x] ~~Send tickets to passenger's Telegram if they have an account (in addition to SMS)~~ DONE
+- [ ] Phase 2: Predictive Maintenance AI features
 
 ---
 
-## RECENT UPDATES (v2.8.0 - Jan 25, 2026)
+## RECENT UPDATES (v2.8.1 - Jan 26, 2026)
+
+1. **Passenger Telegram Notifications** - Tickets sent directly to passengers who have Telegram accounts (by phone lookup)
+2. **Track API Fix** - Fixed missing fields (commission, commissionVAT, totalAmount, status, createdAt) in track API response
+
+### Previous (v2.8.0 - Jan 25, 2026)
 
 1. **Telegram Bot** - Full booking flow via @i_ticket_busBot with bilingual support
 2. **Fuzzy City Search** - Levenshtein distance algorithm for spelling error tolerance

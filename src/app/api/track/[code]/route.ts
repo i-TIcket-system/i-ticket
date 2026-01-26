@@ -17,7 +17,13 @@ export async function GET(
     // Try to find by booking ID first (case-sensitive, use trimmed original)
     let booking = await prisma.booking.findUnique({
       where: { id: code },
-      include: {
+      select: {
+        id: true,
+        status: true,
+        totalAmount: true,
+        commission: true,
+        commissionVAT: true,
+        createdAt: true,
         passengers: {
           select: {
             id: true,
@@ -47,9 +53,15 @@ export async function GET(
     if (!booking) {
       const ticket = await prisma.ticket.findUnique({
         where: { shortCode: codeUpper },
-        include: {
+        select: {
           booking: {
-            include: {
+            select: {
+              id: true,
+              status: true,
+              totalAmount: true,
+              commission: true,
+              commissionVAT: true,
+              createdAt: true,
               passengers: {
                 select: {
                   id: true,
