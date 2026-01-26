@@ -20,6 +20,7 @@ import {
   formatBookingSummary,
   formatSeats,
   formatCurrency,
+  formatTime,
 } from "../utils/formatters";
 import { prisma } from "@/lib/db";
 import { transactionWithTimeout } from "@/lib/db";
@@ -357,7 +358,7 @@ export async function handleTripSearch(ctx: TelegramContext) {
         trips.map((t) => ({
           id: t.id,
           company: t.company.name,
-          time: format(t.departureTime, "HH:mm"),
+          time: formatTime(t.departureTime),
           availableSlots: t.availableSlots,
         }))
       );
@@ -371,11 +372,11 @@ export async function handleTripSearch(ctx: TelegramContext) {
       return;
     }
 
-    // Format trips for keyboard
+    // Format trips for keyboard (using Ethiopia timezone)
     const tripsData = trips.map((trip) => ({
       id: trip.id,
       company: trip.company.name,
-      time: format(trip.departureTime, "h:mm a"),
+      time: formatTime(trip.departureTime),
       price: trip.price,
       availableSlots: trip.availableSlots,
     }));
