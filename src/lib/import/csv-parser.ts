@@ -95,3 +95,43 @@ export async function parseCSVFile(file: File): Promise<ParseResult> {
     reader.readAsText(file);
   });
 }
+
+/**
+ * Extract headers from CSV content
+ * @param fileContent - Raw CSV file content as string
+ * @returns Array of header names
+ */
+export function extractHeaders(fileContent: string): string[] {
+  const result = Papa.parse(fileContent, {
+    preview: 1, // Only parse first row
+    transformHeader: (header) => header.trim(),
+  });
+
+  if (result.meta && result.meta.fields) {
+    return result.meta.fields;
+  }
+
+  return [];
+}
+
+/**
+ * Parse result with headers included
+ */
+export interface ParseResultWithHeaders extends ParseResult {
+  headers: string[];
+}
+
+/**
+ * Parse CSV file with headers extraction
+ * @param fileContent - Raw CSV file content as string
+ * @returns ParseResultWithHeaders
+ */
+export function parseCSVWithHeaders(fileContent: string): ParseResultWithHeaders {
+  const headers = extractHeaders(fileContent);
+  const parseResult = parseCSV(fileContent);
+
+  return {
+    ...parseResult,
+    headers,
+  };
+}

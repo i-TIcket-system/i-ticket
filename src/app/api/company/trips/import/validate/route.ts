@@ -1,6 +1,7 @@
 /**
  * Trip Import Validation API
  * Validates uploaded CSV/XLSX file without creating trips
+ * Supports smart column auto-detection and custom mapping
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -14,6 +15,12 @@ import {
   REQUIRED_COLUMNS,
 } from '@/lib/import/trip-import-validator';
 import { mapTripsToDatabase } from '@/lib/import/trip-import-mapper';
+import {
+  autoDetectColumns,
+  applyMapping,
+  ColumnMapping,
+  REQUIRED_FIELDS,
+} from '@/lib/import/column-mapping';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_ROWS = 50;
@@ -47,6 +54,8 @@ export async function POST(request: NextRequest) {
     // Parse multipart form data
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const customMappingsJson = formData.get('mappings') as string | null;
+    const skipMapping = formData.get('skipMapping') === 'true';
 
     if (!file) {
       return NextResponse.json(
@@ -114,22 +123,105 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate columns
+    // Get headers from file
     const headers = Object.keys(parseResult.data[0]);
-    const columnErrors = validateColumns(headers);
+
+    // ============================================
+    // SMART COLUMN MAPPING
+    // ============================================
+
+    let mappedData = parseResult.data;
+    let mappingResult = autoDetectColumns(headers);
+
+    // If custom mappings provided, use those instead
+    if (customMappingsJson) {
+      try {
+        const customMappings: ColumnMapping[] = JSON.parse(customMappingsJson);
+        mappingResult = {
+          mappings: customMappings,
+          unmappedRequired: REQUIRED_FIELDS.filter(
+            f => !customMappings.some(m => m.iTicketField === f)
+          ),
+          autoDetected: false,
+          confidence: 'complete',
+        };
+      } catch {
+        return NextResponse.json(
+          { error: 'Invalid mappings format' },
+          { status: 400 }
+        );
+      }
+    }
+
+    // If manual mapping is needed and not skipped, return mapping info
+    if (mappingResult.confidence === 'manual' && !skipMapping && !customMappingsJson) {
+      return NextResponse.json({
+        success: false,
+        needsMapping: true,
+        mappingResult: {
+          mappings: mappingResult.mappings,
+          unmappedRequired: mappingResult.unmappedRequired,
+          confidence: mappingResult.confidence,
+        },
+        sampleData: parseResult.data.slice(0, 5), // First 5 rows for preview
+        headers,
+        message: 'Column names do not match. Please map your columns to i-Ticket fields.',
+      });
+    }
+
+    // If partial confidence, return mapping for review (user can confirm or adjust)
+    if (mappingResult.confidence === 'partial' && !skipMapping && !customMappingsJson) {
+      return NextResponse.json({
+        success: false,
+        needsMapping: true,
+        mappingResult: {
+          mappings: mappingResult.mappings,
+          unmappedRequired: mappingResult.unmappedRequired,
+          confidence: mappingResult.confidence,
+        },
+        sampleData: parseResult.data.slice(0, 5),
+        headers,
+        message: 'Some columns were auto-detected with lower confidence. Please review and confirm.',
+      });
+    }
+
+    // Apply column mapping if needed (if columns don't match exactly)
+    const hasExactMatch = REQUIRED_COLUMNS.every(col => headers.includes(col));
+
+    if (!hasExactMatch) {
+      // Apply the mapping to transform data
+      mappedData = applyMapping(parseResult.data, mappingResult.mappings);
+    }
+
+    // ============================================
+    // STANDARD VALIDATION (with mapped data)
+    // ============================================
+
+    // Validate columns (should pass now after mapping)
+    const mappedHeaders = Object.keys(mappedData[0] || {});
+    const columnErrors = validateColumns(mappedHeaders);
 
     if (columnErrors.length > 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          errors: columnErrors,
+      // If still missing columns, we need mapping
+      const stillMissing = REQUIRED_COLUMNS.filter(c => !mappedHeaders.includes(c));
+
+      return NextResponse.json({
+        success: false,
+        needsMapping: true,
+        mappingResult: {
+          mappings: mappingResult.mappings,
+          unmappedRequired: stillMissing,
+          confidence: 'manual',
         },
-        { status: 400 }
-      );
+        sampleData: parseResult.data.slice(0, 5),
+        headers,
+        errors: columnErrors,
+        message: `Missing required columns: ${stillMissing.join(', ')}. Please map your columns.`,
+      });
     }
 
     // Validate all rows (schema validation)
-    const validationResult = validateAllRows(parseResult.data);
+    const validationResult = validateAllRows(mappedData);
 
     // If schema validation failed, return errors
     if (validationResult.hasErrors) {
@@ -152,19 +244,19 @@ export async function POST(request: NextRequest) {
       .map((r) => r.data);
 
     // Map to database entities (staff, vehicles, cities)
-    const mappingResult = await mapTripsToDatabase(
+    const dbMappingResult = await mapTripsToDatabase(
       validData,
       session.user.companyId
     );
 
-    if (!mappingResult.success) {
+    if (!dbMappingResult.success) {
       return NextResponse.json({
         success: false,
         validCount: validationResult.validCount,
-        errorCount: mappingResult.errors.length,
-        errors: mappingResult.errors,
+        errorCount: dbMappingResult.errors.length,
+        errors: dbMappingResult.errors,
         validatedRows: validationResult.validatedRows,
-        warnings: mappingResult.warnings,
+        warnings: dbMappingResult.warnings,
       });
     }
 
@@ -175,8 +267,13 @@ export async function POST(request: NextRequest) {
       errorCount: 0,
       errors: [],
       validatedRows: validationResult.validatedRows,
-      mappedTrips: mappingResult.mappedTrips,
-      warnings: mappingResult.warnings,
+      mappedTrips: dbMappingResult.mappedTrips,
+      warnings: dbMappingResult.warnings,
+      // Include mapping info for reference
+      columnMapping: hasExactMatch ? null : {
+        applied: true,
+        confidence: mappingResult.confidence,
+      },
     });
   } catch (error) {
     console.error('Trip import validation error:', error);

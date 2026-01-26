@@ -252,7 +252,7 @@ export default function NewTripPage() {
       ...prev,
       origin: template.origin,
       destination: template.destination,
-      estimatedDuration: template.estimatedDuration.toString(),
+      estimatedDuration: (template.estimatedDuration / 60).toString(),
       distance: template.distance?.toString() || "",
       price: template.price.toString(),
       busType: template.busType,
@@ -299,7 +299,7 @@ export default function NewTripPage() {
           name: templateName.trim(),
           origin: finalOrigin,
           destination: finalDestination,
-          estimatedDuration: parseInt(formData.estimatedDuration),
+          estimatedDuration: Math.round(parseFloat(formData.estimatedDuration) * 60),
           distance: formData.distance ? parseInt(formData.distance) : null,
           price: parseFloat(formData.price),
           busType: formData.busType,
@@ -429,7 +429,7 @@ export default function NewTripPage() {
             origin: finalOrigin,
             destination: finalDestination,
             ...tripsData,
-            estimatedDuration: parseInt(formData.estimatedDuration, 10),
+            estimatedDuration: Math.round(parseFloat(formData.estimatedDuration) * 60),
             distance: formData.distance ? parseInt(formData.distance, 10) : undefined,
             price: parseFloat(formData.price),
             busType: formData.busType,
@@ -524,7 +524,7 @@ export default function NewTripPage() {
           route,
           intermediateStops: intermediateStops.length > 0 ? JSON.stringify(intermediateStops) : null,
           departureTime: departureTime.toISOString(),
-          estimatedDuration: parseInt(formData.estimatedDuration),
+          estimatedDuration: Math.round(parseFloat(formData.estimatedDuration) * 60),
           distance: parseInt(formData.distance),
           price: parseFloat(formData.price),
           busType: formData.busType,
@@ -661,6 +661,182 @@ export default function NewTripPage() {
                   )}
                 </div>
               )}
+
+              {/* ═══════════════════════════════════════════════════════════
+                  1. ROUTE - Where is the trip going?
+                  ═══════════════════════════════════════════════════════════ */}
+
+              {/* Route */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Origin *</Label>
+                  <Select
+                    value={formData.origin}
+                    onValueChange={(v) => handleSelectChange("origin", v)}
+                  >
+                    <SelectTrigger>
+                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <SelectValue placeholder="Select origin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cities.map((city) => (
+                        <SelectItem key={city} value={city}>
+                          {city}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__custom__">Other (type manually)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formData.origin === "__custom__" && (
+                    <Input
+                      placeholder="Enter custom origin city"
+                      value={customOrigin}
+                      onChange={(e) => setCustomOrigin(e.target.value)}
+                      required
+                    />
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Destination *</Label>
+                  <Select
+                    value={formData.destination}
+                    onValueChange={(v) => handleSelectChange("destination", v)}
+                  >
+                    <SelectTrigger>
+                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <SelectValue placeholder="Select destination" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cities.filter((c) => c !== formData.origin).map((city) => (
+                        <SelectItem key={city} value={city}>
+                          {city}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="__custom__">Other (type manually)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formData.destination === "__custom__" && (
+                    <Input
+                      placeholder="Enter custom destination city"
+                      value={customDestination}
+                      onChange={(e) => setCustomDestination(e.target.value)}
+                      required
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Intermediate Stops */}
+              <div className="space-y-2">
+                <Label>Intermediate Stops (Optional)</Label>
+                <p className="text-sm text-muted-foreground">
+                  Add cities where the bus stops along the route
+                </p>
+                {intermediateStops.map((stop, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input
+                      placeholder={`Stop ${index + 1}`}
+                      value={stop}
+                      onChange={(e) => {
+                        const newStops = [...intermediateStops]
+                        newStops[index] = e.target.value
+                        setIntermediateStops(newStops)
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => {
+                        setIntermediateStops(intermediateStops.filter((_, i) => i !== index))
+                      }}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIntermediateStops([...intermediateStops, ""])}
+                  className="w-full"
+                >
+                  + Add Stop
+                </Button>
+                {intermediateStops.length > 0 && (
+                  <p className="text-xs text-muted-foreground">
+                    Route: {formData.origin === "__custom__" ? customOrigin : formData.origin}
+                    {intermediateStops.map((s, i) => s && ` → ${s}`)}
+                    → {formData.destination === "__custom__" ? customDestination : formData.destination}
+                  </p>
+                )}
+              </div>
+
+              {/* ═══════════════════════════════════════════════════════════
+                  2. DATE & TIME - When is the trip?
+                  ═══════════════════════════════════════════════════════════ */}
+
+              {/* Date & Time */}
+              {!batchMode ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Departure Date *</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="date"
+                        name="departureDate"
+                        value={formData.departureDate}
+                        onChange={handleChange}
+                        min={minDate}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Departure Time *</Label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                      <Input
+                        type="time"
+                        name="departureTime"
+                        value={formData.departureTime}
+                        onChange={handleChange}
+                        className="pl-10 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 [&::-webkit-calendar-picker-indicator]:dark:invert"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                // Only show this field when using same time for all trips
+                sameTimeForAll && (
+                  <div className="space-y-2">
+                    <Label>Departure Time (for all selected dates) *</Label>
+                    <div className="relative max-w-xs">
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                      <Input
+                        type="time"
+                        name="departureTime"
+                        value={formData.departureTime}
+                        onChange={handleChange}
+                        className="pl-10 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 [&::-webkit-calendar-picker-indicator]:dark:invert"
+                        required
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      This time will be used for all trips in the batch
+                    </p>
+                  </div>
+                )
+              )}
+
+              {/* ═══════════════════════════════════════════════════════════
+                  3. BATCH MODE - Create multiple trips at once
+                  ═══════════════════════════════════════════════════════════ */}
 
               {/* Batch Mode Toggle */}
               <div className="flex items-center justify-between p-4 rounded-lg border bg-card">
@@ -823,253 +999,128 @@ export default function NewTripPage() {
                 </div>
               )}
 
-              {/* Route */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Origin *</Label>
-                  <Select
-                    value={formData.origin}
-                    onValueChange={(v) => handleSelectChange("origin", v)}
-                  >
-                    <SelectTrigger>
-                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <SelectValue placeholder="Select origin" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cities.map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="__custom__">Other (type manually)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {formData.origin === "__custom__" && (
-                    <Input
-                      placeholder="Enter custom origin city"
-                      value={customOrigin}
-                      onChange={(e) => setCustomOrigin(e.target.value)}
-                      required
-                    />
-                  )}
-                </div>
+              {/* ═══════════════════════════════════════════════════════════
+                  4. VEHICLE - What bus will be used?
+                  ═══════════════════════════════════════════════════════════ */}
 
-                <div className="space-y-2">
-                  <Label>Destination *</Label>
-                  <Select
-                    value={formData.destination}
-                    onValueChange={(v) => handleSelectChange("destination", v)}
-                  >
-                    <SelectTrigger>
-                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <SelectValue placeholder="Select destination" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cities.filter((c) => c !== formData.origin).map((city) => (
-                        <SelectItem key={city} value={city}>
-                          {city}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="__custom__">Other (type manually)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  {formData.destination === "__custom__" && (
-                    <Input
-                      placeholder="Enter custom destination city"
-                      value={customDestination}
-                      onChange={(e) => setCustomDestination(e.target.value)}
-                      required
-                    />
-                  )}
+              {/* Vehicle Assignment */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base">Vehicle Assignment *</Label>
+                  <span className="text-xs text-destructive">Required</span>
                 </div>
-              </div>
-
-              {/* Intermediate Stops */}
-              <div className="space-y-2">
-                <Label>Intermediate Stops (Optional)</Label>
                 <p className="text-sm text-muted-foreground">
-                  Add cities where the bus stops along the route
+                  A vehicle is required for all trips (24hr availability enforced)
                 </p>
-                {intermediateStops.map((stop, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input
-                      placeholder={`Stop ${index + 1}`}
-                      value={stop}
-                      onChange={(e) => {
-                        const newStops = [...intermediateStops]
-                        newStops[index] = e.target.value
-                        setIntermediateStops(newStops)
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={() => {
-                        setIntermediateStops(intermediateStops.filter((_, i) => i !== index))
-                      }}
-                    >
-                      ×
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIntermediateStops([...intermediateStops, ""])}
-                  className="w-full"
-                >
-                  + Add Stop
-                </Button>
-                {intermediateStops.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Route: {formData.origin === "__custom__" ? customOrigin : formData.origin}
-                    {intermediateStops.map((s, i) => s && ` → ${s}`)}
-                    → {formData.destination === "__custom__" ? customDestination : formData.destination}
-                  </p>
-                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="vehicle" className="flex items-center gap-2">
+                    <Truck className="h-4 w-4 text-purple-500" />
+                    Vehicle *
+                  </Label>
+                  <Select
+                    value={formData.vehicleId || ""}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, vehicleId: value || null }))
+                    }
+                  >
+                    <SelectTrigger className={!formData.vehicleId ? "border-destructive" : ""}>
+                      <SelectValue placeholder="Select vehicle (required)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {vehicles.map((vehicle) => (
+                        <SelectItem key={vehicle.id} value={vehicle.id}>
+                          {vehicle.plateNumber}
+                          {vehicle.sideNumber && ` (${vehicle.sideNumber})`}
+                          {" - "}
+                          {vehicle.make} {vehicle.model}
+                          {vehicle.totalSeats && ` (${vehicle.totalSeats} seats)`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {vehicles.length === 0 && (
+                    <p className="text-xs text-destructive">
+                      No active vehicles available.{" "}
+                      <Link href="/company/vehicles" className="underline">
+                        Add vehicles first
+                      </Link>
+                    </p>
+                  )}
+                </div>
               </div>
 
-              {/* Date & Time */}
-              {!batchMode ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Departure Date *</Label>
-                    <div className="relative">
-                      <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="date"
-                        name="departureDate"
-                        value={formData.departureDate}
-                        onChange={handleChange}
-                        min={minDate}
-                        className="pl-10"
-                        required
-                      />
+              {/* Vehicle Conflict Warning */}
+              {vehicleConflictWarning && (
+                <div className="border border-orange-500 bg-orange-50 p-4 rounded-lg space-y-3">
+                  <div className="flex items-start gap-2">
+                    <Truck className="h-5 w-5 text-orange-600 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="font-medium text-orange-900">Vehicle Availability Conflict</h4>
+                      <p className="text-sm text-orange-800 mt-1">{vehicleConflictWarning}</p>
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label>Departure Time *</Label>
-                    <div className="relative">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                      <Input
-                        type="time"
-                        name="departureTime"
-                        value={formData.departureTime}
-                        onChange={handleChange}
-                        className="pl-10 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 [&::-webkit-calendar-picker-indicator]:dark:invert"
-                        required
-                      />
-                    </div>
+                  <div className="flex items-start gap-2 pl-7">
+                    <Checkbox
+                      id="overrideVehicleConflict"
+                      checked={overrideVehicleConflict}
+                      onCheckedChange={(checked) => {
+                        setOverrideVehicleConflict(checked as boolean)
+                        if (!checked) setVehicleOverrideReason("")
+                      }}
+                    />
+                    <label
+                      htmlFor="overrideVehicleConflict"
+                      className="text-sm text-orange-900 cursor-pointer"
+                    >
+                      I want to override this 24-hour availability constraint
+                    </label>
                   </div>
+                  {overrideVehicleConflict && (
+                    <div className="pl-7 space-y-2">
+                      <Label htmlFor="vehicleOverrideReason" className="text-sm text-orange-900">
+                        Override Reason (required, min 10 characters) *
+                      </Label>
+                      <textarea
+                        id="vehicleOverrideReason"
+                        className="w-full p-2 border border-orange-300 rounded-md text-sm min-h-[80px] focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="Explain why this vehicle must be used despite the 24-hour constraint..."
+                        value={vehicleOverrideReason}
+                        onChange={(e) => setVehicleOverrideReason(e.target.value)}
+                      />
+                      {vehicleOverrideReason.length > 0 && vehicleOverrideReason.length < 10 && (
+                        <p className="text-xs text-orange-600">
+                          {10 - vehicleOverrideReason.length} more characters required
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                // Only show this field when using same time for all trips
-                sameTimeForAll && (
-                  <div className="space-y-2">
-                    <Label>Departure Time (for all selected dates) *</Label>
-                    <div className="relative max-w-xs">
-                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                      <Input
-                        type="time"
-                        name="departureTime"
-                        value={formData.departureTime}
-                        onChange={handleChange}
-                        className="pl-10 bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 [&::-webkit-calendar-picker-indicator]:dark:invert"
-                        required
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      This time will be used for all trips in the batch
-                    </p>
-                  </div>
-                )
               )}
 
-              {/* Duration and Distance */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Estimated Duration (minutes) *</Label>
-                  <div className="relative">
-                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="number"
-                      name="estimatedDuration"
-                      placeholder="e.g., 540 for 9 hours"
-                      value={formData.estimatedDuration}
-                      onChange={handleChange}
-                      min="30"
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Enter duration in minutes (e.g., 540 = 9 hours)
-                  </p>
-                </div>
+              {/* ═══════════════════════════════════════════════════════════
+                  5. BUS TYPE & SEATS
+                  ═══════════════════════════════════════════════════════════ */}
 
-                <div className="space-y-2">
-                  <Label>Distance (km) *</Label>
-                  <div className="relative">
-                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="number"
-                      name="distance"
-                      placeholder="e.g., 450"
-                      value={formData.distance}
-                      onChange={handleChange}
-                      min="1"
-                      max="5000"
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Route distance in kilometers
-                  </p>
-                </div>
-              </div>
-
-              {/* Price & Bus Type */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Price (ETB) *</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      type="number"
-                      name="price"
-                      placeholder="e.g., 850"
-                      value={formData.price}
-                      onChange={handleChange}
-                      min="1"
-                      step="0.01"
-                      className="pl-10"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Bus Type *</Label>
-                  <Select
-                    value={formData.busType}
-                    onValueChange={(v) => handleSelectChange("busType", v)}
-                  >
-                    <SelectTrigger>
-                      <Bus className="h-4 w-4 mr-2 text-muted-foreground" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {BUS_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label} - {type.description}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Bus Type */}
+              <div className="space-y-2">
+                <Label>Bus Type *</Label>
+                <Select
+                  value={formData.busType}
+                  onValueChange={(v) => handleSelectChange("busType", v)}
+                >
+                  <SelectTrigger>
+                    <Bus className="h-4 w-4 mr-2 text-muted-foreground" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BUS_TYPES.map((type) => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.label} - {type.description}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Seats */}
@@ -1107,32 +1158,9 @@ export default function NewTripPage() {
                 })()}
               </div>
 
-              {/* Amenities */}
-              <div className="space-y-3">
-                <Label>Amenities</Label>
-                <div className="flex flex-wrap gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox
-                      checked={formData.hasWater}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({ ...prev, hasWater: !!checked }))
-                      }
-                    />
-                    <Droplets className="h-4 w-4 text-blue-500" />
-                    <span className="text-sm">Water</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <Checkbox
-                      checked={formData.hasFood}
-                      onCheckedChange={(checked) =>
-                        setFormData((prev) => ({ ...prev, hasFood: !!checked }))
-                      }
-                    />
-                    <Coffee className="h-4 w-4 text-amber-500" />
-                    <span className="text-sm">Snacks/Food</span>
-                  </label>
-                </div>
-              </div>
+              {/* ═══════════════════════════════════════════════════════════
+                  6. STAFF - Who will operate the trip?
+                  ═══════════════════════════════════════════════════════════ */}
 
               {/* Staff Assignment */}
               <div className="space-y-3">
@@ -1248,52 +1276,6 @@ export default function NewTripPage() {
                 </div>
               </div>
 
-              {/* Vehicle Assignment */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-base">Vehicle Assignment *</Label>
-                  <span className="text-xs text-destructive">Required</span>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  A vehicle is required for all trips (24hr availability enforced)
-                </p>
-
-                <div className="space-y-2">
-                  <Label htmlFor="vehicle" className="flex items-center gap-2">
-                    <Truck className="h-4 w-4 text-purple-500" />
-                    Vehicle *
-                  </Label>
-                  <Select
-                    value={formData.vehicleId || ""}
-                    onValueChange={(value) =>
-                      setFormData((prev) => ({ ...prev, vehicleId: value || null }))
-                    }
-                  >
-                    <SelectTrigger className={!formData.vehicleId ? "border-destructive" : ""}>
-                      <SelectValue placeholder="Select vehicle (required)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {vehicles.map((vehicle) => (
-                        <SelectItem key={vehicle.id} value={vehicle.id}>
-                          {vehicle.plateNumber}
-                          {vehicle.sideNumber && ` (${vehicle.sideNumber})`}
-                          {" - "}
-                          {vehicle.make} {vehicle.model}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {vehicles.length === 0 && (
-                    <p className="text-xs text-destructive">
-                      No active vehicles available.{" "}
-                      <Link href="/company/vehicles" className="underline">
-                        Add vehicles first
-                      </Link>
-                    </p>
-                  )}
-                </div>
-              </div>
-
               {/* Staff Conflict Warning */}
               {staffConflictWarning && (
                 <div className="border border-amber-500 bg-amber-50 p-4 rounded-lg space-y-3">
@@ -1322,53 +1304,112 @@ export default function NewTripPage() {
                 </div>
               )}
 
-              {/* Vehicle Conflict Warning */}
-              {vehicleConflictWarning && (
-                <div className="border border-orange-500 bg-orange-50 p-4 rounded-lg space-y-3">
-                  <div className="flex items-start gap-2">
-                    <Truck className="h-5 w-5 text-orange-600 mt-0.5" />
-                    <div className="flex-1">
-                      <h4 className="font-medium text-orange-900">Vehicle Availability Conflict</h4>
-                      <p className="text-sm text-orange-800 mt-1">{vehicleConflictWarning}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2 pl-7">
-                    <Checkbox
-                      id="overrideVehicleConflict"
-                      checked={overrideVehicleConflict}
-                      onCheckedChange={(checked) => {
-                        setOverrideVehicleConflict(checked as boolean)
-                        if (!checked) setVehicleOverrideReason("")
-                      }}
+              {/* ═══════════════════════════════════════════════════════════
+                  7. DURATION & DISTANCE
+                  ═══════════════════════════════════════════════════════════ */}
+
+              {/* Duration and Distance */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Estimated Duration (hours) *</Label>
+                  <div className="relative">
+                    <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      name="estimatedDuration"
+                      placeholder="e.g., 9"
+                      value={formData.estimatedDuration}
+                      onChange={handleChange}
+                      min="1"
+                      max="48"
+                      step="0.5"
+                      className="pl-10"
+                      required
                     />
-                    <label
-                      htmlFor="overrideVehicleConflict"
-                      className="text-sm text-orange-900 cursor-pointer"
-                    >
-                      I want to override this 24-hour availability constraint
-                    </label>
                   </div>
-                  {overrideVehicleConflict && (
-                    <div className="pl-7 space-y-2">
-                      <Label htmlFor="vehicleOverrideReason" className="text-sm text-orange-900">
-                        Override Reason (required, min 10 characters) *
-                      </Label>
-                      <textarea
-                        id="vehicleOverrideReason"
-                        className="w-full p-2 border border-orange-300 rounded-md text-sm min-h-[80px] focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        placeholder="Explain why this vehicle must be used despite the 24-hour constraint..."
-                        value={vehicleOverrideReason}
-                        onChange={(e) => setVehicleOverrideReason(e.target.value)}
-                      />
-                      {vehicleOverrideReason.length > 0 && vehicleOverrideReason.length < 10 && (
-                        <p className="text-xs text-orange-600">
-                          {10 - vehicleOverrideReason.length} more characters required
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Enter trip duration in hours (e.g., 9 for a 9-hour trip)
+                  </p>
                 </div>
-              )}
+
+                <div className="space-y-2">
+                  <Label>Distance (km) *</Label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      name="distance"
+                      placeholder="e.g., 450"
+                      value={formData.distance}
+                      onChange={handleChange}
+                      min="1"
+                      max="5000"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Route distance in kilometers
+                  </p>
+                </div>
+              </div>
+
+              {/* ═══════════════════════════════════════════════════════════
+                  8. PRICE
+                  ═══════════════════════════════════════════════════════════ */}
+
+              {/* Price */}
+              <div className="space-y-2">
+                <Label>Price (ETB) *</Label>
+                <div className="relative">
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="number"
+                    name="price"
+                    placeholder="e.g., 850"
+                    value={formData.price}
+                    onChange={handleChange}
+                    min="1"
+                    step="0.01"
+                    className="pl-10"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Ticket price per passenger in Ethiopian Birr
+                </p>
+              </div>
+
+              {/* ═══════════════════════════════════════════════════════════
+                  9. AMENITIES
+                  ═══════════════════════════════════════════════════════════ */}
+
+              {/* Amenities */}
+              <div className="space-y-3">
+                <Label>Amenities</Label>
+                <div className="flex flex-wrap gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={formData.hasWater}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({ ...prev, hasWater: !!checked }))
+                      }
+                    />
+                    <Droplets className="h-4 w-4 text-blue-500" />
+                    <span className="text-sm">Water</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={formData.hasFood}
+                      onCheckedChange={(checked) =>
+                        setFormData((prev) => ({ ...prev, hasFood: !!checked }))
+                      }
+                    />
+                    <Coffee className="h-4 w-4 text-amber-500" />
+                    <span className="text-sm">Snacks/Food</span>
+                  </label>
+                </div>
+              </div>
 
               {/* Save as Template Option */}
               <div className="p-4 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/30">

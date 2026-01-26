@@ -1,6 +1,7 @@
 /**
  * Trip Import API
  * Creates trips from validated CSV/XLSX file
+ * Supports smart column auto-detection and custom mapping
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,8 +13,14 @@ import { parseXLSX } from '@/lib/import/xlsx-parser';
 import {
   validateColumns,
   validateAllRows,
+  REQUIRED_COLUMNS,
 } from '@/lib/import/trip-import-validator';
 import { mapTripsToDatabase, MappedTrip } from '@/lib/import/trip-import-mapper';
+import {
+  autoDetectColumns,
+  applyMapping,
+  ColumnMapping,
+} from '@/lib/import/column-mapping';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_ROWS = 50;
@@ -227,6 +234,7 @@ export async function POST(request: NextRequest) {
     // Parse multipart form data
     const formData = await request.formData();
     const file = formData.get('file') as File;
+    const customMappingsJson = formData.get('mappings') as string | null;
 
     if (!file) {
       return NextResponse.json(
@@ -291,9 +299,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate columns
+    // Get headers and apply column mapping if needed
     const headers = Object.keys(parseResult.data[0]);
-    const columnErrors = validateColumns(headers);
+    let mappedData = parseResult.data;
+
+    // Check if custom mappings are provided
+    if (customMappingsJson) {
+      try {
+        const customMappings: ColumnMapping[] = JSON.parse(customMappingsJson);
+        mappedData = applyMapping(parseResult.data, customMappings);
+      } catch {
+        return NextResponse.json(
+          { error: 'Invalid mappings format' },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Auto-detect columns if not an exact match
+      const hasExactMatch = REQUIRED_COLUMNS.every(col => headers.includes(col));
+
+      if (!hasExactMatch) {
+        const mappingResult = autoDetectColumns(headers);
+        if (mappingResult.confidence === 'complete') {
+          // Auto-apply high-confidence mappings
+          mappedData = applyMapping(parseResult.data, mappingResult.mappings);
+        }
+      }
+    }
+
+    // Validate columns (after potential mapping)
+    const mappedHeaders = Object.keys(mappedData[0] || {});
+    const columnErrors = validateColumns(mappedHeaders);
 
     if (columnErrors.length > 0) {
       return NextResponse.json(
@@ -302,8 +338,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate all rows
-    const validationResult = validateAllRows(parseResult.data);
+    // Validate all rows (with mapped data)
+    const validationResult = validateAllRows(mappedData);
 
     if (validationResult.hasErrors) {
       const allErrors = validationResult.validatedRows
