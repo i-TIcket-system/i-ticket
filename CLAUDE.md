@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.9.0 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.10.0 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md`
 
 ---
@@ -210,7 +210,13 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.9.0 - Jan 26, 2026)
+## RECENT UPDATES (v2.10.0 - Jan 26, 2026)
+
+1. **Smart Column Auto-Detect (Excel Import)** - Upload any Excel/CSV file with your own column names. System auto-detects common variations like "From"→origin, "Date"→departureDate. Supports English and Amharic column names. Manual mapper UI for unrecognized columns.
+2. **Trip Creation Form Reordering** - New logical field order: Route → Date/Time → Batch → Vehicle → Bus Type/Seats → Staff → Duration/Distance → Price → Amenities. Duration now in hours (not minutes).
+3. **Column Mapper Component** - Visual UI for mapping columns with confidence indicators, sample data preview, and required field validation.
+
+### Previous (v2.9.0 - Jan 26, 2026)
 
 1. **Trip Templates** - Save and load route templates for quick trip creation. Templates store origin, destination, duration, distance, price, bus type, and amenities.
 2. **CRITICAL: Telegram Duration Bug Fix** - Bot now correctly displays trip duration (was showing "540 ሰዓት" instead of "9h"). Fixed formatDuration to expect minutes.
