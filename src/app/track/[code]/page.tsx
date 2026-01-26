@@ -75,27 +75,9 @@ export default function TrackBookingPage() {
       // Validate code format before making API call
       const trimmedCode = code.trim()
 
-      // Strict validation: Must match proper ticket patterns
-      // Pattern 1: 6-character short code (e.g., ABC123) - Telegram bot tickets
-      // Pattern 2: TKT-XXXXXX (6+ chars after prefix)
-      // Pattern 3: BKG-XXXXXX (6+ chars after prefix)
-      // Pattern 4: CLK-XXXXXXXXXX (10+ chars - ClickUp IDs)
-      // Pattern 5: Booking ID from DB (25+ alphanumeric - e.g., clm1abc2def3ghi4jkl5mnop6)
-      const shortCodePattern = /^[A-Z0-9]{6}$/i  // Exactly 6 characters (Telegram shortcodes)
-      const ticketPattern = /^TKT-[A-Z0-9]{6,}$/i
-      const bookingCodePattern = /^BKG-[A-Z0-9]{6,}$/i
-      const clickupPattern = /^CLK-[A-Z0-9]{10,}$/i
-      const bookingIdPattern = /^[A-Z0-9]{25,}$/i  // Database booking IDs are long
-
-      const isValidPattern =
-        shortCodePattern.test(trimmedCode) ||
-        ticketPattern.test(trimmedCode) ||
-        bookingCodePattern.test(trimmedCode) ||
-        clickupPattern.test(trimmedCode) ||
-        bookingIdPattern.test(trimmedCode)
-
-      if (!isValidPattern) {
-        setError("Not a valid ticket number or booking code. Please use your 6-character ticket code or booking ID")
+      // Simple validation: 6-character ticket codes or longer booking IDs
+      if (trimmedCode.length < 6) {
+        setError("Ticket code must be at least 6 characters")
         setIsLoading(false)
         return
       }
