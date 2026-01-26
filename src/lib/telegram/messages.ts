@@ -20,21 +20,21 @@ export function getMessage(key: keyof typeof MESSAGES, lang: Language = "EN"): a
 export const MESSAGES = {
   // Welcome & Start
   welcome: {
-    EN: `🚌 *Welcome to i-Ticket!*
+    EN: `🚌 Welcome to i-Ticket!
 
 Book Ethiopian bus tickets instantly via Telegram.
 
-🎫 *Quick Actions:*
+🎫 Quick Actions:
 • /book - Search and book tickets
 • /mytickets - View your bookings
 • /help - Get help
 
 Choose your language to get started! 👇`,
-    AM: `🚌 *እንኳን ወደ አይ-ቲኬት በደህና መጡ!*
+    AM: `🚌 እንኳን ወደ አይ-ቲኬት በደህና መጡ!
 
 በቴሌግራም በፍጥነት የአውቶቡስ ትኬት ይምረጡ።
 
-🎫 *ፈጣን እርምጃዎች:*
+🎫 ፈጣን እርምጃዎች:
 • /book - ትኬት ፈልግ እና አስይዝ
 • /mytickets - የእርስዎን ትኬቶች ይመልከቱ
 • /help - እገዛ ያግኙ
