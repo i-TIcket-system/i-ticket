@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.1 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.10.2 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md`
 
 ---
@@ -210,7 +210,45 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.1 - Jan 27, 2026)
+## RECENT UPDATES (v2.10.2 - Jan 28, 2026)
+
+### Work Order System Fixes (CRITICAL)
+
+1. **Mechanic API Dual Assignment Support** - Fixed mechanic work order query to support both `assignedToId` (legacy) and `assignedStaffIds` (new multi-staff) using OR conditions. Mechanics can now see ALL work orders assigned to them.
+2. **Multi-Staff Notifications** - Work order creation now sends assignment notifications to ALL assigned staff members (loops through array) instead of just first mechanic. Fixes silent assignment failures.
+3. **Notification Stakeholders Parser** - Updated `notifyWorkOrderStakeholders()` to parse `assignedStaffIds` JSON array and add all staff to recipient list.
+4. **Work Order Routing** - Added notification routing for work order types (CREATED, ASSIGNED, URGENT, COMPLETED, BLOCKED). Routes mechanics to `/mechanic/work-order/{id}`, company admins to `/company/work-orders/{id}`, finance to `/finance/work-orders`.
+
+### UI/UX Fixes
+
+5. **Company Logo Upload Refresh** - Logo now displays immediately after upload without manual page refresh. Added `router.refresh()` call after `updateSession()`.
+6. **Conductor Verify Ticket Page** - Created `/staff/verify` page for conductors to verify tickets. Features: Manual 6-character code input, real-time validation via `/api/tickets/verify/public`, large visual feedback (green success/red error), passenger details display, reset button.
+7. **Staff Profile Role Display** - Profile page now shows actual staff role (Driver, Conductor, Mechanic, etc.) instead of generic "COMPANY_ADMIN". Uses `staffRole` field with helper formatter.
+
+### Telegram Bot Improvements
+
+8. **Thank You Message** - Added appreciation message after successful booking payment: "Thank you for choosing us!" / "እኛን ስለመረጡ እናመሰግናለን!"
+9. **Amharic Translation Corrections**:
+   - "Free seats" → "ነጻ መቀመጫዎች አሉ!" (added "ነጻ" + "!" for clarity)
+   - "Number of passengers" → "የተሳፋሪዎችን ብዛት" (changed "ቁጥር" to "ብዛት" for natural phrasing)
+   - Updated in 4 locations: messages.ts (3x), formatters.ts (1x)
+
+### Favicon & Branding
+
+10. **Professional Favicon Integration** - Added 7 favicon files from RealFaviconGenerator:
+    - `favicon.svg` (vector, scalable)
+    - `favicon-96x96.png` (high-res PNG)
+    - `favicon.ico` (multi-resolution ICO)
+    - `apple-touch-icon.png` (180x180, iOS)
+    - `web-app-manifest-192x192.png` (maskable PWA icon)
+    - `web-app-manifest-512x512.png` (maskable PWA icon)
+    - Updated `layout.tsx` metadata and `manifest.json` to reference new icons
+
+### Files Modified
+- 13 files modified (10 issues fixed, 1 new file created)
+- New file: `src/app/staff/verify/page.tsx`
+
+### Previous (v2.10.1 - Jan 27, 2026)
 
 ### Critical Bug Fixes
 
