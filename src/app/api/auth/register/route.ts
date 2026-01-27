@@ -38,16 +38,9 @@ export async function POST(request: NextRequest) {
       prisma.salesPerson.findUnique({ where: { phone } }),
     ])
 
-    if (existingUser) {
+    if (existingUser || existingSales) {
       return NextResponse.json(
-        { error: "A user with this phone number already exists" },
-        { status: 409 }
-      )
-    }
-
-    if (existingSales) {
-      return NextResponse.json(
-        { error: "A sales person with this phone number already exists" },
+        { error: "This phone number is already registered" },
         { status: 409 }
       )
     }

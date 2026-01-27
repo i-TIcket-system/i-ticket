@@ -23,14 +23,14 @@ export async function GET(request: NextRequest) {
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '50', 10)))
     const skip = (page - 1) * limit
 
-    // Filters
+    // Filters (with input length validation to prevent ReDoS)
     const companyId = searchParams.get('companyId') || undefined
     const status = searchParams.get('status') || undefined
-    const origin = searchParams.get('origin') || undefined
-    const destination = searchParams.get('destination') || undefined
+    const origin = searchParams.get('origin')?.trim().slice(0, 100) || undefined
+    const destination = searchParams.get('destination')?.trim().slice(0, 100) || undefined
     const dateFrom = searchParams.get('dateFrom') || undefined
     const dateTo = searchParams.get('dateTo') || undefined
-    const search = searchParams.get('search') || undefined
+    const search = searchParams.get('search')?.trim().slice(0, 100) || undefined
 
     // Sorting
     const sortBy = searchParams.get('sortBy') || 'departureTime'

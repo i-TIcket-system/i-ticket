@@ -117,7 +117,9 @@ export async function initiateTelebirrPayment(
 
   // Demo mode - simulate payment initiation
   if (isDemoMode) {
-    const mockTransactionId = `DEMO-TXN-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    // Use crypto-random generation for transaction IDs (security best practice)
+    const randomSuffix = crypto.randomBytes(4).toString('hex');
+    const mockTransactionId = `DEMO-TXN-${Date.now()}-${randomSuffix}`;
     console.log(`[TeleBirr DEMO] Payment initiated for ${params.phone}: ${params.amount} ETB`);
     console.log(`[TeleBirr DEMO] Transaction ID: ${mockTransactionId}`);
     console.log(`[TeleBirr DEMO] Reference: ${params.reference}`);
