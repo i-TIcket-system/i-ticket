@@ -107,6 +107,17 @@ export async function POST(request: NextRequest) {
                 continue
               }
 
+              // RULE-003: Cannot modify view-only trips (DEPARTED, COMPLETED, CANCELLED)
+              // Also treat past SCHEDULED trips as view-only (effectively DEPARTED)
+              const isPastTrip = new Date(trip.departureTime) < new Date()
+              const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
+
+              if (["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)) {
+                failed++
+                errors.push(`Trip ${tripId}: Cannot modify ${effectiveStatus} trip (view-only)`)
+                continue
+              }
+
               // Check if has paid bookings
               if (trip.bookings.length > 0) {
                 failed++

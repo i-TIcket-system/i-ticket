@@ -258,10 +258,10 @@ export default function FinanceDashboardPage() {
                           variant="secondary"
                           className={
                             wo.status === "COMPLETED"
-                              ? "bg-green-100 text-green-700"
+                              ? "bg-green-600 text-white"
                               : wo.status === "IN_PROGRESS"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-blue-100 text-blue-700"
+                              ? "bg-yellow-500 text-gray-900"
+                              : "bg-blue-600 text-white"
                           }
                         >
                           {wo.status.replace("_", " ")}

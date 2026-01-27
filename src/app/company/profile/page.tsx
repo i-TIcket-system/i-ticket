@@ -98,12 +98,12 @@ interface StaffMember {
 }
 
 const STAFF_ROLES: Record<string, { label: string; icon: any; color: string }> = {
-  ADMIN: { label: "Admin", icon: Shield, color: "bg-purple-100 text-purple-800" },
-  DRIVER: { label: "Driver", icon: Car, color: "bg-blue-100 text-blue-800" },
-  CONDUCTOR: { label: "Conductor", icon: UserCheck, color: "bg-green-100 text-green-800" },
-  MANUAL_TICKETER: { label: "Manual Ticketer", icon: Ticket, color: "bg-orange-100 text-orange-800" },
-  MECHANIC: { label: "Mechanic", icon: Wrench, color: "bg-amber-100 text-amber-800" },
-  FINANCE: { label: "Finance", icon: DollarSign, color: "bg-emerald-100 text-emerald-800" },
+  ADMIN: { label: "Admin", icon: Shield, color: "bg-purple-600 text-white" },
+  DRIVER: { label: "Driver", icon: Car, color: "bg-blue-600 text-white" },
+  CONDUCTOR: { label: "Conductor", icon: UserCheck, color: "bg-green-600 text-white" },
+  MANUAL_TICKETER: { label: "Manual Ticketer", icon: Ticket, color: "bg-orange-500 text-white" },
+  MECHANIC: { label: "Mechanic", icon: Wrench, color: "bg-amber-600 text-white" },
+  FINANCE: { label: "Finance", icon: DollarSign, color: "bg-emerald-600 text-white" },
 }
 
 // Helper to get role display info (handles custom roles)
@@ -115,7 +115,7 @@ const getRoleInfo = (role: string) => {
   return {
     label: role.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()),
     icon: Users,
-    color: "bg-gray-100 text-gray-800"
+    color: "bg-gray-600 text-white"
   }
 }
 

@@ -334,10 +334,16 @@ export function initializeBot() {
           // Check if more passengers to collect
           if (currentPassengerIndex + 1 < passengerCount) {
             // Move to next passenger
+            const newIndex = currentPassengerIndex + 1;
             await updateSessionState(ctx.chat.id, "ASK_PASSENGER_NAME", {
               passengerData,
-              currentPassengerIndex: currentPassengerIndex + 1,
+              currentPassengerIndex: newIndex,
             });
+            // CRITICAL: Update in-memory session to match DB
+            // Without this, handlePassengerName reads stale index and shows wrong passenger number
+            if (ctx.session?.data) {
+              ctx.session.data.currentPassengerIndex = newIndex;
+            }
 
             const { handlePassengerName } = await import("./scenes/booking-wizard");
             await handlePassengerName(ctx);

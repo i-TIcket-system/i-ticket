@@ -62,6 +62,8 @@ interface Booking {
   id: string
   status: string
   totalAmount: number
+  commission: number | null
+  commissionVAT: number | null
   createdAt: string
   passengers: Passenger[]
   user: {
@@ -295,7 +297,9 @@ export default function TripDetailPage() {
   const lowSlots = isLowSlots(trip.availableSlots, trip.totalSlots)
   const paidBookings = trip.bookings.filter((b) => b.status === "PAID")
   const totalPassengers = paidBookings.reduce((acc, b) => acc + b.passengers.length, 0)
-  const totalRevenue = paidBookings.reduce((acc, b) => acc + Number(b.totalAmount), 0)
+  // RULE-007: Company revenue = totalAmount - commission - commissionVAT (platform fees)
+  const totalRevenue = paidBookings.reduce((acc, b) =>
+    acc + (Number(b.totalAmount) - Number(b.commission || 0) - Number(b.commissionVAT || 0)), 0)
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8">
@@ -324,29 +328,37 @@ export default function TripDetailPage() {
               <RefreshCw className="h-3 w-3 animate-spin" style={{ animationDuration: '6s' }} />
               <span className="text-xs">Live updates</span>
             </Badge>
-            <Button
-              variant="outline"
-              asChild={!isTripViewOnly(trip.status)}
-              disabled={isTripViewOnly(trip.status)}
-            >
-              {isTripViewOnly(trip.status) ? (
-                <span className="cursor-not-allowed opacity-50">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Trip (View-Only)
-                </span>
-              ) : (
-                <Link href={`/company/trips/${tripId}/edit`}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Trip
-                </Link>
-              )}
-            </Button>
+            {/* RULE-003: Check both status AND past date for view-only */}
+            {(() => {
+              const isPastTrip = new Date(trip.departureTime) < new Date()
+              const isViewOnly = isTripViewOnly(trip.status) || isPastTrip
+              return (
+                <Button
+                  variant="outline"
+                  asChild={!isViewOnly}
+                  disabled={isViewOnly}
+                  title={isViewOnly ? "Only view is possible for departed, cancelled, completed or past trips" : undefined}
+                >
+                  {isViewOnly ? (
+                    <span className="cursor-not-allowed opacity-50">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Trip (View-Only)
+                    </span>
+                  ) : (
+                    <Link href={`/company/trips/${tripId}/edit`}>
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Trip
+                    </Link>
+                  )}
+                </Button>
+              )
+            })()}
           </div>
         </div>
 
-        {/* View-Only Banner for DEPARTED, COMPLETED, CANCELLED trips */}
-        {isTripViewOnly(trip.status) && (
-          <ViewOnlyBanner tripStatus={trip.status} />
+        {/* View-Only Banner for DEPARTED, COMPLETED, CANCELLED, or past trips */}
+        {(isTripViewOnly(trip.status) || new Date(trip.departureTime) < new Date()) && (
+          <ViewOnlyBanner tripStatus={new Date(trip.departureTime) < new Date() && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status} />
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

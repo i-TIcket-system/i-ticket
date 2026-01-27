@@ -155,10 +155,10 @@ export default function PlatformStaffPage() {
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, any> = {
-      ACTIVE: <Badge className="bg-green-600 !text-white border-0"><CheckCircle className="h-3 w-3 mr-1" />Active</Badge>,
-      ON_LEAVE: <Badge className="bg-yellow-100 text-yellow-900 border border-yellow-300"><Clock className="h-3 w-3 mr-1" />On Leave</Badge>,
-      SUSPENDED: <Badge className="bg-orange-100 text-orange-900 border border-orange-300"><Ban className="h-3 w-3 mr-1" />Suspended</Badge>,
-      TERMINATED: <Badge className="bg-red-100 text-red-900 border border-red-300"><XCircle className="h-3 w-3 mr-1" />Terminated</Badge>,
+      ACTIVE: <Badge className="bg-green-600 text-white"><CheckCircle className="h-3 w-3 mr-1" />Active</Badge>,
+      ON_LEAVE: <Badge className="bg-yellow-500 text-gray-900"><Clock className="h-3 w-3 mr-1" />On Leave</Badge>,
+      SUSPENDED: <Badge className="bg-orange-500 text-white"><Ban className="h-3 w-3 mr-1" />Suspended</Badge>,
+      TERMINATED: <Badge className="bg-red-600 text-white"><XCircle className="h-3 w-3 mr-1" />Terminated</Badge>,
     }
     return variants[status] || <Badge>{status}</Badge>
   }

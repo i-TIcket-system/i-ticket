@@ -65,9 +65,18 @@ interface Trip {
   availableSlots: number
   bookingHalted: boolean
   lowSlotAlertSent: boolean
+  status: string
   _count: {
     bookings: number
   }
+}
+
+// RULE-003: Helper to check if a trip is view-only
+const isViewOnlyTrip = (trip: Trip) => {
+  const departureTime = new Date(trip.departureTime)
+  const isPastTrip = departureTime < new Date()
+  const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
+  return ["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)
 }
 
 interface Stats {
@@ -592,9 +601,13 @@ export default function CompanyDashboard() {
                   trips.map((trip) => {
                     const slotsPercent = getSlotsPercentage(trip.availableSlots, trip.totalSlots)
                     const lowSlots = isLowSlots(trip.availableSlots, trip.totalSlots)
+                    const isViewOnly = isViewOnlyTrip(trip)
 
                     return (
-                      <TableRow key={trip.id}>
+                      <TableRow
+                        key={trip.id}
+                        className={isViewOnly ? "opacity-50 bg-muted/30" : ""}
+                      >
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4 text-primary" />
@@ -640,11 +653,24 @@ export default function CompanyDashboard() {
                                 <Eye className="h-4 w-4" />
                               </Link>
                             </Button>
-                            <Button variant="ghost" size="sm" aria-label="Edit trip" asChild>
-                              <Link href={`/company/trips/${trip.id}/edit`}>
-                                <Edit className="h-4 w-4" />
-                              </Link>
-                            </Button>
+                            {/* RULE-003: Disable Edit for view-only trips */}
+                            {isViewOnly ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                aria-label="Edit trip (view-only)"
+                                disabled
+                                title="View-only: departed, completed, cancelled or past trips cannot be edited"
+                              >
+                                <Edit className="h-4 w-4 opacity-50" />
+                              </Button>
+                            ) : (
+                              <Button variant="ghost" size="sm" aria-label="Edit trip" asChild>
+                                <Link href={`/company/trips/${trip.id}/edit`}>
+                                  <Edit className="h-4 w-4" />
+                                </Link>
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

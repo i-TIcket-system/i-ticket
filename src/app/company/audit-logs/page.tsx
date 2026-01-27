@@ -58,31 +58,31 @@ interface AuditLog {
 
 const ACTION_COLORS: Record<string, string> = {
   // Company profile
-  COMPANY_PROFILE_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
+  COMPANY_PROFILE_UPDATED: "bg-blue-600 text-white",
   // Staff actions
-  STAFF_MEMBER_ADDED: "bg-purple-100 text-purple-900 border border-purple-300",
-  STAFF_MEMBER_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
-  STAFF_MEMBER_REMOVED: "bg-orange-100 text-orange-900 border border-orange-300",
+  STAFF_MEMBER_ADDED: "bg-purple-600 text-white",
+  STAFF_MEMBER_UPDATED: "bg-blue-600 text-white",
+  STAFF_MEMBER_REMOVED: "bg-orange-500 text-white",
   // Trip actions
-  TRIP_CREATED: "bg-green-100 text-green-900 border border-green-300",
-  TRIP_UPDATED: "bg-blue-100 text-blue-900 border border-blue-300",
-  TRIP_DELETED: "bg-red-100 text-red-900 border border-red-300",
-  TRIP_HALTED: "bg-yellow-100 text-yellow-900 border border-yellow-300",
-  TRIP_RESUMED: "bg-teal-100 text-teal-900 border border-teal-300",
+  TRIP_CREATED: "bg-green-600 text-white",
+  TRIP_UPDATED: "bg-blue-600 text-white",
+  TRIP_DELETED: "bg-red-600 text-white",
+  TRIP_HALTED: "bg-yellow-500 text-gray-900",
+  TRIP_RESUMED: "bg-teal-600 text-white",
   // Vehicle actions
-  VEHICLE_ADDED: "bg-emerald-100 text-emerald-900 border border-emerald-300",
-  VEHICLE_UPDATED: "bg-cyan-100 text-cyan-900 border border-cyan-300",
-  VEHICLE_REMOVED: "bg-rose-100 text-rose-900 border border-rose-300",
+  VEHICLE_ADDED: "bg-emerald-600 text-white",
+  VEHICLE_UPDATED: "bg-cyan-600 text-white",
+  VEHICLE_REMOVED: "bg-rose-600 text-white",
   // Work order actions
-  WORK_ORDER_CREATED: "bg-indigo-100 text-indigo-900 border border-indigo-300",
-  WORK_ORDER_UPDATED: "bg-violet-100 text-violet-900 border border-violet-300",
-  WORK_ORDER_COMPLETED: "bg-green-100 text-green-900 border border-green-300",
-  WORK_ORDER_CANCELLED: "bg-red-100 text-red-900 border border-red-300",
+  WORK_ORDER_CREATED: "bg-indigo-600 text-white",
+  WORK_ORDER_UPDATED: "bg-violet-600 text-white",
+  WORK_ORDER_COMPLETED: "bg-green-600 text-white",
+  WORK_ORDER_CANCELLED: "bg-red-600 text-white",
   // Trip log actions
-  TRIP_LOG_START: "bg-sky-100 text-sky-900 border border-sky-300",
-  TRIP_LOG_END: "bg-lime-100 text-lime-900 border border-lime-300",
+  TRIP_LOG_START: "bg-sky-600 text-white",
+  TRIP_LOG_END: "bg-lime-600 text-white",
   // Manual ticketing
-  MANUAL_TICKET_SOLD: "bg-amber-100 text-amber-900 border border-amber-300",
+  MANUAL_TICKET_SOLD: "bg-amber-600 text-white",
 }
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {
@@ -208,14 +208,14 @@ export default function CompanyAuditLogsPage() {
   const getStaffRoleBadge = (role?: string | null) => {
     if (!role) return null
     const roleColors: Record<string, string> = {
-      DRIVER: "bg-blue-100 text-blue-800",
-      CONDUCTOR: "bg-green-100 text-green-800",
-      MANUAL_TICKETER: "bg-orange-100 text-orange-800",
-      MECHANIC: "bg-purple-100 text-purple-800",
-      FINANCE: "bg-emerald-100 text-emerald-800",
+      DRIVER: "bg-blue-600 text-white",
+      CONDUCTOR: "bg-green-600 text-white",
+      MANUAL_TICKETER: "bg-orange-500 text-white",
+      MECHANIC: "bg-purple-600 text-white",
+      FINANCE: "bg-emerald-600 text-white",
     }
     return (
-      <Badge className={roleColors[role] || "bg-gray-100 text-gray-800"} variant="secondary">
+      <Badge className={roleColors[role] || "bg-gray-600 text-white"} variant="secondary">
         {role.replace("_", " ")}
       </Badge>
     )

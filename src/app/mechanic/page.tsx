@@ -68,17 +68,17 @@ interface Stats {
 }
 
 const STATUS_OPTIONS = [
-  { value: "OPEN", label: "Open", color: "bg-blue-100 text-blue-900 border border-blue-300", icon: Clock },
-  { value: "IN_PROGRESS", label: "In Progress", color: "bg-yellow-100 text-yellow-900 border border-yellow-300", icon: Play },
-  { value: "BLOCKED", label: "Blocked", color: "bg-red-100 text-red-900 border border-red-300", icon: Pause },
-  { value: "COMPLETED", label: "Completed", color: "bg-green-100 text-green-900 border border-green-300", icon: CheckCircle },
+  { value: "OPEN", label: "Open", color: "bg-blue-600 text-white", icon: Clock },
+  { value: "IN_PROGRESS", label: "In Progress", color: "bg-yellow-500 text-gray-900", icon: Play },
+  { value: "BLOCKED", label: "Blocked", color: "bg-red-600 text-white", icon: Pause },
+  { value: "COMPLETED", label: "Completed", color: "bg-green-600 text-white", icon: CheckCircle },
 ]
 
 const PRIORITY_INFO: Record<number, { label: string; color: string }> = {
-  1: { label: "Low", color: "bg-gray-100 text-gray-900 border border-gray-300" },
-  2: { label: "Normal", color: "bg-blue-100 text-blue-900 border border-blue-300" },
-  3: { label: "High", color: "bg-orange-100 text-orange-900 border border-orange-300" },
-  4: { label: "Urgent", color: "bg-red-100 text-red-900 border border-red-300 animate-pulse" },
+  1: { label: "Low", color: "bg-gray-600 text-white" },
+  2: { label: "Normal", color: "bg-blue-600 text-white" },
+  3: { label: "High", color: "bg-orange-500 text-white" },
+  4: { label: "Urgent", color: "bg-red-600 text-white animate-pulse" },
 }
 
 export default function MechanicDashboardPage() {

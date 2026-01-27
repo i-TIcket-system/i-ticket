@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.0 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.10.1 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md`
 
 ---
@@ -210,7 +210,18 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.0 - Jan 26, 2026)
+## RECENT UPDATES (v2.10.1 - Jan 27, 2026)
+
+### Critical Bug Fixes
+
+1. **RULE-003: View-Only Trip Protection** - Fixed bulk price update bypass. DEPARTED, COMPLETED, CANCELLED, and past trips now properly blocked from all modifications (bulk operations, edit page, API). Greyed out rows in dashboard/trips list with disabled Edit button.
+2. **RULE-007: Company Revenue Calculation** - Trip details now shows correct company revenue (totalAmount - commission - commissionVAT) instead of customer total. Fixed in trip details page and manifest generator.
+3. **Work Orders API** - Added missing fields (assignedToName, totalCost, createdAt, completionNotes, mechanicSignature) to GET response.
+4. **Telegram Bot Passenger Prompt** - Fixed wrong passenger number display. Now correctly shows "Passenger 2 of 2" instead of "Passenger 1 of 2" by syncing in-memory session after DB update.
+5. **Badge Colors** - Updated 8 files with high-contrast colors (bg-*-600 text-white) for better readability. Affected: staff, vehicles, audit-logs, profile, work-orders, mechanic, finance pages.
+6. **Template Search UX** - Search input now integrated inside dropdown for intuitive filtering.
+
+### Previous (v2.10.0 - Jan 26, 2026)
 
 1. **Smart Column Auto-Detect (Excel Import)** - Upload any Excel/CSV file with your own column names. System auto-detects common variations like "From"→origin, "Date"→departureDate. Supports English and Amharic column names. Manual mapper UI for unrecognized columns.
 2. **Trip Creation Form Reordering** - New logical field order: Route → Date/Time → Batch → Vehicle → Bus Type/Seats → Staff → Duration/Distance → Price → Amenities. Duration now in hours (not minutes).

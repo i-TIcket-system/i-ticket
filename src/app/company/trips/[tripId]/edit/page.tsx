@@ -206,11 +206,13 @@ export default function EditTripPage() {
       const data = await response.json()
 
       if (response.ok) {
-        // 🚨 CRITICAL: Redirect if trip is view-only (DEPARTED, COMPLETED, CANCELLED)
-        if (isTripViewOnly(data.trip.status)) {
+        // 🚨 CRITICAL: Redirect if trip is view-only (DEPARTED, COMPLETED, CANCELLED, or past)
+        const isPastTrip = new Date(data.trip.departureTime) < new Date()
+        const effectiveStatus = isPastTrip && data.trip.status === "SCHEDULED" ? "DEPARTED" : data.trip.status
+        if (isTripViewOnly(data.trip.status) || isPastTrip) {
           import("sonner").then(({ toast }) => {
-            toast.error(`Cannot edit ${data.trip.status.toLowerCase()} trips`, {
-              description: "This trip is view-only. All modifications are blocked for data integrity.",
+            toast.error(`Cannot edit ${effectiveStatus.toLowerCase()} trips`, {
+              description: "Only view is possible for departed, cancelled, completed or past trips.",
             })
           })
           router.push(`/company/trips/${tripId}`)

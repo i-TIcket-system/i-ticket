@@ -622,38 +622,48 @@ export default function NewTripPage() {
                     <Label className="text-base font-medium">Load from Template</Label>
                     <span className="text-xs text-muted-foreground">({templates.length} saved)</span>
                   </div>
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search templates by name or route..."
-                        value={templateSearch}
-                        onChange={(e) => setTemplateSearch(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-                    <Select
-                      value={selectedTemplateId}
-                      onValueChange={applyTemplate}
-                    >
-                      <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Select template" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">-- No template --</SelectItem>
-                        {filteredTemplates.map((template) => (
+                  {/* Template selection dropdown - full width for easier use */}
+                  <Select
+                    value={selectedTemplateId}
+                    onValueChange={applyTemplate}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a template to load" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {/* Search input inside dropdown for better UX */}
+                      <div className="p-2 border-b">
+                        <div className="relative">
+                          <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                          <input
+                            type="text"
+                            placeholder="Search templates..."
+                            value={templateSearch}
+                            onChange={(e) => setTemplateSearch(e.target.value)}
+                            className="w-full pl-8 pr-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      </div>
+                      <SelectItem value="__none__">-- No template --</SelectItem>
+                      {filteredTemplates.length === 0 && templateSearch ? (
+                        <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                          No templates found for "{templateSearch}"
+                        </div>
+                      ) : (
+                        filteredTemplates.map((template) => (
                           <SelectItem key={template.id} value={template.id}>
                             <div className="flex flex-col">
-                              <span>{template.name}</span>
+                              <span className="font-medium">{template.name}</span>
                               <span className="text-xs text-muted-foreground">
                                 {template.origin} → {template.destination}
                               </span>
                             </div>
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
                   {selectedTemplateId && selectedTemplateId !== "__none__" && (
                     <p className="text-xs text-blue-600 mt-2">
                       Template loaded. You can modify any field before creating the trip.

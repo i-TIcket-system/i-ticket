@@ -170,14 +170,19 @@ export async function PUT(
       )
     }
 
-    // 🚨 CRITICAL: Block all modifications to DEPARTED, COMPLETED, or CANCELLED trips
+    // 🚨 CRITICAL: Block all modifications to DEPARTED, COMPLETED, CANCELLED, or past trips
     // These trips are VIEW-ONLY - no edits allowed for data integrity and audit compliance
-    if (isTripViewOnly(existingTrip.status)) {
+    const isPastTrip = new Date(existingTrip.departureTime) < new Date()
+    const effectiveStatus = isPastTrip && existingTrip.status === "SCHEDULED" ? "DEPARTED" : existingTrip.status
+
+    if (isTripViewOnly(existingTrip.status) || isPastTrip) {
       return NextResponse.json(
         {
-          error: `Cannot modify ${existingTrip.status.toLowerCase()} trips`,
-          message: getViewOnlyMessage(existingTrip.status),
-          tripStatus: existingTrip.status,
+          error: `Cannot modify ${effectiveStatus.toLowerCase()} trips`,
+          message: isPastTrip && existingTrip.status === "SCHEDULED"
+            ? "Trip departure time has passed. All modifications are blocked."
+            : getViewOnlyMessage(existingTrip.status),
+          tripStatus: effectiveStatus,
         },
         { status: 403 }
       )

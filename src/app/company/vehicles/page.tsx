@@ -106,16 +106,16 @@ interface Vehicle {
 }
 
 const BUS_TYPES = {
-  MINI: { label: "Mini Bus", color: "bg-blue-100 text-blue-800" },
-  STANDARD: { label: "Standard Bus", color: "bg-green-100 text-green-800" },
-  LUXURY: { label: "Luxury Bus", color: "bg-purple-100 text-purple-800" },
+  MINI: { label: "Mini Bus", color: "bg-blue-600 text-white" },
+  STANDARD: { label: "Standard Bus", color: "bg-green-600 text-white" },
+  LUXURY: { label: "Luxury Bus", color: "bg-purple-600 text-white" },
 }
 
 const STATUS_INFO: Record<string, { label: string; color: string; icon: any }> = {
-  ON_TRIP: { label: "On Trip", color: "bg-blue-100 text-blue-800", icon: Truck },
-  ACTIVE: { label: "Available", color: "bg-green-100 text-green-800", icon: CheckCircle },
-  MAINTENANCE: { label: "Maintenance", color: "bg-orange-100 text-orange-800", icon: Wrench },
-  INACTIVE: { label: "Inactive", color: "bg-gray-100 text-gray-800", icon: XCircle },
+  ON_TRIP: { label: "On Trip", color: "bg-blue-600 text-white", icon: Truck },
+  ACTIVE: { label: "Available", color: "bg-green-600 text-white", icon: CheckCircle },
+  MAINTENANCE: { label: "Maintenance", color: "bg-orange-500 text-white", icon: Wrench },
+  INACTIVE: { label: "Inactive", color: "bg-gray-600 text-white", icon: XCircle },
 }
 
 const COMMON_MAKES = [
@@ -580,13 +580,13 @@ export default function VehiclesPage() {
                     const StatusIcon = statusInfo.icon
                     const isExpanded = expandedVehicle === vehicle.id
 
-                    // Risk score color
+                    // Risk score color (high contrast)
                     const getRiskColor = (score: number | null) => {
-                      if (score === null) return "bg-gray-100 text-gray-800"
-                      if (score < 50) return "bg-green-100 text-green-800"
-                      if (score < 70) return "bg-yellow-100 text-yellow-800"
-                      if (score < 85) return "bg-orange-100 text-orange-800"
-                      return "bg-red-100 text-red-800"
+                      if (score === null) return "bg-gray-600 text-white"
+                      if (score < 50) return "bg-green-600 text-white"
+                      if (score < 70) return "bg-yellow-500 text-gray-900"
+                      if (score < 85) return "bg-orange-500 text-white"
+                      return "bg-red-600 text-white"
                     }
 
                     return (

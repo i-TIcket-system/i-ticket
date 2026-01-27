@@ -30,7 +30,7 @@ export async function generateAndStoreManifest(
         },
         bookings: {
           where: { status: "PAID" },
-          select: { totalAmount: true }
+          select: { totalAmount: true, commission: true, commissionVAT: true }
         }
       }
     })
@@ -62,8 +62,11 @@ export async function generateAndStoreManifest(
 
     // 5. Calculate stats
     const passengerCount = trip.bookings.length
-    const totalRevenue = trip.bookings.reduce((sum, b) => sum + Number(b.totalAmount), 0)
-    const platformCommission = totalRevenue * 0.05
+    // RULE-007: Company revenue = totalAmount - commission - commissionVAT
+    const totalRevenue = trip.bookings.reduce((sum, b) =>
+      sum + (Number(b.totalAmount) - Number(b.commission || 0) - Number(b.commissionVAT || 0)), 0)
+    const platformCommission = trip.bookings.reduce((sum, b) =>
+      sum + Number(b.commission || 0) + Number(b.commissionVAT || 0), 0)
     const publicPath = `/manifests/company-${trip.company.id}/${fileName}`
 
     // 6. Create database records in transaction
@@ -176,7 +179,7 @@ export async function recordManualDownload(
       include: {
         bookings: {
           where: { status: "PAID" },
-          select: { totalAmount: true }
+          select: { totalAmount: true, commission: true, commissionVAT: true }
         }
       }
     })
@@ -186,7 +189,9 @@ export async function recordManualDownload(
     }
 
     const passengerCount = trip.bookings.length
-    const totalRevenue = trip.bookings.reduce((sum, b) => sum + Number(b.totalAmount), 0)
+    // RULE-007: Company revenue = totalAmount - commission - commissionVAT
+    const totalRevenue = trip.bookings.reduce((sum, b) =>
+      sum + (Number(b.totalAmount) - Number(b.commission || 0) - Number(b.commissionVAT || 0)), 0)
 
     // Create ManifestDownload record with downloadedBy = userId (manual)
     await prisma.$transaction([

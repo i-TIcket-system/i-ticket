@@ -120,11 +120,35 @@ export async function GET(request: NextRequest) {
       ...(workType && { taskType: workType }),
     }
 
-    // Get work orders
+    // Get work orders with all required fields
     const [workOrders, totalCount] = await Promise.all([
       prisma.workOrder.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          workOrderNumber: true,
+          vehicleId: true,
+          companyId: true,
+          title: true,
+          description: true,
+          taskType: true,
+          priority: true,
+          status: true,
+          assignedToId: true,
+          assignedToName: true,
+          assignedStaffIds: true,
+          serviceProvider: true,
+          scheduledDate: true,
+          startedAt: true,
+          completedAt: true,
+          laborCost: true,
+          partsCost: true,
+          totalCost: true,
+          completionNotes: true,
+          mechanicSignature: true,
+          createdAt: true,
+          updatedAt: true,
+          odometerAtService: true,
           vehicle: {
             select: {
               id: true,
