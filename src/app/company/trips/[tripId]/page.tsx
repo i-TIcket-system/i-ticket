@@ -248,9 +248,13 @@ export default function TripDetailPage() {
     }
   }
 
-  // Get available status actions
-  const getStatusActions = (status: string) => {
-    switch (status) {
+  // Get available status actions (ULTRA CRITICAL: Check past trip)
+  const getStatusActions = (status: string, departureTime: string) => {
+    // 🚨 ULTRA CRITICAL: Past trips (even SCHEDULED) should only allow DEPARTED→COMPLETED
+    const isPastTrip = new Date(departureTime) < new Date()
+    const effectiveStatus = isPastTrip && status === "SCHEDULED" ? "DEPARTED" : status
+
+    switch (effectiveStatus) {
       case "SCHEDULED":
         return [
           { status: "BOARDING", label: "Start Boarding", icon: Play, variant: "default" as const },
@@ -684,8 +688,8 @@ export default function TripDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                {getStatusActions(trip.status || "SCHEDULED").length > 0 ? (
-                  getStatusActions(trip.status || "SCHEDULED").map((action) => (
+                {getStatusActions(trip.status || "SCHEDULED", trip.departureTime).length > 0 ? (
+                  getStatusActions(trip.status || "SCHEDULED", trip.departureTime).map((action) => (
                     <Button
                       key={action.status}
                       className="w-full"
@@ -720,6 +724,7 @@ export default function TripDetailPage() {
               availableSlots={trip.availableSlots}
               currentAutoResumeEnabled={trip.autoResumeEnabled || false}
               tripStatus={trip.status}
+              departureTime={trip.departureTime}
               onUpdate={fetchTrip}
             />
 

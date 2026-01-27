@@ -12,6 +12,7 @@ interface BookingControlCardProps {
   availableSlots: number
   currentAutoResumeEnabled: boolean
   tripStatus: string
+  departureTime: string  // CRITICAL: Check if trip has passed
   onUpdate: () => void
 }
 
@@ -21,11 +22,14 @@ export function BookingControlCard({
   availableSlots,
   currentAutoResumeEnabled,
   tripStatus,
+  departureTime,
   onUpdate,
 }: BookingControlCardProps) {
-  // 🚨 CRITICAL: Cannot resume booking for DEPARTED, COMPLETED, or CANCELLED trips
-  const isStatusBlocked = ["DEPARTED", "COMPLETED", "CANCELLED"].includes(tripStatus)
-  // Force halted display for blocked statuses
+  // 🚨 ULTRA CRITICAL: Check BOTH status AND departure time
+  // Past trips (even if still SCHEDULED) should be treated as departed
+  const isPastTrip = new Date(departureTime) < new Date()
+  const isStatusBlocked = ["DEPARTED", "COMPLETED", "CANCELLED"].includes(tripStatus) || isPastTrip
+  // Force halted display for blocked statuses OR past trips
   const displayHalted = isStatusBlocked || bookingHalted
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
