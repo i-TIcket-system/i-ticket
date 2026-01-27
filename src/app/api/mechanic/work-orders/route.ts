@@ -38,10 +38,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
 
-    // Build where clause with proper Prisma types
+    // Build where clause with proper Prisma types - support both legacy and new assignment
     const where: Prisma.WorkOrderWhereInput = {
       companyId,
-      assignedToId: session.user.id,
+      OR: [
+        { assignedToId: session.user.id },
+        { assignedStaffIds: { contains: session.user.id } },
+      ],
     }
 
     if (status && status !== "ALL") {
@@ -51,7 +54,22 @@ export async function GET(request: NextRequest) {
     // Fetch work orders assigned to this mechanic
     const workOrders = await prisma.workOrder.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        workOrderNumber: true,
+        vehicleId: true,
+        title: true,
+        description: true,
+        taskType: true,
+        priority: true,
+        status: true,
+        assignedToId: true,
+        assignedToName: true,
+        assignedStaffIds: true,
+        scheduledDate: true,
+        startedAt: true,
+        completedAt: true,
+        createdAt: true,
         vehicle: {
           select: {
             id: true,
@@ -88,7 +106,10 @@ export async function GET(request: NextRequest) {
       by: ["status"],
       where: {
         companyId,
-        assignedToId: session.user.id,
+        OR: [
+          { assignedToId: session.user.id },
+          { assignedStaffIds: { contains: session.user.id } },
+        ],
       },
       _count: {
         _all: true,

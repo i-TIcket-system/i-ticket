@@ -18,6 +18,7 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Wrench,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -63,6 +64,11 @@ const typeIcons: Record<string, React.ElementType> = {
   PAYOUT_PROCESSED: DollarSign,
   LOW_SLOT_ALERT: AlertCircle,
   SYSTEM_ALERT: Bell,
+  WORK_ORDER_CREATED: Wrench,
+  WORK_ORDER_ASSIGNED: Wrench,
+  WORK_ORDER_URGENT: AlertTriangle,
+  WORK_ORDER_COMPLETED: CheckCircle,
+  WORK_ORDER_BLOCKED: AlertCircle,
 }
 
 const priorityColors: Record<number, string> = {
@@ -84,8 +90,24 @@ function getNotificationUrl(
   tripId: string | null | undefined,
   bookingId: string | null | undefined,
   userRole: string | undefined,
-  staffRole: string | null | undefined
+  staffRole: string | null | undefined,
+  metadata?: Record<string, unknown> | null
 ): string | null {
+  // Work Order notifications
+  if (type.startsWith("WORK_ORDER_") && metadata?.workOrderId) {
+    const workOrderId = metadata.workOrderId as string
+    // Mechanic → their mechanic work order page
+    if (staffRole === "MECHANIC") return `/mechanic/work-order/${workOrderId}`
+    // Company Admin (manager, no staffRole) → company work orders detail
+    if (userRole === "COMPANY_ADMIN" && !staffRole) return `/company/work-orders/${workOrderId}`
+    // Finance staff → finance work orders page
+    if (staffRole === "FINANCE") return "/finance/work-orders"
+    // Drivers/Conductors → staff my-trips
+    if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") return "/staff/my-trips"
+    // Super Admin → admin dashboard
+    if (userRole === "SUPER_ADMIN") return "/admin/dashboard"
+  }
+
   // Trip-related notifications - route to user's own trip page
   if (
     ["TRIP_ASSIGNED", "TRIP_UNASSIGNED", "TRIP_MESSAGE", "TRIP_HALTED", "TRIP_AUTO_HALTED", "TRIP_RESUMED", "LOW_SLOT_ALERT"].includes(type) &&
@@ -221,7 +243,8 @@ export default function NotificationsPage() {
       notification.tripId,
       notification.bookingId,
       session?.user?.role,
-      session?.user?.staffRole
+      session?.user?.staffRole,
+      notification.metadata
     )
 
     if (url) {

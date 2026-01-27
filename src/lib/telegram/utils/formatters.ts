@@ -319,7 +319,7 @@ export function formatTripCard(
 
 📍 ${formatRoute(trip.origin, trip.destination)}
 🕐 ${formatTime(trip.departureTime)}${durationStr}
-💺 ${trip.availableSlots} መቀመጫዎች አሉ
+💺 ${trip.availableSlots} ነጻ መቀመጫዎች አሉ!
 🚌 ${formatBusType(busType, lang)}${amenitiesStr}
 
 💰 *ዋጋ:* ${formatCurrency(trip.price)} በአንድ ሰው`;

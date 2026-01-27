@@ -270,6 +270,7 @@ export async function notifyWorkOrderStakeholders(
       select: {
         workOrderNumber: true,
         assignedToId: true,
+        assignedStaffIds: true,
         taskType: true,
         priority: true,
         vehicle: {
@@ -307,9 +308,18 @@ export async function notifyWorkOrderStakeholders(
     })
     companyAdmins.forEach((admin) => recipientIds.add(admin.id))
 
-    // 2. Add assigned mechanic
+    // 2. Add assigned mechanics (supports both legacy single and new multi-staff)
     if (workOrder.assignedToId) {
       recipientIds.add(workOrder.assignedToId)
+    }
+    // Parse assignedStaffIds JSON array and add all staff
+    if (workOrder.assignedStaffIds) {
+      try {
+        const staffIds = JSON.parse(workOrder.assignedStaffIds) as string[]
+        staffIds.forEach((staffId) => recipientIds.add(staffId))
+      } catch (err) {
+        console.error('Failed to parse assignedStaffIds:', err)
+      }
     }
 
     // 3. Get finance staff

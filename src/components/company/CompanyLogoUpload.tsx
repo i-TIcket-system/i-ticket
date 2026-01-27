@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Building2, Camera, Loader2, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ export function CompanyLogoUpload({
   onUploadSuccess,
   size = "md"
 }: CompanyLogoUploadProps) {
+  const router = useRouter()
   const { update: updateSession } = useSession()
   const [isUploading, setIsUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentLogo || null)
@@ -78,6 +80,7 @@ export function CompanyLogoUpload({
 
         // Refresh session to update logo across the app
         await updateSession()
+        router.refresh()
       } else {
         toast.error(data.error || "Failed to upload logo")
         setPreview(currentLogo || null)
@@ -109,6 +112,7 @@ export function CompanyLogoUpload({
 
         // Refresh session
         await updateSession()
+        router.refresh()
       } else {
         toast.error(data.error || "Failed to remove logo")
       }

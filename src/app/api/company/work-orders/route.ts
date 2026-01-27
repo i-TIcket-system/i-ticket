@@ -325,15 +325,17 @@ export async function POST(request: NextRequest) {
       session.user.id // exclude creator from notification
     ).catch((err) => console.error('Failed to send work order notifications:', err))
 
-    // If mechanic is assigned, send them a specific assignment notification
-    if (assignedMechanicId) {
-      notifyWorkOrderUser(assignedMechanicId, 'WORK_ORDER_ASSIGNED', {
-        workOrderId: workOrder.id,
-        workOrderNumber: workOrder.workOrderNumber,
-        vehiclePlate: workOrder.vehicle.plateNumber,
-        taskType: restData.taskType,
-        companyId: session.user.companyId!,
-      }).catch((err) => console.error('Failed to send mechanic assignment notification:', err))
+    // Send assignment notifications to all assigned staff (supports multi-staff assignments)
+    if (staffIdsToAssign.length > 0) {
+      for (const staffId of staffIdsToAssign) {
+        notifyWorkOrderUser(staffId, 'WORK_ORDER_ASSIGNED', {
+          workOrderId: workOrder.id,
+          workOrderNumber: workOrder.workOrderNumber,
+          vehiclePlate: workOrder.vehicle.plateNumber,
+          taskType: restData.taskType,
+          companyId: session.user.companyId!,
+        }).catch((err) => console.error(`Failed to send assignment notification to ${staffId}:`, err))
+      }
     }
 
     return NextResponse.json(

@@ -364,6 +364,7 @@ async function processDemoPayment(
 
     // Send success message
     await ctx.reply(getMessage("paymentSuccess", lang), { parse_mode: "Markdown" });
+    await ctx.reply(getMessage("thankYou", lang));
 
     // Send ticket details
     const booking = result.booking;
@@ -528,6 +529,7 @@ export async function handlePaymentCallback(
           getMessage("paymentSuccess", lang),
           { parse_mode: "Markdown" }
         );
+        await bot.telegram.sendMessage(chatId, getMessage("thankYou", lang));
 
         // Send ticket info
         const booking = result.booking;

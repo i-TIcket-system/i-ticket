@@ -34,7 +34,10 @@ export async function GET(
       where: {
         id: workOrderId,
         companyId: session.user.companyId!,
-        assignedToId: session.user.id,
+        OR: [
+          { assignedToId: session.user.id },
+          { assignedStaffIds: { contains: session.user.id } },
+        ],
       },
       include: {
         vehicle: {
@@ -88,7 +91,10 @@ export async function PATCH(
       where: {
         id: workOrderId,
         companyId: session.user.companyId!,
-        assignedToId: session.user.id,
+        OR: [
+          { assignedToId: session.user.id },
+          { assignedStaffIds: { contains: session.user.id } },
+        ],
       },
     })
 

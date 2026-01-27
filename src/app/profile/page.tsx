@@ -13,6 +13,20 @@ import { PhoneInput } from "@/components/ui/phone-input"
 import { toast } from "sonner"
 import { ProfilePictureUpload } from "@/components/profile/ProfilePictureUpload"
 
+// Helper function to format role display
+const getRoleInfo = (role: string) => {
+  const STAFF_ROLES: Record<string, string> = {
+    ADMIN: "Admin",
+    DRIVER: "Driver",
+    CONDUCTOR: "Conductor",
+    MANUAL_TICKETER: "Manual Ticketer",
+    MECHANIC: "Mechanic",
+    FINANCE: "Finance",
+    SUPERVISOR: "Supervisor",
+  }
+  return STAFF_ROLES[role] || role.replace(/_/g, " ")
+}
+
 export default function ProfilePage() {
   const { data: session, status, update } = useSession()
   const router = useRouter()
@@ -154,7 +168,15 @@ export default function ProfilePage() {
           </div>
           <div>
             <Label>Role</Label>
-            <Input value={session.user.role} disabled className="bg-gray-50" />
+            <Input
+              value={
+                session.user.staffRole
+                  ? getRoleInfo(session.user.staffRole)
+                  : session.user.role
+              }
+              disabled
+              className="bg-gray-50"
+            />
           </div>
         </CardContent>
       </Card>
