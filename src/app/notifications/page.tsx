@@ -19,6 +19,7 @@ import {
   XCircle,
   AlertCircle,
   Wrench,
+  Package,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -70,6 +71,9 @@ const typeIcons: Record<string, React.ElementType> = {
   WORK_ORDER_URGENT: AlertTriangle,
   WORK_ORDER_COMPLETED: CheckCircle,
   WORK_ORDER_BLOCKED: AlertCircle,
+  WORK_ORDER_STATUS_CHANGED: Wrench,
+  WORK_ORDER_MESSAGE: MessageSquare,
+  WORK_ORDER_PARTS_REQUESTED: Package,
 }
 
 const priorityColors: Record<number, string> = {
@@ -99,10 +103,10 @@ function getNotificationUrl(
     const workOrderId = metadata.workOrderId as string
     // Mechanic → their mechanic work order page
     if (staffRole === "MECHANIC") return `/mechanic/work-order/${workOrderId}`
-    // Company Admin (manager, no staffRole) → company work orders detail
-    if (userRole === "COMPANY_ADMIN" && !staffRole) return `/company/work-orders/${workOrderId}`
-    // Finance staff → finance work orders page
-    if (staffRole === "FINANCE") return "/finance/work-orders"
+    // Company Admin (manager, no staffRole OR staffRole=ADMIN) → company work orders detail
+    if (userRole === "COMPANY_ADMIN" && (!staffRole || staffRole === "ADMIN")) return `/company/work-orders/${workOrderId}`
+    // Finance staff → finance work orders detail page (BUG FIX)
+    if (staffRole === "FINANCE") return `/finance/work-orders/${workOrderId}`
     // BUG FIX v2.10.5: Drivers/Conductors → staff work orders detail page
     if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") return `/staff/work-orders/${workOrderId}`
     // Super Admin → admin dashboard
@@ -118,8 +122,8 @@ function getNotificationUrl(
     if (staffRole === "MANUAL_TICKETER") return `/cashier/trip/${tripId}`
     // Drivers/Conductors → staff my-trips
     if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") return "/staff/my-trips"
-    // Company Admin (manager, no staffRole) → company trip detail
-    if (userRole === "COMPANY_ADMIN" && !staffRole) return `/company/trips/${tripId}`
+    // Company Admin (manager, no staffRole OR staffRole=ADMIN) → company trip detail
+    if (userRole === "COMPANY_ADMIN" && (!staffRole || staffRole === "ADMIN")) return `/company/trips/${tripId}`
     // Super Admin → admin dashboard
     if (userRole === "SUPER_ADMIN") return "/admin/dashboard"
   }
@@ -129,7 +133,7 @@ function getNotificationUrl(
     if (userRole === "CUSTOMER" && bookingId) return `/tickets/${bookingId}`
     if (staffRole === "MANUAL_TICKETER") return "/cashier"
     if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") return "/staff/my-trips"
-    if (userRole === "COMPANY_ADMIN" && !staffRole && tripId) return `/company/trips/${tripId}`
+    if (userRole === "COMPANY_ADMIN" && (!staffRole || staffRole === "ADMIN") && tripId) return `/company/trips/${tripId}`
     if (userRole === "SUPER_ADMIN") return "/admin/dashboard"
   }
 

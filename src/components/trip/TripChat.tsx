@@ -19,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { cn } from "@/lib/utils"
+import { cn, isTodayEthiopia } from "@/lib/utils"
 
 interface Message {
   id: string
@@ -152,8 +152,7 @@ export function TripChat({
 
   const formatTime = (dateString: string) => {
     const date = new Date(dateString)
-    const now = new Date()
-    const isToday = date.toDateString() === now.toDateString()
+    const isToday = isTodayEthiopia(dateString)
 
     if (isToday) {
       return date.toLocaleTimeString("en-US", {

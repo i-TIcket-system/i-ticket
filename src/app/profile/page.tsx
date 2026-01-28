@@ -34,7 +34,6 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    nationalId: "",
     nextOfKinName: "",
     nextOfKinPhone: "",
   })
@@ -55,7 +54,6 @@ export default function ProfilePage() {
       setFormData({
         name: session.user.name || "",
         email: session.user.email || "",
-        nationalId: "",
         nextOfKinName: "",
         nextOfKinPhone: "",
       })
@@ -220,16 +218,6 @@ export default function ProfilePage() {
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="nationalId">ID Number/Passport (Optional)</Label>
-              <Input
-                id="nationalId"
-                placeholder="Kebele, National, Regional, or Passport"
-                value={formData.nationalId}
-                onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
               />
             </div>
 

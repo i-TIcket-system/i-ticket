@@ -21,6 +21,37 @@ export function formatDate(date: Date | string): string {
   }).format(new Date(date))
 }
 
+// Ethiopia timezone constant
+export const ETHIOPIA_TIMEZONE = "Africa/Addis_Ababa";
+
+/**
+ * Get date-only string in Ethiopia timezone (YYYY-MM-DD format)
+ * Used for date comparisons that should be Ethiopia-timezone aware
+ */
+export function getEthiopiaDateString(date: Date | string): string {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("en-CA", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    timeZone: ETHIOPIA_TIMEZONE,
+  }).format(dateObj);
+}
+
+/**
+ * Check if two dates are the same day in Ethiopia timezone
+ */
+export function isSameDayEthiopia(date1: Date | string, date2: Date | string): boolean {
+  return getEthiopiaDateString(date1) === getEthiopiaDateString(date2);
+}
+
+/**
+ * Check if a date is today in Ethiopia timezone
+ */
+export function isTodayEthiopia(date: Date | string): boolean {
+  return isSameDayEthiopia(date, new Date());
+}
+
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60

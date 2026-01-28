@@ -20,7 +20,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { formatCurrency, formatDate } from "@/lib/utils"
+import { formatCurrency, formatDate, isTodayEthiopia } from "@/lib/utils"
 
 interface AssignedTrip {
   id: string
@@ -204,7 +204,7 @@ export default function CashierDashboard() {
 
 function TripCard({ trip }: { trip: AssignedTrip }) {
   const departureDate = new Date(trip.departureTime)
-  const isToday = departureDate.toDateString() === new Date().toDateString()
+  const isToday = isTodayEthiopia(trip.departureTime)
   const isPast = departureDate < new Date()
   const isSoldOut = trip.availableSlots === 0
   const soldCount = trip.totalSlots - trip.availableSlots

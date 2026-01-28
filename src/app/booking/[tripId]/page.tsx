@@ -81,7 +81,6 @@ interface Trip {
 
 interface Passenger {
   name: string
-  nationalId: string
   phone: string
   specialNeeds: string
   pickupLocation?: string
@@ -91,7 +90,6 @@ interface Passenger {
 
 const emptyPassenger: Passenger = {
   name: "",
-  nationalId: "",
   phone: "",
   specialNeeds: "",
   pickupLocation: "",
@@ -165,7 +163,6 @@ export default function BookingPage() {
           ...prev[0],
           name: session.user.name || "",
           phone: session.user.phone || "",
-          nationalId: session.user.nationalId || "",
         },
         ...prev.slice(1),
       ])
@@ -567,8 +564,7 @@ export default function BookingPage() {
                                       ? {
                                           ...p,
                                           isChild: checked as boolean,
-                                          // Clear ID and phone when marking as child
-                                          nationalId: checked ? "" : p.nationalId,
+                                          // Clear phone when marking as child
                                           phone: checked ? "" : p.phone,
                                         }
                                       : p
@@ -643,26 +639,13 @@ export default function BookingPage() {
                         )}
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>
-                          ID Number/Passport (Optional)
-                        </Label>
-                        <div className="relative">
-                          <BadgeCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder={passenger.isChild ? "Not required for children" : "Kebele, National, Regional, or Passport"}
-                            value={passenger.nationalId}
-                            onChange={(e) => updatePassenger(index, "nationalId", e.target.value)}
-                            className={`pl-10 ${passenger.isChild ? 'bg-gray-100 dark:bg-gray-800/60 cursor-not-allowed text-muted-foreground/70 border-dashed' : ''}`}
-                            disabled={passenger.isChild}
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {passenger.isChild
-                              ? "Children under 12 don't need ID verification"
-                              : "You'll need to show ID matching your name when boarding"}
-                          </p>
+                      {/* ID Verification Note */}
+                      {!passenger.isChild && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-3 rounded-md md:col-span-2">
+                          <BadgeCheck className="h-4 w-4 text-primary flex-shrink-0" />
+                          <p>You'll need to show ID matching your name when boarding</p>
                         </div>
-                      </div>
+                      )}
 
                       <div className="space-y-2">
                         <Label>

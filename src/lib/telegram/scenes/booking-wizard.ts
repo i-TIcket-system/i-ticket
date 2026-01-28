@@ -25,7 +25,7 @@ import {
 import { prisma } from "@/lib/db";
 import { transactionWithTimeout } from "@/lib/db";
 import { calculateBookingAmounts } from "@/lib/commission";
-import { getAvailableSeatNumbers } from "@/lib/utils";
+import { getAvailableSeatNumbers, isSameDayEthiopia } from "@/lib/utils";
 import { startOfDay, endOfDay, parseISO, format } from "date-fns";
 
 /**
@@ -323,7 +323,8 @@ export async function handleTripSearch(ctx: TelegramContext) {
     // Search trips - MATCHES WEB APP QUERY (api/trips/route.ts)
     const searchDate = new Date(date);
     const now = new Date();
-    const isToday = startOfDay(searchDate).toDateString() === now.toDateString();
+    // Use Ethiopia timezone for date comparison (fixes Jan 29 showing as Jan 28 bug)
+    const isToday = isSameDayEthiopia(searchDate, now);
 
     const trips = await prisma.trip.findMany({
       where: {

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/db"
 import { searchTripsSchema, validateQueryParams } from "@/lib/validations"
 import { createAuditLogTask } from "@/lib/clickup"
-import { handleApiError } from "@/lib/utils"
+import { handleApiError, isSameDayEthiopia } from "@/lib/utils"
 import { sortTripsByStatusAndTime } from "@/lib/sort-trips"
 
 export async function GET(request: NextRequest) {
@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
 
       const now = new Date()
 
-      // If searching for today, only show trips that haven't departed yet
-      if (startOfDay.toDateString() === now.toDateString()) {
+      // If searching for today (using Ethiopia timezone), only show trips that haven't departed yet
+      if (isSameDayEthiopia(startOfDay, now)) {
         where.departureTime = {
           gte: now, // Only future trips today
           lte: endOfDay,

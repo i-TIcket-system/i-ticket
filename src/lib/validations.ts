@@ -102,7 +102,7 @@ export const createBookingSchema = z.object({
   passengers: z.array(
     z.object({
       name: z.string().min(2, "Passenger name must be at least 2 characters"),
-      nationalId: z.string().min(5, "National ID is required"),
+      nationalId: z.string().optional(), // ID is optional - verified at boarding
       phone: ethiopianPhone,
       specialNeeds: z.string().optional(),
     })

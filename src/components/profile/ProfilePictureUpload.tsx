@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 import { Camera, Loader2, Trash2, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,6 +19,7 @@ export function ProfilePictureUpload({
   onUploadSuccess,
   size = "md"
 }: ProfilePictureUploadProps) {
+  const router = useRouter()
   const { update: updateSession } = useSession()
   const [isUploading, setIsUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentPicture || null)
@@ -72,6 +74,7 @@ export function ProfilePictureUpload({
 
         // Refresh session to update profile picture across the app
         await updateSession()
+        router.refresh() // Force UI refresh
       } else {
         toast.error(data.error || "Failed to upload image")
         setPreview(currentPicture || null)
@@ -103,6 +106,7 @@ export function ProfilePictureUpload({
 
         // Refresh session
         await updateSession()
+        router.refresh() // Force UI refresh
       } else {
         toast.error(data.error || "Failed to remove image")
       }

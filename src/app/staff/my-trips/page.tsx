@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState, useRef } from "react"
-import { cn } from "@/lib/utils"
+import { cn, isTodayEthiopia } from "@/lib/utils"
 import {
   Loader2,
   Bus,
@@ -120,14 +120,13 @@ export default function MyTripsPage() {
     )
   }
 
-  // Filter trips by time
+  // Filter trips by time (using Ethiopia timezone for date comparisons)
   const now = new Date()
   const upcomingTrips = trips.filter(trip => new Date(trip.departureTime) > now)
   const pastTrips = trips.filter(trip => new Date(trip.departureTime) <= now)
-  const todaysTrips = upcomingTrips.filter(trip => {
-    const tripDate = new Date(trip.departureTime)
-    return tripDate.toDateString() === now.toDateString()
-  })
+  const todaysTrips = upcomingTrips.filter(trip =>
+    isTodayEthiopia(trip.departureTime)
+  )
 
   const getRoleIcon = () => {
     switch (session?.user?.staffRole) {

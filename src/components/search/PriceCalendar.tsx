@@ -10,7 +10,7 @@ import { ChevronLeft, ChevronRight, TrendingDown, Calendar as CalendarIcon, Load
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+import { cn, isSameDayEthiopia, isTodayEthiopia, getEthiopiaDateString } from '@/lib/utils'
 
 /**
  * Price Calendar Cell
@@ -220,11 +220,11 @@ export function PriceCalendar({
             <div key={weekIndex} className="grid grid-cols-7 gap-2">
               {week.map((day) => {
                 const dayData = priceData.find(
-                  d => d.date.toDateString() === day.toDateString()
+                  d => isSameDayEthiopia(d.date, day)
                 )
                 const isPast = day < today
-                const isToday = day.toDateString() === today.toDateString()
-                const isSelected = selectedDate?.toDateString() === day.toDateString()
+                const isToday = isTodayEthiopia(day)
+                const isSelected = selectedDate ? isSameDayEthiopia(selectedDate, day) : false
                 const isLowestPrice = dayData?.price === lowestPrice && dayData.availability !== 'none'
 
                 return (
@@ -311,9 +311,9 @@ export function CompactPriceCalendar({
       <div className="grid grid-cols-7 gap-1">
         {days.map((day) => {
           const dayData = priceData.find(
-            d => d.date.toDateString() === day.toDateString()
+            d => isSameDayEthiopia(d.date, day)
           )
-          const isSelected = selectedDate?.toDateString() === day.toDateString()
+          const isSelected = selectedDate ? isSameDayEthiopia(selectedDate, day) : false
           const isLowestPrice = dayData?.price === lowestPrice && dayData.availability !== 'none'
 
           return (

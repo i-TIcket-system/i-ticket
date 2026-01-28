@@ -53,8 +53,8 @@ function getNotificationUrl(
       }
       return "/staff/my-trips"
     }
-    // Company Admin (manager, no staffRole) → company trip detail
-    if (userRole === "COMPANY_ADMIN" && !staffRole) {
+    // Company Admin (manager, no staffRole OR staffRole=ADMIN) → company trip detail
+    if (userRole === "COMPANY_ADMIN" && (!staffRole || staffRole === "ADMIN")) {
       return `/company/trips/${tripId}`
     }
     // Super Admin → their admin dashboard (no access to company trip pages)
@@ -82,8 +82,8 @@ function getNotificationUrl(
     if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") {
       return "/staff/my-trips"
     }
-    // Company Admin (manager) → company trip detail
-    if (userRole === "COMPANY_ADMIN" && !staffRole && tripId) {
+    // Company Admin (manager, no staffRole OR staffRole=ADMIN) → company trip detail
+    if (userRole === "COMPANY_ADMIN" && (!staffRole || staffRole === "ADMIN") && tripId) {
       return `/company/trips/${tripId}`
     }
     // Super Admin → admin dashboard
@@ -102,6 +102,8 @@ function getNotificationUrl(
       "WORK_ORDER_MESSAGE",
       "WORK_ORDER_COMPLETED",
       "WORK_ORDER_URGENT",
+      "WORK_ORDER_PARTS_REQUESTED",
+      "WORK_ORDER_BLOCKED",
     ].includes(type) &&
     workOrderId
   ) {
@@ -113,13 +115,13 @@ function getNotificationUrl(
     if (staffRole === "FINANCE") {
       return `/finance/work-orders/${workOrderId}`
     }
-    // Company Admin (manager, no staffRole) → company work order detail
-    if (userRole === "COMPANY_ADMIN" && !staffRole) {
+    // Company Admin (manager, no staffRole OR staffRole=ADMIN) → company work order detail
+    if (userRole === "COMPANY_ADMIN" && (!staffRole || staffRole === "ADMIN")) {
       return `/company/work-orders/${workOrderId}`
     }
-    // Driver/Conductor → company work order (they can view but not assigned portal-specific page)
+    // Driver/Conductor → staff work orders detail page (BUG FIX)
     if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") {
-      return `/company/work-orders/${workOrderId}`
+      return `/staff/work-orders/${workOrderId}`
     }
     return null
   }
