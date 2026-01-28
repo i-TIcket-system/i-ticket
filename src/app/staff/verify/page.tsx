@@ -64,10 +64,40 @@ export default function VerifyTicketPage() {
 
       const data = await response.json()
 
-      if (response.ok) {
-        setResult({ success: true, data })
+      // BUG FIX v2.10.5: Transform API response to match UI expected structure
+      // API returns { valid, ticket: {...} } but UI expects { success, data: { ticket, passenger, trip, booking } }
+      if (response.ok && data.valid) {
+        const transformedData = {
+          ticket: {
+            id: data.ticket.id,
+            code: data.ticket.shortCode,
+            shortCode: data.ticket.shortCode,
+            status: 'VALID',
+            seatNumber: data.ticket.seatNumber,
+          },
+          passenger: {
+            name: data.ticket.passengerName,
+            phone: data.ticket.booking?.bookedByPhone || '',
+            nationalId: null,
+          },
+          trip: {
+            origin: data.ticket.trip.origin,
+            destination: data.ticket.trip.destination,
+            departureDate: data.ticket.trip.departureTime,
+            departureTime: new Date(data.ticket.trip.departureTime).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true,
+            }),
+          },
+          booking: {
+            totalPassengers: data.ticket.booking?.passengerCount || 1,
+            bookingReference: data.ticket.booking?.id || '',
+          },
+        }
+        setResult({ success: true, data: transformedData })
         toast.success("Ticket verified successfully!")
-      } else {
+      } else if (!response.ok || !data.valid) {
         setResult({ success: false, error: data.error || "Ticket verification failed" })
         toast.error(data.error || "Ticket verification failed")
       }

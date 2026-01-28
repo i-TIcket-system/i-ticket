@@ -103,8 +103,8 @@ function getNotificationUrl(
     if (userRole === "COMPANY_ADMIN" && !staffRole) return `/company/work-orders/${workOrderId}`
     // Finance staff → finance work orders page
     if (staffRole === "FINANCE") return "/finance/work-orders"
-    // Drivers/Conductors → staff my-trips
-    if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") return "/staff/my-trips"
+    // BUG FIX v2.10.5: Drivers/Conductors → staff work orders detail page
+    if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") return `/staff/work-orders/${workOrderId}`
     // Super Admin → admin dashboard
     if (userRole === "SUPER_ADMIN") return "/admin/dashboard"
   }

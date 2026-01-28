@@ -26,16 +26,17 @@ const createWorkOrderSchema = z.object({
 })
 
 // M1 FIX: Validation schema with scientific notation rejection
+// BUG FIX v2.10.5: Added .nullish() to status and workType to handle null from searchParams.get()
 const workOrderQuerySchema = z.object({
-  status: z.enum(['OPEN', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELLED']).optional(),
-  priority: z.string().optional().transform((val) => {
+  status: z.enum(['OPEN', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELLED']).nullish(),
+  priority: z.string().nullish().transform((val) => {
     if (!val) return undefined
     const num = parseInt(val, 10)
     if (isNaN(num) || num < 1 || num > 4) return undefined
     return num
   }),
-  vehicleId: z.string().optional(),
-  workType: z.enum(['PREVENTIVE', 'CORRECTIVE', 'INSPECTION', 'EMERGENCY']).optional(),
+  vehicleId: z.string().nullish(),
+  workType: z.enum(['PREVENTIVE', 'CORRECTIVE', 'INSPECTION', 'EMERGENCY']).nullish(),
   page: z.string().nullable().optional().transform((val) => {
     if (!val || /[eE.]/.test(val)) return 1
     const num = parseInt(val, 10)

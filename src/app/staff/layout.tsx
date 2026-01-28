@@ -14,6 +14,7 @@ import {
   X,
   Bus,
   QrCode,
+  Wrench,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
@@ -29,6 +30,15 @@ const getSidebarItems = (staffRole?: string) => {
       icon: Bus,
     },
   ]
+
+  // BUG FIX v2.10.5: Add Work Orders link for Driver/Conductor
+  if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") {
+    items.push({
+      title: "Work Orders",
+      href: "/staff/work-orders",
+      icon: Wrench,
+    })
+  }
 
   // Conductors can verify tickets
   if (staffRole === "CONDUCTOR") {

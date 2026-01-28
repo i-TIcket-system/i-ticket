@@ -6,13 +6,14 @@ import { Prisma } from "@prisma/client"
 import { z } from "zod"
 
 // Issue 2.4: RULE-014 - Validation schema for finance query parameters
+// BUG FIX v2.10.5: Added .nullish() to handle null from searchParams.get()
 const financeQuerySchema = z.object({
-  status: z.string().optional(),
-  startDate: z.string().optional().refine(
+  status: z.string().nullish(),
+  startDate: z.string().nullish().refine(
     (val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val),
     "Invalid date format. Use YYYY-MM-DD"
   ),
-  endDate: z.string().optional().refine(
+  endDate: z.string().nullish().refine(
     (val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val),
     "Invalid date format. Use YYYY-MM-DD"
   ),
