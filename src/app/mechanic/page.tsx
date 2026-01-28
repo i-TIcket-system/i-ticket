@@ -99,6 +99,19 @@ export default function MechanicDashboardPage() {
     }
   }, [status, session, router, statusFilter])
 
+  // Auto-refresh every 30 seconds for real-time updates
+  useEffect(() => {
+    if (status !== "authenticated") return
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchWorkOrders()
+      }
+    }, 30000) // 30 seconds for list pages
+
+    return () => clearInterval(interval)
+  }, [status, statusFilter])
+
   const fetchWorkOrders = async () => {
     setLoading(true)
     try {

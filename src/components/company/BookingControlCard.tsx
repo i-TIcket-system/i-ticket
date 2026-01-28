@@ -140,6 +140,15 @@ export function BookingControlCard({
           </div>
         )}
 
+        {availableSlots === 0 && !isStatusBlocked && (
+          <div className="flex items-start gap-2 p-2 bg-gray-100 border border-gray-300 rounded text-xs">
+            <AlertTriangle className="h-4 w-4 text-gray-600 flex-shrink-0 mt-0.5" />
+            <p className="text-gray-800">
+              <strong>Sold Out:</strong> All seats are booked. No action needed.
+            </p>
+          </div>
+        )}
+
         <div className="space-y-3">
           <div className="flex gap-2">
             {displayHalted ? (
@@ -147,8 +156,8 @@ export function BookingControlCard({
                 className="flex-1 bg-green-600 hover:bg-green-700 text-white disabled:bg-gray-400 disabled:cursor-not-allowed"
                 size="sm"
                 onClick={() => toggleBooking("RESUME")}
-                disabled={isLoading || isStatusBlocked}
-                title={isStatusBlocked ? `Cannot resume booking for ${tripStatus} trips` : undefined}
+                disabled={isLoading || isStatusBlocked || availableSlots === 0}
+                title={isStatusBlocked ? `Cannot resume booking for ${tripStatus} trips` : availableSlots === 0 ? "All seats are sold out" : undefined}
               >
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />

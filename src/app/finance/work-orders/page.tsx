@@ -120,6 +120,7 @@ export default function FinanceWorkOrdersPage() {
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
   const [exportStartDate, setExportStartDate] = useState("")
   const [exportEndDate, setExportEndDate] = useState("")
+  const [exportStatus, setExportStatus] = useState("ALL")
   const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
@@ -131,6 +132,19 @@ export default function FinanceWorkOrdersPage() {
       fetchWorkOrders()
     }
   }, [status, session, router])
+
+  // Auto-refresh every 30 seconds for real-time updates
+  useEffect(() => {
+    if (status !== "authenticated") return
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchWorkOrders()
+      }
+    }, 30000) // 30 seconds for list pages
+
+    return () => clearInterval(interval)
+  }, [status, filters.status, filters.startDate, filters.endDate])
 
   const fetchWorkOrders = async () => {
     setLoading(true)
@@ -177,7 +191,7 @@ export default function FinanceWorkOrdersPage() {
       const params = new URLSearchParams()
       if (exportStartDate) params.append("startDate", exportStartDate)
       if (exportEndDate) params.append("endDate", exportEndDate)
-      if (filters.status !== "ALL") params.append("status", filters.status)
+      if (exportStatus !== "ALL") params.append("status", exportStatus)
 
       const response = await fetch(`/api/company/work-orders/export?${params.toString()}`)
 
@@ -457,13 +471,24 @@ export default function FinanceWorkOrdersPage() {
                 />
               </div>
             </div>
+            <div>
+              <Label>Status Filter</Label>
+              <Select value={exportStatus} onValueChange={setExportStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Statuses</SelectItem>
+                  <SelectItem value="OPEN">Open</SelectItem>
+                  <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                  <SelectItem value="BLOCKED">Blocked</SelectItem>
+                  <SelectItem value="COMPLETED">Completed</SelectItem>
+                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <p className="text-sm text-muted-foreground">
               Leave dates empty to export all work orders.
-              {filters.status !== "ALL" && (
-                <span className="block mt-1">
-                  Status filter ({filters.status.replace("_", " ")}) will be applied.
-                </span>
-              )}
             </p>
           </div>
           <DialogFooter>

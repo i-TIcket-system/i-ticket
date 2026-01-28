@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Loader2, CheckCircle2, Info, Bus, RotateCcw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -146,6 +146,10 @@ export function SeatMap({
   const [loading, setLoading] = useState(true)
   const [totalSlots, setTotalSlots] = useState(0)
 
+  // Fix for stale closure: useRef to always access current selectedSeats value
+  // This prevents polling from using stale captured values
+  const selectedSeatsRef = useRef<number[]>([])
+
   // Auto-detect orientation based on device
   const [currentOrientation, setCurrentOrientation] = useState<"landscape" | "portrait">(() => {
     if (orientation === "auto") {
@@ -189,6 +193,11 @@ export function SeatMap({
     setCurrentOrientation(prev => prev === "landscape" ? "portrait" : "landscape")
   }
 
+  // Keep ref in sync with selectedSeats state for polling access
+  useEffect(() => {
+    selectedSeatsRef.current = selectedSeats
+  }, [selectedSeats])
+
   useEffect(() => {
     fetchSeatAvailability()
     // Clear selection on refresh
@@ -219,8 +228,8 @@ export function SeatMap({
 
       if (response.ok) {
         setTotalSlots(data.totalSlots)
-        // Preserve currently selected seats during polling updates
-        const seatLayout = generateSeatLayout(data.totalSlots, data.occupiedSeats, selectedSeats)
+        // Use ref for current selected seats to avoid stale closure in polling interval
+        const seatLayout = generateSeatLayout(data.totalSlots, data.occupiedSeats, selectedSeatsRef.current)
         setSeats(seatLayout)
       }
     } catch (error) {

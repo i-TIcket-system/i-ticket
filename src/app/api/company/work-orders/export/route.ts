@@ -118,14 +118,13 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
     })
 
-    // Format data for Excel
-    const excelData = workOrders.map((wo) => {
-      // Build parts list string
-      const partsList = wo.partsUsed
-        .map((p) => `${p.partName} (${p.quantity}x @ ${p.unitPrice} Birr)`)
-        .join("; ")
+    // Format data for Excel - one row per part (parts in separate rows)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const excelData: any[] = []
 
-      return {
+    for (const wo of workOrders) {
+      // Base row data for this work order
+      const baseRow = {
         "WO Number": wo.workOrderNumber,
         "Title": wo.title,
         "Vehicle": wo.vehicle.plateNumber,
@@ -139,7 +138,6 @@ export async function GET(request: NextRequest) {
         "Labor Cost (Birr)": wo.laborCost,
         "Parts Cost (Birr)": wo.partsCost,
         "Total Cost (Birr)": wo.totalCost,
-        "Parts Used": partsList || "None",
         "Scheduled Date": wo.scheduledDate ? new Date(wo.scheduledDate).toLocaleDateString() : "-",
         "Started At": wo.startedAt ? new Date(wo.startedAt).toLocaleString() : "-",
         "Completed At": wo.completedAt ? new Date(wo.completedAt).toLocaleString() : "-",
@@ -147,7 +145,36 @@ export async function GET(request: NextRequest) {
         "Description": wo.description || "-",
         "Completion Notes": wo.completionNotes || "-",
       }
-    })
+
+      if (wo.partsUsed.length === 0) {
+        // No parts - add single row with "None" for part columns
+        excelData.push({
+          ...baseRow,
+          "Part Name": "-",
+          "Part Qty": "-",
+          "Part Unit Price": "-",
+          "Part Total": "-",
+          "Part Status": "-",
+        })
+      } else {
+        // Multiple parts - add one row per part
+        wo.partsUsed.forEach((part, index) => {
+          // First row shows all WO details, subsequent rows have empty WO fields
+          const rowData = index === 0
+            ? { ...baseRow }
+            : Object.fromEntries(Object.keys(baseRow).map(k => [k, ""]))
+
+          excelData.push({
+            ...rowData,
+            "Part Name": part.partName,
+            "Part Qty": part.quantity,
+            "Part Unit Price": part.unitPrice,
+            "Part Total": part.totalPrice,
+            "Part Status": part.status || "N/A",
+          })
+        })
+      }
+    }
 
     // Create workbook
     const workbook = XLSX.utils.book_new()
@@ -168,13 +195,17 @@ export async function GET(request: NextRequest) {
       { wch: 15 }, // Labor Cost
       { wch: 15 }, // Parts Cost
       { wch: 15 }, // Total Cost
-      { wch: 50 }, // Parts Used
       { wch: 15 }, // Scheduled Date
       { wch: 20 }, // Started At
       { wch: 20 }, // Completed At
       { wch: 20 }, // Created At
       { wch: 40 }, // Description
       { wch: 40 }, // Completion Notes
+      { wch: 25 }, // Part Name
+      { wch: 10 }, // Part Qty
+      { wch: 15 }, // Part Unit Price
+      { wch: 15 }, // Part Total
+      { wch: 12 }, // Part Status
     ]
     worksheet["!cols"] = colWidths
 

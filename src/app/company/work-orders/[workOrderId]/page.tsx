@@ -173,6 +173,20 @@ export default function WorkOrderDetailPage() {
     }
   }, [status, session, router, workOrderId])
 
+  // Auto-refresh every 5 seconds for real-time status updates
+  useEffect(() => {
+    if (status !== "authenticated" || !workOrder) return
+
+    const interval = setInterval(() => {
+      // Only refresh if page is visible and work order is not completed/cancelled
+      if (document.visibilityState === "visible" && !["COMPLETED", "CANCELLED"].includes(workOrder.status)) {
+        fetchWorkOrder()
+      }
+    }, 5000) // 5 seconds for detail pages
+
+    return () => clearInterval(interval)
+  }, [status, workOrder?.status])
+
   const fetchWorkOrder = async () => {
     try {
       const response = await fetch(`/api/company/work-orders/${workOrderId}`)

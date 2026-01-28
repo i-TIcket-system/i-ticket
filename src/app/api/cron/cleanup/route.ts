@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       paymentsTimedOut: 0,
       bookingsCancelled: 0,
       notificationsSent: 0,
+      tripsDeparted: 0,
       tripsCompleted: 0,
       tripsCancelled: 0,
       timestamp: new Date().toISOString()
@@ -91,7 +92,12 @@ export async function GET(request: NextRequest) {
       results.bookingsCancelled++;
     }
 
-    // 4. Auto-update status of old trips (past departure date)
+    // 4. Auto-update status of trips (departed and completed)
+    // 4a. Mark recently-past trips as DEPARTED (within 1 hour of departure time)
+    const departedTripsCount = await markTripsAsDeparted();
+    results.tripsDeparted = departedTripsCount;
+
+    // 4b. Mark old DEPARTED trips as COMPLETED/CANCELLED
     const oldTripsResult = await updateOldTripStatuses();
     results.tripsCompleted = oldTripsResult.completed;
     results.tripsCancelled = oldTripsResult.cancelled;
@@ -213,8 +219,85 @@ async function cancelStaleBooking(booking: any) {
 }
 
 /**
+ * Mark trips as DEPARTED when their departure time has just passed
+ * This creates the expected SCHEDULED → DEPARTED → COMPLETED lifecycle
+ * Only marks trips within 1 hour of departure time (recently departed)
+ */
+async function markTripsAsDeparted() {
+  const now = new Date();
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  let departedCount = 0;
+
+  try {
+    // Find trips that just passed their departure time (within the last hour)
+    // and are still SCHEDULED or BOARDING
+    const recentlyPastTrips = await prisma.trip.findMany({
+      where: {
+        departureTime: {
+          lt: now,
+          gte: oneHourAgo,
+        },
+        status: {
+          in: ['SCHEDULED', 'BOARDING'],
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        departureTime: true,
+        companyId: true,
+      },
+    });
+
+    for (const trip of recentlyPastTrips) {
+      try {
+        await prisma.$transaction(async (tx) => {
+          // Mark trip as DEPARTED
+          await tx.trip.update({
+            where: { id: trip.id },
+            data: {
+              status: 'DEPARTED',
+              actualDepartureTime: trip.departureTime,
+              bookingHalted: true, // No more bookings for departed trips
+            },
+          });
+
+          // Create audit log
+          await tx.adminLog.create({
+            data: {
+              userId: 'SYSTEM',
+              action: 'TRIP_STATUS_AUTO_DEPARTED',
+              tripId: trip.id,
+              companyId: trip.companyId,
+              details: JSON.stringify({
+                oldStatus: trip.status,
+                newStatus: 'DEPARTED',
+                reason: 'Automatic - departure time passed',
+                departureTime: trip.departureTime.toISOString(),
+                processedAt: now.toISOString(),
+              }),
+            },
+          });
+        });
+
+        departedCount++;
+        console.log(`[Cron] Trip ${trip.id} marked as DEPARTED`);
+      } catch (error) {
+        console.error(`[Cron] Failed to mark trip ${trip.id} as DEPARTED:`, error);
+      }
+    }
+
+    console.log(`[Cron] Auto-departed ${departedCount} trips`);
+  } catch (error) {
+    console.error('[Cron] Error marking trips as DEPARTED:', error);
+  }
+
+  return departedCount;
+}
+
+/**
  * Update old trip statuses (trips with past departure dates)
- * - DEPARTED trips → COMPLETED
+ * - DEPARTED trips (older than 1 hour + estimated duration) → COMPLETED
  * - SCHEDULED/BOARDING trips with bookings → COMPLETED
  * - SCHEDULED/BOARDING trips without bookings → CANCELLED
  */
