@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.7 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.10.8 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -210,7 +210,54 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.7 - Jan 28, 2026)
+## RECENT UPDATES (v2.10.8 - Jan 28, 2026)
+
+### Notification Routing, Timezone & UI Fixes (5 Issues)
+
+**P0 CRITICAL BUGS:**
+
+**ISSUE 1: Notification Routing Fixes**
+- Driver/Conductor WO notifications were routing to `/company/work-orders/{id}` - **WRONG**
+- **Fix**: Now routes to `/staff/work-orders/{id}` for drivers/conductors
+- Company Admin with `staffRole === "ADMIN"` now properly routes to company pages
+- Finance WO notifications now route to detail page `/finance/work-orders/{id}` (was list page)
+- Added missing WO types: `WORK_ORDER_PARTS_REQUESTED`, `WORK_ORDER_BLOCKED`, `WORK_ORDER_STATUS_CHANGED`, `WORK_ORDER_MESSAGE`
+- **Files**: `src/components/notifications/NotificationBell.tsx`, `src/app/notifications/page.tsx`
+
+**ISSUE 2: Trip Date Display Bug (Timezone)**
+- `toDateString()` is NOT timezone-aware - caused Jan 29 trips to show as Jan 28
+- **Root Cause**: JavaScript dates stored in UTC but compared using browser timezone
+- **Fix**: Created timezone-aware utility functions in `src/lib/utils.ts`:
+  - `ETHIOPIA_TIMEZONE = "Africa/Addis_Ababa"`
+  - `getEthiopiaDateString(date)` - Returns YYYY-MM-DD in Ethiopia timezone
+  - `isSameDayEthiopia(date1, date2)` - Compares dates in Ethiopia timezone
+  - `isTodayEthiopia(date)` - Checks if date is today in Ethiopia timezone
+- Applied to: staff my-trips, cashier, TripChat, trips API, PriceCalendar, Telegram bot
+- **Files**: 7 files modified
+
+**P1 IMPORTANT FIXES:**
+
+**ISSUE 3: Profile Picture Upload Fix**
+- Profile picture didn't display immediately after upload (required page refresh)
+- **Fix**: Added `router.refresh()` after `updateSession()` for upload and remove
+- **File**: `src/components/profile/ProfilePictureUpload.tsx`
+
+**ISSUE 4: Remove Kebele/Passport ID Field**
+- Removed ID input field from booking page and profile page
+- Replaced with static note: "You'll need to show ID matching your name when boarding"
+- Made `nationalId` truly optional in booking validation schema
+- **Files**: `src/app/booking/[tripId]/page.tsx`, `src/app/profile/page.tsx`, `src/lib/validations.ts`
+
+**ISSUE 5: WO Notifications for Driver/Conductor**
+- Same as Issue 1 - now routes to `/staff/work-orders/{id}`
+
+### Files Modified
+- 13 files modified
+- New utility functions: `getEthiopiaDateString`, `isSameDayEthiopia`, `isTodayEthiopia`
+
+---
+
+### Previous (v2.10.7 - Jan 28, 2026)
 
 ### Work Order System & Trip Fixes (8 Issues)
 
@@ -546,6 +593,7 @@ Live testing after v2.10.4 deployment revealed 5 critical bugs preventing the wo
 
 | Bug | Fix |
 |-----|-----|
+| Date comparison timezone (v2.10.8) | Use `isTodayEthiopia()` and `isSameDayEthiopia()` instead of `toDateString()` - JS dates compare in browser timezone, not Ethiopia |
 | Stale closure in polling (v2.10.7) | Use `useRef` to access current state in `setInterval` callbacks - state captured at setup time becomes stale |
 | Zod validation null vs undefined (v2.10.5) | Use `.nullish()` not `.optional()` for searchParams - `searchParams.get()` returns `null`, not `undefined` |
 | Telegram duration (v2.9.0) | `formatDuration()` now expects minutes (DB stores minutes, not hours) |
