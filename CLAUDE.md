@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.6 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.10.7 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -210,7 +210,57 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.6 - Jan 28, 2026)
+## RECENT UPDATES (v2.10.7 - Jan 28, 2026)
+
+### Work Order System & Trip Fixes (8 Issues)
+
+**P0 CRITICAL BUGS:**
+
+**ISSUE 1: Seat Selection Stale Closure Bug (Cashier/Admin)**
+- Seat selection showed blue → green → lost selection during polling refresh
+- **Root Cause**: Stale closure in polling interval captured `selectedSeats` at setup time
+- **Fix**: Added `useRef` to always access current `selectedSeats` value
+- **File**: `src/components/booking/SeatMap.tsx`
+
+**ISSUE 2: Resume Button When 100% Full**
+- Resume Online Booking button was active even when all seats sold out
+- **Fix**: Disabled Resume button when `availableSlots === 0`, added "Sold Out" message
+- **File**: `src/components/company/BookingControlCard.tsx`
+
+**P1 IMPORTANT FIXES:**
+
+**ISSUE 3: Real-time Work Order Status Updates**
+- Detail pages now auto-refresh every 5 seconds (was 30s or none)
+- List pages now auto-refresh every 30 seconds (was none)
+- Only refreshes when page is visible and WO not completed/cancelled
+- **Files**: 8 work order page files (company, staff, finance, mechanic - list & detail)
+
+**ISSUE 4: Trip Auto-Depart Cron Transition**
+- Trips now properly transition: SCHEDULED → DEPARTED → COMPLETED
+- Added `markTripsAsDeparted()` function for trips within 1 hour of departure
+- New audit log action: `TRIP_STATUS_AUTO_DEPARTED`
+- **File**: `src/app/api/cron/cleanup/route.ts`
+
+**P2 ENHANCEMENTS:**
+
+**ISSUE 5: Excel Export - Parts in Separate Rows**
+- Each part now gets its own row instead of combining in single cell
+- First row shows WO details, subsequent rows show only part columns
+- Added columns: Part Name, Part Qty, Part Unit Price, Part Total, Part Status
+- **File**: `src/app/api/company/work-orders/export/route.ts`
+
+**ISSUE 6: Status Filter in Export Dialog**
+- Added explicit status dropdown to export dialog (All/Open/In Progress/Blocked/Completed/Cancelled)
+- Export now uses dialog status instead of page filter
+- **Files**: `src/app/company/work-orders/page.tsx`, `src/app/finance/work-orders/page.tsx`
+
+### Files Modified
+- 12 files modified
+- Key patterns: `useRef` for stale closure, `setInterval` with visibility check
+
+---
+
+### Previous (v2.10.6 - Jan 28, 2026)
 
 ### Work Order System - Bug Fixes & Enhancements (6 Issues + 1 Feature)
 
@@ -496,6 +546,7 @@ Live testing after v2.10.4 deployment revealed 5 critical bugs preventing the wo
 
 | Bug | Fix |
 |-----|-----|
+| Stale closure in polling (v2.10.7) | Use `useRef` to access current state in `setInterval` callbacks - state captured at setup time becomes stale |
 | Zod validation null vs undefined (v2.10.5) | Use `.nullish()` not `.optional()` for searchParams - `searchParams.get()` returns `null`, not `undefined` |
 | Telegram duration (v2.9.0) | `formatDuration()` now expects minutes (DB stores minutes, not hours) |
 | Telegram timezone (v2.8.2) | Use `Intl.DateTimeFormat` with `timeZone: "Africa/Addis_Ababa"` in formatters.ts |
