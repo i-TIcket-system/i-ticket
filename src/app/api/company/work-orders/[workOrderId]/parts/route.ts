@@ -102,7 +102,7 @@ export async function POST(
 
     // Create part and update work order costs in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create the part
+      // Create the part - Issue 2.7: Explicitly set status to APPROVED for admin-added parts
       const part = await tx.workOrderPart.create({
         data: {
           workOrderId,
@@ -112,12 +112,16 @@ export async function POST(
           unitPrice: validatedData.unitPrice,
           totalPrice,
           supplier: validatedData.supplier || null,
+          status: 'APPROVED', // Admin-added parts are pre-approved
+          approvedBy: session.user.id,
+          approvedAt: new Date(),
         },
       })
 
-      // Get all parts for this work order to recalculate total
+      // Get all APPROVED parts for this work order to recalculate total
+      // Only approved parts contribute to the work order cost
       const allParts = await tx.workOrderPart.findMany({
-        where: { workOrderId },
+        where: { workOrderId, status: 'APPROVED' },
       })
 
       const newPartsCost = allParts.reduce((sum, p) => sum + p.totalPrice, 0)
@@ -134,10 +138,11 @@ export async function POST(
       return { part, workOrder: updatedWorkOrder }
     })
 
-    // Create admin log
+    // RULE-001: Create admin log with companyId for proper audit trail filtering
     await prisma.adminLog.create({
       data: {
         userId: session.user.id,
+        companyId: session.user.companyId,
         action: 'ADD_WORK_ORDER_PART',
         details: JSON.stringify({
           workOrderId,

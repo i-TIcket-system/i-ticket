@@ -15,7 +15,8 @@ const updateWorkOrderSchema = z.object({
   status: z.enum(['OPEN', 'IN_PROGRESS', 'BLOCKED', 'COMPLETED', 'CANCELLED']).optional(),
   description: z.string().max(2000).optional().nullable(),
   priority: z.number().int().min(1).max(4).optional(),
-  assignedMechanicId: z.string().optional().nullable(),
+  assignedMechanicId: z.string().optional().nullable(), // Deprecated: use assignedStaffIds
+  assignedStaffIds: z.array(z.string()).optional(), // Issue 1.5: Multi-staff assignment support
   externalShopName: z.string().optional().nullable(), // Maps to serviceProvider
   // Accept both date-only (YYYY-MM-DD) and full datetime (ISO) formats
   scheduledDate: z.union([
@@ -72,6 +73,13 @@ export async function GET(
             unitPrice: true,
             totalPrice: true,
             supplier: true,
+            // Issue 1.2: Parts status fields for approval workflow visibility
+            status: true,
+            notes: true,
+            requestedBy: true,
+            requestedAt: true,
+            approvedBy: true,
+            approvedAt: true,
           },
         },
       },
@@ -143,31 +151,56 @@ export async function PATCH(
     const body = await request.json()
     const validatedData = updateWorkOrderSchema.parse(body)
 
+    // Issue 1.7: Status transition validation - COMPLETED work orders cannot be cancelled
+    if (validatedData.status === 'CANCELLED' && existingWorkOrder.status === 'COMPLETED') {
+      return NextResponse.json(
+        { error: 'Completed work orders cannot be cancelled' },
+        { status: 400 }
+      )
+    }
+
     // Validate mechanic belongs to company if specified and get their name
     const updateData: any = {}
 
-    // Handle mechanic assignment
-    if (validatedData.assignedMechanicId !== undefined) {
-      if (validatedData.assignedMechanicId) {
-        const mechanic = await prisma.user.findUnique({
-          where: { id: validatedData.assignedMechanicId },
-          select: { companyId: true, name: true },
+    // Issue 1.5: Handle multi-staff assignment (supports both legacy and new format)
+    const staffIdsToAssign = validatedData.assignedStaffIds && validatedData.assignedStaffIds.length > 0
+      ? validatedData.assignedStaffIds
+      : (validatedData.assignedMechanicId ? [validatedData.assignedMechanicId] : null)
+
+    if (staffIdsToAssign !== null) {
+      if (staffIdsToAssign.length > 0) {
+        // Validate all assigned staff belong to company
+        const staff = await prisma.user.findMany({
+          where: {
+            id: { in: staffIdsToAssign },
+            companyId: session.user.companyId,
+          },
+          select: { id: true, name: true },
         })
 
-        if (!mechanic || mechanic.companyId !== session.user.companyId) {
+        if (staff.length !== staffIdsToAssign.length) {
           return NextResponse.json(
-            { error: 'Invalid mechanic assignment' },
+            { error: 'One or more assigned staff members are invalid or do not belong to your company' },
             { status: 400 }
           )
         }
 
-        updateData.assignedToId = validatedData.assignedMechanicId
-        updateData.assignedToName = mechanic.name
+        // Store multiple staff IDs as JSON
+        updateData.assignedStaffIds = JSON.stringify(staffIdsToAssign)
+        // Keep first staff in legacy fields for backward compatibility
+        updateData.assignedToId = staffIdsToAssign[0]
+        updateData.assignedToName = staff[0]?.name || null
       } else {
-        // Unassign mechanic
+        // Unassign all staff
+        updateData.assignedStaffIds = null
         updateData.assignedToId = null
         updateData.assignedToName = null
       }
+    } else if (validatedData.assignedMechanicId === null) {
+      // Explicit null to unassign
+      updateData.assignedStaffIds = null
+      updateData.assignedToId = null
+      updateData.assignedToName = null
     }
 
     // Copy validated fields with proper mapping
@@ -202,6 +235,13 @@ export async function PATCH(
       updateData.completedAt = validatedData.completedAt ? new Date(validatedData.completedAt) : null
     }
 
+    // Issue 1.6: If status is changing to IN_PROGRESS, auto-set startedAt
+    if (validatedData.status === 'IN_PROGRESS' && existingWorkOrder.status !== 'IN_PROGRESS') {
+      if (!existingWorkOrder.startedAt) {
+        updateData.startedAt = new Date()
+      }
+    }
+
     // If status is changing to COMPLETED, auto-set completedAt
     if (validatedData.status === 'COMPLETED' && existingWorkOrder.status !== 'COMPLETED') {
       if (!updateData.completedAt) {
@@ -233,10 +273,11 @@ export async function PATCH(
       },
     })
 
-    // Create admin log
+    // RULE-001: Create admin log with companyId for proper audit trail filtering
     await prisma.adminLog.create({
       data: {
         userId: session.user.id,
+        companyId: session.user.companyId,
         action: 'UPDATE_WORK_ORDER',
         details: JSON.stringify({
           workOrderId,
@@ -270,15 +311,30 @@ export async function PATCH(
       ).catch((err) => console.error('Failed to send status change notification:', err))
     }
 
-    // New mechanic assignment notification
-    if (
-      validatedData.assignedMechanicId &&
-      validatedData.assignedMechanicId !== existingWorkOrder.assignedToId
-    ) {
-      notifyWorkOrderUser(validatedData.assignedMechanicId, 'WORK_ORDER_ASSIGNED', {
-        ...notificationData,
-        taskType: existingWorkOrder.taskType,
-      }).catch((err) => console.error('Failed to send mechanic assignment notification:', err))
+    // Issue 1.5: Staff assignment notifications - notify all newly assigned staff
+    if (staffIdsToAssign && staffIdsToAssign.length > 0) {
+      // Get existing staff IDs for comparison
+      let existingStaffIds: string[] = []
+      if (existingWorkOrder.assignedStaffIds) {
+        try {
+          existingStaffIds = JSON.parse(existingWorkOrder.assignedStaffIds) as string[]
+        } catch {
+          // If parse fails, treat as empty
+        }
+      } else if (existingWorkOrder.assignedToId) {
+        existingStaffIds = [existingWorkOrder.assignedToId]
+      }
+
+      // Find newly assigned staff (not previously assigned)
+      const newlyAssigned = staffIdsToAssign.filter(id => !existingStaffIds.includes(id))
+
+      // Send assignment notifications to all newly assigned staff
+      for (const staffId of newlyAssigned) {
+        notifyWorkOrderUser(staffId, 'WORK_ORDER_ASSIGNED', {
+          ...notificationData,
+          taskType: existingWorkOrder.taskType,
+        }).catch((err) => console.error(`Failed to send assignment notification to ${staffId}:`, err))
+      }
     }
 
     return NextResponse.json({
@@ -364,10 +420,11 @@ export async function DELETE(
       where: { id: workOrderId },
     })
 
-    // Create admin log
+    // RULE-001: Create admin log with companyId for proper audit trail filtering
     await prisma.adminLog.create({
       data: {
         userId: session.user.id,
+        companyId: session.user.companyId,
         action: 'DELETE_WORK_ORDER',
         details: JSON.stringify({
           workOrderId,

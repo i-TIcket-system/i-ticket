@@ -55,7 +55,13 @@ interface WorkOrder {
   scheduledDate: string | null
   createdAt: string
   assignedToName: string | null
+  assignedStaffIds: string | null // Issue 3.1: JSON array of staff IDs
   totalCost: number
+  // Issue 3.5: Parts for pending count
+  partsUsed: Array<{
+    id: string
+    status: string | null
+  }>
 }
 
 const STATUS_INFO = {
@@ -331,6 +337,22 @@ export default function WorkOrdersPage() {
                     const StatusIcon = statusInfo.icon
                     const priorityInfo = PRIORITY_INFO[wo.priority as keyof typeof PRIORITY_INFO]
 
+                    // Issue 3.1: Parse assignedStaffIds for multi-staff count
+                    let staffCount = 0
+                    if (wo.assignedStaffIds) {
+                      try {
+                        const staffIds = JSON.parse(wo.assignedStaffIds)
+                        staffCount = Array.isArray(staffIds) ? staffIds.length : 0
+                      } catch {
+                        staffCount = wo.assignedToName ? 1 : 0
+                      }
+                    } else if (wo.assignedToName) {
+                      staffCount = 1
+                    }
+
+                    // Issue 3.5: Count pending parts
+                    const pendingPartsCount = wo.partsUsed?.filter(p => p.status === "REQUESTED").length || 0
+
                     return (
                       <TableRow
                         key={wo.id}
@@ -338,7 +360,15 @@ export default function WorkOrdersPage() {
                         onClick={() => router.push(`/company/work-orders/${wo.id}`)}
                       >
                         <TableCell>
-                          <span className="font-mono text-sm font-medium">{wo.workOrderNumber}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm font-medium">{wo.workOrderNumber}</span>
+                            {/* Issue 3.5: Pending parts indicator */}
+                            {pendingPartsCount > 0 && (
+                              <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-300 text-xs">
+                                {pendingPartsCount} pending
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div>
@@ -371,7 +401,13 @@ export default function WorkOrdersPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <span className="text-sm">{wo.assignedToName || "Unassigned"}</span>
+                          {/* Issue 3.1: Show multi-staff count */}
+                          <div className="text-sm">
+                            <span>{wo.assignedToName || "Unassigned"}</span>
+                            {staffCount > 1 && (
+                              <span className="text-muted-foreground ml-1">(+{staffCount - 1})</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <span className="font-medium">{wo.totalCost.toLocaleString()} Birr</span>

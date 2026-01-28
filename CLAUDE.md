@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.3 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.10.4 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -210,7 +210,63 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.3 - Jan 28, 2026)
+## RECENT UPDATES (v2.10.4 - Jan 28, 2026)
+
+### Work Order System - Comprehensive Remediation (21 Issues Fixed)
+
+**ITERATION 1: Critical Bugs (7 Issues)**
+
+1. **P0: Parts Approval Endpoint** - Created `PATCH /api/company/work-orders/[id]/parts/[partId]` for company admins to approve/reject mechanic part requests. Supports status transitions: REQUESTED → APPROVED/REJECTED/ORDERED. Auto-recalculates work order costs on approval.
+
+2. **Parts Status Fields in All Endpoints** - Added status, notes, requestedBy, requestedAt, approvedBy, approvedAt fields to partsUsed select in:
+   - `company/work-orders/route.ts` (list)
+   - `company/work-orders/[id]/route.ts` (detail)
+   - `finance/work-orders/route.ts` (finance view)
+
+3. **Multi-Staff Update Support** - PATCH endpoint now accepts `assignedStaffIds` array for multi-staff assignments (backward compatible with `assignedMechanicId`)
+
+4. **Auto-Set startedAt** - When status changes to IN_PROGRESS, `startedAt` is automatically set if not already set
+
+5. **Status Transition Validation** - COMPLETED work orders cannot be cancelled (returns 400 error)
+
+6. **AdminLog companyId** - Added companyId to AdminLog for:
+   - UPDATE_WORK_ORDER
+   - DELETE_WORK_ORDER
+   - ADD_WORK_ORDER_PART
+   - REMOVE_WORK_ORDER_PART
+   - UPDATE_WORK_ORDER_PART (new)
+
+**ITERATION 2: Security & Data Integrity (4 Issues)**
+
+7. **Notification Stakeholders Filter** - Fixed `notifyWorkOrderStakeholders()` to include `staffRole: "ADMIN"` using OR condition (consistent with `notifyCompanyAdmins`)
+
+8. **Finance Date Validation** - Added Zod validation for startDate/endDate query parameters (format: YYYY-MM-DD)
+
+9. **Explicit APPROVED Status** - Admin-added parts now explicitly set `status: "APPROVED"` with approvedBy/approvedAt instead of relying on schema default
+
+10. **Parts Cost Calculation** - Only APPROVED parts contribute to work order costs
+
+**ITERATION 3: UX & Completeness (4 Issues)**
+
+11. **Parts Approval UI** - Company admin detail page now shows:
+    - Status badges for all parts (Pending Approval, Approved, Rejected, Ordered)
+    - Approve/Reject buttons for REQUESTED parts
+    - "Mark as Ordered" button for APPROVED parts
+    - Yellow highlight border for pending parts
+
+12. **Multi-Staff Display (List)** - Work orders list shows "Name (+1)" for multi-staff assignments and count of pending part requests
+
+13. **Multi-Staff Display (Detail)** - Detail page shows full staff count "Name (+N more)"
+
+14. **Mechanic Notifications** - When admin approves/rejects/deletes a part request, the requesting mechanic receives a notification
+
+### Files Modified
+- 10 files modified, 1 new file created
+- New file: `src/app/api/company/work-orders/[workOrderId]/parts/[partId]/route.ts`
+
+---
+
+### Previous (v2.10.3 - Jan 28, 2026)
 
 ### Work Order System Enhancements & UI Polish
 

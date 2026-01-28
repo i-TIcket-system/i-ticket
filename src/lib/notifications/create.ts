@@ -297,12 +297,15 @@ export async function notifyWorkOrderStakeholders(
     // Collect all recipient IDs
     const recipientIds: Set<string> = new Set()
 
-    // 1. Get company admins (users with COMPANY_ADMIN role and no staffRole)
+    // Issue 2.1: Get company admins including staffRole: "ADMIN" (consistent with notifyCompanyAdmins)
     const companyAdmins = await prisma.user.findMany({
       where: {
         companyId,
         role: "COMPANY_ADMIN",
-        staffRole: null,
+        OR: [
+          { staffRole: null },
+          { staffRole: "ADMIN" },
+        ],
       },
       select: { id: true },
     })

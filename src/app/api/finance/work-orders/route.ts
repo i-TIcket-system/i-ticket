@@ -3,6 +3,20 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { Prisma } from "@prisma/client"
+import { z } from "zod"
+
+// Issue 2.4: RULE-014 - Validation schema for finance query parameters
+const financeQuerySchema = z.object({
+  status: z.string().optional(),
+  startDate: z.string().optional().refine(
+    (val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val),
+    "Invalid date format. Use YYYY-MM-DD"
+  ),
+  endDate: z.string().optional().refine(
+    (val) => !val || /^\d{4}-\d{2}-\d{2}$/.test(val),
+    "Invalid date format. Use YYYY-MM-DD"
+  ),
+})
 
 /**
  * Get all work orders for finance staff - focused on cost tracking
@@ -36,9 +50,22 @@ export async function GET(request: NextRequest) {
 
     const companyId = session.user.companyId
     const { searchParams } = new URL(request.url)
-    const status = searchParams.get("status")
-    const startDate = searchParams.get("startDate")
-    const endDate = searchParams.get("endDate")
+
+    // Issue 2.4: Validate query parameters with Zod
+    const queryValidation = financeQuerySchema.safeParse({
+      status: searchParams.get("status"),
+      startDate: searchParams.get("startDate"),
+      endDate: searchParams.get("endDate"),
+    })
+
+    if (!queryValidation.success) {
+      return NextResponse.json(
+        { error: "Invalid query parameters", details: queryValidation.error.format() },
+        { status: 400 }
+      )
+    }
+
+    const { status, startDate, endDate } = queryValidation.data
 
     // Build where clause with proper Prisma types
     const where: Prisma.WorkOrderWhereInput = {
@@ -78,10 +105,18 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             partName: true,
+            partNumber: true,
             quantity: true,
             unitPrice: true,
             totalPrice: true,
             supplier: true,
+            // Issue 1.2: Parts status fields for approval workflow visibility
+            status: true,
+            notes: true,
+            requestedBy: true,
+            requestedAt: true,
+            approvedBy: true,
+            approvedAt: true,
           },
         },
         _count: {

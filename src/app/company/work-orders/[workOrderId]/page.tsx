@@ -75,6 +75,7 @@ interface WorkOrder {
   completedAt: string | null
   assignedToId: string | null
   assignedToName: string | null
+  assignedStaffIds: string | null // Issue 3.2: JSON array of staff IDs
   serviceProvider: string | null
   odometerAtService: number | null
   laborCost: number
@@ -91,7 +92,22 @@ interface WorkOrder {
     unitPrice: number
     totalPrice: number
     supplier: string | null
+    // Issue 3.3: Parts approval workflow fields
+    status: string | null
+    notes: string | null
+    requestedBy: string | null
+    requestedAt: string | null
+    approvedBy: string | null
+    approvedAt: string | null
   }>
+}
+
+// Issue 3.3: Part status styling
+const PART_STATUS_INFO = {
+  REQUESTED: { label: "Pending Approval", color: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+  APPROVED: { label: "Approved", color: "bg-green-100 text-green-800 border-green-300" },
+  REJECTED: { label: "Rejected", color: "bg-red-100 text-red-800 border-red-300" },
+  ORDERED: { label: "Ordered", color: "bg-blue-100 text-blue-800 border-blue-300" },
 }
 
 const STATUS_OPTIONS = [
@@ -143,6 +159,9 @@ export default function WorkOrderDetailPage() {
     supplier: "",
   })
   const [isAddingPart, setIsAddingPart] = useState(false)
+
+  // Issue 3.3: Parts approval state
+  const [approvingPartId, setApprovingPartId] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -336,6 +355,31 @@ export default function WorkOrderDetailPage() {
     }
   }
 
+  // Issue 3.3: Approve or reject a part request
+  const updatePartStatus = async (partId: string, newStatus: "APPROVED" | "REJECTED" | "ORDERED") => {
+    setApprovingPartId(partId)
+    try {
+      const response = await fetch(`/api/company/work-orders/${workOrderId}/parts/${partId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      })
+
+      if (response.ok) {
+        const statusLabel = newStatus === "APPROVED" ? "approved" : newStatus === "REJECTED" ? "rejected" : "marked as ordered"
+        toast.success(`Part ${statusLabel}`)
+        fetchWorkOrder()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || `Failed to update part status`)
+      }
+    } catch (error) {
+      toast.error("An error occurred")
+    } finally {
+      setApprovingPartId(null)
+    }
+  }
+
   if (status === "loading" || isLoading) {
     return (
       <div className="container mx-auto py-12">
@@ -437,7 +481,38 @@ export default function WorkOrderDetailPage() {
 
                 <div>
                   <p className="text-sm text-muted-foreground">Assigned To</p>
-                  <p className="font-medium">{workOrder.assignedToName || "Unassigned"}</p>
+                  {/* Issue 3.2: Multi-staff display */}
+                  {(() => {
+                    let staffCount = 0
+                    if (workOrder.assignedStaffIds) {
+                      try {
+                        const staffIds = JSON.parse(workOrder.assignedStaffIds)
+                        staffCount = Array.isArray(staffIds) ? staffIds.length : 0
+                      } catch {
+                        staffCount = workOrder.assignedToName ? 1 : 0
+                      }
+                    } else if (workOrder.assignedToName) {
+                      staffCount = 1
+                    }
+
+                    return (
+                      <div>
+                        <p className="font-medium">
+                          {workOrder.assignedToName || "Unassigned"}
+                          {staffCount > 1 && (
+                            <span className="ml-1 text-muted-foreground font-normal">
+                              (+{staffCount - 1} more)
+                            </span>
+                          )}
+                        </p>
+                        {staffCount > 1 && (
+                          <p className="text-xs text-muted-foreground">
+                            {staffCount} staff assigned
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })()}
                   {workOrder.serviceProvider && (
                     <p className="text-sm text-muted-foreground">External: {workOrder.serviceProvider}</p>
                   )}
@@ -505,42 +580,107 @@ export default function WorkOrderDetailPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {workOrder.partsUsed.map((part) => (
-                    <div
-                      key={part.id}
-                      className="flex items-center justify-between p-3 border rounded-lg group"
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium">{part.partName}</p>
-                        {part.partNumber && (
-                          <p className="text-xs text-muted-foreground font-mono">
-                            PN: {part.partNumber}
-                          </p>
-                        )}
-                        {part.supplier && (
-                          <p className="text-xs text-muted-foreground">
-                            Supplier: {part.supplier}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="font-medium">{part.totalPrice.toLocaleString()} Birr</p>
-                          <p className="text-xs text-muted-foreground">
-                            {part.quantity} × {part.unitPrice.toLocaleString()} Birr
-                          </p>
+                  {workOrder.partsUsed.map((part) => {
+                    const statusInfo = part.status ? PART_STATUS_INFO[part.status as keyof typeof PART_STATUS_INFO] : null
+                    const isRequested = part.status === "REQUESTED"
+                    const isLoading = approvingPartId === part.id
+
+                    return (
+                      <div
+                        key={part.id}
+                        className={`p-3 border rounded-lg group ${isRequested ? "border-yellow-300 bg-yellow-50/50" : ""}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium">{part.partName}</p>
+                              {/* Issue 3.3: Status badge */}
+                              {statusInfo && (
+                                <Badge variant="outline" className={statusInfo.color}>
+                                  {statusInfo.label}
+                                </Badge>
+                              )}
+                            </div>
+                            {part.partNumber && (
+                              <p className="text-xs text-muted-foreground font-mono">
+                                PN: {part.partNumber}
+                              </p>
+                            )}
+                            {part.supplier && (
+                              <p className="text-xs text-muted-foreground">
+                                Supplier: {part.supplier}
+                              </p>
+                            )}
+                            {part.notes && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Note: {part.notes}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-right">
+                              <p className="font-medium">{part.totalPrice.toLocaleString()} Birr</p>
+                              <p className="text-xs text-muted-foreground">
+                                {part.quantity} × {part.unitPrice.toLocaleString()} Birr
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
+                              onClick={() => deletePart(part.id)}
+                              disabled={isLoading}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="opacity-0 group-hover:opacity-100 text-destructive hover:text-destructive"
-                          onClick={() => deletePart(part.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+
+                        {/* Issue 3.3: Approval buttons for REQUESTED parts */}
+                        {isRequested && (
+                          <div className="flex items-center gap-2 mt-3 pt-3 border-t border-yellow-200">
+                            <span className="text-xs text-muted-foreground mr-auto">
+                              Requested by mechanic - awaiting approval
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 border-red-300 hover:bg-red-50"
+                              onClick={() => updatePartStatus(part.id, "REJECTED")}
+                              disabled={isLoading}
+                            >
+                              {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Reject"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700"
+                              onClick={() => updatePartStatus(part.id, "APPROVED")}
+                              disabled={isLoading}
+                            >
+                              {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Approve"}
+                            </Button>
+                          </div>
+                        )}
+
+                        {/* Mark as ordered for approved parts */}
+                        {part.status === "APPROVED" && (
+                          <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+                            <span className="text-xs text-muted-foreground mr-auto">
+                              Approved - Ready to order
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updatePartStatus(part.id, "ORDERED")}
+                              disabled={isLoading}
+                            >
+                              {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : "Mark as Ordered"}
+                            </Button>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               )}
             </CardContent>

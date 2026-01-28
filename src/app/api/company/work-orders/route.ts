@@ -162,9 +162,18 @@ export async function GET(request: NextRequest) {
             select: {
               id: true,
               partName: true,
+              partNumber: true,
               quantity: true,
               unitPrice: true,
               totalPrice: true,
+              supplier: true,
+              // Issue 1.2: Parts status fields for approval workflow visibility
+              status: true,
+              notes: true,
+              requestedBy: true,
+              requestedAt: true,
+              approvedBy: true,
+              approvedAt: true,
             },
           },
         },
