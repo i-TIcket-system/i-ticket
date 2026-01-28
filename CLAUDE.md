@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.4 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.10.5 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -210,7 +210,55 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.4 - Jan 28, 2026)
+## RECENT UPDATES (v2.10.5 - Jan 28, 2026)
+
+### Work Order System - Post-Deployment Bug Fixes (5 Issues)
+
+Live testing after v2.10.4 deployment revealed 5 critical bugs preventing the work order system from functioning properly.
+
+**BUG 1 (P0): Work Orders Not Showing in Admin Dashboard**
+- Company admin dashboard showed "0 work orders" despite work orders existing
+- **Root Cause**: Zod validation used `.optional()` for `status` and `workType` fields, but `searchParams.get()` returns `null` (not `undefined`). Zod's `.optional()` only handles `undefined`.
+- **Fix**: Changed to `.nullish()` which handles both `null` and `undefined`
+- **File**: `src/app/api/company/work-orders/route.ts`
+
+**BUG 2 (P1): Finance Work Orders Tab Shows 0**
+- Same root cause as BUG 1 - Zod validation failing on null values
+- **Fix**: Added `.nullish()` to status, startDate, endDate validation
+- **File**: `src/app/api/finance/work-orders/route.ts`
+
+**BUG 3 (P2): Driver/Conductor Need Work Orders Tab**
+- Drivers and conductors had no way to view work orders for vehicles they operate
+- Clicking work order notifications routed them to wrong page (`/staff/my-trips`)
+- **Fix**:
+  - Added "Work Orders" link to staff sidebar for DRIVER/CONDUCTOR roles
+  - Updated notification routing to `/staff/work-orders/{id}`
+  - Created new staff work orders API (list + detail, read-only view)
+  - Created new staff work orders pages
+- **Files**: `src/app/staff/layout.tsx`, `src/app/notifications/page.tsx`
+- **New Files**:
+  - `src/app/api/staff/work-orders/route.ts`
+  - `src/app/api/staff/work-orders/[workOrderId]/route.ts`
+  - `src/app/staff/work-orders/page.tsx`
+  - `src/app/staff/work-orders/[workOrderId]/page.tsx`
+
+**BUG 4 (P1): Mechanic "Work Order Not Found" in Team Communication**
+- Mechanic messages API only checked `assignedToId` but ignored `assignedStaffIds` (multi-staff assignments)
+- **Fix**: Updated GET and POST handlers to check both legacy single assignment and new JSON array
+- **File**: `src/app/api/mechanic/work-orders/[workOrderId]/messages/route.ts`
+
+**BUG 5 (P1): Conductor Ticket Verification Shows Error After Success**
+- Conductor verified ticket, saw success toast, then saw "Something went wrong!" error
+- **Root Cause**: API returns `{ valid, ticket }` but UI expected `{ success, data: { ticket, passenger, trip, booking } }`
+- **Fix**: Transform API response to match UI expected structure
+- **File**: `src/app/staff/verify/page.tsx`
+
+### Files Modified
+- 7 files modified, 4 new files created
+
+---
+
+### Previous (v2.10.4 - Jan 28, 2026)
 
 ### Work Order System - Comprehensive Remediation (21 Issues Fixed)
 
@@ -404,6 +452,7 @@ model TelegramSession {
 
 | Bug | Fix |
 |-----|-----|
+| Zod validation null vs undefined (v2.10.5) | Use `.nullish()` not `.optional()` for searchParams - `searchParams.get()` returns `null`, not `undefined` |
 | Telegram duration (v2.9.0) | `formatDuration()` now expects minutes (DB stores minutes, not hours) |
 | Telegram timezone (v2.8.2) | Use `Intl.DateTimeFormat` with `timeZone: "Africa/Addis_Ababa"` in formatters.ts |
 | Staff API role filter | Use `role: "COMPANY_ADMIN"` + `staffRole` filter |
