@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch all work orders for the company
-    const workOrders = await prisma.workOrder.findMany({
+    const workOrdersRaw = await prisma.workOrder.findMany({
       where,
       include: {
         vehicle: {
@@ -127,6 +127,22 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: "desc" },
+    })
+
+    // v2.10.6: Sort COMPLETED/CANCELLED to bottom, active statuses first
+    const statusOrder: Record<string, number> = {
+      OPEN: 0,
+      IN_PROGRESS: 1,
+      BLOCKED: 2,
+      COMPLETED: 3,
+      CANCELLED: 4,
+    }
+    const workOrders = workOrdersRaw.sort((a, b) => {
+      const statusA = statusOrder[a.status] ?? 5
+      const statusB = statusOrder[b.status] ?? 5
+      if (statusA !== statusB) return statusA - statusB
+      // Within same status group, sort by date (desc)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     })
 
     // Calculate cost statistics

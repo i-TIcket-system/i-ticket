@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get work orders with all required fields
-    const [workOrders, totalCount] = await Promise.all([
+    const [workOrdersRaw, totalCount] = await Promise.all([
       prisma.workOrder.findMany({
         where,
         select: {
@@ -187,6 +187,23 @@ export async function GET(request: NextRequest) {
       }),
       prisma.workOrder.count({ where }),
     ])
+
+    // v2.10.6: Sort COMPLETED/CANCELLED to bottom, active statuses first
+    const statusOrder: Record<string, number> = {
+      OPEN: 0,
+      IN_PROGRESS: 1,
+      BLOCKED: 2,
+      COMPLETED: 3,
+      CANCELLED: 4,
+    }
+    const workOrders = workOrdersRaw.sort((a, b) => {
+      const statusA = statusOrder[a.status] ?? 5
+      const statusB = statusOrder[b.status] ?? 5
+      if (statusA !== statusB) return statusA - statusB
+      // Within same status group, sort by priority (desc) then date (desc)
+      if (a.priority !== b.priority) return b.priority - a.priority
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
 
     return NextResponse.json({
       workOrders,

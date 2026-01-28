@@ -114,6 +114,20 @@ export default function MechanicWorkOrderDetailPage() {
     }
   }, [status, session, router, workOrderId])
 
+  // v2.10.6: Auto-refresh every 30 seconds to pick up parts status updates
+  useEffect(() => {
+    if (status !== "authenticated" || !workOrder) return
+
+    const interval = setInterval(() => {
+      // Only refresh if page is visible and work order is not completed
+      if (document.visibilityState === "visible" && workOrder.status !== "COMPLETED") {
+        fetchWorkOrder()
+      }
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [status, workOrder?.status])
+
   const fetchWorkOrder = async () => {
     try {
       const response = await fetch(`/api/mechanic/work-orders/${workOrderId}`)
@@ -441,7 +455,8 @@ export default function MechanicWorkOrderDetailPage() {
               <CardTitle className="text-lg">Update Status</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {workOrder.status !== "COMPLETED" && (
+              {/* v2.10.6: Completed work orders are view-only - no status changes allowed */}
+              {workOrder.status !== "COMPLETED" && workOrder.status !== "CANCELLED" && (
                 <>
                   {workOrder.status === "OPEN" && (
                     <Button
@@ -499,6 +514,19 @@ export default function MechanicWorkOrderDetailPage() {
                   <p className="text-sm text-muted-foreground">
                     {workOrder.completedAt &&
                       new Date(workOrder.completedAt).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Completed work orders cannot be modified
+                  </p>
+                </div>
+              )}
+
+              {workOrder.status === "CANCELLED" && (
+                <div className="text-center py-4">
+                  <AlertCircle className="h-12 w-12 mx-auto text-gray-500 mb-2" />
+                  <p className="font-medium text-gray-700">Work Cancelled</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Cancelled work orders cannot be modified
                   </p>
                 </div>
               )}

@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/db'
 import { z } from 'zod'
-import { notifyWorkOrderUser } from '@/lib/notifications/create'
+import { notifyWorkOrderUser, createBulkNotifications } from '@/lib/notifications/create'
 
 /**
  * Work Order Part API - Update & Delete individual part
@@ -141,6 +141,41 @@ export async function PATCH(
         workOrderStatus: `Part ${validatedData.status.toLowerCase()}`,
         companyId: session.user.companyId!,
       }).catch((err) => console.error('Failed to notify mechanic about part status:', err))
+    }
+
+    // v2.10.6: Notify finance staff when parts are marked as ORDERED
+    if (validatedData.status === 'ORDERED') {
+      try {
+        const financeStaff = await prisma.user.findMany({
+          where: {
+            companyId: session.user.companyId,
+            role: 'COMPANY_ADMIN',
+            staffRole: 'FINANCE',
+          },
+          select: { id: true },
+        })
+
+        if (financeStaff.length > 0) {
+          await createBulkNotifications({
+            recipients: financeStaff.map((staff) => ({
+              recipientId: staff.id,
+              recipientType: 'USER',
+            })),
+            type: 'WORK_ORDER_STATUS_CHANGED',
+            data: {
+              workOrderId,
+              workOrderNumber: workOrder.workOrderNumber,
+              vehiclePlate: workOrder.vehicle.plateNumber,
+              partName: part.partName,
+              quantity: part.quantity,
+              workOrderStatus: `Part ordered: ${part.partName} (${part.quantity} pcs)`,
+              companyId: session.user.companyId!,
+            },
+          })
+        }
+      } catch (err) {
+        console.error('Failed to notify finance about ordered part:', err)
+      }
     }
 
     return NextResponse.json({

@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Filter client-side to check JSON array membership
-    const workOrders = allWorkOrders.filter(wo => {
+    const filteredWorkOrders = allWorkOrders.filter(wo => {
       // Check legacy assignment
       if (wo.assignedToId === session.user.id) return true
 
@@ -118,6 +118,23 @@ export async function GET(request: NextRequest) {
       }
 
       return false
+    })
+
+    // v2.10.6: Sort COMPLETED/CANCELLED to bottom, active statuses first
+    const statusOrder: Record<string, number> = {
+      OPEN: 0,
+      IN_PROGRESS: 1,
+      BLOCKED: 2,
+      COMPLETED: 3,
+      CANCELLED: 4,
+    }
+    const workOrders = filteredWorkOrders.sort((a, b) => {
+      const statusA = statusOrder[a.status] ?? 5
+      const statusB = statusOrder[b.status] ?? 5
+      if (statusA !== statusB) return statusA - statusB
+      // Within same status group, sort by priority (desc) then date (desc)
+      if (a.priority !== b.priority) return b.priority - a.priority
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     })
 
     // Get stats - reuse same filtering logic

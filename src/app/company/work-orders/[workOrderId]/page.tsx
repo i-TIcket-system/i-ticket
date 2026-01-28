@@ -763,10 +763,12 @@ export default function WorkOrderDetailPage() {
               <CardTitle className="text-lg">Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
+              {/* v2.10.6: Disable Edit button for COMPLETED work orders */}
               <Button
                 variant="outline"
                 className="w-full justify-start"
                 onClick={openEditDialog}
+                disabled={workOrder.status === "COMPLETED"}
               >
                 <Edit className="h-4 w-4 mr-2" />
                 Edit Work Order
@@ -782,7 +784,7 @@ export default function WorkOrderDetailPage() {
               </Button>
               {workOrder.status === "COMPLETED" && (
                 <p className="text-xs text-muted-foreground">
-                  Completed work orders cannot be deleted
+                  Completed work orders cannot be edited or deleted
                 </p>
               )}
             </CardContent>

@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.5 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.10.6 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -210,7 +210,51 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.5 - Jan 28, 2026)
+## RECENT UPDATES (v2.10.6 - Jan 28, 2026)
+
+### Work Order System - Bug Fixes & Enhancements (6 Issues + 1 Feature)
+
+**ISSUE 1: Simplified Staff (Driver/Conductor) WO Detail View**
+- REMOVED Cost Summary and Parts sections (not relevant for drivers/conductors)
+- ADDED Team Communication section with ability to send messages
+- Created new staff messages API endpoint
+- **Files**: `src/app/staff/work-orders/[workOrderId]/page.tsx`, `src/app/api/staff/work-orders/[workOrderId]/messages/route.ts` (NEW)
+
+**ISSUE 2: Parts Status Visibility for Finance + Notifications**
+- Finance detail page now shows parts status badges (REQUESTED, APPROVED, REJECTED, ORDERED)
+- Added finance notification when parts are marked as ORDERED
+- **Files**: `src/app/finance/work-orders/[workOrderId]/page.tsx`, `src/app/api/company/work-orders/[workOrderId]/parts/[partId]/route.ts`
+
+**ISSUE 3: View-Only Protection for COMPLETED Work Orders**
+- Admin Edit button disabled for COMPLETED work orders (shows message)
+- Mechanic status dropdown disabled for COMPLETED/CANCELLED work orders
+- **Files**: `src/app/company/work-orders/[workOrderId]/page.tsx`, `src/app/mechanic/work-order/[workOrderId]/page.tsx`
+
+**ISSUE 4: COMPLETED/CANCELLED Sort to Bottom**
+- All work order list APIs now sort by status priority:
+  - OPEN, IN_PROGRESS, BLOCKED → Top (sorted by priority then date)
+  - COMPLETED, CANCELLED → Bottom
+- **Files**: `src/app/api/company/work-orders/route.ts`, `src/app/api/mechanic/work-orders/route.ts`, `src/app/api/staff/work-orders/route.ts`, `src/app/api/finance/work-orders/route.ts`
+
+**ISSUE 5: Auto-Refresh for Parts Status Updates**
+- Mechanic and Finance work order detail pages auto-refresh every 30 seconds
+- Only refreshes when page is visible and work order is not completed
+- **Files**: `src/app/mechanic/work-order/[workOrderId]/page.tsx`, `src/app/finance/work-orders/[workOrderId]/page.tsx`
+
+**FEATURE: Excel Export for Work Orders**
+- New export API endpoint with date range filtering
+- Export button added to Company Admin and Finance work orders pages
+- Exports: WO#, Vehicle, Title, Type, Priority, Status, Assigned Staff, Costs, Parts, Dates
+- Uses `xlsx` package for Excel generation
+- **Files**: `src/app/api/company/work-orders/export/route.ts` (NEW), `src/app/company/work-orders/page.tsx`, `src/app/finance/work-orders/page.tsx`
+
+### Files Modified
+- 12 files modified, 2 new files created
+- New dependency: `xlsx` package
+
+---
+
+### Previous (v2.10.5 - Jan 28, 2026)
 
 ### Work Order System - Post-Deployment Bug Fixes (5 Issues)
 

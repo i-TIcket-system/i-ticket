@@ -7,9 +7,6 @@ import {
   Wrench,
   ArrowLeft,
   Loader2,
-  Calendar,
-  DollarSign,
-  Package,
   Clock,
   CheckCircle,
   AlertCircle,
@@ -17,16 +14,20 @@ import {
   Play,
   Pause,
   MessageSquare,
+  Send,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 
 /**
- * BUG FIX v2.10.5: Staff Work Order Detail Page
- * Read-only view for Driver/Conductor
+ * v2.10.6: Staff Work Order Detail Page
+ * Simplified read-only view for Driver/Conductor with Team Communication
+ * REMOVED: Cost Summary, Parts Used (not relevant for drivers/conductors)
+ * ADDED: Full Team Communication with message sending
  */
 
 interface WorkOrder {
@@ -51,20 +52,8 @@ interface WorkOrder {
   startedAt: string | null
   completedAt: string | null
   odometerAtService: number | null
-  laborCost: number
-  partsCost: number
-  totalCost: number
   completionNotes: string | null
   createdAt: string
-  partsUsed: Array<{
-    id: string
-    partName: string
-    partNumber: string | null
-    quantity: number
-    unitPrice: number
-    totalPrice: number
-    status?: string | null
-  }>
   messages: Array<{
     id: string
     senderId: string
@@ -98,6 +87,8 @@ export default function StaffWorkOrderDetailPage() {
 
   const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [newMessage, setNewMessage] = useState("")
+  const [isSending, setIsSending] = useState(false)
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -133,6 +124,33 @@ export default function StaffWorkOrderDetailPage() {
     }
   }
 
+  const sendMessage = async () => {
+    if (!newMessage.trim()) return
+
+    setIsSending(true)
+    try {
+      const response = await fetch(`/api/staff/work-orders/${workOrderId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: newMessage.trim() }),
+      })
+
+      if (response.ok) {
+        setNewMessage("")
+        toast.success("Message sent")
+        fetchWorkOrder() // Refresh to show new message
+      } else {
+        const data = await response.json()
+        toast.error(data.error || "Failed to send message")
+      }
+    } catch (error) {
+      console.error("Failed to send message:", error)
+      toast.error("An error occurred")
+    } finally {
+      setIsSending(false)
+    }
+  }
+
   if (status === "loading" || isLoading) {
     return (
       <div className="container mx-auto py-12">
@@ -164,7 +182,7 @@ export default function StaffWorkOrderDetailPage() {
   const StatusIcon = statusInfo?.icon || Clock
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-7xl">
+    <div className="container mx-auto py-8 px-4 max-w-5xl">
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -272,93 +290,90 @@ export default function StaffWorkOrderDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Parts List */}
+          {/* Team Communication */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Parts Used
+                <MessageSquare className="h-5 w-5" />
+                Team Communication
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {workOrder.partsUsed.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No parts listed</p>
+              {/* Message Input */}
+              <div className="mb-4">
+                <div className="flex gap-2">
+                  <Textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type a message to the team..."
+                    rows={2}
+                    className="resize-none"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault()
+                        sendMessage()
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim() || isSending}
+                    className="shrink-0"
+                  >
+                    {isSending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                  </Button>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {workOrder.partsUsed.map((part) => (
-                    <div
-                      key={part.id}
-                      className="flex items-start justify-between p-3 border rounded-lg"
-                    >
-                      <div className="flex-1">
+                <p className="text-xs text-muted-foreground mt-1">
+                  Press Enter to send, Shift+Enter for new line
+                </p>
+              </div>
+
+              <Separator className="my-4" />
+
+              {/* Messages List */}
+              {workOrder.messages && workOrder.messages.length > 0 ? (
+                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {workOrder.messages.map((msg) => {
+                    const isOwnMessage = msg.senderId === session?.user?.id
+
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`p-3 border rounded-lg ${
+                          isOwnMessage ? "bg-teal-50 border-teal-200" : "bg-white"
+                        }`}
+                      >
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium">{part.partName}</p>
-                          {part.status && (
-                            <Badge
-                              variant="outline"
-                              className={
-                                part.status === "APPROVED"
-                                  ? "bg-green-100 text-green-800"
-                                  : part.status === "ORDERED"
-                                  ? "bg-blue-100 text-blue-800"
-                                  : "bg-yellow-100 text-yellow-800"
-                              }
-                            >
-                              {part.status}
-                            </Badge>
-                          )}
+                          <span className="font-medium text-sm">
+                            {isOwnMessage ? "You" : msg.senderName}
+                          </span>
+                          <Badge variant="outline" className="text-xs">
+                            {msg.senderRole}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground ml-auto">
+                            {new Date(msg.createdAt).toLocaleString()}
+                          </span>
                         </div>
-                        {part.partNumber && (
-                          <p className="text-xs text-muted-foreground font-mono">
-                            PN: {part.partNumber}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right ml-4">
-                        <p className="font-medium">{part.quantity} pcs</p>
-                        <p className="text-xs text-muted-foreground">
-                          {part.totalPrice.toLocaleString()} Birr
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                          {msg.message}
                         </p>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <MessageSquare className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No messages yet</p>
+                  <p className="text-xs mt-1">Be the first to send a message</p>
                 </div>
               )}
             </CardContent>
           </Card>
-
-          {/* Recent Messages */}
-          {workOrder.messages && workOrder.messages.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Recent Messages
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {workOrder.messages.slice(0, 5).map((msg) => (
-                    <div key={msg.id} className="p-3 border rounded-lg">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm">{msg.senderName}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {msg.senderRole}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground ml-auto">
-                          {new Date(msg.createdAt).toLocaleString()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{msg.message}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {/* Sidebar */}
@@ -420,31 +435,6 @@ export default function StaffWorkOrderDetailPage() {
               </CardContent>
             </Card>
           )}
-
-          {/* Cost Summary */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <DollarSign className="h-5 w-5" />
-                Cost Summary
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Labor Cost</span>
-                <span className="font-medium">{workOrder.laborCost.toLocaleString()} Birr</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Parts Cost</span>
-                <span className="font-medium">{workOrder.partsCost.toLocaleString()} Birr</span>
-              </div>
-              <Separator />
-              <div className="flex justify-between">
-                <span className="font-medium">Total</span>
-                <span className="text-lg font-bold">{workOrder.totalCost.toLocaleString()} Birr</span>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Timeline */}
           <Card>

@@ -14,6 +14,7 @@ import {
   Truck,
   Package,
   Download,
+  FileSpreadsheet,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -35,6 +36,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 interface WorkOrder {
   id: string
@@ -106,6 +116,12 @@ export default function FinanceWorkOrdersPage() {
     endDate: "",
   })
 
+  // v2.10.6: Export state
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
+  const [exportStartDate, setExportStartDate] = useState("")
+  const [exportEndDate, setExportEndDate] = useState("")
+  const [isExporting, setIsExporting] = useState(false)
+
   useEffect(() => {
     if (status === "authenticated") {
       if (session.user.role !== "COMPANY_ADMIN" || session.user.staffRole !== "FINANCE") {
@@ -152,6 +168,42 @@ export default function FinanceWorkOrdersPage() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount)
+  }
+
+  // v2.10.6: Export work orders to Excel
+  const handleExport = async () => {
+    setIsExporting(true)
+    try {
+      const params = new URLSearchParams()
+      if (exportStartDate) params.append("startDate", exportStartDate)
+      if (exportEndDate) params.append("endDate", exportEndDate)
+      if (filters.status !== "ALL") params.append("status", filters.status)
+
+      const response = await fetch(`/api/company/work-orders/export?${params.toString()}`)
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        const contentDisposition = response.headers.get("Content-Disposition")
+        const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
+        a.download = filenameMatch ? filenameMatch[1] : "work-orders.xlsx"
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        toast.success("Export successful")
+        setIsExportDialogOpen(false)
+      } else {
+        toast.error("Export failed")
+      }
+    } catch (error) {
+      console.error("Export error:", error)
+      toast.error("An error occurred during export")
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   if (status === "loading" || loading) {
@@ -282,6 +334,11 @@ export default function FinanceWorkOrdersPage() {
                 Showing {workOrders.length} work orders
               </CardDescription>
             </div>
+            {/* v2.10.6: Export button */}
+            <Button variant="outline" onClick={() => setIsExportDialogOpen(true)}>
+              <Download className="h-4 w-4 mr-2" />
+              Export to Excel
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -368,6 +425,58 @@ export default function FinanceWorkOrdersPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* v2.10.6: Export Dialog */}
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Export Work Orders
+            </DialogTitle>
+            <DialogDescription>
+              Export work orders to Excel for financial analysis.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Start Date</Label>
+                <Input
+                  type="date"
+                  value={exportStartDate}
+                  onChange={(e) => setExportStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label>End Date</Label>
+                <Input
+                  type="date"
+                  value={exportEndDate}
+                  onChange={(e) => setExportEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Leave dates empty to export all work orders.
+              {filters.status !== "ALL" && (
+                <span className="block mt-1">
+                  Status filter ({filters.status.replace("_", " ")}) will be applied.
+                </span>
+              )}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleExport} disabled={isExporting} className="bg-emerald-600 hover:bg-emerald-700">
+              {isExporting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Export to Excel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

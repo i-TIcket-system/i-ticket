@@ -62,6 +62,13 @@ interface WorkOrder {
     unitPrice: number
     totalPrice: number
     supplier: string | null
+    // v2.10.6: Parts status fields for finance visibility
+    status: string | null
+    notes: string | null
+    requestedBy: string | null
+    requestedAt: string | null
+    approvedBy: string | null
+    approvedAt: string | null
   }>
 }
 
@@ -98,6 +105,20 @@ export default function FinanceWorkOrderDetailPage() {
       fetchWorkOrder()
     }
   }, [status, session, router, workOrderId])
+
+  // v2.10.6: Auto-refresh every 30 seconds to pick up parts status updates
+  useEffect(() => {
+    if (status !== "authenticated" || !workOrder) return
+
+    const interval = setInterval(() => {
+      // Only refresh if page is visible and work order is not completed
+      if (document.visibilityState === "visible" && workOrder.status !== "COMPLETED") {
+        fetchWorkOrder()
+      }
+    }, 30000) // 30 seconds
+
+    return () => clearInterval(interval)
+  }, [status, workOrder?.status])
 
   const fetchWorkOrder = async () => {
     try {
@@ -279,34 +300,62 @@ export default function FinanceWorkOrderDetailPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {workOrder.partsUsed.map((part) => (
-                    <div
-                      key={part.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <p className="font-medium">{part.partName}</p>
-                        {part.partNumber && (
-                          <p className="text-xs text-muted-foreground font-mono">
-                            PN: {part.partNumber}
-                          </p>
-                        )}
-                        {part.supplier && (
-                          <p className="text-xs text-muted-foreground">
-                            Supplier: {part.supplier}
-                          </p>
-                        )}
+                  {workOrder.partsUsed.map((part) => {
+                    // v2.10.6: Part status styling for finance view
+                    const statusColors: Record<string, string> = {
+                      REQUESTED: "bg-yellow-100 text-yellow-800 border-yellow-300",
+                      APPROVED: "bg-green-100 text-green-800 border-green-300",
+                      REJECTED: "bg-red-100 text-red-800 border-red-300",
+                      ORDERED: "bg-blue-100 text-blue-800 border-blue-300",
+                    }
+                    const statusColor = part.status ? statusColors[part.status] : ""
+
+                    return (
+                      <div
+                        key={part.id}
+                        className={`p-3 border rounded-lg ${
+                          part.status === "ORDERED" ? "border-blue-300 bg-blue-50/30" : ""
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <p className="font-medium">{part.partName}</p>
+                              {/* v2.10.6: Show status badge */}
+                              {part.status && (
+                                <Badge variant="outline" className={statusColor}>
+                                  {part.status}
+                                </Badge>
+                              )}
+                            </div>
+                            {part.partNumber && (
+                              <p className="text-xs text-muted-foreground font-mono">
+                                PN: {part.partNumber}
+                              </p>
+                            )}
+                            {part.supplier && (
+                              <p className="text-xs text-muted-foreground">
+                                Supplier: {part.supplier}
+                              </p>
+                            )}
+                            {part.notes && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Note: {part.notes}
+                              </p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <p className="font-mono font-medium">
+                              {formatCurrency(part.totalPrice)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {part.quantity} × {formatCurrency(part.unitPrice)}
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-mono font-medium">
-                          {formatCurrency(part.totalPrice)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {part.quantity} × {formatCurrency(part.unitPrice)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
 
                   <Separator />
 

@@ -15,6 +15,8 @@ import {
   AlertTriangle,
   Search,
   Eye,
+  Download,
+  Calendar,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -35,6 +37,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 import { CreateWorkOrderDialog } from "@/components/maintenance/CreateWorkOrderDialog"
 
@@ -98,6 +109,12 @@ export default function WorkOrdersPage() {
   const [taskTypeFilter, setTaskTypeFilter] = useState<string>("all")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
 
+  // v2.10.6: Export dialog state
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false)
+  const [exportStartDate, setExportStartDate] = useState("")
+  const [exportEndDate, setExportEndDate] = useState("")
+  const [isExporting, setIsExporting] = useState(false)
+
   useEffect(() => {
     if (status === "authenticated") {
       if (session.user.role !== "COMPANY_ADMIN") {
@@ -136,6 +153,42 @@ export default function WorkOrdersPage() {
       fetchWorkOrders()
     }
   }, [statusFilter, priorityFilter, taskTypeFilter, status])
+
+  // v2.10.6: Export work orders to Excel
+  const handleExport = async () => {
+    setIsExporting(true)
+    try {
+      const params = new URLSearchParams()
+      if (exportStartDate) params.append("startDate", exportStartDate)
+      if (exportEndDate) params.append("endDate", exportEndDate)
+      if (statusFilter !== "all") params.append("status", statusFilter)
+
+      const response = await fetch(`/api/company/work-orders/export?${params.toString()}`)
+
+      if (response.ok) {
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        const contentDisposition = response.headers.get("Content-Disposition")
+        const filenameMatch = contentDisposition?.match(/filename="(.+)"/)
+        a.download = filenameMatch ? filenameMatch[1] : "work-orders.xlsx"
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        toast.success("Export successful")
+        setIsExportDialogOpen(false)
+      } else {
+        toast.error("Export failed")
+      }
+    } catch (error) {
+      console.error("Export error:", error)
+      toast.error("An error occurred during export")
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   if (status === "loading" || isLoading) {
     return (
@@ -182,10 +235,17 @@ export default function WorkOrdersPage() {
               Manage vehicle maintenance and repair work orders
             </p>
           </div>
-          <Button size="lg" onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Work Order
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* v2.10.6: Export button */}
+            <Button variant="outline" onClick={() => setIsExportDialogOpen(true)}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <Button size="lg" onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Work Order
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -440,6 +500,60 @@ export default function WorkOrdersPage() {
         onOpenChange={setIsCreateDialogOpen}
         onSuccess={fetchWorkOrders}
       />
+
+      {/* v2.10.6: Export Dialog */}
+      <Dialog open={isExportDialogOpen} onOpenChange={setIsExportDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5" />
+              Export Work Orders
+            </DialogTitle>
+            <DialogDescription>
+              Export work orders to Excel. Optionally filter by date range.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="export-start">Start Date</Label>
+                <Input
+                  id="export-start"
+                  type="date"
+                  value={exportStartDate}
+                  onChange={(e) => setExportStartDate(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label htmlFor="export-end">End Date</Label>
+                <Input
+                  id="export-end"
+                  type="date"
+                  value={exportEndDate}
+                  onChange={(e) => setExportEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Leave dates empty to export all work orders.
+              {statusFilter !== "all" && (
+                <span className="block mt-1">
+                  Status filter ({STATUS_INFO[statusFilter as keyof typeof STATUS_INFO]?.label}) will be applied.
+                </span>
+              )}
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsExportDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleExport} disabled={isExporting}>
+              {isExporting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Export to Excel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
