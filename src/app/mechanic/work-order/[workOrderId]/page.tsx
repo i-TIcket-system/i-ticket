@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/select"
 import { toast } from "sonner"
 import { MechanicWorkOrderChat } from "@/components/maintenance/MechanicWorkOrderChat"
+import { RequestPartDialog } from "@/components/maintenance/RequestPartDialog"
 
 interface WorkOrder {
   id: string
@@ -70,6 +71,8 @@ interface WorkOrder {
     unitPrice: number
     totalPrice: number
     supplier: string | null
+    status?: string | null
+    notes?: string | null
   }>
 }
 
@@ -336,26 +339,63 @@ export default function MechanicWorkOrderDetailPage() {
           {/* Parts List */}
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="h-5 w-5" />
-                Parts Required
-              </CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Parts Required
+                </CardTitle>
+                {workOrder.status !== "COMPLETED" && (
+                  <RequestPartDialog
+                    workOrderId={workOrder.id}
+                    onSuccess={fetchWorkOrder}
+                  />
+                )}
+              </div>
             </CardHeader>
             <CardContent>
               {workOrder.partsUsed.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground">
                   <Package className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No parts listed for this work order</p>
+                  <p className="text-sm">No parts listed yet</p>
+                  {workOrder.status !== "COMPLETED" && (
+                    <p className="text-xs mt-2">Click "Request Parts" to add parts needed</p>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-3">
                   {workOrder.partsUsed.map((part) => (
                     <div
                       key={part.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className="flex items-start justify-between p-3 border rounded-lg"
                     >
-                      <div>
-                        <p className="font-medium">{part.partName}</p>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium">{part.partName}</p>
+                          {part.status && (
+                            <Badge
+                              variant={
+                                part.status === "REQUESTED"
+                                  ? "secondary"
+                                  : part.status === "APPROVED"
+                                  ? "default"
+                                  : part.status === "ORDERED"
+                                  ? "default"
+                                  : "destructive"
+                              }
+                              className={
+                                part.status === "REQUESTED"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : part.status === "APPROVED"
+                                  ? "bg-green-100 text-green-800"
+                                  : part.status === "ORDERED"
+                                  ? "bg-blue-100 text-blue-800"
+                                  : ""
+                              }
+                            >
+                              {part.status}
+                            </Badge>
+                          )}
+                        </div>
                         {part.partNumber && (
                           <p className="text-xs text-muted-foreground font-mono">
                             PN: {part.partNumber}
@@ -366,8 +406,13 @@ export default function MechanicWorkOrderDetailPage() {
                             From: {part.supplier}
                           </p>
                         )}
+                        {part.notes && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Note: {part.notes}
+                          </p>
+                        )}
                       </div>
-                      <div className="text-right">
+                      <div className="text-right ml-4">
                         <p className="font-medium">{part.quantity} pcs</p>
                         <p className="text-xs text-muted-foreground">
                           {part.totalPrice.toLocaleString()} Birr

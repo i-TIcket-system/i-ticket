@@ -26,6 +26,7 @@ export type NotificationType =
   | "WORK_ORDER_MESSAGE"
   | "WORK_ORDER_COMPLETED"
   | "WORK_ORDER_URGENT"
+  | "WORK_ORDER_PARTS_REQUESTED"
 
 export type NotificationPriority = 1 | 2 | 3 | 4 // 1=Low, 2=Normal, 3=High, 4=Urgent
 
@@ -71,6 +72,9 @@ export interface NotificationData {
   taskType?: string
   workOrderStatus?: string
   priority?: number
+  partName?: string
+  quantity?: number
+  mechanicName?: string
 
   // Generic
   reason?: string
@@ -266,6 +270,14 @@ export function generateNotification(
         title: "Urgent Work Order",
         message: `Urgent work order ${data.workOrderNumber || ""} for ${data.vehiclePlate || "vehicle"}${data.taskType ? ` - ${data.taskType}` : ""}.`,
         priority: 4, // Urgent
+      }
+
+    case "WORK_ORDER_PARTS_REQUESTED":
+      return {
+        type,
+        title: "Parts Request",
+        message: `${data.mechanicName || "Mechanic"} requested ${data.quantity || 1}x ${data.partName || "part"} for work order ${data.workOrderNumber || ""} (${data.vehiclePlate || "vehicle"}).`,
+        priority: 3, // High
       }
 
     default:

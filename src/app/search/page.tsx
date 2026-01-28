@@ -566,7 +566,7 @@ function SearchContent() {
                       </div>
                       <h3 className="font-semibold text-foreground mb-2">{trip.company.name}</h3>
                       <div className="flex flex-col gap-1.5 w-full items-center">
-                        <Badge variant="secondary" className="glass-subtle border-white/20 justify-center w-full">
+                        <Badge className="bg-primary/10 border-primary/30 text-primary font-semibold justify-center w-full">
                           {BUS_TYPES.find((t) => t.value === trip.busType)?.label || trip.busType}
                         </Badge>
                         {trip.distance && (

@@ -439,7 +439,7 @@ export default function BookingPage() {
                       {formatDate(trip.departureTime)}
                     </CardDescription>
                   </div>
-                  <Badge className="glass-subtle border-white/20 text-foreground">
+                  <Badge className="bg-primary/10 border-primary/30 text-primary font-semibold">
                     {BUS_TYPES.find((t) => t.value === trip.busType)?.label || trip.busType}
                   </Badge>
                 </div>

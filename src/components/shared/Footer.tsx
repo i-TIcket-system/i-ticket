@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
-import { Phone, Mail, MapPin, Facebook, Twitter, Instagram, Youtube, ArrowUpRight } from "lucide-react"
+import { Phone, Mail, MapPin, Send, ArrowUpRight } from "lucide-react"
 
 const footerLinks = {
   company: [
@@ -27,10 +27,7 @@ const footerLinks = {
 }
 
 const socialLinks = [
-  { icon: Facebook, href: "#", label: "Facebook" },
-  { icon: Twitter, href: "#", label: "Twitter" },
-  { icon: Instagram, href: "#", label: "Instagram" },
-  { icon: Youtube, href: "#", label: "YouTube" },
+  { icon: Send, href: "https://t.me/i_ticket_busBot", label: "Telegram Bot - Book Bus Tickets" },
 ]
 
 export function Footer() {

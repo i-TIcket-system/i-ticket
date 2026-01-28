@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { toast } from "sonner"
 import {
   Select,
   SelectContent,
@@ -236,6 +237,23 @@ export default function NotificationsPage() {
   const handleNotificationClick = async (notification: Notification) => {
     if (!notification.isRead) {
       await handleMarkAsRead(notification.id)
+    }
+
+    // For work order notifications, verify the work order exists before routing
+    if (notification.type.startsWith("WORK_ORDER_") && notification.metadata?.workOrderId) {
+      try {
+        const woId = notification.metadata.workOrderId as string
+        const response = await fetch(`/api/work-orders/${woId}/exists`)
+        const data = await response.json()
+
+        if (!data.exists) {
+          toast.error("This work order no longer exists")
+          return
+        }
+      } catch (error) {
+        console.error("Failed to verify work order:", error)
+        // Continue anyway - better to route and get 404 than block the user
+      }
     }
 
     const url = getNotificationUrl(

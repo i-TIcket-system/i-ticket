@@ -277,18 +277,18 @@ export default function HomePage() {
 
               {/* Popular Routes - Dynamic based on customer searches */}
               <div className="pt-4">
-                <p className="text-sm text-white/80 font-medium mb-4" id="popular-routes-label">Popular Routes:</p>
+                <p className="text-sm text-white font-semibold mb-4 drop-shadow-md" id="popular-routes-label">Popular Routes:</p>
                 <nav aria-labelledby="popular-routes-label" className="flex flex-wrap gap-3">
                   {popularRoutes.map((route) => (
                     <Link
                       key={`${route.from}-${route.to}`}
                       href={`/search?from=${route.from}&to=${route.to}`}
-                      className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-full glass-moderate border border-white/30 hover:border-[#20c4c4]/50 focus:border-[#20c4c4] focus:ring-4 focus:ring-[#20c4c4]/50 focus:outline-none transition-all duration-300 hover:shadow-lg hover:shadow-[#20c4c4]/20 hover:scale-105 focus:scale-105"
+                      className="group inline-flex items-center gap-2 px-4 py-2.5 rounded-full glass-moderate border border-white/30 hover:border-[#20c4c4]/50 focus:border-[#20c4c4] focus:ring-4 focus:ring-[#20c4c4]/50 focus:outline-none transition-all duration-300 hover:shadow-lg hover:shadow-[#20c4c4]/20 hover:scale-105 focus:scale-105 bg-white/5"
                       aria-label={`Search trips from ${route.from} to ${route.to}`}
                     >
-                      <span className="text-white text-sm font-medium whitespace-nowrap">{shortenCityName(route.from)}</span>
-                      <ArrowRight className="h-4 w-4 text-[#20c4c4] flex-shrink-0" aria-hidden="true" />
-                      <span className="text-white text-sm font-medium whitespace-nowrap">{route.to}</span>
+                      <span className="text-white text-sm font-semibold whitespace-nowrap drop-shadow-md">{shortenCityName(route.from)}</span>
+                      <ArrowRight className="h-4 w-4 text-[#20c4c4] flex-shrink-0 drop-shadow-md" aria-hidden="true" />
+                      <span className="text-white text-sm font-semibold whitespace-nowrap drop-shadow-md">{route.to}</span>
                     </Link>
                   ))}
                 </nav>

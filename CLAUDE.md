@@ -1,7 +1,7 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.2 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
-> **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md`
+> **Version**: v2.10.3 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
 
@@ -210,7 +210,43 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.2 - Jan 28, 2026)
+## RECENT UPDATES (v2.10.3 - Jan 28, 2026)
+
+### Work Order System Enhancements & UI Polish
+
+1. **CRITICAL: Fixed Mechanic Work Order Query Bug** - Mechanics can now see ALL assigned work orders. Fixed JSON array query bug in `assignedStaffIds` field by implementing client-side filtering instead of broken `.contains()` query. Updated both list and detail API endpoints.
+
+2. **Parts Request Workflow for Mechanics** - New feature allowing mechanics to request parts for work orders:
+   - Created `POST /api/mechanic/work-orders/{id}/parts` endpoint
+   - New `RequestPartDialog` component with validation
+   - Added database fields: `status`, `notes`, `requestedBy`, `requestedAt`, `approvedBy`, `approvedAt` to `WorkOrderPart` model
+   - Automatic notifications to company admins when parts are requested
+   - Status badges: REQUESTED, APPROVED, ORDERED, REJECTED
+
+3. **Fixed Notification Routing** - Added work order existence check before routing. Prevents 404 errors when clicking notifications for deleted work orders. Shows user-friendly error: "This work order no longer exists"
+
+4. **Homepage Popular Routes Contrast** - Improved text visibility with white text, drop shadows, and semi-transparent backgrounds for better readability on glass backgrounds.
+
+5. **Fixed Bus Type Visibility** - Bus type badges in search results and booking page changed from white-on-white to `bg-primary/10 border-primary/30 text-primary` for clear visibility.
+
+6. **Simplified Seat Selection** - Replaced three-color scheme with two-state design:
+   - Vacant seats: Clean white box with seat number
+   - Occupied seats: Gray box with red X mark
+   - Selected seats show blue border
+   - Updated legend to show only "Vacant" and "Occupied"
+
+7. **UI Polish**:
+   - Footer now shows ONLY Telegram bot link (@i_ticket_busBot)
+   - Company logo upload component handles failed image loads gracefully
+   - Audit log action badges now clearly visible with `!text-white` and `border-0`
+
+8. **Documentation** - Created comprehensive `DEPLOYMENT.md` with step-by-step deployment workflow
+
+### Files Modified
+- 13 files modified + 4 new files created
+- Database migration: `add_work_order_part_status`
+
+### Previous (v2.10.2 - Jan 28, 2026)
 
 ### Work Order System Fixes (CRITICAL)
 

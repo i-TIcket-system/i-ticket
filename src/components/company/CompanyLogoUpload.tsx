@@ -23,6 +23,7 @@ export function CompanyLogoUpload({
   const { update: updateSession } = useSession()
   const [isUploading, setIsUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(currentLogo || null)
+  const [imageError, setImageError] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const sizeClasses = {
@@ -128,13 +129,22 @@ export function CompanyLogoUpload({
       {/* Logo Display */}
       <div className={`relative ${sizeClasses[size]} rounded-lg overflow-hidden bg-muted border-4 border-background shadow-lg`}>
         {preview ? (
-          <Image
-            src={preview}
-            alt="Company Logo"
-            fill
-            className="object-contain p-2"
-            priority
-          />
+          <div className="relative w-full h-full">
+            <Image
+              src={preview}
+              alt="Company Logo"
+              fill
+              className="object-contain p-2"
+              priority
+              onError={() => setImageError(true)}
+              onLoad={() => setImageError(false)}
+            />
+            {imageError && (
+              <div className="absolute inset-0 flex items-center justify-center bg-primary/10">
+                <Building2 className="w-1/2 h-1/2 text-primary/40" />
+              </div>
+            )}
+          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-primary/10">
             <Building2 className="w-1/2 h-1/2 text-primary/40" />

@@ -58,31 +58,31 @@ interface AuditLog {
 
 const ACTION_COLORS: Record<string, string> = {
   // Company profile
-  COMPANY_PROFILE_UPDATED: "bg-blue-600 text-white",
+  COMPANY_PROFILE_UPDATED: "bg-blue-600 !text-white border-0",
   // Staff actions
-  STAFF_MEMBER_ADDED: "bg-purple-600 text-white",
-  STAFF_MEMBER_UPDATED: "bg-blue-600 text-white",
-  STAFF_MEMBER_REMOVED: "bg-orange-500 text-white",
+  STAFF_MEMBER_ADDED: "bg-purple-600 !text-white border-0",
+  STAFF_MEMBER_UPDATED: "bg-blue-600 !text-white border-0",
+  STAFF_MEMBER_REMOVED: "bg-orange-500 !text-white border-0",
   // Trip actions
-  TRIP_CREATED: "bg-green-600 text-white",
-  TRIP_UPDATED: "bg-blue-600 text-white",
-  TRIP_DELETED: "bg-red-600 text-white",
-  TRIP_HALTED: "bg-yellow-500 text-gray-900",
-  TRIP_RESUMED: "bg-teal-600 text-white",
+  TRIP_CREATED: "bg-green-600 !text-white border-0",
+  TRIP_UPDATED: "bg-blue-600 !text-white border-0",
+  TRIP_DELETED: "bg-red-600 !text-white border-0",
+  TRIP_HALTED: "bg-yellow-500 !text-gray-900 border-0",
+  TRIP_RESUMED: "bg-teal-600 !text-white border-0",
   // Vehicle actions
-  VEHICLE_ADDED: "bg-emerald-600 text-white",
-  VEHICLE_UPDATED: "bg-cyan-600 text-white",
-  VEHICLE_REMOVED: "bg-rose-600 text-white",
+  VEHICLE_ADDED: "bg-emerald-600 !text-white border-0",
+  VEHICLE_UPDATED: "bg-cyan-600 !text-white border-0",
+  VEHICLE_REMOVED: "bg-rose-600 !text-white border-0",
   // Work order actions
-  WORK_ORDER_CREATED: "bg-indigo-600 text-white",
-  WORK_ORDER_UPDATED: "bg-violet-600 text-white",
-  WORK_ORDER_COMPLETED: "bg-green-600 text-white",
-  WORK_ORDER_CANCELLED: "bg-red-600 text-white",
+  WORK_ORDER_CREATED: "bg-indigo-600 !text-white border-0",
+  WORK_ORDER_UPDATED: "bg-violet-600 !text-white border-0",
+  WORK_ORDER_COMPLETED: "bg-green-600 !text-white border-0",
+  WORK_ORDER_CANCELLED: "bg-red-600 !text-white border-0",
   // Trip log actions
-  TRIP_LOG_START: "bg-sky-600 text-white",
-  TRIP_LOG_END: "bg-lime-600 text-white",
+  TRIP_LOG_START: "bg-sky-600 !text-white border-0",
+  TRIP_LOG_END: "bg-lime-600 !text-white border-0",
   // Manual ticketing
-  MANUAL_TICKET_SOLD: "bg-amber-600 text-white",
+  MANUAL_TICKET_SOLD: "bg-amber-600 !text-white border-0",
 }
 
 const ACTION_ICONS: Record<string, React.ReactNode> = {

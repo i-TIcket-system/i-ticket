@@ -30,14 +30,11 @@ export async function GET(
 
     const { workOrderId } = params
 
+    // Fetch work order without assignedStaffIds filter (we'll check client-side)
     const workOrder = await prisma.workOrder.findFirst({
       where: {
         id: workOrderId,
         companyId: session.user.companyId!,
-        OR: [
-          { assignedToId: session.user.id },
-          { assignedStaffIds: { contains: session.user.id } },
-        ],
       },
       include: {
         vehicle: {
@@ -56,6 +53,30 @@ export async function GET(
     })
 
     if (!workOrder) {
+      return NextResponse.json({ error: "Work order not found" }, { status: 404 })
+    }
+
+    // Verify mechanic has access (client-side check for JSON array)
+    let hasAccess = false
+
+    // Check legacy assignment
+    if (workOrder.assignedToId === session.user.id) {
+      hasAccess = true
+    }
+
+    // Check new multi-staff assignment
+    if (!hasAccess && workOrder.assignedStaffIds) {
+      try {
+        const staffIds = JSON.parse(workOrder.assignedStaffIds)
+        if (Array.isArray(staffIds) && staffIds.includes(session.user.id)) {
+          hasAccess = true
+        }
+      } catch {
+        // Invalid JSON, no access
+      }
+    }
+
+    if (!hasAccess) {
       return NextResponse.json({ error: "Work order not found" }, { status: 404 })
     }
 
@@ -91,14 +112,32 @@ export async function PATCH(
       where: {
         id: workOrderId,
         companyId: session.user.companyId!,
-        OR: [
-          { assignedToId: session.user.id },
-          { assignedStaffIds: { contains: session.user.id } },
-        ],
       },
     })
 
     if (!existingWorkOrder) {
+      return NextResponse.json({ error: "Work order not found" }, { status: 404 })
+    }
+
+    // Verify mechanic has access (client-side check for JSON array)
+    let hasAccess = false
+
+    if (existingWorkOrder.assignedToId === session.user.id) {
+      hasAccess = true
+    }
+
+    if (!hasAccess && existingWorkOrder.assignedStaffIds) {
+      try {
+        const staffIds = JSON.parse(existingWorkOrder.assignedStaffIds)
+        if (Array.isArray(staffIds) && staffIds.includes(session.user.id)) {
+          hasAccess = true
+        }
+      } catch {
+        // Invalid JSON, no access
+      }
+    }
+
+    if (!hasAccess) {
       return NextResponse.json({ error: "Work order not found" }, { status: 404 })
     }
 

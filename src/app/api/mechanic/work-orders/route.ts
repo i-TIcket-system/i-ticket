@@ -38,12 +38,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
 
-    // Build where clause with proper Prisma types - support both legacy and new assignment
+    // Build where clause - fetch all potentially relevant work orders
+    // We'll filter client-side because assignedStaffIds is JSON string
     const where: Prisma.WorkOrderWhereInput = {
       companyId,
       OR: [
         { assignedToId: session.user.id },
-        { assignedStaffIds: { contains: session.user.id } },
+        { assignedStaffIds: { not: null } },  // Get all with multi-assignment
       ],
     }
 
@@ -51,8 +52,8 @@ export async function GET(request: NextRequest) {
       where.status = status
     }
 
-    // Fetch work orders assigned to this mechanic
-    const workOrders = await prisma.workOrder.findMany({
+    // Fetch work orders and filter client-side for JSON array membership
+    const allWorkOrders = await prisma.workOrder.findMany({
       where,
       select: {
         id: true,
@@ -101,23 +102,59 @@ export async function GET(request: NextRequest) {
       ],
     })
 
-    // Get stats
-    const stats = await prisma.workOrder.groupBy({
-      by: ["status"],
-      where: {
-        companyId,
-        OR: [
-          { assignedToId: session.user.id },
-          { assignedStaffIds: { contains: session.user.id } },
-        ],
-      },
-      _count: {
-        _all: true,
+    // Filter client-side to check JSON array membership
+    const workOrders = allWorkOrders.filter(wo => {
+      // Check legacy assignment
+      if (wo.assignedToId === session.user.id) return true
+
+      // Check new multi-staff assignment
+      if (wo.assignedStaffIds) {
+        try {
+          const staffIds = JSON.parse(wo.assignedStaffIds)
+          return Array.isArray(staffIds) && staffIds.includes(session.user.id)
+        } catch {
+          return false
+        }
+      }
+
+      return false
+    })
+
+    // Get stats - reuse same filtering logic
+    const statsWhere: Prisma.WorkOrderWhereInput = {
+      companyId,
+      OR: [
+        { assignedToId: session.user.id },
+        { assignedStaffIds: { not: null } },
+      ],
+    }
+
+    const allStatsWorkOrders = await prisma.workOrder.findMany({
+      where: statsWhere,
+      select: {
+        id: true,
+        status: true,
+        assignedToId: true,
+        assignedStaffIds: true,
       },
     })
 
-    const statsMap = stats.reduce((acc, s) => {
-      acc[s.status] = s._count._all
+    // Filter and group stats
+    const filteredStatsWorkOrders = allStatsWorkOrders.filter(wo => {
+      if (wo.assignedToId === session.user.id) return true
+      if (wo.assignedStaffIds) {
+        try {
+          const staffIds = JSON.parse(wo.assignedStaffIds)
+          return Array.isArray(staffIds) && staffIds.includes(session.user.id)
+        } catch {
+          return false
+        }
+      }
+      return false
+    })
+
+    const statsMap = filteredStatsWorkOrders.reduce((acc, wo) => {
+      acc[wo.status] = (acc[wo.status] || 0) + 1
       return acc
     }, {} as Record<string, number>)
 

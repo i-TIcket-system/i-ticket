@@ -961,7 +961,16 @@ model WorkOrderPart {
   totalPrice    Float
   supplier      String?
 
+  // Parts request workflow
+  status        String?    @default("APPROVED")  // REQUESTED, APPROVED, ORDERED, REJECTED
+  notes         String?
+  requestedBy   String?    // User ID of mechanic who requested
+  requestedAt   DateTime?
+  approvedBy    String?    // User ID of admin who approved
+  approvedAt    DateTime?
+
   @@index([workOrderId])
+  @@index([status])
 }
 
 // Digital vehicle inspections (daily/weekly)

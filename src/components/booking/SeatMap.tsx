@@ -28,45 +28,54 @@ interface SeatData {
   row: number // 0=bottom (driver side), 1=second, 2=third (after aisle), 3=top
 }
 
-// Custom seat icon matching guzo.et style - rounded body with backrest tab
+// Simplified two-state seat icon: vacant box or occupied box with X
 function SeatIcon({ status, number, size = "normal" }: { status: SeatStatus; number: number; size?: "normal" | "small" }) {
-  const bgColor = status === "selected"
-    ? "#3B82F6"
-    : status === "occupied"
-    ? "#9CA3AF"
-    : "#22C55E"
+  const isOccupied = status === "occupied"
+  const isSelected = status === "selected"
 
-  const textColor = "#FFFFFF"
-  const borderColor = status === "selected"
-    ? "#1D4ED8"
-    : status === "occupied"
-    ? "#6B7280"
-    : "#16A34A"
+  // Vacant (available or selected) = white/light background with border
+  // Occupied = gray background with red X
+  const bgColor = isOccupied ? "#E5E7EB" : isSelected ? "#DBEAFE" : "#FFFFFF"
+  const borderColor = isSelected ? "#3B82F6" : "#D1D5DB"
+  const borderWidth = isSelected ? "3" : "2"
 
-  const dimensions = size === "small" ? { width: 32, height: 32, fontSize: 11 } : { width: 44, height: 44, fontSize: 14 }
+  const dimensions = size === "small" ? { width: 32, height: 32, fontSize: 11 } : { width: 44, height: 44, fontSize: 13 }
 
   return (
     <svg width={dimensions.width} height={dimensions.height} viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="3" y="6" width="30" height="32" rx="5" fill={bgColor} stroke={borderColor} strokeWidth="2" />
-      <path
-        d="M33 12 L38 12 Q41 12 41 15 L41 29 Q41 32 38 32 L33 32"
+      {/* Simple square box */}
+      <rect
+        x="4"
+        y="4"
+        width="36"
+        height="36"
+        rx="4"
         fill={bgColor}
         stroke={borderColor}
-        strokeWidth="2"
+        strokeWidth={borderWidth}
       />
-      <rect x="33" y="14" width="6" height="16" rx="2" fill={bgColor} />
-      <text
-        x="18"
-        y="24"
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fill={textColor}
-        fontSize={dimensions.fontSize}
-        fontWeight="bold"
-        fontFamily="system-ui, sans-serif"
-      >
-        {number}
-      </text>
+
+      {isOccupied ? (
+        /* Show red X for occupied seats */
+        <>
+          <line x1="14" y1="14" x2="30" y2="30" stroke="#DC2626" strokeWidth="3" strokeLinecap="round" />
+          <line x1="30" y1="14" x2="14" y2="30" stroke="#DC2626" strokeWidth="3" strokeLinecap="round" />
+        </>
+      ) : (
+        /* Show seat number for available/selected seats */
+        <text
+          x="22"
+          y="24"
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fill="#374151"
+          fontSize={dimensions.fontSize}
+          fontWeight="600"
+          fontFamily="system-ui, sans-serif"
+        >
+          {number}
+        </text>
+      )}
     </svg>
   )
 }
@@ -357,25 +366,22 @@ export function SeatMap({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Legend */}
+        {/* Legend - Simplified two-state */}
         <div className="flex flex-wrap items-center gap-4 text-xs border-b pb-3">
           <div className="flex items-center gap-1.5">
-            <div className="w-6 h-6 rounded bg-green-500 border-2 border-green-600 flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">1</span>
+            <div className="w-7 h-7 rounded border-2 border-gray-300 bg-white flex items-center justify-center">
+              <span className="text-gray-700 text-[11px] font-semibold">1</span>
             </div>
-            <span className="text-muted-foreground">Available</span>
+            <span className="text-muted-foreground font-medium">Vacant</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-6 h-6 rounded bg-blue-500 border-2 border-blue-700 flex items-center justify-center">
-              <span className="text-white text-[10px] font-bold">1</span>
+            <div className="w-7 h-7 rounded border-2 border-gray-300 bg-gray-200 flex items-center justify-center relative">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <line x1="5" y1="5" x2="15" y2="15" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round" />
+                <line x1="15" y1="5" x2="5" y2="15" stroke="#DC2626" strokeWidth="2.5" strokeLinecap="round" />
+              </svg>
             </div>
-            <span className="text-muted-foreground">Selected</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-6 h-6 rounded bg-gray-400 border-2 border-gray-500 flex items-center justify-center opacity-60">
-              <span className="text-white text-[10px] font-bold">1</span>
-            </div>
-            <span className="text-muted-foreground">Occupied</span>
+            <span className="text-muted-foreground font-medium">Occupied</span>
           </div>
         </div>
 
