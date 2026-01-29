@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.10 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.10.11 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -40,7 +40,8 @@ ONLY shared resource: City database.
 - Bypass: `Company.disableAutoHaltGlobally` or `Trip.autoResumeEnabled`
 
 ### 4. VIEW-ONLY TRIPS
-DEPARTED, COMPLETED, CANCELLED trips are READ-ONLY. No edits, no ticket sales.
+DEPARTED, COMPLETED, CANCELLED, and **SOLD-OUT** trips are READ-ONLY. No edits allowed.
+- Sold-out = `availableSlots === 0` (protects existing bookings)
 
 ---
 
@@ -210,7 +211,39 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.10 - Jan 29, 2026)
+## RECENT UPDATES (v2.10.11 - Jan 29, 2026)
+
+### WO-Vehicle Health Sync & Sold-Out Trip Protection (2 Issues)
+
+**ISSUE 1 (P0): Vehicle Health Dashboard WO Sync**
+- Vehicle Health Dashboard showed "No active work orders" despite IN_PROGRESS WOs existing
+- **Root Cause**: Frontend sent CSV format (`status=OPEN,IN_PROGRESS`) but API only accepts single enum values (Zod validation)
+- **Fix**: Make two parallel API calls (OPEN + IN_PROGRESS) and combine results
+- **File**: `src/components/maintenance/VehicleHealthDashboard.tsx`
+
+**ISSUE 2 (P1): Sold-Out Trip Edit Protection**
+- Users could edit trips with `availableSlots === 0`, risking booking integrity
+- **Fix**: Trips with `availableSlots === 0` are now view-only
+- Added `isTripSoldOut()` helper to `trip-status.ts`
+- Updated `isTripViewOnly()` to accept optional `availableSlots` parameter
+- API PUT returns 403 with "Cannot modify sold-out trips" message
+- Edit buttons show "(Sold Out)" label instead of "(View-Only)"
+- ViewOnlyBanner supports new "SOLD_OUT" status with orange styling
+- Keyboard shortcuts (Ctrl+A) exclude sold-out trips from selection
+- **Files**: 6 files modified
+
+### Files Modified
+- `src/components/maintenance/VehicleHealthDashboard.tsx` - Parallel API calls for WO status
+- `src/lib/trip-status.ts` - Added `isTripSoldOut()`, updated `isTripViewOnly()`
+- `src/app/api/company/trips/[tripId]/route.ts` - Sold-out check in PUT
+- `src/app/company/trips/[tripId]/edit/page.tsx` - Redirect with sold-out message
+- `src/app/company/trips/[tripId]/page.tsx` - Edit button disabled for sold-out
+- `src/app/company/trips/page.tsx` - List edit button + keyboard shortcuts
+- `src/components/company/ViewOnlyBanner.tsx` - SOLD_OUT status support
+
+---
+
+### Previous (v2.10.10 - Jan 29, 2026)
 
 ### DELAYED Status, Cron Fix & Multi-Bug Fixes (8 Issues)
 
@@ -713,6 +746,7 @@ Live testing after v2.10.4 deployment revealed 5 critical bugs preventing the wo
 
 | Bug | Fix |
 |-----|-----|
+| API multi-value query params (v2.10.11) | Don't send CSV (`status=OPEN,IN_PROGRESS`) - make parallel API calls and combine results instead |
 | Date comparison timezone (v2.10.8) | Use `isTodayEthiopia()` and `isSameDayEthiopia()` instead of `toDateString()` - JS dates compare in browser timezone, not Ethiopia |
 | Stale closure in polling (v2.10.7) | Use `useRef` to access current state in `setInterval` callbacks - state captured at setup time becomes stale |
 | Zod validation null vs undefined (v2.10.5) | Use `.nullish()` not `.optional()` for searchParams - `searchParams.get()` returns `null`, not `undefined` |
