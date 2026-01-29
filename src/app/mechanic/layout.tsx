@@ -146,6 +146,25 @@ export default function MechanicLayout({
                   </Button>
                 </div>
               </div>
+              {/* Profile Section - Collapsed View */}
+              {collapsed && (
+                <div className="flex justify-center">
+                  {session.user.profilePicture ? (
+                    <Image
+                      src={session.user.profilePicture}
+                      alt={session.user.name || "Profile"}
+                      width={40}
+                      height={40}
+                      className="rounded-full border-2 border-amber-400"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center border-2 border-amber-400" style={{ background: "linear-gradient(135deg, #d97706 0%, #f59e0b 100%)" }}>
+                      <User className="h-5 w-5 text-white" />
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* Profile Section - Expanded View */}
               {!collapsed && (
                 <div className="flex items-center gap-3 p-3 bg-white/10 rounded-lg">
                   {/* Profile Picture */}

@@ -126,6 +126,9 @@ export default function TicketsPage() {
 
     setIsDownloading(true)
 
+    // Give React time to re-render and hide the buttons
+    await new Promise(resolve => setTimeout(resolve, 100))
+
     try {
       // Generate canvas from the ticket card
       const canvas = await html2canvas(ticketCardRef.current, {
@@ -133,6 +136,10 @@ export default function TicketsPage() {
         scale: 2, // Higher quality
         logging: false,
         useCORS: true,
+        ignoreElements: (element) => {
+          // Also ignore elements with data-download-hide attribute as backup
+          return element.hasAttribute('data-download-hide')
+        },
       })
 
       // Convert to blob and download
@@ -450,7 +457,7 @@ export default function TicketsPage() {
 
                       {/* Hide action buttons when downloading/capturing screenshot */}
                       {!isDownloading && (
-                        <>
+                        <div data-download-hide>
                           <Button
                             variant="default"
                             className="w-full mb-2"
@@ -488,7 +495,7 @@ export default function TicketsPage() {
                               <span>Share</span>
                             </Button>
                           </div>
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>

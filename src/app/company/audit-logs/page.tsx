@@ -449,7 +449,7 @@ export default function CompanyAuditLogsPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge className={`${ACTION_COLORS[log.action] || "bg-gray-100 text-gray-800"} gap-1`}>
+                              <Badge variant="outline" className={`${ACTION_COLORS[log.action] || "bg-gray-100 text-gray-800"} gap-1`}>
                                 {ACTION_ICONS[log.action]}
                                 {log.action.replace(/_/g, " ")}
                               </Badge>
@@ -532,7 +532,7 @@ export default function CompanyAuditLogsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Action</p>
-                  <Badge className={ACTION_COLORS[selectedLog.action] || "bg-gray-100 text-gray-800"}>
+                  <Badge variant="outline" className={ACTION_COLORS[selectedLog.action] || "bg-gray-100 text-gray-800"}>
                     {selectedLog.action.replace(/_/g, " ")}
                   </Badge>
                 </div>

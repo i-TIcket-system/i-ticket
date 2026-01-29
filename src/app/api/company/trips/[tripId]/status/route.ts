@@ -7,8 +7,9 @@ import { generateAndStoreManifest } from "@/lib/manifest-generator"
 import { getAllowedStatusTransitions } from "@/lib/trip-status"
 
 const statusUpdateSchema = z.object({
-  status: z.enum(["SCHEDULED", "BOARDING", "DEPARTED", "COMPLETED", "CANCELLED"]),
+  status: z.enum(["SCHEDULED", "DELAYED", "BOARDING", "DEPARTED", "COMPLETED", "CANCELLED"]),
   notes: z.string().optional(),
+  delayReason: z.enum(["TRAFFIC", "BREAKDOWN", "WEATHER", "WAITING_PASSENGERS", "OTHER"]).optional(),
 })
 
 /**
@@ -101,16 +102,28 @@ export async function PATCH(
       actualDepartureTime?: Date
       actualArrivalTime?: Date
       bookingHalted?: boolean // Explicit boolean type (not truthy/falsy)
+      delayReason?: string | null
+      delayedAt?: Date | null
     }
 
     const updateData: TripStatusUpdate = {
       status: validatedData.status,
     }
 
+    // Handle DELAYED status - allow bookings to continue
+    if (validatedData.status === "DELAYED") {
+      updateData.delayReason = validatedData.delayReason || null
+      updateData.delayedAt = new Date()
+      // Note: Do NOT halt booking for DELAYED - user requirement
+    }
+
     // Record actual departure time and auto-halt booking when status changes to DEPARTED
     if (validatedData.status === "DEPARTED") {
       updateData.actualDepartureTime = new Date()
       updateData.bookingHalted = true as boolean // Explicit boolean assignment
+      // Clear delay fields when departing
+      updateData.delayReason = null
+      updateData.delayedAt = null
     }
 
     // Record actual arrival time and force halt when status changes to COMPLETED
@@ -259,6 +272,7 @@ export async function GET(
       allowedTransitions,
       statusLabels: {
         SCHEDULED: "Scheduled",
+        DELAYED: "Delayed",
         BOARDING: "Boarding",
         DEPARTED: "Departed",
         COMPLETED: "Completed",

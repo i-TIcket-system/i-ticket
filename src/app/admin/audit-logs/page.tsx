@@ -415,7 +415,7 @@ export default function AuditLogsPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge className={ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT}>
+                              <Badge variant="outline" className={ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT}>
                                 {log.action.replace(/_/g, " ")}
                               </Badge>
                             </TableCell>
@@ -507,7 +507,7 @@ export default function AuditLogsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Action</p>
-                  <Badge className={ACTION_COLORS[selectedLog.action] || ACTION_COLORS.DEFAULT}>
+                  <Badge variant="outline" className={ACTION_COLORS[selectedLog.action] || ACTION_COLORS.DEFAULT}>
                     {selectedLog.action.replace(/_/g, " ")}
                   </Badge>
                 </div>

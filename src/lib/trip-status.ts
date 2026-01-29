@@ -3,11 +3,12 @@
  *
  * Business Logic:
  * - DEPARTED, COMPLETED, CANCELLED trips are VIEW-ONLY (read-only)
+ * - DELAYED trips can still be edited and accept bookings
  * - Only exception: DEPARTED can transition to COMPLETED
  */
 
 export const FINAL_TRIP_STATUSES = ["DEPARTED", "COMPLETED", "CANCELLED"] as const;
-export const EDITABLE_TRIP_STATUSES = ["SCHEDULED", "BOARDING"] as const;
+export const EDITABLE_TRIP_STATUSES = ["SCHEDULED", "DELAYED", "BOARDING"] as const;
 
 export type FinalTripStatus = typeof FINAL_TRIP_STATUSES[number];
 export type EditableTripStatus = typeof EDITABLE_TRIP_STATUSES[number];
@@ -64,6 +65,23 @@ export function getViewOnlyMessage(status: string): string {
 }
 
 /**
+ * Get user-friendly message for delayed trips
+ *
+ * @param delayReason - The reason code for the delay
+ * @returns Human-readable delay reason
+ */
+export function getDelayReasonLabel(delayReason: string | null): string {
+  const reasons: Record<string, string> = {
+    TRAFFIC: "Traffic",
+    BREAKDOWN: "Breakdown",
+    WEATHER: "Weather",
+    WAITING_PASSENGERS: "Waiting for passengers",
+    OTHER: "Other",
+  };
+  return delayReason ? reasons[delayReason] || delayReason : "Unknown";
+}
+
+/**
  * Get allowed status transitions for a trip
  *
  * @param currentStatus - Current trip status
@@ -71,7 +89,8 @@ export function getViewOnlyMessage(status: string): string {
  */
 export function getAllowedStatusTransitions(currentStatus: string): string[] {
   const transitions: Record<string, string[]> = {
-    SCHEDULED: ["BOARDING", "CANCELLED"],
+    SCHEDULED: ["DELAYED", "BOARDING", "CANCELLED"],
+    DELAYED: ["BOARDING", "DEPARTED", "CANCELLED"], // Can board, depart, or cancel from delayed
     BOARDING: ["DEPARTED", "CANCELLED"],
     DEPARTED: ["COMPLETED"],
     COMPLETED: [], // Final state

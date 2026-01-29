@@ -28,7 +28,8 @@ import {
   Square,
   Flag,
   Ban,
-  RefreshCw
+  RefreshCw,
+  PauseCircle
 } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -43,6 +44,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { formatCurrency, formatDate, formatDuration, getSlotsPercentage, isLowSlots, BUS_TYPES } from "@/lib/utils"
 import { BookingControlCard } from "@/components/company/BookingControlCard"
 import { TripChat } from "@/components/trip/TripChat"
@@ -97,6 +113,8 @@ interface Trip {
   bookingHalted: boolean
   autoResumeEnabled: boolean
   status: string
+  delayReason: string | null
+  delayedAt: string | null
   company: {
     name: string
   }
@@ -142,6 +160,17 @@ export default function TripDetailPage() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false)
   const [showTripLogPopup, setShowTripLogPopup] = useState(false)  // Auto-show trip log on DEPARTED
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
+  const [showDelayDialog, setShowDelayDialog] = useState(false)
+  const [delayReason, setDelayReason] = useState<string>("")
+
+  // Delay reason options
+  const DELAY_REASONS = [
+    { value: "TRAFFIC", label: "Traffic" },
+    { value: "BREAKDOWN", label: "Breakdown" },
+    { value: "WEATHER", label: "Weather" },
+    { value: "WAITING_PASSENGERS", label: "Waiting for passengers" },
+    { value: "OTHER", label: "Other" },
+  ]
 
   // Fetch trip data (with optional silent mode for auto-refresh)
   const fetchTrip = useCallback(async (silent = false) => {
@@ -199,13 +228,18 @@ export default function TripDetailPage() {
     fetchTrip(false) // Show loading state
   }
 
-  const updateTripStatus = async (newStatus: string) => {
+  const updateTripStatus = async (newStatus: string, reason?: string) => {
     setIsUpdatingStatus(true)
     try {
+      const body: { status: string; delayReason?: string } = { status: newStatus }
+      if (reason) {
+        body.delayReason = reason
+      }
+
       const response = await fetch(`/api/company/trips/${tripId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify(body),
       })
       const data = await response.json()
 
@@ -220,6 +254,12 @@ export default function TripDetailPage() {
             duration: 5000,
           })
         }
+
+        // Close delay dialog
+        if (newStatus === "DELAYED") {
+          setShowDelayDialog(false)
+          setDelayReason("")
+        }
       } else {
         toast.error(data.error || "Failed to update status")
       }
@@ -230,11 +270,21 @@ export default function TripDetailPage() {
     }
   }
 
+  const handleDelayTrip = () => {
+    if (!delayReason) {
+      toast.error("Please select a delay reason")
+      return
+    }
+    updateTripStatus("DELAYED", delayReason)
+  }
+
   // Get status badge color and label
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "SCHEDULED":
         return { variant: "secondary" as const, label: "Scheduled" }
+      case "DELAYED":
+        return { variant: "warning" as const, label: "Delayed" }
       case "BOARDING":
         return { variant: "warning" as const, label: "Boarding" }
       case "DEPARTED":
@@ -258,6 +308,13 @@ export default function TripDetailPage() {
       case "SCHEDULED":
         return [
           { status: "BOARDING", label: "Start Boarding", icon: Play, variant: "default" as const },
+          { status: "DELAYED", label: "Mark as Delayed", icon: PauseCircle, variant: "warning" as const, isDelay: true },
+          { status: "CANCELLED", label: "Cancel Trip", icon: Ban, variant: "destructive" as const },
+        ]
+      case "DELAYED":
+        return [
+          { status: "BOARDING", label: "Start Boarding", icon: Play, variant: "default" as const },
+          { status: "DEPARTED", label: "Depart", icon: Flag, variant: "default" as const },
           { status: "CANCELLED", label: "Cancel Trip", icon: Ban, variant: "destructive" as const },
         ]
       case "BOARDING":
@@ -688,13 +745,34 @@ export default function TripDetailPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Show delay reason if trip is delayed */}
+                {trip.status === "DELAYED" && trip.delayReason && (
+                  <div className="p-3 rounded-lg bg-yellow-50 border border-yellow-200 mb-3">
+                    <p className="text-xs font-medium text-yellow-800 uppercase">Delay Reason</p>
+                    <p className="text-sm font-semibold text-yellow-900">
+                      {DELAY_REASONS.find(r => r.value === trip.delayReason)?.label || trip.delayReason}
+                    </p>
+                    {trip.delayedAt && (
+                      <p className="text-xs text-yellow-700 mt-1">
+                        Since {formatDate(trip.delayedAt)}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {getStatusActions(trip.status || "SCHEDULED", trip.departureTime).length > 0 ? (
                   getStatusActions(trip.status || "SCHEDULED", trip.departureTime).map((action) => (
                     <Button
                       key={action.status}
                       className="w-full"
                       variant={action.variant}
-                      onClick={() => updateTripStatus(action.status)}
+                      onClick={() => {
+                        if ((action as any).isDelay) {
+                          setShowDelayDialog(true)
+                        } else {
+                          updateTripStatus(action.status)
+                        }
+                      }}
                       disabled={isUpdatingStatus}
                     >
                       {isUpdatingStatus ? (
@@ -761,6 +839,58 @@ export default function TripDetailPage() {
         </div>
 
       </div>
+
+      {/* Delay Dialog */}
+      <Dialog open={showDelayDialog} onOpenChange={setShowDelayDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PauseCircle className="h-5 w-5 text-yellow-500" />
+              Mark Trip as Delayed
+            </DialogTitle>
+            <DialogDescription>
+              Select the reason for the delay. Bookings will still be allowed for delayed trips.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Delay Reason</label>
+              <Select value={delayReason} onValueChange={setDelayReason}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a reason..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {DELAY_REASONS.map((reason) => (
+                    <SelectItem key={reason.value} value={reason.value}>
+                      {reason.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDelayDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="default"
+              onClick={handleDelayTrip}
+              disabled={!delayReason || isUpdatingStatus}
+              className="bg-yellow-500 hover:bg-yellow-600 text-white"
+            >
+              {isUpdatingStatus ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <PauseCircle className="h-4 w-4 mr-2" />
+              )}
+              Mark as Delayed
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

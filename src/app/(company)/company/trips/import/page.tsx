@@ -268,7 +268,7 @@ export default function TripImportPage() {
   };
 
   /**
-   * Retry with new file (keeps mappings for reference but resets validation)
+   * Retry with new file (resets everything)
    */
   const handleRetry = () => {
     setStep('upload');
@@ -277,10 +277,66 @@ export default function TripImportPage() {
     setValidCount(0);
     setErrorCount(0);
     setWarnings([]);
-    // Keep mappingResult and confirmedMappings for reference
+    setConfirmedMappings(null);
+    setMappingResult(null);
+    setSampleData([]);
     // Clear the file input so user can select new file
     const fileInput = document.getElementById('file-input') as HTMLInputElement;
     if (fileInput) fileInput.value = '';
+  };
+
+  /**
+   * Reload the same file after user makes changes in Excel
+   * Keeps existing column mappings and re-validates
+   */
+  const handleReloadFile = async () => {
+    if (!selectedFile) {
+      toast.error('No file selected');
+      return;
+    }
+
+    // Clear validation results but keep mappings
+    setValidatedRows([]);
+    setValidCount(0);
+    setErrorCount(0);
+    setWarnings([]);
+
+    // Re-trigger file selection for the same file
+    // Browser requires re-selection to get updated content
+    const fileInput = document.getElementById('reload-file-input') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = ''; // Clear to allow re-selecting same file
+      fileInput.click();
+    }
+  };
+
+  /**
+   * Handle file re-selection for reload (uses existing mappings)
+   */
+  const handleReloadFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    // Validate file type
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    if (!fileExtension || !['csv', 'xlsx'].includes(fileExtension)) {
+      toast.error('Invalid file type. Please upload a .csv or .xlsx file');
+      return;
+    }
+
+    // Validate file size (5MB)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      toast.error(`File too large (${sizeMB}MB). Maximum size is 5MB`);
+      return;
+    }
+
+    setSelectedFile(file);
+    toast.info('Reloading file with existing column mappings...');
+    // Use existing confirmed mappings for re-validation
+    validateFile(file, confirmedMappings || mappingResult?.mappings || undefined);
   };
 
   return (
@@ -450,6 +506,18 @@ export default function TripImportPage() {
             </Alert>
           )}
 
+          {/* Tip for fixing errors */}
+          {errorCount > 0 && (
+            <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+              <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              <AlertTitle className="text-blue-800 dark:text-blue-300">Tip: Fix errors without starting over</AlertTitle>
+              <AlertDescription className="text-blue-700 dark:text-blue-400">
+                Keep this page open, fix the errors in Excel, save the file (Ctrl+S), then click{' '}
+                <strong>"Reload File"</strong> to re-validate with your changes. Column mappings will be preserved.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <ImportPreviewTable
             validatedRows={validatedRows}
             validCount={validCount}
@@ -460,14 +528,16 @@ export default function TripImportPage() {
             <Button variant="outline" onClick={handleReset}>
               Cancel
             </Button>
-            <Button
-              variant="outline"
-              onClick={handleRetry}
-              className="border-teal-500 text-teal-600 hover:bg-teal-50"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry with New File
-            </Button>
+            {errorCount > 0 && (
+              <Button
+                variant="outline"
+                onClick={handleReloadFile}
+                className="border-teal-500 text-teal-600 hover:bg-teal-50"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Reload File (after Excel edits)
+              </Button>
+            )}
             <Button
               onClick={handleImport}
               disabled={errorCount > 0}
@@ -477,6 +547,15 @@ export default function TripImportPage() {
               Import {validCount} Trips
             </Button>
           </div>
+
+          {/* Hidden file input for reloading */}
+          <input
+            id="reload-file-input"
+            type="file"
+            accept=".csv,.xlsx"
+            onChange={handleReloadFileSelect}
+            className="hidden"
+          />
         </div>
       )}
 

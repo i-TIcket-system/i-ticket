@@ -167,7 +167,9 @@ model Trip {
   hasWater          Boolean   @default(false)
   hasFood           Boolean   @default(false)
   isActive          Boolean   @default(true)
-  status            String    @default("SCHEDULED") // SCHEDULED, BOARDING, DEPARTED, COMPLETED, CANCELLED
+  status            String    @default("SCHEDULED") // SCHEDULED, DELAYED, BOARDING, DEPARTED, COMPLETED, CANCELLED
+  delayReason       String?   // TRAFFIC, BREAKDOWN, WEATHER, WAITING_PASSENGERS, OTHER
+  delayedAt         DateTime? // When trip was marked as delayed
   lowSlotAlertSent         Boolean   @default(false)
   bookingHalted            Boolean   @default(false)
   adminResumedFromAutoHalt Boolean   @default(false)

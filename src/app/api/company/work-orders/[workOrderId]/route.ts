@@ -242,14 +242,11 @@ export async function PATCH(
       }
     }
 
-    // If status is changing to COMPLETED, auto-set completedAt
+    // If status is changing to COMPLETED, auto-set completedAt and update vehicle
     if (validatedData.status === 'COMPLETED' && existingWorkOrder.status !== 'COMPLETED') {
       if (!updateData.completedAt) {
         updateData.completedAt = new Date()
       }
-
-      // TODO: Update linked maintenance schedule if scheduleId exists
-      // This requires fetching the schedule separately since there's no relation
     }
 
     // Calculate total cost if labor or parts cost provided
@@ -266,12 +263,76 @@ export async function PATCH(
       include: {
         vehicle: {
           select: {
+            id: true,
             plateNumber: true,
             sideNumber: true,
+            defectCount: true,
+            criticalDefectCount: true,
           },
         },
       },
     })
+
+    // Issue 7: Update vehicle health when work order is completed
+    if (validatedData.status === 'COMPLETED' && existingWorkOrder.status !== 'COMPLETED') {
+      const vehicleUpdateData: {
+        lastServiceDate: Date
+        defectCount?: number
+        criticalDefectCount?: number
+      } = {
+        lastServiceDate: new Date(),
+      }
+
+      // For CORRECTIVE work orders, decrement defect counters
+      // Assume each corrective WO fixes at least 1 defect
+      if (existingWorkOrder.taskType === 'CORRECTIVE') {
+        const currentDefects = updatedWorkOrder.vehicle.defectCount || 0
+        const currentCritical = updatedWorkOrder.vehicle.criticalDefectCount || 0
+
+        // Decrement defects (minimum 0)
+        // For HIGH/URGENT priority WOs, decrement critical defects
+        if (existingWorkOrder.priority >= 3 && currentCritical > 0) {
+          vehicleUpdateData.criticalDefectCount = Math.max(0, currentCritical - 1)
+        }
+
+        // Always decrement regular defect count for corrective work
+        if (currentDefects > 0) {
+          vehicleUpdateData.defectCount = Math.max(0, currentDefects - 1)
+        }
+      }
+
+      await prisma.vehicle.update({
+        where: { id: existingWorkOrder.vehicleId },
+        data: vehicleUpdateData,
+      })
+
+      // Update linked maintenance schedule if scheduleId exists
+      if (existingWorkOrder.scheduleId) {
+        const schedule = await prisma.maintenanceSchedule.findUnique({
+          where: { id: existingWorkOrder.scheduleId },
+        })
+
+        if (schedule) {
+          const nextDueDate = schedule.intervalDays
+            ? new Date(Date.now() + schedule.intervalDays * 24 * 60 * 60 * 1000)
+            : null
+
+          const nextDueKm = schedule.intervalKm && existingWorkOrder.odometerAtService
+            ? existingWorkOrder.odometerAtService + schedule.intervalKm
+            : null
+
+          await prisma.maintenanceSchedule.update({
+            where: { id: existingWorkOrder.scheduleId },
+            data: {
+              lastCompletedAt: new Date(),
+              lastCompletedKm: existingWorkOrder.odometerAtService,
+              nextDueDate,
+              nextDueKm,
+            },
+          })
+        }
+      }
+    }
 
     // RULE-001: Create admin log with companyId for proper audit trail filtering
     await prisma.adminLog.create({

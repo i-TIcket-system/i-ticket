@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
       paymentsTimedOut: 0,
       bookingsCancelled: 0,
       notificationsSent: 0,
+      tripsDelayed: 0,
       tripsDeparted: 0,
       tripsCompleted: 0,
       tripsCancelled: 0,
@@ -92,12 +93,16 @@ export async function GET(request: NextRequest) {
       results.bookingsCancelled++;
     }
 
-    // 4. Auto-update status of trips (departed and completed)
-    // 4a. Mark recently-past trips as DEPARTED (within 1 hour of departure time)
+    // 4. Auto-update status of trips (delayed, departed, and completed)
+    // 4a. Mark trips as DELAYED if 30+ min past departure time and still SCHEDULED
+    const delayedTripsCount = await markTripsAsDelayed();
+    results.tripsDelayed = delayedTripsCount;
+
+    // 4b. Mark recently-past trips as DEPARTED (within 1 hour of departure time)
     const departedTripsCount = await markTripsAsDeparted();
     results.tripsDeparted = departedTripsCount;
 
-    // 4b. Mark old DEPARTED trips as COMPLETED/CANCELLED
+    // 4c. Mark old DEPARTED/DELAYED trips as COMPLETED/CANCELLED
     const oldTripsResult = await updateOldTripStatuses();
     results.tripsCompleted = oldTripsResult.completed;
     results.tripsCancelled = oldTripsResult.cancelled;
@@ -219,27 +224,22 @@ async function cancelStaleBooking(booking: any) {
 }
 
 /**
- * Mark trips as DEPARTED when their departure time has just passed
- * This creates the expected SCHEDULED → DEPARTED → COMPLETED lifecycle
- * Only marks trips within 1 hour of departure time (recently departed)
+ * Mark trips as DELAYED when 30+ minutes past departure and still SCHEDULED
+ * DELAYED trips can still accept bookings (both online and manual)
  */
-async function markTripsAsDeparted() {
+async function markTripsAsDelayed() {
   const now = new Date();
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-  let departedCount = 0;
+  const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
+  let delayedCount = 0;
 
   try {
-    // Find trips that just passed their departure time (within the last hour)
-    // and are still SCHEDULED or BOARDING
-    const recentlyPastTrips = await prisma.trip.findMany({
+    // Find SCHEDULED trips that are 30+ minutes past departure time
+    const tripsToDelay = await prisma.trip.findMany({
       where: {
         departureTime: {
-          lt: now,
-          gte: oneHourAgo,
+          lt: thirtyMinutesAgo,
         },
-        status: {
-          in: ['SCHEDULED', 'BOARDING'],
-        },
+        status: 'SCHEDULED', // Only SCHEDULED, not BOARDING or DELAYED
       },
       select: {
         id: true,
@@ -249,7 +249,90 @@ async function markTripsAsDeparted() {
       },
     });
 
-    for (const trip of recentlyPastTrips) {
+    for (const trip of tripsToDelay) {
+      try {
+        await prisma.$transaction(async (tx) => {
+          // Mark trip as DELAYED (booking NOT halted - allow both online and manual)
+          await tx.trip.update({
+            where: { id: trip.id },
+            data: {
+              status: 'DELAYED',
+              delayedAt: now,
+              // Don't halt booking - user wants to allow bookings for delayed trips
+            },
+          });
+
+          // Create audit log
+          await tx.adminLog.create({
+            data: {
+              userId: 'SYSTEM',
+              action: 'TRIP_STATUS_AUTO_DELAYED',
+              tripId: trip.id,
+              companyId: trip.companyId,
+              details: JSON.stringify({
+                oldStatus: trip.status,
+                newStatus: 'DELAYED',
+                reason: 'Automatic - 30 minutes past departure time',
+                departureTime: trip.departureTime.toISOString(),
+                processedAt: now.toISOString(),
+              }),
+            },
+          });
+        });
+
+        delayedCount++;
+        console.log(`[Cron] Trip ${trip.id} marked as DELAYED`);
+      } catch (error) {
+        console.error(`[Cron] Failed to mark trip ${trip.id} as DELAYED:`, error);
+      }
+    }
+
+    console.log(`[Cron] Auto-delayed ${delayedCount} trips`);
+  } catch (error) {
+    console.error('[Cron] Error marking trips as DELAYED:', error);
+  }
+
+  return delayedCount;
+}
+
+/**
+ * Mark trips as DEPARTED when their departure time has passed
+ * This creates the expected SCHEDULED/DELAYED → DEPARTED → COMPLETED lifecycle
+ * Also catches trips that were missed and are still SCHEDULED/BOARDING/DELAYED
+ */
+async function markTripsAsDeparted() {
+  const now = new Date();
+  let departedCount = 0;
+
+  try {
+    // Find ALL trips that have past departure time and are still SCHEDULED, BOARDING, or DELAYED
+    // This catches trips that may have been missed due to cron gaps
+    const pastTrips = await prisma.trip.findMany({
+      where: {
+        departureTime: {
+          lt: now,
+        },
+        status: {
+          in: ['SCHEDULED', 'BOARDING', 'DELAYED'],
+        },
+      },
+      select: {
+        id: true,
+        status: true,
+        departureTime: true,
+        companyId: true,
+        delayedAt: true,
+      },
+    });
+
+    for (const trip of pastTrips) {
+      // For DELAYED trips, only auto-depart if it's been at least 1 hour past departure
+      // (give staff time to manually handle delayed trips)
+      const oneHourPastDeparture = new Date(trip.departureTime.getTime() + 60 * 60 * 1000);
+      if (trip.status === 'DELAYED' && now < oneHourPastDeparture) {
+        continue; // Skip - give delayed trip more time
+      }
+
       try {
         await prisma.$transaction(async (tx) => {
           // Mark trip as DEPARTED
@@ -272,7 +355,9 @@ async function markTripsAsDeparted() {
               details: JSON.stringify({
                 oldStatus: trip.status,
                 newStatus: 'DEPARTED',
-                reason: 'Automatic - departure time passed',
+                reason: trip.status === 'DELAYED'
+                  ? 'Automatic - delayed trip auto-departed after 1 hour'
+                  : 'Automatic - departure time passed',
                 departureTime: trip.departureTime.toISOString(),
                 processedAt: now.toISOString(),
               }),
@@ -281,7 +366,7 @@ async function markTripsAsDeparted() {
         });
 
         departedCount++;
-        console.log(`[Cron] Trip ${trip.id} marked as DEPARTED`);
+        console.log(`[Cron] Trip ${trip.id} marked as DEPARTED (was ${trip.status})`);
       } catch (error) {
         console.error(`[Cron] Failed to mark trip ${trip.id} as DEPARTED:`, error);
       }
@@ -297,9 +382,12 @@ async function markTripsAsDeparted() {
 
 /**
  * Update old trip statuses (trips with past departure dates)
- * - DEPARTED trips (older than 1 hour + estimated duration) → COMPLETED
- * - SCHEDULED/BOARDING trips with bookings → COMPLETED
- * - SCHEDULED/BOARDING trips without bookings → CANCELLED
+ * - DEPARTED trips (older than estimated duration) → COMPLETED
+ * - SCHEDULED/BOARDING/DELAYED trips with bookings that are very old → COMPLETED
+ * - SCHEDULED/BOARDING trips without bookings that are very old → CANCELLED
+ *
+ * Note: This function now only handles DEPARTED trips for COMPLETED transition.
+ * SCHEDULED/BOARDING/DELAYED → DEPARTED is handled by markTripsAsDeparted().
  */
 async function updateOldTripStatuses() {
   const now = new Date();
@@ -307,14 +395,83 @@ async function updateOldTripStatuses() {
   let cancelled = 0;
 
   try {
-    // Find trips with past departure dates that need status updates
-    const oldTrips = await prisma.trip.findMany({
+    // Find DEPARTED trips that should be marked COMPLETED
+    // (estimated arrival time has passed)
+    const departedTrips = await prisma.trip.findMany({
+      where: {
+        status: 'DEPARTED',
+      },
+      include: {
+        bookings: {
+          where: {
+            status: {
+              in: ['PAID', 'COMPLETED'],
+            },
+          },
+          select: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    for (const trip of departedTrips) {
+      try {
+        // Calculate estimated arrival time
+        const estimatedArrivalTime = new Date(
+          trip.departureTime.getTime() + trip.estimatedDuration * 60 * 60 * 1000
+        );
+
+        // Only mark as COMPLETED if arrival time has passed
+        if (now < estimatedArrivalTime) {
+          continue; // Trip still in transit
+        }
+
+        await prisma.$transaction(async (tx) => {
+          await tx.trip.update({
+            where: { id: trip.id },
+            data: {
+              status: 'COMPLETED',
+              actualDepartureTime: trip.actualDepartureTime || trip.departureTime,
+              actualArrivalTime: now,
+              bookingHalted: true,
+            },
+          });
+
+          await tx.adminLog.create({
+            data: {
+              userId: 'SYSTEM',
+              action: 'TRIP_STATUS_AUTO_UPDATE',
+              tripId: trip.id,
+              companyId: trip.companyId,
+              details: JSON.stringify({
+                oldStatus: 'DEPARTED',
+                newStatus: 'COMPLETED',
+                reason: 'Automatic - estimated arrival time passed',
+                departureTime: trip.departureTime.toISOString(),
+                estimatedArrivalTime: estimatedArrivalTime.toISOString(),
+              }),
+            },
+          });
+        });
+
+        completed++;
+        console.log(`[Cron] Trip ${trip.id} marked as COMPLETED`);
+      } catch (error) {
+        console.error(`[Cron] Failed to complete trip ${trip.id}:`, error);
+      }
+    }
+
+    // Handle very old trips that are still SCHEDULED/BOARDING (24+ hours old)
+    // This catches edge cases where trips were never properly transitioned
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const veryOldTrips = await prisma.trip.findMany({
       where: {
         departureTime: {
-          lt: now,
+          lt: twentyFourHoursAgo,
         },
         status: {
-          notIn: ['COMPLETED', 'CANCELLED'],
+          in: ['SCHEDULED', 'BOARDING'],
         },
       },
       include: {
@@ -331,30 +488,24 @@ async function updateOldTripStatuses() {
       },
     });
 
-    for (const trip of oldTrips) {
+    for (const trip of veryOldTrips) {
       try {
         const hasBookings = trip.bookings.length > 0;
-        const newStatus = hasBookings || trip.status === 'DEPARTED' ? 'COMPLETED' : 'CANCELLED';
-
-        // Calculate actual times based on estimated duration
-        const actualDepartureTime = trip.departureTime;
-        const actualArrivalTime = new Date(
-          actualDepartureTime.getTime() + trip.estimatedDuration * 60 * 60 * 1000
-        );
+        const newStatus = hasBookings ? 'COMPLETED' : 'CANCELLED';
 
         await prisma.$transaction(async (tx) => {
-          // RULE-003: Update trip status and force bookingHalted for view-only status
           await tx.trip.update({
             where: { id: trip.id },
             data: {
               status: newStatus,
-              actualDepartureTime,
-              actualArrivalTime,
-              bookingHalted: true, // RULE-003: Always halt booking for COMPLETED/CANCELLED
+              actualDepartureTime: trip.departureTime,
+              actualArrivalTime: new Date(
+                trip.departureTime.getTime() + trip.estimatedDuration * 60 * 60 * 1000
+              ),
+              bookingHalted: true,
             },
           });
 
-          // Create audit log
           await tx.adminLog.create({
             data: {
               userId: 'SYSTEM',
@@ -364,7 +515,7 @@ async function updateOldTripStatuses() {
               details: JSON.stringify({
                 oldStatus: trip.status,
                 newStatus,
-                reason: 'Automatic cleanup - departure date in the past',
+                reason: 'Automatic cleanup - trip 24+ hours past departure',
                 departureTime: trip.departureTime.toISOString(),
                 hasBookings,
               }),
@@ -374,13 +525,13 @@ async function updateOldTripStatuses() {
 
         if (newStatus === 'COMPLETED') {
           completed++;
-          console.log(`[Cron] Trip ${trip.id} marked as COMPLETED`);
+          console.log(`[Cron] Very old trip ${trip.id} marked as COMPLETED`);
         } else {
           cancelled++;
-          console.log(`[Cron] Trip ${trip.id} marked as CANCELLED (no bookings)`);
+          console.log(`[Cron] Very old trip ${trip.id} marked as CANCELLED (no bookings)`);
         }
       } catch (error) {
-        console.error(`[Cron] Failed to update trip ${trip.id}:`, error);
+        console.error(`[Cron] Failed to update very old trip ${trip.id}:`, error);
       }
     }
 
