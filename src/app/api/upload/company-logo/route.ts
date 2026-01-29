@@ -71,8 +71,15 @@ export async function POST(request: NextRequest) {
       await mkdir(uploadDir, { recursive: true })
     }
 
-    // Generate unique filename
-    const extension = file.name.split(".").pop()
+    // Generate unique filename using actual MIME type (not filename extension)
+    const mimeToExt: Record<string, string> = {
+      "image/jpeg": "jpg",
+      "image/jpg": "jpg",
+      "image/png": "png",
+      "image/webp": "webp",
+      "image/svg+xml": "svg",
+    }
+    const extension = mimeToExt[file.type] || file.name.split(".").pop()
     const filename = `${session.user.companyId}-${Date.now()}.${extension}`
     const filepath = path.join(uploadDir, filename)
 
