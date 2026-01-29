@@ -308,7 +308,7 @@ export default function TripDetailPage() {
       case "SCHEDULED":
         return [
           { status: "BOARDING", label: "Start Boarding", icon: Play, variant: "default" as const },
-          { status: "DELAYED", label: "Mark as Delayed", icon: PauseCircle, variant: "warning" as const, isDelay: true },
+          { status: "DELAYED", label: "Mark as Delayed", icon: PauseCircle, variant: "outline" as const, isDelay: true },
           { status: "CANCELLED", label: "Cancel Trip", icon: Ban, variant: "destructive" as const },
         ]
       case "DELAYED":
