@@ -250,12 +250,32 @@ export async function POST(request: NextRequest) {
     );
 
     if (!dbMappingResult.success) {
+      // Merge DB mapping errors into validatedRows so UI shows errors per row
+      const mergedRows = validationResult.validatedRows.map((validatedRow) => {
+        // Find DB mapping errors for this row (row number from mapper is Excel row, +2 offset)
+        const dbErrorsForRow = dbMappingResult.errors.filter(
+          (e) => e.row === validatedRow.row
+        );
+
+        if (dbErrorsForRow.length > 0) {
+          return {
+            ...validatedRow,
+            isValid: false,
+            errors: [...validatedRow.errors, ...dbErrorsForRow],
+          };
+        }
+        return validatedRow;
+      });
+
+      const validCount = mergedRows.filter((r) => r.isValid).length;
+      const errorCount = mergedRows.filter((r) => !r.isValid).length;
+
       return NextResponse.json({
         success: false,
-        validCount: validationResult.validCount,
-        errorCount: dbMappingResult.errors.length,
+        validCount,
+        errorCount,
         errors: dbMappingResult.errors,
-        validatedRows: validationResult.validatedRows,
+        validatedRows: mergedRows,
         warnings: dbMappingResult.warnings,
       });
     }
