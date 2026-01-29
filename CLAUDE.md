@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.9 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.10.10 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -210,7 +210,68 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.9 - Jan 29, 2026)
+## RECENT UPDATES (v2.10.10 - Jan 29, 2026)
+
+### DELAYED Status, Cron Fix & Multi-Bug Fixes (8 Issues)
+
+**ISSUE 1 (P0): Trip Status Cron Gap Fix**
+- Trips >1 hour past departure were skipping DEPARTED status (jumping SCHEDULED → COMPLETED)
+- **Root Cause**: `markTripsAsDeparted()` only caught trips within 1-hour window
+- **Fix**: Removed time window restriction - now processes ALL past SCHEDULED/BOARDING trips
+- **File**: `src/app/api/cron/cleanup/route.ts`
+
+**ISSUE 2 (P1): DELAYED Trip Status**
+- New trip status between SCHEDULED and BOARDING
+- **Auto-trigger**: Cron marks trips as DELAYED after 30 minutes past departure time
+- **Manual trigger**: "Mark as Delayed" button with reason selection in trip detail page
+- **Delay Reasons**: Traffic, Breakdown, Weather, Waiting for passengers, Other
+- **Bookings**: Still allowed while trip is DELAYED (not halted)
+- **Schema**: Added `delayReason` and `delayedAt` fields to Trip model
+- **Files**: `prisma/schema.prisma`, `src/app/api/cron/cleanup/route.ts`, `src/app/company/trips/[tripId]/page.tsx`, `src/app/api/company/trips/[tripId]/status/route.ts`, `src/lib/trip-status.ts`
+
+**ISSUE 3 (P1): Audit Trail Badge Visibility**
+- Badges were faded/invisible (default variant overriding colors)
+- **Fix**: Added `variant="outline"` to Badge components
+- **Files**: `src/app/company/audit-logs/page.tsx`, `src/app/admin/audit-logs/page.tsx`
+
+**ISSUE 5 (P2): Mechanic/Finance Profile Pictures**
+- Profile pics not visible when sidebar collapsed
+- **Fix**: Added collapsed-state avatar display section
+- **Files**: `src/app/mechanic/layout.tsx`, `src/app/finance/layout.tsx`
+
+**ISSUE 6 (P2): Ticket Download Image Cleanup**
+- Share/Download/Calendar buttons appeared in downloaded PNG (useless in static image)
+- **Fix**: Added `data-download-hide` attribute and `ignoreElements` option to html2canvas
+- **File**: `src/app/tickets/[bookingId]/page.tsx`
+
+**ISSUE 7 (P2): Vehicle Health ↔ Work Orders Connection**
+- Completing work orders didn't improve vehicle health
+- **Fix**: On WO completion:
+  - Updates `Vehicle.lastServiceDate`
+  - Decrements `defectCount` for CORRECTIVE work orders
+  - Decrements `criticalDefectCount` for high-priority CORRECTIVE WOs
+  - Updates `MaintenanceSchedule.lastCompletedAt`, `nextDueDate`, `nextDueKm` if scheduleId exists
+- **File**: `src/app/api/company/work-orders/[workOrderId]/route.ts`
+
+**ISSUE 8 (P2): Excel Import Reload (Preserve Mappings)**
+- Users couldn't reload edited Excel file without losing column mappings
+- **Fix**: Added "Reload File" button that preserves mappings and re-validates
+- **File**: `src/app/(company)/company/trips/import/page.tsx`
+
+### Trip Status Lifecycle (Updated)
+```
+SCHEDULED → DELAYED → BOARDING → DEPARTED → COMPLETED
+                 ↘ ↘        ↘        ↘
+                  CANCELLED (from any active status)
+```
+
+### Files Modified
+- 12 files modified
+- Schema: 2 new fields on Trip model (`delayReason`, `delayedAt`)
+
+---
+
+### Previous (v2.10.9 - Jan 29, 2026)
 
 ### Past Trips Filter, Company Logo & Import Retry (5 Fixes)
 
