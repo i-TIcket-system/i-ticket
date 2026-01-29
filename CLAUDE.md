@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.8 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
+> **Version**: v2.10.9 | **Production**: https://i-ticket.et | **Full Docs**: `CLAUDE-FULL-BACKUP.md`
 > **Rules**: `RULES.md` | **Stable Reference**: `CLAUDE-STABLE-REFERENCE.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -210,9 +210,68 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.8 - Jan 28, 2026)
+## RECENT UPDATES (v2.10.9 - Jan 29, 2026)
 
-### Notification Routing, Timezone & UI Fixes (5 Issues)
+### Past Trips Filter, Company Logo & Import Retry (5 Fixes)
+
+**ISSUE 1: EC2 Cron Jobs Not Running (P0 CRITICAL)**
+- `vercel.json` cron config only works on Vercel, not AWS EC2
+- **Root Cause**: Nothing was calling `/api/cron/cleanup` on EC2
+- **Immediate Fix**: Manual cleanup - 18 trips COMPLETED, 106 trips CANCELLED
+- **Permanent Fix**: Created system cron at `/etc/cron.d/i-ticket`:
+  - Cleanup runs hourly (trip status, payment timeouts)
+  - Trip reminders run hourly
+  - Predictive maintenance runs daily at 2 AM EAT
+- **Authentication**: Uses `CRON_SECRET` Bearer token
+
+**ISSUE 2: Hide Past Trips by Default**
+- Company trips list was showing old trips from days ago
+- **Fix**: Added `hidePastTrips` state defaulting to `true`
+- Added "Hide past trips" checkbox in filter bar
+- Past trips filtered out when `departureTime < now`
+- **File**: `src/app/company/trips/page.tsx`
+
+**ISSUE 3: Company Logo Not Displayed**
+- Logos uploaded but never shown in company admin sidebar
+- **Fix (Session)**: Added `companyLogo` to:
+  - `src/types/next-auth.d.ts` (Session, User, JWT interfaces)
+  - `src/lib/auth.ts` (authorize, jwt, session callbacks)
+- **Fix (Company Layout)**: Sidebar shows company logo when available
+  - Falls back to i-Ticket branding if no logo
+  - Works in both desktop sidebar and mobile header
+- **Fix (Search Results)**: Customer search shows company logos
+  - Added `logo` to company select in `/api/trips/route.ts`
+  - Updated Trip interface in search page
+- **Files**: 4 files modified
+- **Note**: Staff layouts unchanged - they correctly show user profile pictures
+
+**ISSUE 4: Excel Import Retry Button**
+- After validation errors, users had to start completely over
+- **Fix**: Added "Retry with New File" button in preview step
+- Resets validation state but preserves column mappings
+- **File**: `src/app/(company)/company/trips/import/page.tsx`
+
+### Files Modified
+- 7 source files modified
+- 1 cron file created on EC2 (`/etc/cron.d/i-ticket`)
+
+### EC2 Cron Setup Reference
+```bash
+# Cron file location
+/etc/cron.d/i-ticket
+
+# Manual trigger (with auth)
+curl -H "Authorization: Bearer $CRON_SECRET" https://i-ticket.et/api/cron/cleanup
+
+# Check cron status
+sudo systemctl status cron
+```
+
+---
+
+### Previous (v2.10.8 - Jan 28, 2026)
+
+**Notification Routing, Timezone & UI Fixes (5 Issues)**
 
 **P0 CRITICAL BUGS:**
 
