@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 import { useEffect } from "react"
 import {
   LayoutDashboard,
@@ -248,14 +249,32 @@ export default function CompanyLayout({
                 <Link href="/company/dashboard" className="flex items-center gap-3 group">
                   <div className="relative">
                     <div className="absolute inset-0 rounded-xl blur-lg transition-colors" style={{ background: "rgba(32, 196, 196, 0.2)" }} />
-                    <div className="relative p-2 rounded-xl shadow-lg" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
-                      <Bus className="h-5 w-5 text-white" />
-                    </div>
+                    {session.user.companyLogo ? (
+                      <Image
+                        src={session.user.companyLogo}
+                        alt={session.user.companyName || "Company"}
+                        width={40}
+                        height={40}
+                        className="relative h-10 w-10 rounded-xl object-contain bg-white shadow-lg"
+                      />
+                    ) : (
+                      <div className="relative p-2 rounded-xl shadow-lg" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
+                        <Bus className="h-5 w-5 text-white" />
+                      </div>
+                    )}
                   </div>
                   {!collapsed && (
                     <div>
-                      <span className="font-bold text-lg text-white tracking-tight">i-Ticket</span>
-                      <span className="font-medium ml-1" style={{ color: "#20c4c4" }}>Bus</span>
+                      {session.user.companyLogo ? (
+                        <span className="font-bold text-lg text-white tracking-tight truncate max-w-[140px] block">
+                          {session.user.companyName}
+                        </span>
+                      ) : (
+                        <>
+                          <span className="font-bold text-lg text-white tracking-tight">i-Ticket</span>
+                          <span className="font-medium ml-1" style={{ color: "#20c4c4" }}>Bus</span>
+                        </>
+                      )}
                     </div>
                   )}
                 </Link>
@@ -436,11 +455,27 @@ export default function CompanyLayout({
               <Menu className="h-5 w-5" />
             </Button>
             <Link href="/company/dashboard" className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
-                <Bus className="h-4 w-4 text-white" />
-              </div>
-              <span className="font-bold">i-Ticket</span>
-              <span className="font-bold" style={{ color: "#20c4c4" }}>Bus</span>
+              {session.user.companyLogo ? (
+                <Image
+                  src={session.user.companyLogo}
+                  alt={session.user.companyName || "Company"}
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 rounded-lg object-contain bg-white"
+                />
+              ) : (
+                <div className="p-1.5 rounded-lg" style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}>
+                  <Bus className="h-4 w-4 text-white" />
+                </div>
+              )}
+              {session.user.companyLogo ? (
+                <span className="font-bold truncate max-w-[120px]">{session.user.companyName}</span>
+              ) : (
+                <>
+                  <span className="font-bold">i-Ticket</span>
+                  <span className="font-bold" style={{ color: "#20c4c4" }}>Bus</span>
+                </>
+              )}
             </Link>
             <NotificationBell variant="dark" />
           </div>

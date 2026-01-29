@@ -94,6 +94,7 @@ export default function CompanyTripsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [dateFilter, setDateFilter] = useState("")
   const [filteredTrips, setFilteredTrips] = useState<Trip[]>([])
+  const [hidePastTrips, setHidePastTrips] = useState(true)
 
   // Refs for keyboard shortcuts to avoid dependency issues
   const filteredTripsRef = useRef<Trip[]>([])
@@ -182,6 +183,12 @@ export default function CompanyTripsPage() {
   useEffect(() => {
     let filtered = [...trips]
 
+    // Hide past trips by default (Issue 2 fix)
+    if (hidePastTrips) {
+      const now = new Date()
+      filtered = filtered.filter(trip => new Date(trip.departureTime) >= now)
+    }
+
     // Text search (destination, origin, driver, conductor, vehicle)
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
@@ -219,7 +226,7 @@ export default function CompanyTripsPage() {
     }
 
     setFilteredTrips(filtered)
-  }, [searchQuery, statusFilter, dateFilter, trips])
+  }, [searchQuery, statusFilter, dateFilter, trips, hidePastTrips])
 
   // P2-UX-004: Fix selection to work with filtered trips only (memoized to prevent render loop)
   const visibleSelectedCount = useMemo(
@@ -530,6 +537,25 @@ export default function CompanyTripsPage() {
               onChange={(e) => setDateFilter(e.target.value)}
               placeholder="Filter by date"
             />
+          </div>
+          {/* Hide Past Trips Toggle */}
+          <div className="mt-4 flex items-center gap-2">
+            <Checkbox
+              id="hidePastTrips"
+              checked={hidePastTrips}
+              onCheckedChange={(checked) => setHidePastTrips(checked === true)}
+            />
+            <label
+              htmlFor="hidePastTrips"
+              className="text-sm font-medium cursor-pointer select-none"
+            >
+              Hide past trips
+            </label>
+            {!hidePastTrips && (
+              <span className="text-xs text-muted-foreground ml-2">
+                (Showing all trips including past)
+              </span>
+            )}
           </div>
           {(searchQuery || statusFilter !== "all" || dateFilter) && (
             <div className="mt-3 flex items-center gap-2">

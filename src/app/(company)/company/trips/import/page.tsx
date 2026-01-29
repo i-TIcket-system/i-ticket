@@ -7,7 +7,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, Loader2, FileUp, CheckCircle2, AlertTriangle, Sparkles } from 'lucide-react';
+import { Upload, Loader2, FileUp, CheckCircle2, AlertTriangle, Sparkles, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -267,6 +267,22 @@ export default function TripImportPage() {
     setConfirmedMappings(null);
   };
 
+  /**
+   * Retry with new file (keeps mappings for reference but resets validation)
+   */
+  const handleRetry = () => {
+    setStep('upload');
+    setSelectedFile(null);
+    setValidatedRows([]);
+    setValidCount(0);
+    setErrorCount(0);
+    setWarnings([]);
+    // Keep mappingResult and confirmedMappings for reference
+    // Clear the file input so user can select new file
+    const fileInput = document.getElementById('file-input') as HTMLInputElement;
+    if (fileInput) fileInput.value = '';
+  };
+
   return (
     <div className="container max-w-7xl py-8">
       <div className="mb-8">
@@ -443,6 +459,14 @@ export default function TripImportPage() {
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={handleReset}>
               Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleRetry}
+              className="border-teal-500 text-teal-600 hover:bg-teal-50"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry with New File
             </Button>
             <Button
               onClick={handleImport}

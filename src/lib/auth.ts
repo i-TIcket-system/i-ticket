@@ -163,6 +163,7 @@ export const authOptions: NextAuthOptions = {
             role: user.role,
             companyId: user.companyId,
             companyName: user.company?.name || null,
+            companyLogo: user.company?.logo || null,
             staffRole: user.staffRole,
             profilePicture: user.profilePicture,
             nationalId: user.nationalId,
@@ -199,6 +200,7 @@ export const authOptions: NextAuthOptions = {
             role: 'SALES_PERSON',
             companyId: null,
             companyName: null,
+            companyLogo: null,
             staffRole: null,
             profilePicture: null,
             nationalId: null,
@@ -217,6 +219,7 @@ export const authOptions: NextAuthOptions = {
         token.phone = user.phone
         token.companyId = user.companyId
         token.companyName = user.companyName
+        token.companyLogo = user.companyLogo
         token.staffRole = user.staffRole
         token.profilePicture = user.profilePicture
         token.nationalId = user.nationalId
@@ -258,9 +261,10 @@ export const authOptions: NextAuthOptions = {
             token.profilePicture = freshUser.profilePicture
             // Update nationalId
             token.nationalId = freshUser.nationalId
-            // Update company name if user is associated with a company
+            // Update company name and logo if user is associated with a company
             if (token.companyId && freshUser.company) {
               token.companyName = freshUser.company.name
+              token.companyLogo = freshUser.company.logo
             }
 
             // FEATURE 4: Refresh platform staff data for Super Admins
@@ -299,6 +303,7 @@ export const authOptions: NextAuthOptions = {
         session.user.phone = token.phone as string
         session.user.companyId = token.companyId as string | null
         session.user.companyName = token.companyName as string | null
+        session.user.companyLogo = token.companyLogo as string | null
         session.user.staffRole = token.staffRole as string | null
         session.user.profilePicture = token.profilePicture as string | null
         session.user.nationalId = token.nationalId as string | null

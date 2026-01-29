@@ -8,6 +8,7 @@ declare module "next-auth" {
       phone: string
       companyId: string | null
       companyName: string | null
+      companyLogo: string | null
       staffRole: string | null
       profilePicture: string | null
       nationalId: string | null
@@ -25,6 +26,7 @@ declare module "next-auth" {
     phone: string
     companyId: string | null
     companyName: string | null
+    companyLogo: string | null
     staffRole: string | null
     profilePicture: string | null
     nationalId: string | null
@@ -39,6 +41,7 @@ declare module "next-auth/jwt" {
     phone: string
     companyId: string | null
     companyName: string | null
+    companyLogo: string | null
     staffRole: string | null
     profilePicture: string | null
     nationalId: string | null

@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
+import Image from "next/image"
 import {
   Bus,
   MapPin,
@@ -62,6 +63,7 @@ interface Trip {
   company: {
     id: string
     name: string
+    logo: string | null
   }
 }
 
@@ -558,9 +560,19 @@ function SearchContent() {
                     {/* Company Info - Glass tinted section */}
                     <div className="p-6 md:w-48 glass-teal flex flex-col items-center justify-center text-center border-r border-white/10">
                       <div className="relative mb-3">
-                        <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center text-white font-bold text-xl shadow-xl relative z-10 group-hover:scale-110 transition-transform duration-300">
-                          {trip.company.name.charAt(0)}
-                        </div>
+                        {trip.company.logo ? (
+                          <Image
+                            src={trip.company.logo}
+                            alt={trip.company.name}
+                            width={56}
+                            height={56}
+                            className="h-14 w-14 rounded-2xl object-contain bg-white shadow-xl relative z-10 group-hover:scale-110 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-primary-700 flex items-center justify-center text-white font-bold text-xl shadow-xl relative z-10 group-hover:scale-110 transition-transform duration-300">
+                            {trip.company.name.charAt(0)}
+                          </div>
+                        )}
                         {/* Glow behind company logo */}
                         <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-primary-700 blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300" />
                       </div>
