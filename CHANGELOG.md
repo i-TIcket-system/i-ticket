@@ -4,6 +4,33 @@
 
 ---
 
+## v2.10.12 - Jan 29, 2026
+
+### Logo Refresh, Pagination & Docs Restructure (3 Issues)
+
+**ISSUE 1: Company Logo Not Refreshing After Upload**
+- Dashboard showed old logo after uploading new one (required manual refresh)
+- **Root Cause**: `router.refresh()` didn't trigger full session reload
+- **Fix**: Changed to `window.location.reload()` for immediate refresh
+- **File**: `src/components/company/CompanyLogoUpload.tsx`
+
+**ISSUE 2: Pagination for Long Lists**
+- Company Trips and Vehicles pages loaded all items without pagination
+- **Fix**: Added pagination with 20 items per page
+- Server-side pagination support in trips API (`page`, `limit`, `skip` params)
+- Client-side pagination UI with Previous/Next buttons
+- **Files**: `src/app/api/company/trips/route.ts`, `src/app/company/trips/page.tsx`, `src/app/company/vehicles/page.tsx`
+
+**ISSUE 3: Documentation Restructuring**
+- CLAUDE.md was 804 lines (too long for quick reference)
+- **Fix**: Moved full changelog to `CHANGELOG.md`, slimmed CLAUDE.md to ~285 lines
+- **Files**: `CLAUDE.md`, `CHANGELOG.md` (new)
+
+### Files Modified
+- 6 files modified, 1 new file created
+
+---
+
 ## v2.10.11 - Jan 29, 2026
 
 ### WO-Vehicle Health Sync & Sold-Out Trip Protection (2 Issues)

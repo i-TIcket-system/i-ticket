@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.11 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.10.12 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -211,11 +211,12 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.11)
+## RECENT UPDATES (v2.10.12)
 
-**Latest**: WO-Vehicle Health Sync & Sold-Out Trip Protection (2 Issues)
-- Fixed parallel API calls for work order status filtering
-- Sold-out trips (`availableSlots === 0`) are now view-only
+**Latest**: Logo Refresh, Pagination & Docs Restructure (3 Issues)
+- Company logo now refreshes immediately after upload (`window.location.reload`)
+- Added pagination (20 items/page) to Company Trips and Vehicles pages
+- Moved changelog to `CHANGELOG.md`, slimmed CLAUDE.md from 804 to 282 lines
 
 **Full changelog**: See `CHANGELOG.md`
 

@@ -359,6 +359,11 @@ export default function VehiclesPage() {
     }
   }
 
+  // Reset page when filters change (must be before early return to maintain hooks order)
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter])
+
   if (status === "loading" || isLoading) {
     return (
       <div className="container mx-auto py-12">
@@ -392,11 +397,6 @@ export default function VehiclesPage() {
 
     return matchesSearch && matchesStatus
   })
-
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm, statusFilter])
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage)
