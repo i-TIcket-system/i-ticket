@@ -443,13 +443,13 @@ function SearchContent() {
             </div>
 
             <h3 className="text-2xl font-display font-semibold mb-3 gradient-text-simien">No trips found</h3>
-            <p className="text-muted-foreground mb-6 text-lg">
+            <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg">
               Try adjusting your search criteria or check back later.
             </p>
 
-            <div className="glass-subtle rounded-xl p-6 mb-6 text-left border border-white/20">
-              <p className="font-medium text-foreground mb-3">Suggestions:</p>
-              <div className="text-sm text-muted-foreground space-y-2">
+            <div className="glass-subtle rounded-xl p-6 mb-6 text-left border border-white/25">
+              <p className="font-semibold text-foreground mb-3">Suggestions:</p>
+              <div className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
                 <div className="flex items-start gap-2">
                   <span className="text-primary mt-0.5">•</span>
                   <p>Try different dates (tomorrow or next week)</p>
@@ -725,11 +725,11 @@ function SearchContent() {
                         {/* Price & Seats - Enhanced glass section */}
                         <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-4 md:w-44">
                           <div className="text-right">
-                            <div className="glass-subtle rounded-lg px-3 py-2 border border-white/20 mb-2">
-                              <div className="text-lg font-bold text-[#0d4f5c] dark:text-white">
+                            <div className="glass-subtle rounded-lg px-3 py-2 border border-white/25 mb-2">
+                              <div className="text-lg font-bold text-[#0a3f4a] dark:text-white drop-shadow-sm">
                                 {formatCurrency(Number(trip.price))}
                               </div>
-                              <div className="text-xs text-muted-foreground font-medium">per person</div>
+                              <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">per person</div>
                             </div>
                           </div>
 

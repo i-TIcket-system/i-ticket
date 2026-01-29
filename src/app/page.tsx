@@ -255,7 +255,7 @@ export default function HomePage() {
                 </span>
               </h1>
 
-              <p className="text-xl md:text-2xl text-white/90 max-w-xl leading-relaxed drop-shadow-md">
+              <p className="text-xl md:text-2xl text-white/95 max-w-xl leading-relaxed drop-shadow-lg">
                 Book bus tickets from Ethiopia&apos;s top companies. Fast, secure, and hassle-free booking at your fingertips.
               </p>
 
@@ -307,12 +307,12 @@ export default function HomePage() {
                       <Bus className="h-6 w-6 text-primary flex-shrink-0" />
                       Find Your Trip
                     </h3>
-                    <p className="text-sm text-muted-foreground">Search from 100+ daily departures</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Search from 100+ daily departures</p>
                   </div>
 
                   <form onSubmit={handleSearch} className="space-y-5" role="search" aria-label="Trip search form">
                     <div className="space-y-2 group/field">
-                      <label htmlFor="origin-city" className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
+                      <label htmlFor="origin-city" className="text-sm font-semibold text-foreground/85 flex items-center gap-1.5">
                         <MapPin className="h-3.5 w-3.5 text-primary flex-shrink-0" aria-hidden="true" />
                         From
                       </label>
@@ -328,7 +328,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="space-y-2 group/field">
-                      <label htmlFor="destination-city" className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
+                      <label htmlFor="destination-city" className="text-sm font-semibold text-foreground/85 flex items-center gap-1.5">
                         <MapPin className="h-3.5 w-3.5 text-secondary flex-shrink-0" aria-hidden="true" />
                         To
                       </label>
@@ -345,7 +345,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="space-y-2 group/field">
-                      <label htmlFor="travel-date" className="text-sm font-medium text-foreground/70 flex items-center gap-1.5">
+                      <label htmlFor="travel-date" className="text-sm font-semibold text-foreground/85 flex items-center gap-1.5">
                         <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" aria-hidden="true" />
                         Date
                       </label>
@@ -494,7 +494,7 @@ export default function HomePage() {
               <div />
             </div>
             <h2 className="mb-4 font-display">Our Trusted Partners</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg">
               We partner with Ethiopia&apos;s leading bus companies to bring you the best travel experience.
             </p>
           </div>
@@ -535,7 +535,7 @@ export default function HomePage() {
               <div />
             </div>
             <h2 className="mb-4 font-display text-white">Why Choose i-Ticket?</h2>
-            <p className="text-white/90 max-w-2xl mx-auto text-lg">
+            <p className="text-white/95 max-w-2xl mx-auto text-lg drop-shadow-md">
               We&apos;ve built the most convenient way to book bus tickets in Ethiopia.
             </p>
           </div>
@@ -563,7 +563,7 @@ export default function HomePage() {
                   </div>
 
                   <h3 className="mb-3 text-foreground font-display text-xl group-hover:text-primary transition-colors duration-300">{feature.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+                  <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{feature.description}</p>
 
                   {/* Hover indicator */}
                   <div className="mt-6 flex items-center gap-2 text-sm text-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -590,7 +590,7 @@ export default function HomePage() {
         <div className="container relative z-10 mx-auto px-4">
           <div className="text-center mb-14">
             <h2 className="mb-4 font-display">How It Works</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto text-lg">
+            <p className="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg">
               Book your bus ticket in 3 simple steps
             </p>
           </div>
@@ -630,7 +630,7 @@ export default function HomePage() {
                   <span className="text-3xl font-display font-bold leading-none block" style={{ transform: 'translateY(1px)' }}>{item.step}</span>
                 </div>
                 <h3 className="mb-3 text-foreground font-display text-xl">{item.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{item.description}</p>
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{item.description}</p>
               </div>
             ))}
           </div>
@@ -652,7 +652,7 @@ export default function HomePage() {
           <h2 className="text-white mb-6 font-display">
             Ready to Start Your Journey?
           </h2>
-          <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-md">
             Join thousands of travelers who trust i-Ticket for their bus bookings across Ethiopia.
           </p>
 

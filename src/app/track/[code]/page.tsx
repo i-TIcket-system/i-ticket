@@ -103,7 +103,7 @@ export default function TrackBookingPage() {
       <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-muted/30">
         <Card className="max-w-md p-8 text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Searching for your booking...</p>
+          <p className="text-gray-600 dark:text-gray-300">Searching for your booking...</p>
         </Card>
       </div>
     )
@@ -115,11 +115,11 @@ export default function TrackBookingPage() {
         <Card className="max-w-md w-full p-6 text-center">
           <XCircle className="h-16 w-16 mx-auto text-destructive mb-4" />
           <h2 className="text-2xl font-bold mb-2">Booking Not Found</h2>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             {error || "We couldn't find a booking with that ID or ticket code."}
           </p>
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Please check:
             </p>
             <ul className="text-sm text-left space-y-1 max-w-xs mx-auto">
@@ -161,7 +161,7 @@ export default function TrackBookingPage() {
       <div className="container mx-auto px-4 max-w-3xl">
         <Link
           href="/"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6"
+          className="inline-flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-foreground mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back to home
@@ -204,11 +204,11 @@ export default function TrackBookingPage() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Company</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">Company</p>
                 <p className="font-medium">{booking.trip.company.name}</p>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Bus Type</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">Bus Type</p>
                 <p className="font-medium">{booking.trip.busType.toUpperCase()}</p>
               </div>
             </div>
@@ -217,7 +217,7 @@ export default function TrackBookingPage() {
 
             <div className="flex items-center justify-between">
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">From</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">From</p>
                 <p className="text-xl font-bold">{booking.trip.origin}</p>
               </div>
               <div className="flex-1 flex items-center justify-center">
@@ -226,7 +226,7 @@ export default function TrackBookingPage() {
                 <div className="h-0.5 w-full bg-gradient-to-r from-accent to-primary max-w-[100px]" />
               </div>
               <div className="text-center">
-                <p className="text-sm text-muted-foreground">To</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">To</p>
                 <p className="text-xl font-bold">{booking.trip.destination}</p>
               </div>
             </div>
@@ -235,16 +235,16 @@ export default function TrackBookingPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Calendar className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Departure</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Departure</p>
                   <p className="font-medium">{formatDate(booking.trip.departureTime)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
+                <Clock className="h-4 w-4 text-gray-600 dark:text-gray-300" />
                 <div>
-                  <p className="text-sm text-muted-foreground">Time</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Time</p>
                   <p className="font-medium">
                     {new Date(booking.trip.departureTime).toLocaleTimeString("en-ET", {
                       hour: "2-digit",
@@ -274,7 +274,7 @@ export default function TrackBookingPage() {
                 >
                   <div>
                     <p className="font-medium">{passenger.name}</p>
-                    <p className="text-sm text-muted-foreground">{passenger.phone}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{passenger.phone}</p>
                   </div>
                   <Badge variant="outline">Seat {passenger.seatNumber}</Badge>
                 </div>
@@ -290,17 +290,17 @@ export default function TrackBookingPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">
+              <span className="text-gray-600 dark:text-gray-300">
                 Ticket Price ({booking.passengers.length} passenger{booking.passengers.length > 1 ? "s" : ""})
               </span>
               <span>{formatCurrency(ticketPrice)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">i-Ticket Service Charge (5%)</span>
+              <span className="text-gray-600 dark:text-gray-300">i-Ticket Service Charge (5%)</span>
               <span>{formatCurrency(commission)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">VAT on Service Charge (15%)</span>
+              <span className="text-gray-600 dark:text-gray-300">VAT on Service Charge (15%)</span>
               <span>{formatCurrency(commissionVAT)}</span>
             </div>
             <Separator />
@@ -308,7 +308,7 @@ export default function TrackBookingPage() {
               <span>Total Paid</span>
               <span className="text-primary">{formatCurrency(totalPaid)}</span>
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-gray-600 dark:text-gray-300">
               Booked on {new Date(booking.createdAt).toLocaleDateString("en-ET", {
                 year: "numeric",
                 month: "long",

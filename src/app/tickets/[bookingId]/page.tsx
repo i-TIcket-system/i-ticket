@@ -269,57 +269,62 @@ export default function TicketsPage() {
           {/* Main Ticket Display */}
           <div className="lg:col-span-2 space-y-6">
             {selectedTicket && (
-              <Card className="overflow-hidden" ref={ticketCardRef}>
-                <div className="bg-gradient-to-r from-primary to-primary/80 text-white p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Bus className="h-6 w-6" />
-                      <span className="font-bold text-lg">{booking.trip.company.name}</span>
-                    </div>
-                    <Badge variant="secondary" className="bg-white/20 text-white">
+              <Card className="overflow-hidden border-2 border-primary/20" ref={ticketCardRef} style={{ borderWidth: '2px', borderColor: 'rgba(14, 148, 148, 0.2)' }}>
+                {/* Teal gradient header */}
+                <div style={{ background: 'linear-gradient(135deg, #0e9494 0%, #0d7a7a 50%, #0d4f5c 100%)', color: 'white', padding: '24px' }}>
+                  {/* Header row - simple layout without pill */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <span style={{ fontWeight: 'bold', fontSize: '18px' }}>🚌 {booking.trip.company.name}</span>
+                    <span style={{ float: 'right', fontSize: '14px', fontWeight: '600', opacity: '0.9' }}>
                       {booking.trip.busType}
-                    </Badge>
+                    </span>
+                    <div style={{ clear: 'both' }}></div>
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="text-center">
-                      <div className="text-3xl font-bold">
-                        {new Date(booking.trip.departureTime).toLocaleTimeString("en-ET", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                      <div className="text-white/80">{booking.trip.origin}</div>
-                    </div>
-
-                    <div className="flex-1 flex items-center gap-2 px-4">
-                      <div className="h-3 w-3 rounded-full bg-white" />
-                      <div className="flex-1 border-t-2 border-dashed border-white/50" />
-                      <Bus className="h-6 w-6" />
-                      <div className="flex-1 border-t-2 border-dashed border-white/50" />
-                      <div className="h-3 w-3 rounded-full bg-white" />
-                    </div>
-
-                    <div className="text-center">
-                      <div className="text-3xl font-bold">
-                        {new Date(
-                          new Date(booking.trip.departureTime).getTime() +
-                            booking.trip.estimatedDuration * 60000
-                        ).toLocaleTimeString("en-ET", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                      <div className="text-white/80">{booking.trip.destination}</div>
-                    </div>
-                  </div>
+                  {/* Route display with table */}
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <tbody>
+                      <tr>
+                        <td style={{ textAlign: 'left', verticalAlign: 'middle', width: '30%' }}>
+                          <div style={{ fontSize: '28px', fontWeight: 'bold' }}>
+                            {new Date(booking.trip.departureTime).toLocaleTimeString("en-ET", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                          <div style={{ opacity: 0.85, fontSize: '14px' }}>{booking.trip.origin}</div>
+                        </td>
+                        <td style={{ textAlign: 'center', verticalAlign: 'middle', width: '40%' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'white', display: 'inline-block' }}></span>
+                            <span style={{ flex: 1, borderTop: '2px dashed rgba(255,255,255,0.5)', maxWidth: '60px' }}></span>
+                            <span style={{ fontSize: '20px' }}>🚌</span>
+                            <span style={{ flex: 1, borderTop: '2px dashed rgba(255,255,255,0.5)', maxWidth: '60px' }}></span>
+                            <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: 'white', display: 'inline-block' }}></span>
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right', verticalAlign: 'middle', width: '30%' }}>
+                          <div style={{ fontSize: '28px', fontWeight: 'bold' }}>
+                            {new Date(
+                              new Date(booking.trip.departureTime).getTime() +
+                                booking.trip.estimatedDuration * 60000
+                            ).toLocaleTimeString("en-ET", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </div>
+                          <div style={{ opacity: 0.85, fontSize: '14px' }}>{booking.trip.destination}</div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
-                <CardContent className="p-6">
+                <CardContent className="p-6" style={{ backgroundColor: '#fafffe' }}>
                   <div className="flex flex-col md:flex-row gap-6">
                     {/* QR Code */}
                     <div className="flex flex-col items-center">
-                      <div className="p-4 bg-white border-2 border-dashed border-muted rounded-lg">
+                      <div style={{ padding: '16px', backgroundColor: 'white', border: '3px solid #0e9494', borderRadius: '12px', boxShadow: '0 4px 12px rgba(14, 148, 148, 0.15)' }}>
                         <Image
                           src={selectedTicket.qrCode}
                           alt="Ticket QR Code"
@@ -328,22 +333,22 @@ export default function TicketsPage() {
                           className="rounded"
                         />
                       </div>
-                      <div className="mt-3 text-center">
-                        <p className="text-xs text-muted-foreground mb-1">Backup Code</p>
-                        <code className="text-2xl font-mono font-bold tracking-wider text-primary">
+                      <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                        <p style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px', fontWeight: '500' }}>Backup Code</p>
+                        <code style={{ fontSize: '24px', fontFamily: 'monospace', fontWeight: 'bold', letterSpacing: '0.1em', color: '#0e9494' }}>
                           {selectedTicket.shortCode}
                         </code>
                       </div>
 
                       {/* i-Ticket Branding */}
-                      <div className="mt-6 pt-4 border-t border-muted text-center space-y-2">
-                        <p className="text-sm font-semibold text-primary">
+                      <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '2px solid #0e9494', textAlign: 'center' }}>
+                        <p style={{ fontSize: '14px', fontWeight: '600', color: '#0e9494', marginBottom: '4px' }}>
                           Thank you for using i-Ticket!
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          Visit <span className="font-medium text-primary">i-tickets.et</span>
+                        <p style={{ fontSize: '12px', color: '#4b5563' }}>
+                          Visit <span style={{ fontWeight: '600', color: '#0e9494' }}>i-tickets.et</span>
                         </p>
-                        <p className="text-[10px] text-muted-foreground">
+                        <p style={{ fontSize: '10px', color: '#9ca3af', marginTop: '4px' }}>
                           Ethiopia's #1 Bus Booking Platform
                         </p>
                       </div>
@@ -351,109 +356,134 @@ export default function TicketsPage() {
 
                     {/* Ticket Details */}
                     <div className="flex-1 space-y-4">
-                      <div>
-                        <h3 className="text-xl font-bold">{selectedTicket.passengerName}</h3>
+                      {/* Passenger Info */}
+                      <div style={{ padding: '12px 16px', backgroundColor: 'rgba(14, 148, 148, 0.08)', borderRadius: '8px', borderLeft: '4px solid #0e9494' }}>
+                        <h3 style={{ fontSize: '20px', fontWeight: 'bold', color: '#1f2937', margin: 0 }}>{selectedTicket.passengerName}</h3>
                         {selectedTicket.seatNumber && (
-                          <p className="text-muted-foreground">Seat {selectedTicket.seatNumber}</p>
+                          <p style={{ fontSize: '14px', color: '#0e9494', fontWeight: '600', marginTop: '4px' }}>Seat {selectedTicket.seatNumber}</p>
                         )}
                       </div>
 
-                      <Separator />
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <span>
-                            {new Date(booking.trip.departureTime).toLocaleDateString("en-ET", {
-                              weekday: "short",
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                          <span>{formatDuration(booking.trip.estimatedDuration)}</span>
-                        </div>
-                        {booking.trip.distance && (
-                          <div className="flex items-center gap-2 col-span-2">
-                            <MapPin className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                            <span>Distance: {booking.trip.distance} km</span>
-                          </div>
-                        )}
+                      {/* Trip details - table layout for reliable html2canvas rendering */}
+                      <div style={{ padding: '12px 16px', backgroundColor: 'rgba(14, 148, 148, 0.05)', borderRadius: '8px' }}>
+                        <table className="text-sm w-full" style={{ borderCollapse: 'collapse' }}>
+                          <tbody>
+                            <tr>
+                              <td style={{ paddingBottom: '8px', verticalAlign: 'middle', width: '24px' }}>
+                                <span>📅</span>
+                              </td>
+                              <td style={{ paddingBottom: '8px', paddingLeft: '8px', verticalAlign: 'middle', fontWeight: '500' }}>
+                                {new Date(booking.trip.departureTime).toLocaleDateString("en-ET", {
+                                  weekday: "short",
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style={{ paddingBottom: '8px', verticalAlign: 'middle', width: '24px' }}>
+                                <span>⏱</span>
+                              </td>
+                              <td style={{ paddingBottom: '8px', paddingLeft: '8px', verticalAlign: 'middle', fontWeight: '500' }}>
+                                {formatDuration(booking.trip.estimatedDuration)}
+                              </td>
+                            </tr>
+                            {booking.trip.distance && (
+                              <tr>
+                                <td style={{ verticalAlign: 'middle', width: '24px' }}>
+                                  <span>📍</span>
+                                </td>
+                                <td style={{ paddingLeft: '8px', verticalAlign: 'middle', fontWeight: '500' }}>
+                                  Distance: {booking.trip.distance} km
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
                       </div>
 
-                      <Separator />
-
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Ticket Price</span>
-                          <span className="font-medium">{formatCurrency(booking.trip.price)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Service Fee (5%)</span>
-                          <span className="font-medium">{formatCurrency(Number(booking.commission) / booking.passengers.length)}</span>
-                        </div>
-                        {booking.commissionVAT !== undefined && booking.commissionVAT !== null && (
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">VAT on Service Fee (15%)</span>
-                            <span className="font-medium">{formatCurrency(Number(booking.commissionVAT) / booking.passengers.length)}</span>
-                          </div>
-                        )}
-                        <Separator />
-                        <div className="flex justify-between font-bold">
-                          <span>Total Paid</span>
-                          <span className="text-primary">{formatCurrency(
-                            Number(booking.totalAmount) / booking.passengers.length
-                          )}</span>
-                        </div>
+                      {/* Price Summary */}
+                      <div style={{ padding: '12px 16px', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                        <table className="text-sm w-full" style={{ borderCollapse: 'collapse' }}>
+                          <tbody>
+                            <tr>
+                              <td style={{ paddingBottom: '6px', color: '#4b5563' }}>Ticket Price</td>
+                              <td style={{ paddingBottom: '6px', textAlign: 'right', fontWeight: '600' }}>{formatCurrency(booking.trip.price)}</td>
+                            </tr>
+                            <tr>
+                              <td style={{ paddingBottom: '6px', color: '#4b5563' }}>Service Fee (5%)</td>
+                              <td style={{ paddingBottom: '6px', textAlign: 'right', fontWeight: '600' }}>{formatCurrency(Number(booking.commission) / booking.passengers.length)}</td>
+                            </tr>
+                            {booking.commissionVAT !== undefined && booking.commissionVAT !== null && (
+                              <tr>
+                                <td style={{ paddingBottom: '6px', color: '#4b5563' }}>VAT on Service Fee (15%)</td>
+                                <td style={{ paddingBottom: '6px', textAlign: 'right', fontWeight: '600' }}>{formatCurrency(Number(booking.commissionVAT) / booking.passengers.length)}</td>
+                              </tr>
+                            )}
+                            <tr>
+                              <td colSpan={2} style={{ paddingTop: '8px', paddingBottom: '8px' }}>
+                                <div style={{ borderTop: '2px solid #0e9494' }}></div>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style={{ fontWeight: 'bold', fontSize: '15px' }}>Total Paid</td>
+                              <td style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '16px', color: '#0e9494' }}>{formatCurrency(
+                                Number(booking.totalAmount) / booking.passengers.length
+                              )}</td>
+                            </tr>
+                          </tbody>
+                        </table>
                       </div>
 
-                      <Separator />
-
-                      <div className="text-xs text-muted-foreground">
-                        <p>Booking ID: {booking.id.slice(0, 8).toUpperCase()}</p>
-                        <p>Booked: {new Date(booking.createdAt).toLocaleDateString()}</p>
+                      {/* Booking Info */}
+                      <div style={{ fontSize: '12px', color: '#6b7280', padding: '8px 12px', backgroundColor: '#f3f4f6', borderRadius: '6px' }}>
+                        <p style={{ margin: '0 0 4px 0' }}>Booking ID: <span style={{ fontWeight: '600', color: '#374151' }}>{booking.id.slice(0, 8).toUpperCase()}</span></p>
+                        <p style={{ margin: 0 }}>Booked: <span style={{ fontWeight: '600', color: '#374151' }}>{new Date(booking.createdAt).toLocaleDateString()}</span></p>
                       </div>
 
                       {/* Driver/Conductor/Vehicle Contact (included in download) */}
+                      {/* Using table layout for reliable html2canvas rendering */}
                       {(booking.trip.driver || booking.trip.conductor || booking.trip.vehicle) && (
-                        <>
-                          <Separator />
-                          <div className="space-y-1">
-                            <p className="text-xs font-semibold text-muted-foreground mb-1">
-                              {booking.trip.vehicle ? "Staff & Vehicle:" : "Staff:"}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs flex-wrap">
+                        <div style={{ padding: '12px 16px', backgroundColor: 'rgba(14, 148, 148, 0.05)', borderRadius: '8px', border: '1px solid rgba(14, 148, 148, 0.2)' }}>
+                          <p style={{ fontSize: '12px', fontWeight: '600', color: '#0e9494', marginBottom: '8px' }}>
+                            Staff & Vehicle:
+                          </p>
+                          <table className="text-xs w-full" style={{ borderCollapse: 'collapse' }}>
+                            <tbody>
                               {booking.trip.driver && (
-                                <span className="flex items-center gap-1">
-                                  <Car className="h-3 w-3 flex-shrink-0" />
-                                  <span>{booking.trip.driver.name} ({booking.trip.driver.phone})</span>
-                                </span>
+                                <tr>
+                                  <td style={{ paddingBottom: '6px', verticalAlign: 'top', whiteSpace: 'nowrap', color: '#6b7280' }}>
+                                    Driver:
+                                  </td>
+                                  <td style={{ paddingBottom: '6px', paddingLeft: '8px', verticalAlign: 'top', fontWeight: '500', color: '#374151' }}>
+                                    {booking.trip.driver.name} ({booking.trip.driver.phone})
+                                  </td>
+                                </tr>
                               )}
-                              {booking.trip.driver && booking.trip.conductor && <span className="text-muted-foreground">•</span>}
                               {booking.trip.conductor && (
-                                <span className="flex items-center gap-1">
-                                  <UserCheck className="h-3 w-3 flex-shrink-0" />
-                                  <span>{booking.trip.conductor.name} ({booking.trip.conductor.phone})</span>
-                                </span>
+                                <tr>
+                                  <td style={{ paddingBottom: '6px', verticalAlign: 'top', whiteSpace: 'nowrap', color: '#6b7280' }}>
+                                    Conductor:
+                                  </td>
+                                  <td style={{ paddingBottom: '6px', paddingLeft: '8px', verticalAlign: 'top', fontWeight: '500', color: '#374151' }}>
+                                    {booking.trip.conductor.name} ({booking.trip.conductor.phone})
+                                  </td>
+                                </tr>
                               )}
-                              {(booking.trip.driver || booking.trip.conductor) && booking.trip.vehicle && <span className="text-muted-foreground">•</span>}
                               {booking.trip.vehicle && (
-                                <span className="flex items-center gap-1 font-mono">
-                                  <Truck className="h-3 w-3 flex-shrink-0" />
-                                  <span>
-                                    {booking.trip.vehicle.plateNumber}
-                                    {booking.trip.vehicle.sideNumber && ` (${booking.trip.vehicle.sideNumber})`}
-                                  </span>
-                                </span>
+                                <tr>
+                                  <td style={{ verticalAlign: 'top', whiteSpace: 'nowrap', color: '#6b7280' }}>
+                                    Vehicle:
+                                  </td>
+                                  <td style={{ paddingLeft: '8px', verticalAlign: 'top', fontWeight: '500', fontFamily: 'monospace', color: '#374151' }}>
+                                    {booking.trip.vehicle.plateNumber}{booking.trip.vehicle.sideNumber && ` (${booking.trip.vehicle.sideNumber})`}
+                                  </td>
+                                </tr>
                               )}
-                            </div>
-                          </div>
-                        </>
+                            </tbody>
+                          </table>
+                        </div>
                       )}
-
-                      <Separator />
 
                       {/* Hide action buttons when downloading/capturing screenshot */}
                       {!isDownloading && (

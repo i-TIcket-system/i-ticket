@@ -755,22 +755,22 @@ export default function BookingPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="glass-subtle rounded-xl p-4 border border-white/20">
+                <div className="glass-subtle rounded-xl p-4 border border-white/25">
                   <div className="flex justify-between mb-2">
-                    <span className="text-muted-foreground text-sm">
+                    <span className="text-gray-600 dark:text-gray-300 text-sm">
                       {formatCurrency(Number(trip.price))} x {passengers.length} passenger{passengers.length > 1 ? "s" : ""}
                     </span>
-                    <span className="font-medium">{formatCurrency(ticketTotal)}</span>
+                    <span className="font-semibold">{formatCurrency(ticketTotal)}</span>
                   </div>
 
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-muted-foreground">i-Ticket service charge (5%)</span>
-                    <span>{formatCurrency(baseCommission)}</span>
+                    <span className="text-gray-600 dark:text-gray-300">i-Ticket service charge (5%)</span>
+                    <span className="font-medium">{formatCurrency(baseCommission)}</span>
                   </div>
 
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">VAT on service charge (15%)</span>
-                    <span>{formatCurrency(commissionVAT)}</span>
+                    <span className="text-gray-600 dark:text-gray-300">VAT on service charge (15%)</span>
+                    <span className="font-medium">{formatCurrency(commissionVAT)}</span>
                   </div>
                 </div>
 
@@ -809,10 +809,10 @@ export default function BookingPage() {
                   </>
                 )}
 
-                <div className="text-xs text-muted-foreground">
+                <div className="text-xs text-gray-600 dark:text-gray-300">
                   Price includes all taxes and fees. Payment via TeleBirr.
                   {status === "unauthenticated" && (
-                    <span className="block mt-2 text-primary font-medium">
+                    <span className="block mt-2 text-primary font-semibold">
                       No account needed - book as guest!
                     </span>
                   )}

@@ -223,25 +223,25 @@ export default function PaymentPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="glass-subtle rounded-xl p-4 border border-white/20 space-y-3">
+                <div className="glass-subtle rounded-xl p-4 border border-white/30 space-y-3">
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Bus Company</span>
-                  <span className="font-medium">{booking.trip.company.name}</span>
+                  <span className="text-gray-800 dark:text-gray-100 font-medium">Bus Company</span>
+                  <span className="font-bold">{booking.trip.company.name}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Departure</span>
-                  <span className="font-medium">{formatDate(booking.trip.departureTime)}</span>
+                  <span className="text-gray-800 dark:text-gray-100 font-medium">Departure</span>
+                  <span className="font-bold">{formatDate(booking.trip.departureTime)}</span>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Passengers</span>
-                    <span className="font-medium">{booking.passengers.length} passenger{booking.passengers.length > 1 ? "s" : ""}</span>
+                    <span className="text-gray-800 dark:text-gray-100 font-medium">Passengers</span>
+                    <span className="font-bold">{booking.passengers.length} passenger{booking.passengers.length > 1 ? "s" : ""}</span>
                   </div>
                   <div className="space-y-1.5 ml-4">
                     {booking.passengers.map((passenger, index) => (
                       <div key={index} className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">{passenger.name}</span>
-                        <span className="font-mono font-medium text-primary">
+                        <span className="text-gray-800 dark:text-gray-100">{passenger.name}</span>
+                        <span className="font-mono font-bold text-[#0a3f4a] dark:text-primary">
                           {passenger.seatNumber ? `Seat ${passenger.seatNumber}` : "Auto-assign"}
                         </span>
                       </div>
@@ -252,31 +252,31 @@ export default function PaymentPage() {
 
                 <Separator className="bg-white/10" />
 
-                <div className="glass-subtle rounded-xl p-4 border border-white/20 space-y-2">
+                <div className="glass-subtle rounded-xl p-4 border border-white/30 space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
+                    <span className="text-gray-800 dark:text-gray-100 font-medium">
                       Ticket Price ({booking.passengers.length} passenger{booking.passengers.length > 1 ? "s" : ""})
                     </span>
-                    <span>{formatCurrency(ticketPrice)}</span>
+                    <span className="font-semibold">{formatCurrency(ticketPrice)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">i-Ticket Service Charge (5%)</span>
-                    <span>{formatCurrency(commission)}</span>
+                    <span className="text-gray-800 dark:text-gray-100 font-medium">i-Ticket Service Charge (5%)</span>
+                    <span className="font-semibold">{formatCurrency(commission)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">VAT on Service Charge (15%)</span>
-                    <span>{formatCurrency(commissionVAT)}</span>
+                    <span className="text-gray-800 dark:text-gray-100 font-medium">VAT on Service Charge (15%)</span>
+                    <span className="font-semibold">{formatCurrency(commissionVAT)}</span>
                   </div>
                 </div>
 
-                <div className="glass-subtle rounded-2xl p-5 border border-white/20 shadow-glass-md">
+                <div className="glass-subtle rounded-2xl p-5 border border-white/40 shadow-glass-md bg-gradient-to-r from-primary/5 to-primary/10">
                   <div className="flex justify-between items-center">
-                    <span className="text-foreground font-semibold text-lg">Total</span>
+                    <span className="text-foreground font-extrabold text-lg">Total</span>
                     <div className="text-right">
-                      <div className="text-3xl font-bold text-foreground drop-shadow-sm">
+                      <div className="text-3xl font-extrabold text-[#0a3f4a] dark:text-primary drop-shadow-lg">
                         {formatCurrency(total)}
                       </div>
-                      <div className="text-xs text-muted-foreground font-medium">incl. taxes & fees</div>
+                      <div className="text-xs text-gray-800 dark:text-gray-100 font-bold">incl. taxes & fees</div>
                     </div>
                   </div>
                 </div>
@@ -314,7 +314,7 @@ export default function PaymentPage() {
                     </div>
                     <div>
                       <h3 className="font-bold text-lg">TeleBirr</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-gray-700 dark:text-gray-200">
                         Pay with your mobile wallet
                       </p>
                     </div>
@@ -353,7 +353,7 @@ export default function PaymentPage() {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-lg">CBE Birr</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-gray-700 dark:text-gray-200">
                         Pay with Commercial Bank of Ethiopia
                       </p>
                     </div>
@@ -387,8 +387,8 @@ export default function PaymentPage() {
                       <p className="text-sm font-medium">{isMobile ? "Payment Details:" : "Or enter manually:"}</p>
 
                       {/* Account Number */}
-                      <div className="glass-subtle rounded-xl p-3 border border-white/10">
-                        <label className="text-xs text-muted-foreground block mb-1">i-Ticket Account</label>
+                      <div className="glass-subtle rounded-xl p-3 border border-white/20">
+                        <label className="text-xs text-gray-700 dark:text-gray-200 font-medium block mb-1">i-Ticket Account</label>
                         <div className="flex items-center gap-2">
                           <code className="flex-1 font-mono text-sm font-semibold">
                             {cbeAccountNumber}
@@ -409,8 +409,8 @@ export default function PaymentPage() {
                       </div>
 
                       {/* Reference Code */}
-                      <div className="glass-subtle rounded-xl p-3 border border-white/10">
-                        <label className="text-xs text-muted-foreground block mb-1">Reference Code</label>
+                      <div className="glass-subtle rounded-xl p-3 border border-white/20">
+                        <label className="text-xs text-gray-700 dark:text-gray-200 font-medium block mb-1">Reference Code</label>
                         <div className="flex items-center gap-2">
                           <code className="flex-1 font-mono text-sm font-semibold text-primary">
                             {paymentReference}
@@ -431,8 +431,8 @@ export default function PaymentPage() {
                       </div>
 
                       {/* Amount */}
-                      <div className="glass-subtle rounded-xl p-3 border border-white/10">
-                        <label className="text-xs text-muted-foreground block mb-1">Amount</label>
+                      <div className="glass-subtle rounded-xl p-3 border border-white/20">
+                        <label className="text-xs text-gray-700 dark:text-gray-200 font-medium block mb-1">Amount</label>
                         <div className="font-bold text-lg text-primary">
                           {formatCurrency(total)}
                         </div>
@@ -495,14 +495,14 @@ export default function PaymentPage() {
                   <Shield className="h-5 w-5 text-primary mt-0.5" />
                   <div className="text-sm">
                     <p className="font-medium mb-1">Secure Payment</p>
-                    <p className="text-muted-foreground">
+                    <p className="text-gray-700 dark:text-gray-200">
                       Your payment information is encrypted and secure. We never store your payment details.
                     </p>
                   </div>
                 </div>
 
                 {/* Timer Notice */}
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                   <Clock className="h-4 w-4" />
                   Booking held for 15 minutes. Complete payment to confirm your seats.
                 </div>
