@@ -22,6 +22,14 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    const { searchParams } = new URL(request.url)
+
+    // Pagination params
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+    const limit = Math.min(Math.max(1, parseInt(searchParams.get('limit') || '20')), 100)
+    const skip = (page - 1) * limit
+    const paginated = searchParams.get('paginated') === 'true'
+
     const where: any = {}
 
     // Company admins only see their company's trips
@@ -29,6 +37,41 @@ export async function GET(request: NextRequest) {
       where.companyId = session.user.companyId
     }
 
+    // If paginated, use skip/take for server-side pagination
+    if (paginated) {
+      const [trips, total] = await Promise.all([
+        prisma.trip.findMany({
+          where,
+          orderBy: { departureTime: "desc" },
+          skip,
+          take: limit,
+          include: {
+            company: {
+              select: { name: true },
+            },
+            _count: {
+              select: { bookings: true },
+            },
+          },
+        }),
+        prisma.trip.count({ where })
+      ])
+
+      // Sort by status priority (active first), then departure time
+      const sortedTrips = sortTripsByStatusAndTime(trips, "desc")
+
+      return NextResponse.json({
+        trips: sortedTrips,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit)
+        }
+      })
+    }
+
+    // Non-paginated (default for backwards compatibility)
     const trips = await prisma.trip.findMany({
       where,
       orderBy: { departureTime: "desc" },

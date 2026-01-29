@@ -14,6 +14,8 @@ import {
   Wrench,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   Activity,
   Gauge,
   Fuel,
@@ -139,6 +141,10 @@ export default function VehiclesPage() {
   // Filter state
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("all")
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 20
 
   // Add vehicle form
   const [newVehicle, setNewVehicle] = useState({
@@ -387,6 +393,18 @@ export default function VehiclesPage() {
     return matchesSearch && matchesStatus
   })
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter])
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage)
+  const paginatedVehicles = filteredVehicles.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  )
+
   return (
     <div className="container mx-auto py-12 px-4 max-w-7xl">
       {/* Header */}
@@ -532,6 +550,7 @@ export default function VehiclesPage() {
               </Button>
             </div>
           ) : (
+            <>
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -547,7 +566,7 @@ export default function VehiclesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredVehicles.length === 0 ? (
+                  {paginatedVehicles.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className="h-32 text-center">
                         <div className="text-muted-foreground">
@@ -572,7 +591,7 @@ export default function VehiclesPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredVehicles.map((vehicle) => {
+                    paginatedVehicles.map((vehicle) => {
                     const typeInfo = BUS_TYPES[vehicle.busType as keyof typeof BUS_TYPES]
                     // Use effectiveStatus to show ON_TRIP when vehicle is on an active trip
                     const displayStatus = vehicle.effectiveStatus || vehicle.status
@@ -735,6 +754,41 @@ export default function VehiclesPage() {
                 </TableBody>
               </Table>
             </div>
+
+            {/* Pagination */}
+            {filteredVehicles.length > itemsPerPage && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                  {Math.min(currentPage * itemsPerPage, filteredVehicles.length)} of{" "}
+                  {filteredVehicles.length} vehicles
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                  <span className="text-sm px-3 py-1 bg-muted rounded">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            </>
           )}
         </CardContent>
       </Card>

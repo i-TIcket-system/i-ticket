@@ -79,9 +79,9 @@ export function CompanyLogoUpload({
         setPreview(data.url)
         onUploadSuccess?.(data.url)
 
-        // Refresh session to update logo across the app
+        // Refresh session and force full page reload to update logo across the app
         await updateSession()
-        router.refresh()
+        window.location.reload()
       } else {
         toast.error(data.error || "Failed to upload logo")
         setPreview(currentLogo || null)
@@ -111,9 +111,9 @@ export function CompanyLogoUpload({
         setPreview(null)
         onUploadSuccess?.(null as any)
 
-        // Refresh session
+        // Refresh session and force full page reload to update logo across the app
         await updateSession()
-        router.refresh()
+        window.location.reload()
       } else {
         toast.error(data.error || "Failed to remove logo")
       }
