@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth"
 import { createAuditLogTask } from "@/lib/clickup"
 import { validateTripUpdate } from "@/lib/trip-update-validator"
 import { createNotification } from "@/lib/notifications"
-import { isTripViewOnly, getViewOnlyMessage } from "@/lib/trip-status"
+import { isTripViewOnly, getViewOnlyMessage, FINAL_TRIP_STATUSES } from "@/lib/trip-status"
 
 export async function GET(
   request: NextRequest,
@@ -170,18 +170,27 @@ export async function PUT(
       )
     }
 
-    // 🚨 CRITICAL: Block all modifications to DEPARTED, COMPLETED, CANCELLED, or past trips
+    // 🚨 CRITICAL: Block all modifications to DEPARTED, COMPLETED, CANCELLED, past, or sold-out trips
     // These trips are VIEW-ONLY - no edits allowed for data integrity and audit compliance
     const isPastTrip = new Date(existingTrip.departureTime) < new Date()
     const effectiveStatus = isPastTrip && existingTrip.status === "SCHEDULED" ? "DEPARTED" : existingTrip.status
+    const isSoldOut = existingTrip.availableSlots === 0
 
-    if (isTripViewOnly(existingTrip.status) || isPastTrip) {
+    if (isTripViewOnly(existingTrip.status, existingTrip.availableSlots) || isPastTrip) {
+      let errorMessage = `Cannot modify ${effectiveStatus.toLowerCase()} trips`
+      let detailMessage = getViewOnlyMessage(existingTrip.status)
+
+      if (isSoldOut && !FINAL_TRIP_STATUSES.includes(existingTrip.status as any) && !isPastTrip) {
+        errorMessage = "Cannot modify sold-out trips"
+        detailMessage = "This trip has sold all available seats. Modifications are blocked to protect existing bookings."
+      } else if (isPastTrip && existingTrip.status === "SCHEDULED") {
+        detailMessage = "Trip departure time has passed. All modifications are blocked."
+      }
+
       return NextResponse.json(
         {
-          error: `Cannot modify ${effectiveStatus.toLowerCase()} trips`,
-          message: isPastTrip && existingTrip.status === "SCHEDULED"
-            ? "Trip departure time has passed. All modifications are blocked."
-            : getViewOnlyMessage(existingTrip.status),
+          error: errorMessage,
+          message: detailMessage,
           tripStatus: effectiveStatus,
         },
         { status: 403 }

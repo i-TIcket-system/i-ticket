@@ -243,11 +243,12 @@ export default function CompanyTripsPage() {
   )
 
   // RULE-003: Helper to check if a trip is view-only
+  // Also includes sold-out trips (availableSlots === 0)
   const isViewOnlyTrip = (trip: Trip) => {
     const departureTime = new Date(trip.departureTime)
     const isPastTrip = departureTime < new Date()
     const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
-    return ["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)
+    return ["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus) || trip.availableSlots === 0
   }
 
   // Selection handlers - RULE-003: Exclude view-only trips from selection
@@ -318,12 +319,12 @@ export default function CompanyTripsPage() {
       if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
         e.preventDefault()
         const filtered = filteredTripsRef.current
-        // Filter out view-only trips
+        // Filter out view-only trips (including sold-out trips)
         const selectable = filtered.filter(trip => {
           const departureTime = new Date(trip.departureTime)
           const isPastTrip = departureTime < new Date()
           const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
-          return !["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)
+          return !["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus) && trip.availableSlots > 0
         })
         if (selectable.length > 0) {
           setSelectedTrips(new Set(selectable.map(t => t.id)))
@@ -698,7 +699,9 @@ export default function CompanyTripsPage() {
                   const isDeparted = effectiveStatus === "DEPARTED" || effectiveStatus === "COMPLETED"
 
                   // RULE-003: View-only trips cannot be edited or selected for bulk operations
+                  // Also check for sold-out trips (availableSlots === 0)
                   const isViewOnly = ["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)
+                    || trip.availableSlots === 0
 
                   return (
                     <TableRow

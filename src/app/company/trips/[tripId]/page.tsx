@@ -389,21 +389,29 @@ export default function TripDetailPage() {
               <RefreshCw className="h-3 w-3 animate-spin" style={{ animationDuration: '6s' }} />
               <span className="text-xs">Live updates</span>
             </Badge>
-            {/* RULE-003: Check both status AND past date for view-only */}
+            {/* RULE-003: Check status, past date, AND sold-out for view-only */}
             {(() => {
               const isPastTrip = new Date(trip.departureTime) < new Date()
-              const isViewOnly = isTripViewOnly(trip.status) || isPastTrip
+              const isSoldOut = trip.availableSlots === 0
+              const isViewOnly = isTripViewOnly(trip.status, trip.availableSlots) || isPastTrip
+
+              // Determine the appropriate tooltip message
+              let tooltipMessage = "Only view is possible for departed, cancelled, completed or past trips"
+              if (isSoldOut && !["DEPARTED", "COMPLETED", "CANCELLED"].includes(trip.status) && !isPastTrip) {
+                tooltipMessage = "Cannot edit sold-out trips"
+              }
+
               return (
                 <Button
                   variant="outline"
                   asChild={!isViewOnly}
                   disabled={isViewOnly}
-                  title={isViewOnly ? "Only view is possible for departed, cancelled, completed or past trips" : undefined}
+                  title={isViewOnly ? tooltipMessage : undefined}
                 >
                   {isViewOnly ? (
                     <span className="cursor-not-allowed opacity-50">
                       <Edit className="h-4 w-4 mr-2" />
-                      Edit Trip (View-Only)
+                      Edit Trip {isSoldOut && !["DEPARTED", "COMPLETED", "CANCELLED"].includes(trip.status) && !isPastTrip ? "(Sold Out)" : "(View-Only)"}
                     </span>
                   ) : (
                     <Link href={`/company/trips/${tripId}/edit`}>
@@ -417,9 +425,17 @@ export default function TripDetailPage() {
           </div>
         </div>
 
-        {/* View-Only Banner for DEPARTED, COMPLETED, CANCELLED, or past trips */}
-        {(isTripViewOnly(trip.status) || new Date(trip.departureTime) < new Date()) && (
-          <ViewOnlyBanner tripStatus={new Date(trip.departureTime) < new Date() && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status} />
+        {/* View-Only Banner for DEPARTED, COMPLETED, CANCELLED, past, or sold-out trips */}
+        {(isTripViewOnly(trip.status, trip.availableSlots) || new Date(trip.departureTime) < new Date()) && (
+          <ViewOnlyBanner
+            tripStatus={
+              trip.availableSlots === 0 && !["DEPARTED", "COMPLETED", "CANCELLED"].includes(trip.status) && new Date(trip.departureTime) >= new Date()
+                ? "SOLD_OUT"
+                : new Date(trip.departureTime) < new Date() && trip.status === "SCHEDULED"
+                  ? "DEPARTED"
+                  : trip.status
+            }
+          />
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -78,12 +78,19 @@ export function VehicleHealthDashboard({
       setError(null)
 
       // Fetch data from multiple endpoints
-      const [schedules, workOrders, inspections, vehicleResponse] = await Promise.all([
+      // Note: Work orders API only accepts single status values, so we make two parallel requests
+      const [schedules, openWOs, inProgressWOs, inspections, vehicleResponse] = await Promise.all([
         fetch(`/api/company/vehicles/${vehicleId}/maintenance-schedules`).then(r => r.json()),
-        fetch(`/api/company/work-orders?vehicleId=${vehicleId}&status=OPEN,IN_PROGRESS`).then(r => r.json()),
+        fetch(`/api/company/work-orders?vehicleId=${vehicleId}&status=OPEN`).then(r => r.json()),
+        fetch(`/api/company/work-orders?vehicleId=${vehicleId}&status=IN_PROGRESS`).then(r => r.json()),
         fetch(`/api/company/vehicles/${vehicleId}/inspections`).then(r => r.json()),
         fetch(`/api/company/vehicles/${vehicleId}`).then(r => r.json()),
       ])
+
+      // Combine work orders from both status queries
+      const workOrders = {
+        workOrders: [...(openWOs.workOrders || []), ...(inProgressWOs.workOrders || [])]
+      }
 
       const vehicle = vehicleResponse.vehicle
 

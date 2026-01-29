@@ -206,14 +206,22 @@ export default function EditTripPage() {
       const data = await response.json()
 
       if (response.ok) {
-        // 🚨 CRITICAL: Redirect if trip is view-only (DEPARTED, COMPLETED, CANCELLED, or past)
+        // 🚨 CRITICAL: Redirect if trip is view-only (DEPARTED, COMPLETED, CANCELLED, past, or sold-out)
         const isPastTrip = new Date(data.trip.departureTime) < new Date()
         const effectiveStatus = isPastTrip && data.trip.status === "SCHEDULED" ? "DEPARTED" : data.trip.status
-        if (isTripViewOnly(data.trip.status) || isPastTrip) {
+        const isSoldOut = data.trip.availableSlots === 0
+
+        if (isTripViewOnly(data.trip.status, data.trip.availableSlots) || isPastTrip) {
           import("sonner").then(({ toast }) => {
-            toast.error(`Cannot edit ${effectiveStatus.toLowerCase()} trips`, {
-              description: "Only view is possible for departed, cancelled, completed or past trips.",
-            })
+            if (isSoldOut && !["DEPARTED", "COMPLETED", "CANCELLED"].includes(data.trip.status) && !isPastTrip) {
+              toast.error("Cannot edit sold-out trips", {
+                description: "This trip has sold all available seats. Modifications are blocked to protect existing bookings.",
+              })
+            } else {
+              toast.error(`Cannot edit ${effectiveStatus.toLowerCase()} trips`, {
+                description: "Only view is possible for departed, cancelled, completed or past trips.",
+              })
+            }
           })
           router.push(`/company/trips/${tripId}`)
           return

@@ -16,6 +16,8 @@ export function ViewOnlyBanner({ tripStatus }: ViewOnlyBannerProps) {
         return "Trip is completed. All details are read-only for record keeping and audit compliance.";
       case "CANCELLED":
         return "Trip was cancelled. All details are read-only for record keeping.";
+      case "SOLD_OUT":
+        return "This trip has sold all available seats. Modifications are blocked to protect existing bookings.";
       default:
         return "This trip cannot be modified.";
     }
@@ -29,6 +31,8 @@ export function ViewOnlyBanner({ tripStatus }: ViewOnlyBannerProps) {
         return "bg-green-50 border-green-400";
       case "CANCELLED":
         return "bg-gray-50 border-gray-400";
+      case "SOLD_OUT":
+        return "bg-orange-50 border-orange-400";
       default:
         return "bg-yellow-50 border-yellow-400";
     }

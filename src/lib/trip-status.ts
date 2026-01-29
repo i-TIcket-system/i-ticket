@@ -15,13 +15,30 @@ export type EditableTripStatus = typeof EDITABLE_TRIP_STATUSES[number];
 export type TripStatus = FinalTripStatus | EditableTripStatus;
 
 /**
+ * Check if a trip is sold out (no available seats)
+ *
+ * @param trip - Trip object with availableSlots
+ * @returns true if trip has no available seats
+ */
+export function isTripSoldOut(trip: { availableSlots: number }): boolean {
+  return trip.availableSlots === 0;
+}
+
+/**
  * Check if a trip is in view-only mode (cannot be modified)
  *
+ * A trip is view-only if:
+ * - Status is DEPARTED, COMPLETED, or CANCELLED
+ * - Trip is sold out (availableSlots === 0)
+ *
  * @param status - Current trip status
- * @returns true if trip is view-only (DEPARTED, COMPLETED, CANCELLED)
+ * @param availableSlots - Optional number of available slots (for sold-out check)
+ * @returns true if trip is view-only
  */
-export function isTripViewOnly(status: string): boolean {
-  return FINAL_TRIP_STATUSES.includes(status as FinalTripStatus);
+export function isTripViewOnly(status: string, availableSlots?: number): boolean {
+  if (FINAL_TRIP_STATUSES.includes(status as FinalTripStatus)) return true;
+  if (availableSlots !== undefined && availableSlots === 0) return true;
+  return false;
 }
 
 /**
