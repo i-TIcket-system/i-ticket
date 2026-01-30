@@ -70,8 +70,10 @@ export function ColumnMapper({
   onConfirm,
   onCancel,
 }: ColumnMapperProps) {
-  const [mappings, setMappings] = useState<ColumnMapping[]>(mappingResult.mappings);
-  const [validation, setValidation] = useState(() => validateMappings(mappingResult.mappings));
+  // Ensure mappings is always an array (null safety)
+  const initialMappings = mappingResult?.mappings ?? [];
+  const [mappings, setMappings] = useState<ColumnMapping[]>(initialMappings);
+  const [validation, setValidation] = useState(() => validateMappings(initialMappings));
 
   // Re-validate whenever mappings change
   useEffect(() => {

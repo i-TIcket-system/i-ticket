@@ -129,12 +129,12 @@ export default function TripImportPage() {
       }
 
       // Check if column mapping is needed
-      if (data.needsMapping) {
+      if (data.needsMapping && data.mappingResult?.mappings) {
         setMappingResult({
-          mappings: data.mappingResult.mappings,
-          unmappedRequired: data.mappingResult.unmappedRequired,
+          mappings: data.mappingResult.mappings || [],
+          unmappedRequired: data.mappingResult.unmappedRequired || [],
           autoDetected: data.mappingResult.confidence !== 'manual',
-          confidence: data.mappingResult.confidence,
+          confidence: data.mappingResult.confidence || 'manual',
         });
         setSampleData(data.sampleData || []);
         setStep('mapping');
@@ -444,7 +444,7 @@ export default function TripImportPage() {
       )}
 
       {/* Step 1.5: Column Mapping */}
-      {step === 'mapping' && mappingResult && (
+      {step === 'mapping' && mappingResult && mappingResult.mappings && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
