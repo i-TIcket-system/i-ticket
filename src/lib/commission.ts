@@ -59,15 +59,15 @@ export function calculateBookingAmounts(
 } {
   const ticketTotal = ticketPrice * passengerCount
   const commission = calculateCommission(ticketTotal)
-  // Round final amount for easy payment - only round up if decimal > 0.5
-  // e.g., 898.875 → 899 (rounds up), 898.5 → 898 (stays), 898.4 → 898 (stays)
+  // Keep exact amount - ETB has cents (santim), rounding loses money
+  // Round to 2 decimal places to avoid floating point issues (e.g., 3172.4999999 → 3172.50)
   const rawTotal = ticketTotal + commission.totalCommission
-  const totalAmount = (rawTotal % 1) > 0.5 ? Math.ceil(rawTotal) : Math.floor(rawTotal)
+  const totalAmount = Math.round(rawTotal * 100) / 100
 
   return {
     ticketTotal,
     commission,
-    totalAmount, // Passenger pays this - rounded for easy payment
+    totalAmount, // Passenger pays this - exact amount with cents
   }
 }
 
