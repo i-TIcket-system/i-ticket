@@ -4,6 +4,27 @@
 
 ---
 
+## v2.10.13 - Jan 30, 2026
+
+### CSV Import Validation Fix
+
+**ISSUE: CSV Import Shows "Valid" But Fails with 400 on Import**
+- Validation preview showed "3 valid" trips but clicking Import failed with 400 Bad Request
+- **Root Cause**: Validation API only checked data formats, not database entities (staff/vehicles) or 24-hour conflicts
+- **Fix**: Added full database validation to the validate step:
+  - Staff phone numbers checked against company's staff list
+  - Vehicle plate numbers checked against company's fleet
+  - 24-hour scheduling conflicts now checked during preview
+  - Improved error display to handle ValidationError objects properly
+- **Files**:
+  - `src/app/api/company/trips/import/validate/route.ts` - Added conflict checking
+  - `src/app/(company)/company/trips/import/page.tsx` - Fixed error message display
+
+### Files Modified
+- 2 files modified
+
+---
+
 ## v2.10.12 - Jan 29, 2026
 
 ### Logo Refresh, Pagination & Docs Restructure (3 Issues)
