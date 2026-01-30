@@ -130,29 +130,30 @@ export default function TicketsPage() {
     await new Promise(resolve => setTimeout(resolve, 100))
 
     try {
-      // Get the full dimensions of the element to prevent truncation
       const element = ticketCardRef.current
-      const rect = element.getBoundingClientRect()
+
+      // Use offsetWidth for actual rendered width (not scrollWidth which can be larger)
+      // Use scrollHeight for full content height (in case of overflow)
+      const captureWidth = element.offsetWidth
+      const captureHeight = element.scrollHeight
 
       // Generate canvas from the ticket card
       const canvas = await html2canvas(element, {
         backgroundColor: "#ffffff",
-        scale: 2, // Higher quality
+        scale: 2, // Higher quality for retina displays
         logging: false,
         useCORS: true,
-        // Fix truncation by capturing full element dimensions
-        width: element.scrollWidth,
-        height: element.scrollHeight,
-        windowWidth: element.scrollWidth,
-        windowHeight: element.scrollHeight,
+        // Fix truncation: use offsetWidth for width, scrollHeight for full height
+        width: captureWidth,
+        height: captureHeight,
+        windowWidth: captureWidth,
+        windowHeight: captureHeight,
         // Account for scroll position to capture from top
         scrollX: 0,
         scrollY: -window.scrollY,
-        x: 0,
-        y: 0,
-        ignoreElements: (element) => {
-          // Also ignore elements with data-download-hide attribute as backup
-          return element.hasAttribute('data-download-hide')
+        ignoreElements: (el) => {
+          // Ignore elements with data-download-hide attribute
+          return el.hasAttribute('data-download-hide')
         },
       })
 
