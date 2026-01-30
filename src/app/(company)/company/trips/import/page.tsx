@@ -223,7 +223,20 @@ export default function TripImportPage() {
 
       if (!response.ok) {
         if (data.errors && Array.isArray(data.errors)) {
-          toast.error(data.errors[0] || 'Import failed');
+          // Errors can be strings or ValidationError objects {row, field, message}
+          const firstError = data.errors[0];
+          const errorMessage = typeof firstError === 'string'
+            ? firstError
+            : firstError?.message || 'Import failed';
+          toast.error(errorMessage);
+
+          // If we have detailed errors, show them in the preview
+          if (data.validatedRows || data.errors.some((e: any) => e.row)) {
+            setValidatedRows(data.validatedRows || []);
+            setValidCount(data.validCount || 0);
+            setErrorCount(data.errorCount || data.errors.length || 0);
+            setWarnings(data.warnings || []);
+          }
         } else {
           toast.error(data.error || 'Import failed');
         }

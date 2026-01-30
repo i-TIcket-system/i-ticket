@@ -7,14 +7,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/db';
 import { parseCSV } from '@/lib/import/csv-parser';
 import { parseXLSX } from '@/lib/import/xlsx-parser';
 import {
   validateColumns,
   validateAllRows,
   REQUIRED_COLUMNS,
+  ValidationError,
 } from '@/lib/import/trip-import-validator';
-import { mapTripsToDatabase } from '@/lib/import/trip-import-mapper';
+import { mapTripsToDatabase, MappedTrip } from '@/lib/import/trip-import-mapper';
 import {
   autoDetectColumns,
   applyMapping,
@@ -24,6 +26,143 @@ import {
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const MAX_ROWS = 50;
+
+/**
+ * Helper: Create datetime from date and time strings
+ */
+function createDateTime(dateStr: string, timeStr: string): Date {
+  const date = new Date(dateStr + 'T00:00:00.000Z');
+  const [hours, minutes] = timeStr.split(':').map((num) => parseInt(num, 10));
+  date.setUTCHours(hours, minutes, 0, 0);
+  return date;
+}
+
+/**
+ * Check 24-hour conflicts for staff and vehicle
+ */
+async function checkConflicts(
+  departureTime: Date,
+  driverId: string,
+  conductorId: string,
+  vehicleId: string,
+  companyId: string,
+  manualTicketerId?: string
+): Promise<string[]> {
+  const conflicts: string[] = [];
+
+  const minTime = new Date(departureTime);
+  minTime.setHours(minTime.getHours() - 24);
+  const maxTime = new Date(departureTime);
+  maxTime.setHours(maxTime.getHours() + 24);
+
+  // Check driver conflicts
+  const driverTrips = await prisma.trip.findMany({
+    where: {
+      companyId,
+      driverId,
+      departureTime: { gte: minTime, lte: maxTime },
+    },
+    select: { departureTime: true, origin: true, destination: true },
+  });
+
+  if (driverTrips.length > 0) {
+    const trip = driverTrips[0];
+    conflicts.push(
+      `Driver already assigned to trip on ${trip.departureTime.toISOString().split('T')[0]} ${trip.departureTime.toISOString().split('T')[1].slice(0, 5)} (${trip.origin} → ${trip.destination}). Must be at least 24 hours apart`
+    );
+  }
+
+  // Check conductor conflicts
+  const conductorTrips = await prisma.trip.findMany({
+    where: {
+      companyId,
+      conductorId,
+      departureTime: { gte: minTime, lte: maxTime },
+    },
+    select: { departureTime: true, origin: true, destination: true },
+  });
+
+  if (conductorTrips.length > 0) {
+    const trip = conductorTrips[0];
+    conflicts.push(
+      `Conductor already assigned to trip on ${trip.departureTime.toISOString().split('T')[0]} ${trip.departureTime.toISOString().split('T')[1].slice(0, 5)} (${trip.origin} → ${trip.destination}). Must be at least 24 hours apart`
+    );
+  }
+
+  // Check vehicle conflicts
+  const vehicleTrips = await prisma.trip.findMany({
+    where: {
+      companyId,
+      vehicleId,
+      departureTime: { gte: minTime, lte: maxTime },
+    },
+    select: { departureTime: true },
+  });
+
+  if (vehicleTrips.length > 0) {
+    const trip = vehicleTrips[0];
+    conflicts.push(
+      `Vehicle already in use on ${trip.departureTime.toISOString().split('T')[0]} ${trip.departureTime.toISOString().split('T')[1].slice(0, 5)}. Assign a different vehicle or change the departure time`
+    );
+  }
+
+  // Check manual ticketer conflicts
+  if (manualTicketerId) {
+    const ticketerTrips = await prisma.trip.findMany({
+      where: {
+        companyId,
+        manualTicketerId,
+        departureTime: { gte: minTime, lte: maxTime },
+      },
+      select: { departureTime: true },
+    });
+
+    if (ticketerTrips.length > 0) {
+      const trip = ticketerTrips[0];
+      conflicts.push(
+        `Manual ticketer already assigned to trip on ${trip.departureTime.toISOString().split('T')[0]} ${trip.departureTime.toISOString().split('T')[1].slice(0, 5)}. Must be at least 24 hours apart`
+      );
+    }
+  }
+
+  return conflicts;
+}
+
+/**
+ * Check 24-hour conflicts for all mapped trips
+ */
+async function checkAllConflicts(
+  mappedTrips: MappedTrip[],
+  companyId: string
+): Promise<ValidationError[]> {
+  const conflictErrors: ValidationError[] = [];
+
+  for (let i = 0; i < mappedTrips.length; i++) {
+    const trip = mappedTrips[i];
+    const rowNumber = i + 2; // +2 because row 1 is header, Excel is 1-indexed
+
+    const departureTime = createDateTime(trip.departureDate, trip.departureTime);
+
+    const conflicts = await checkConflicts(
+      departureTime,
+      trip.driverId,
+      trip.conductorId,
+      trip.vehicleId,
+      companyId,
+      trip.manualTicketerId
+    );
+
+    conflicts.forEach((conflict) => {
+      conflictErrors.push({
+        row: rowNumber,
+        field: 'departureTime',
+        message: conflict,
+      });
+    });
+  }
+
+  return conflictErrors;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -275,6 +414,42 @@ export async function POST(request: NextRequest) {
         validCount,
         errorCount,
         errors: dbMappingResult.errors,
+        validatedRows: mergedRows,
+        warnings: dbMappingResult.warnings,
+      });
+    }
+
+    // Check 24-hour conflicts for staff and vehicles
+    const conflictErrors = await checkAllConflicts(
+      dbMappingResult.mappedTrips,
+      session.user.companyId
+    );
+
+    if (conflictErrors.length > 0) {
+      // Merge conflict errors into validatedRows
+      const mergedRows = validationResult.validatedRows.map((validatedRow) => {
+        const conflictsForRow = conflictErrors.filter(
+          (e) => e.row === validatedRow.row
+        );
+
+        if (conflictsForRow.length > 0) {
+          return {
+            ...validatedRow,
+            isValid: false,
+            errors: [...validatedRow.errors, ...conflictsForRow],
+          };
+        }
+        return validatedRow;
+      });
+
+      const validCount = mergedRows.filter((r) => r.isValid).length;
+      const errorCount = mergedRows.filter((r) => !r.isValid).length;
+
+      return NextResponse.json({
+        success: false,
+        validCount,
+        errorCount,
+        errors: conflictErrors,
         validatedRows: mergedRows,
         warnings: dbMappingResult.warnings,
       });
