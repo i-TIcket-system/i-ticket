@@ -426,48 +426,58 @@ export default function VehiclesPage() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <Truck className="h-8 w-8 mx-auto mb-2 text-primary" />
-              <p className="text-2xl font-bold">{stats.total}</p>
-              <p className="text-xs text-muted-foreground">Total Vehicles</p>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats Cards - Dynamic grid based on visible cards */}
+      {(() => {
+        const visibleCardCount = 2 + (stats.maintenance > 0 ? 1 : 0) + (stats.inactive > 0 ? 1 : 0)
+        const gridCols = visibleCardCount === 2 ? "md:grid-cols-2" : visibleCardCount === 3 ? "md:grid-cols-3" : "md:grid-cols-4"
+        return (
+          <div className={`grid grid-cols-1 ${gridCols} gap-4 mb-6`}>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <Truck className="h-8 w-8 mx-auto mb-2 text-primary" />
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                  <p className="text-xs text-muted-foreground">Total Vehicles</p>
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-600" />
-              <p className="text-2xl font-bold">{stats.active}</p>
-              <p className="text-xs text-muted-foreground">Active</p>
-            </div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <CheckCircle className="h-8 w-8 mx-auto mb-2 text-green-600" />
+                  <p className="text-2xl font-bold">{stats.active}</p>
+                  <p className="text-xs text-muted-foreground">Active</p>
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <Wrench className="h-8 w-8 mx-auto mb-2 text-orange-600" />
-              <p className="text-2xl font-bold">{stats.maintenance}</p>
-              <p className="text-xs text-muted-foreground">In Maintenance</p>
-            </div>
-          </CardContent>
-        </Card>
+            {stats.maintenance > 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <Wrench className="h-8 w-8 mx-auto mb-2 text-orange-600" />
+                    <p className="text-2xl font-bold">{stats.maintenance}</p>
+                    <p className="text-xs text-muted-foreground">In Maintenance</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <XCircle className="h-8 w-8 mx-auto mb-2 text-gray-600" />
-              <p className="text-2xl font-bold">{stats.inactive}</p>
-              <p className="text-xs text-muted-foreground">Inactive</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            {stats.inactive > 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <XCircle className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+                    <p className="text-2xl font-bold">{stats.inactive}</p>
+                    <p className="text-xs text-muted-foreground">Inactive</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )
+      })()}
 
       {/* Search & Filter */}
       {vehicles.length > 0 && (

@@ -608,35 +608,78 @@ export default function BookingPage() {
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Full Name *</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder={passenger.isChild ? "Child's name" : "As shown on ID"}
-                            value={passenger.name}
-                            onChange={(e) => {
-                              updatePassenger(index, "name", e.target.value)
-                              // Clear error when user types
-                              if (validationErrors[`passenger-${index}-name`]) {
-                                setValidationErrors((prev) => {
-                                  const newErrors = { ...prev }
-                                  delete newErrors[`passenger-${index}-name`]
-                                  return newErrors
-                                })
-                              }
-                            }}
-                            className={`pl-10 ${validationErrors[`passenger-${index}-name`] ? "border-destructive" : ""}`}
-                            required
-                            aria-invalid={!!validationErrors[`passenger-${index}-name`]}
-                            aria-describedby={validationErrors[`passenger-${index}-name`] ? `passenger-${index}-name-error` : undefined}
-                          />
-                        </div>
+                      {/* Name Field - Visually Prominent */}
+                      <div className={`space-y-2 p-4 rounded-lg border-2 transition-all ${
+                        validationErrors[`passenger-${index}-name`]
+                          ? "bg-destructive/5 border-destructive"
+                          : "bg-primary/5 border-primary/20"
+                      }`}>
+                        <Label className="text-base font-semibold flex items-center gap-2">
+                          <User className="h-4 w-4 text-primary" />
+                          Full Name
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <Input
+                          placeholder={passenger.isChild ? "Child's name" : "As shown on ID"}
+                          value={passenger.name}
+                          onChange={(e) => {
+                            updatePassenger(index, "name", e.target.value)
+                            // Clear error when user types
+                            if (validationErrors[`passenger-${index}-name`]) {
+                              setValidationErrors((prev) => {
+                                const newErrors = { ...prev }
+                                delete newErrors[`passenger-${index}-name`]
+                                return newErrors
+                              })
+                            }
+                          }}
+                          className={`text-lg font-medium h-12 ${
+                            validationErrors[`passenger-${index}-name`]
+                              ? "border-destructive border-2 bg-destructive/5"
+                              : ""
+                          }`}
+                          required
+                          aria-invalid={!!validationErrors[`passenger-${index}-name`]}
+                          aria-describedby={validationErrors[`passenger-${index}-name`] ? `passenger-${index}-name-error` : undefined}
+                        />
                         {validationErrors[`passenger-${index}-name`] && (
-                          <p id={`passenger-${index}-name-error`} className="text-xs text-destructive" role="alert" aria-live="polite">
+                          <p id={`passenger-${index}-name-error`} className="text-sm text-destructive font-medium" role="alert" aria-live="polite">
                             {validationErrors[`passenger-${index}-name`]}
                           </p>
                         )}
+                      </div>
+
+                      {/* Phone Field - Visually Prominent */}
+                      <div className={`space-y-2 p-4 rounded-lg border-2 transition-all ${
+                        validationErrors[`passenger-${index}-phone`]
+                          ? "bg-destructive/5 border-destructive"
+                          : passenger.isChild
+                            ? "bg-muted/30 border-muted"
+                            : "bg-primary/5 border-primary/20"
+                      }`}>
+                        <Label className="text-base font-semibold flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-primary" />
+                          Phone Number
+                          {!passenger.isChild && <span className="text-destructive">*</span>}
+                          {passenger.isChild && <span className="text-muted-foreground text-sm font-normal">(Optional)</span>}
+                        </Label>
+                        <PhoneInput
+                          value={passenger.phone}
+                          onChange={(value) => {
+                            updatePassenger(index, "phone", value)
+                            // Clear error when user types
+                            if (validationErrors[`passenger-${index}-phone`]) {
+                              setValidationErrors((prev) => {
+                                const newErrors = { ...prev }
+                                delete newErrors[`passenger-${index}-phone`]
+                                return newErrors
+                              })
+                            }
+                          }}
+                          disabled={passenger.isChild}
+                          required={!passenger.isChild}
+                          error={validationErrors[`passenger-${index}-phone`]}
+                        />
                       </div>
 
                       {/* ID Verification Note */}
@@ -646,18 +689,6 @@ export default function BookingPage() {
                           <p>You'll need to show ID matching your name when boarding</p>
                         </div>
                       )}
-
-                      <div className="space-y-2">
-                        <Label>
-                          Phone Number {passenger.isChild ? "(Optional)" : "*"}
-                        </Label>
-                        <PhoneInput
-                          value={passenger.phone}
-                          onChange={(value) => updatePassenger(index, "phone", value)}
-                          disabled={passenger.isChild}
-                          required={!passenger.isChild}
-                        />
-                      </div>
 
                       <div className="space-y-2">
                         <Label>Pickup Location (Optional)</Label>

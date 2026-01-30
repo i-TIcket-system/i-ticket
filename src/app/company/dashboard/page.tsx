@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
@@ -125,6 +125,9 @@ export default function CompanyDashboard() {
     return new Set()
   })
 
+  // Ref to prevent request stacking on slow networks
+  const isFetchingRef = useRef(false)
+
   // Auto-refresh with polling
   useEffect(() => {
     if (status === "authenticated") {
@@ -188,56 +191,115 @@ export default function CompanyDashboard() {
     }
   }, [trips, dismissedAlerts])
 
-  const fetchDashboardData = async () => {
+  // Helper: fetch with timeout for mobile networks
+  const fetchWithTimeout = async (url: string, timeout = 8000): Promise<Response> => {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), timeout)
     try {
-      const [tripsRes, statsRes, revenueRes, bookingsRes, routesRes, passengersRes] = await Promise.all([
-        fetch("/api/company/trips").catch(e => {
-          console.error("Trips API error:", e)
-          return { ok: false, json: async () => ({}) } as Response
-        }),
-        fetch("/api/company/stats").catch(e => {
-          console.error("Stats API error:", e)
-          return { ok: false, json: async () => ({}) } as Response
-        }),
-        fetch("/api/company/analytics/revenue").catch(e => {
-          console.error("Revenue API error:", e)
-          return { ok: false, json: async () => ({}) } as Response
-        }),
-        fetch("/api/company/analytics/bookings").catch(e => {
-          console.error("Bookings API error:", e)
-          return { ok: false, json: async () => ({}) } as Response
-        }),
-        fetch("/api/company/analytics/routes").catch(e => {
-          console.error("Routes API error:", e)
-          return { ok: false, json: async () => ({}) } as Response
-        }),
-        fetch("/api/company/analytics/passengers").catch(e => {
-          console.error("Passengers API error:", e)
-          return { ok: false, json: async () => ({}) } as Response
-        }),
+      return await fetch(url, { signal: controller.signal })
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  }
+
+  const fetchDashboardData = async () => {
+    // Prevent request stacking on slow networks
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
+
+    try {
+      // Use Promise.allSettled for graceful degradation - partial data is better than no data
+      const results = await Promise.allSettled([
+        fetchWithTimeout("/api/company/trips"),
+        fetchWithTimeout("/api/company/stats"),
+        fetchWithTimeout("/api/company/analytics/revenue"),
+        fetchWithTimeout("/api/company/analytics/bookings"),
+        fetchWithTimeout("/api/company/analytics/routes"),
+        fetchWithTimeout("/api/company/analytics/passengers"),
       ])
 
-      const tripsData = await tripsRes.json()
-      const statsData = await statsRes.json()
-      const revenueDataRes = await revenueRes.json()
-      const bookingsDataRes = await bookingsRes.json()
-      const routesDataRes = await routesRes.json()
-      const passengersDataRes = await passengersRes.json()
+      const [tripsResult, statsResult, revenueResult, bookingsResult, routesResult, passengersResult] = results
 
-      if (tripsRes.ok) setTrips(tripsData.trips || [])
-      if (statsRes.ok) setStats(statsData.stats || null)
-      if (revenueRes.ok) setRevenueData(revenueDataRes.data || [])
-      if (bookingsRes.ok) {
-        setBookingStats(bookingsDataRes.bookingStats || null)
-        setOccupancyData(bookingsDataRes.occupancyData || [])
+      let failedApis = 0
+      const apiNames: string[] = []
+
+      // Process trips
+      if (tripsResult.status === "fulfilled" && tripsResult.value.ok) {
+        const data = await tripsResult.value.json()
+        setTrips(data.trips || [])
+      } else {
+        failedApis++
+        apiNames.push("trips")
+        console.error("Trips API failed:", tripsResult.status === "rejected" ? tripsResult.reason : "Not OK")
       }
-      if (routesRes.ok) setTopRoutes(routesDataRes.topRoutes || [])
-      if (passengersRes.ok) setPassengerMilestone(passengersDataRes || null)
+
+      // Process stats
+      if (statsResult.status === "fulfilled" && statsResult.value.ok) {
+        const data = await statsResult.value.json()
+        setStats(data.stats || null)
+      } else {
+        failedApis++
+        apiNames.push("stats")
+        console.error("Stats API failed:", statsResult.status === "rejected" ? statsResult.reason : "Not OK")
+      }
+
+      // Process revenue
+      if (revenueResult.status === "fulfilled" && revenueResult.value.ok) {
+        const data = await revenueResult.value.json()
+        setRevenueData(data.data || [])
+      } else {
+        failedApis++
+        apiNames.push("revenue")
+        console.error("Revenue API failed:", revenueResult.status === "rejected" ? revenueResult.reason : "Not OK")
+      }
+
+      // Process bookings
+      if (bookingsResult.status === "fulfilled" && bookingsResult.value.ok) {
+        const data = await bookingsResult.value.json()
+        setBookingStats(data.bookingStats || null)
+        setOccupancyData(data.occupancyData || [])
+      } else {
+        failedApis++
+        apiNames.push("bookings")
+        console.error("Bookings API failed:", bookingsResult.status === "rejected" ? bookingsResult.reason : "Not OK")
+      }
+
+      // Process routes
+      if (routesResult.status === "fulfilled" && routesResult.value.ok) {
+        const data = await routesResult.value.json()
+        setTopRoutes(data.topRoutes || [])
+      } else {
+        failedApis++
+        apiNames.push("routes")
+        console.error("Routes API failed:", routesResult.status === "rejected" ? routesResult.reason : "Not OK")
+      }
+
+      // Process passengers
+      if (passengersResult.status === "fulfilled" && passengersResult.value.ok) {
+        const data = await passengersResult.value.json()
+        setPassengerMilestone(data || null)
+      } else {
+        failedApis++
+        apiNames.push("passengers")
+        console.error("Passengers API failed:", passengersResult.status === "rejected" ? passengersResult.reason : "Not OK")
+      }
+
+      // Show appropriate toast based on failures
+      if (failedApis === 6) {
+        // All APIs failed - show error
+        toast.error("Failed to load dashboard data. Please check your connection and refresh.")
+      } else if (failedApis > 0) {
+        // Partial failure - show warning
+        toast.warning(`Some data couldn't be loaded (${apiNames.join(", ")}). Dashboard showing partial data.`, {
+          duration: 5000,
+        })
+      }
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error)
       toast.error("Failed to load dashboard data. Please refresh the page.")
     } finally {
       setIsLoading(false)
+      isFetchingRef.current = false
     }
   }
 

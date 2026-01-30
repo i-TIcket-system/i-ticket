@@ -82,6 +82,10 @@ function SearchContent() {
   const [showComparison, setShowComparison] = useState(false)
   const [compareMode, setCompareMode] = useState(false) // Toggle for compare mode
 
+  // Fallback content for empty state
+  const [popularRoutes, setPopularRoutes] = useState<Array<{ from: string; to: string }>>([])
+  const [upcomingTrips, setUpcomingTrips] = useState<Trip[]>([])
+
   // Search filters
   const [origin, setOrigin] = useState(searchParams.get("from") || "")
   const [destination, setDestination] = useState(searchParams.get("to") || "")
@@ -138,6 +142,23 @@ function SearchContent() {
       searchTrips()
     }
   }, [searchParams])
+
+  // Fetch fallback content (popular routes + upcoming trips) when no results
+  useEffect(() => {
+    if (trips.length === 0 && !isLoading && (origin || destination || date)) {
+      // Fetch popular routes
+      fetch("/api/popular-routes")
+        .then((res) => res.json())
+        .then((data) => setPopularRoutes(data.routes || []))
+        .catch(() => setPopularRoutes([]))
+
+      // Fetch upcoming trips
+      fetch("/api/upcoming-trips")
+        .then((res) => res.json())
+        .then((data) => setUpcomingTrips(data.trips || []))
+        .catch(() => setUpcomingTrips([]))
+    }
+  }, [trips.length, isLoading, origin, destination, date])
 
   // Auto-refresh search results every 30 seconds (paused during comparison)
   // Silent refresh: no loading state, preserves scroll position
@@ -431,82 +452,166 @@ function SearchContent() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : trips.length === 0 ? (
-          <Card className="glass-dramatic p-12 text-center max-w-2xl mx-auto shadow-glass-lg ethiopianPattern border-white/10">
-            {/* Ethiopian coffee ceremony illustration placeholder */}
-            <div className="relative mb-6">
-              <div className="h-24 w-24 mx-auto rounded-full glass-teal flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform">
-                <Coffee className="h-12 w-12 text-primary" />
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="h-32 w-32 rounded-full bg-gradient-to-br from-primary/20 to-teal-light/20 blur-2xl" />
-              </div>
-            </div>
-
-            <h3 className="text-2xl font-display font-semibold mb-3 gradient-text-simien">No trips found</h3>
-            <p className="text-gray-600 dark:text-gray-300 mb-6 text-lg">
-              Try adjusting your search criteria or check back later.
-            </p>
-
-            <div className="glass-subtle rounded-xl p-6 mb-6 text-left border border-white/25">
-              <p className="font-semibold text-foreground mb-3">Suggestions:</p>
-              <div className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
-                <div className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">•</span>
-                  <p>Try different dates (tomorrow or next week)</p>
+          <div className="space-y-8">
+            {/* No Results Card */}
+            <Card className="glass-dramatic p-8 text-center max-w-2xl mx-auto shadow-glass-lg ethiopianPattern border-white/10">
+              {/* Ethiopian coffee ceremony illustration placeholder */}
+              <div className="relative mb-6">
+                <div className="h-20 w-20 mx-auto rounded-full glass-teal flex items-center justify-center relative z-10 group-hover:scale-110 transition-transform">
+                  <Coffee className="h-10 w-10 text-primary" />
                 </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">•</span>
-                  <p>Check for nearby cities or alternative routes</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="text-primary mt-0.5">•</span>
-                  <p>Some routes may not operate daily</p>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="h-28 w-28 rounded-full bg-gradient-to-br from-primary/20 to-teal-light/20 blur-2xl" />
                 </div>
               </div>
-            </div>
 
-            <div className="flex flex-wrap gap-3 justify-center mb-6">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const tomorrow = new Date()
-                  tomorrow.setDate(tomorrow.getDate() + 1)
-                  setDate(tomorrow.toISOString().split('T')[0])
-                }}
-                className="glass-subtle border-white/30 hover:glass-moderate"
-              >
-                Try Tomorrow
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const nextWeek = new Date()
-                  nextWeek.setDate(nextWeek.getDate() + 7)
-                  setDate(nextWeek.toISOString().split('T')[0])
-                }}
-                className="glass-subtle border-white/30 hover:glass-moderate"
-              >
-                Try Next Week
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => { setBusType("all"); }}
-                className="glass-subtle border-white/30 hover:glass-moderate"
-              >
-                All Bus Types
-              </Button>
-            </div>
+              <h3 className="text-2xl font-display font-semibold mb-3 gradient-text-simien">No trips found</h3>
+              <p className="text-gray-600 dark:text-gray-300 mb-6 text-base">
+                No trips available for this route. Try the suggestions below.
+              </p>
 
-            <Button
-              onClick={() => { setOrigin(""); setDestination(""); setDate(""); setBusType("all"); }}
-              className="glass-button shadow-lg hover:shadow-xl"
-            >
-              Clear All Filters
-            </Button>
-          </Card>
+              <div className="flex flex-wrap gap-3 justify-center mb-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const tomorrow = new Date()
+                    tomorrow.setDate(tomorrow.getDate() + 1)
+                    setDate(tomorrow.toISOString().split('T')[0])
+                  }}
+                  className="glass-subtle border-white/30 hover:glass-moderate"
+                >
+                  Try Tomorrow
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const nextWeek = new Date()
+                    nextWeek.setDate(nextWeek.getDate() + 7)
+                    setDate(nextWeek.toISOString().split('T')[0])
+                  }}
+                  className="glass-subtle border-white/30 hover:glass-moderate"
+                >
+                  Try Next Week
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { setBusType("all"); }}
+                  className="glass-subtle border-white/30 hover:glass-moderate"
+                >
+                  All Bus Types
+                </Button>
+              </div>
+
+              <Button
+                onClick={() => { setOrigin(""); setDestination(""); setDate(""); setBusType("all"); }}
+                className="glass-button shadow-lg hover:shadow-xl"
+              >
+                Clear All Filters
+              </Button>
+            </Card>
+
+            {/* Popular Routes Section */}
+            {popularRoutes.length > 0 && (
+              <Card className="glass-dramatic p-6 border-white/10 shadow-glass-lg">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  Popular Routes
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {popularRoutes.map((route, index) => (
+                    <Button
+                      key={index}
+                      variant="outline"
+                      size="sm"
+                      className="glass-subtle border-white/30 hover:glass-moderate hover:border-primary/50 transition-all"
+                      onClick={() => {
+                        setOrigin(route.from)
+                        setDestination(route.to)
+                        setDate("")
+                        const params = new URLSearchParams()
+                        params.set("from", route.from)
+                        params.set("to", route.to)
+                        router.push(`/search?${params.toString()}`)
+                      }}
+                    >
+                      <span className="font-medium">{route.from}</span>
+                      <ArrowRight className="h-3 w-3 mx-1 text-primary" />
+                      <span className="font-medium">{route.to}</span>
+                    </Button>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {/* Upcoming Trips Section */}
+            {upcomingTrips.length > 0 && (
+              <Card className="glass-dramatic p-6 border-white/10 shadow-glass-lg">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Calendar className="h-5 w-5 text-primary" />
+                  Upcoming Trips Available
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {upcomingTrips.map((trip) => (
+                    <Card
+                      key={trip.id}
+                      className="glass-subtle border-white/20 hover:glass-moderate transition-all cursor-pointer group"
+                      onClick={() => {
+                        setOrigin(trip.origin)
+                        setDestination(trip.destination)
+                        const tripDate = new Date(trip.departureTime).toISOString().split('T')[0]
+                        setDate(tripDate)
+                        const params = new URLSearchParams()
+                        params.set("from", trip.origin)
+                        params.set("to", trip.destination)
+                        params.set("date", tripDate)
+                        router.push(`/search?${params.toString()}`)
+                      }}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-primary">
+                            {trip.company.name}
+                          </span>
+                          <Badge className="bg-primary/10 border-primary/30 text-primary text-xs">
+                            {formatCurrency(Number(trip.price))}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-medium">{trip.origin}</span>
+                          <ArrowRight className="h-3 w-3 text-muted-foreground" />
+                          <span className="font-medium">{trip.destination}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(trip.departureTime).toLocaleDateString("en-ET", {
+                              weekday: "short",
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {new Date(trip.departureTime).toLocaleTimeString("en-ET", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex items-center gap-1 text-xs">
+                          <Users className="h-3 w-3 text-green-500" />
+                          <span className="text-green-600">{trip.availableSlots} seats left</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </Card>
+            )}
+          </div>
         ) : (
           <div className="space-y-4">
             {trips
