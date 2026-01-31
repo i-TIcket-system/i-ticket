@@ -142,7 +142,7 @@ async function main() {
               phone,
               password: hashedPassword,
               role: 'COMPANY_ADMIN',
-              companyId: company.id,
+              company: { connect: { id: company.id } },
               staffRole: 'DRIVER',
               staffStatus: 'AVAILABLE',
               licenseNumber: `DL-${company.id.slice(-4)}-${i + 1}`,
@@ -175,7 +175,7 @@ async function main() {
               phone,
               password: hashedPassword,
               role: 'COMPANY_ADMIN',
-              companyId: company.id,
+              company: { connect: { id: company.id } },
               staffRole: 'CONDUCTOR',
               staffStatus: 'AVAILABLE',
             }
@@ -204,7 +204,7 @@ async function main() {
         try {
           const vehicle = await prisma.vehicle.create({
             data: {
-              companyId: company.id,
+              company: { connect: { id: company.id } },
               plateNumber,
               sideNumber,
               make: 'Test Bus',
