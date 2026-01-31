@@ -5,6 +5,7 @@ import { PlayCircle, PauseCircle, Loader2, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { hasDepartedEthiopia } from "@/lib/utils"
 
 interface BookingControlCardProps {
   tripId: string
@@ -27,7 +28,8 @@ export function BookingControlCard({
 }: BookingControlCardProps) {
   // 🚨 ULTRA CRITICAL: Check BOTH status AND departure time
   // Past trips (even if still SCHEDULED) should be treated as departed
-  const isPastTrip = new Date(departureTime) < new Date()
+  // FIX: Use Ethiopia timezone for proper comparison
+  const isPastTrip = hasDepartedEthiopia(departureTime)
   const isStatusBlocked = ["DEPARTED", "COMPLETED", "CANCELLED"].includes(tripStatus) || isPastTrip
   // Force halted display for blocked statuses OR past trips
   const displayHalted = isStatusBlocked || bookingHalted

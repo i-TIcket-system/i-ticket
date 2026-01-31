@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import prisma, { transactionWithTimeout } from "@/lib/db"
 import { authOptions } from "@/lib/auth"
 import { validateTripUpdate } from "@/lib/trip-update-validator"
+import { hasDepartedEthiopia } from "@/lib/utils"
 
 /**
  * POST /api/company/trips/bulk
@@ -109,7 +110,8 @@ export async function POST(request: NextRequest) {
 
               // RULE-003: Cannot modify view-only trips (DEPARTED, COMPLETED, CANCELLED)
               // Also treat past SCHEDULED trips as view-only (effectively DEPARTED)
-              const isPastTrip = new Date(trip.departureTime) < new Date()
+              // FIX: Use Ethiopia timezone for proper comparison
+              const isPastTrip = hasDepartedEthiopia(trip.departureTime)
               const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
 
               if (["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)) {
@@ -342,7 +344,8 @@ export async function DELETE(request: NextRequest) {
 
           // RULE-003: Cannot delete view-only trips (DEPARTED, COMPLETED, CANCELLED)
           // Also treat past SCHEDULED trips as view-only (effectively DEPARTED)
-          const isPastTrip = new Date(trip.departureTime) < new Date()
+          // FIX: Use Ethiopia timezone for proper comparison
+          const isPastTrip = hasDepartedEthiopia(trip.departureTime)
           const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
 
           if (["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)) {

@@ -226,6 +226,7 @@ model TelegramSession {
 
 | Bug | Fix |
 |-----|-----|
+| **UTC vs Ethiopia timezone (v2.10.15)** | Use `hasDepartedEthiopia()` from `@/lib/utils` instead of `new Date(departureTime) < new Date()` - AWS EC2 runs in UTC causing trips to be marked DEPARTED 3 hours early |
 | Cron estimatedDuration unit (v2.10.14) | DB stores MINUTES, not hours - use `trip.estimatedDuration * 60 * 1000` not `* 60 * 60 * 1000` |
 | API multi-value query params (v2.10.11) | Don't send CSV (`status=OPEN,IN_PROGRESS`) - make parallel API calls and combine results instead |
 | Date comparison timezone (v2.10.8) | Use `isTodayEthiopia()` and `isSameDayEthiopia()` instead of `toDateString()` - JS dates compare in browser timezone, not Ethiopia |

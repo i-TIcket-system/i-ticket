@@ -59,7 +59,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { formatCurrency, formatDate, formatDuration, getSlotsPercentage, isLowSlots, BUS_TYPES } from "@/lib/utils"
+import { formatCurrency, formatDate, formatDuration, getSlotsPercentage, isLowSlots, BUS_TYPES, hasDepartedEthiopia } from "@/lib/utils"
 import { BookingControlCard } from "@/components/company/BookingControlCard"
 import { TripChat } from "@/components/trip/TripChat"
 import { TripLogCard } from "@/components/trip/TripLogCard"
@@ -301,7 +301,8 @@ export default function TripDetailPage() {
   // Get available status actions (ULTRA CRITICAL: Check past trip)
   const getStatusActions = (status: string, departureTime: string) => {
     // 🚨 ULTRA CRITICAL: Past trips (even SCHEDULED) should only allow DEPARTED→COMPLETED
-    const isPastTrip = new Date(departureTime) < new Date()
+    // FIX: Use Ethiopia timezone for proper comparison
+    const isPastTrip = hasDepartedEthiopia(departureTime)
     const effectiveStatus = isPastTrip && status === "SCHEDULED" ? "DEPARTED" : status
 
     switch (effectiveStatus) {
@@ -391,7 +392,8 @@ export default function TripDetailPage() {
             </Badge>
             {/* RULE-003: Check status, past date, AND sold-out for view-only */}
             {(() => {
-              const isPastTrip = new Date(trip.departureTime) < new Date()
+              // FIX: Use Ethiopia timezone for proper comparison
+              const isPastTrip = hasDepartedEthiopia(trip.departureTime)
               const isSoldOut = trip.availableSlots === 0
               const isViewOnly = isTripViewOnly(trip.status, trip.availableSlots) || isPastTrip
 
@@ -426,12 +428,13 @@ export default function TripDetailPage() {
         </div>
 
         {/* View-Only Banner for DEPARTED, COMPLETED, CANCELLED, past, or sold-out trips */}
-        {(isTripViewOnly(trip.status, trip.availableSlots) || new Date(trip.departureTime) < new Date()) && (
+        {/* FIX: Use Ethiopia timezone for proper comparison */}
+        {(isTripViewOnly(trip.status, trip.availableSlots) || hasDepartedEthiopia(trip.departureTime)) && (
           <ViewOnlyBanner
             tripStatus={
-              trip.availableSlots === 0 && !["DEPARTED", "COMPLETED", "CANCELLED"].includes(trip.status) && new Date(trip.departureTime) >= new Date()
+              trip.availableSlots === 0 && !["DEPARTED", "COMPLETED", "CANCELLED"].includes(trip.status) && !hasDepartedEthiopia(trip.departureTime)
                 ? "SOLD_OUT"
-                : new Date(trip.departureTime) < new Date() && trip.status === "SCHEDULED"
+                : hasDepartedEthiopia(trip.departureTime) && trip.status === "SCHEDULED"
                   ? "DEPARTED"
                   : trip.status
             }

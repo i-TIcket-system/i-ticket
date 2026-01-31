@@ -52,6 +52,63 @@ export function isTodayEthiopia(date: Date | string): boolean {
   return isSameDayEthiopia(date, new Date());
 }
 
+/**
+ * Get current time in Ethiopia timezone as a comparable Date
+ * Use this instead of new Date() when comparing with trip times
+ *
+ * CRITICAL: AWS EC2 servers run in UTC. This function converts "now" to Ethiopia time
+ * so comparisons with trip departure times work correctly regardless of server timezone.
+ */
+export function getNowEthiopia(): Date {
+  const now = new Date();
+  const ethiopiaString = now.toLocaleString('en-US', {
+    timeZone: ETHIOPIA_TIMEZONE
+  });
+  return new Date(ethiopiaString);
+}
+
+/**
+ * Convert a date to Ethiopia timezone for accurate comparison
+ * Use this when you need to compare two dates in Ethiopia context
+ */
+export function toEthiopiaTime(date: Date | string): Date {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const ethiopiaString = dateObj.toLocaleString('en-US', {
+    timeZone: ETHIOPIA_TIMEZONE
+  });
+  return new Date(ethiopiaString);
+}
+
+/**
+ * Check if a departure time has passed in Ethiopia timezone
+ * This is the CORRECT way to check if a trip has departed
+ *
+ * CRITICAL: Use this instead of `new Date(departureTime) < new Date()`
+ * The raw comparison fails when server is in UTC but times are meant for Ethiopia
+ */
+export function hasDepartedEthiopia(departureTime: Date | string): boolean {
+  const departure = toEthiopiaTime(departureTime);
+  const now = getNowEthiopia();
+  return departure < now;
+}
+
+/**
+ * Check if a departure time is in the future in Ethiopia timezone
+ */
+export function isFutureEthiopia(departureTime: Date | string): boolean {
+  return !hasDepartedEthiopia(departureTime);
+}
+
+/**
+ * Get milliseconds until departure in Ethiopia timezone (negative if past)
+ * Useful for calculating delays, countdowns, etc.
+ */
+export function msUntilDepartureEthiopia(departureTime: Date | string): number {
+  const departure = toEthiopiaTime(departureTime);
+  const now = getNowEthiopia();
+  return departure.getTime() - now.getTime();
+}
+
 export function formatDuration(minutes: number): string {
   const hours = Math.floor(minutes / 60)
   const mins = minutes % 60

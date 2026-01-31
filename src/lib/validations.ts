@@ -38,7 +38,11 @@ export const createTripSchema = z.object({
   destination: z.string().min(2, "Destination must be at least 2 characters"),
   route: z.string().optional().nullable(),
   intermediateStops: z.string().optional().nullable(),
-  departureTime: z.string().datetime().refine((date) => new Date(date) > new Date(), {
+  departureTime: z.string().datetime().refine((date) => {
+    // Use simple comparison - validation happens at creation time
+    // and the client/server should be in sync for this check
+    return new Date(date) > new Date();
+  }, {
     message: "Departure time must be in the future",
   }),
   estimatedDuration: z.number().int().min(30, "Duration must be at least 30 minutes").max(2880, "Duration cannot exceed 2880 minutes (48 hours)"),

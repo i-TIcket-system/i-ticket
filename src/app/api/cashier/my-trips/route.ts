@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
 import prisma from "@/lib/db"
 import { sortTripsByStatusAndTime } from "@/lib/sort-trips"
+import { hasDepartedEthiopia } from "@/lib/utils"
 
 /**
  * GET /api/cashier/my-trips
@@ -97,7 +98,8 @@ export async function GET(request: NextRequest) {
     const stats = {
       totalSold: todayBookings.reduce((sum, b) => sum + b.passengers.length, 0),
       totalRevenue: todayBookings.reduce((sum, b) => sum + Number(b.totalAmount), 0),
-      tripsWorked: new Set(trips.filter((t) => new Date(t.departureTime) <= new Date()).map((t) => t.id)).size,
+      // FIX: Use Ethiopia timezone for proper comparison
+      tripsWorked: new Set(trips.filter((t) => hasDepartedEthiopia(t.departureTime)).map((t) => t.id)).size,
     }
 
     return NextResponse.json({

@@ -6,6 +6,7 @@ import { createAuditLogTask } from "@/lib/clickup"
 import { validateTripUpdate } from "@/lib/trip-update-validator"
 import { createNotification } from "@/lib/notifications"
 import { isTripViewOnly, getViewOnlyMessage, FINAL_TRIP_STATUSES } from "@/lib/trip-status"
+import { hasDepartedEthiopia } from "@/lib/utils"
 
 export async function GET(
   request: NextRequest,
@@ -172,7 +173,8 @@ export async function PUT(
 
     // 🚨 CRITICAL: Block all modifications to DEPARTED, COMPLETED, CANCELLED, past, or sold-out trips
     // These trips are VIEW-ONLY - no edits allowed for data integrity and audit compliance
-    const isPastTrip = new Date(existingTrip.departureTime) < new Date()
+    // FIX: Use Ethiopia timezone for proper comparison
+    const isPastTrip = hasDepartedEthiopia(existingTrip.departureTime)
     const effectiveStatus = isPastTrip && existingTrip.status === "SCHEDULED" ? "DEPARTED" : existingTrip.status
     const isSoldOut = existingTrip.availableSlots === 0
 

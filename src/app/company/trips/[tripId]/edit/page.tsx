@@ -47,7 +47,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { BUS_TYPES } from "@/lib/utils"
+import { BUS_TYPES, hasDepartedEthiopia } from "@/lib/utils"
 import { isTripViewOnly } from "@/lib/trip-status"
 import { ViewOnlyBanner } from "@/components/company/ViewOnlyBanner"
 
@@ -207,7 +207,8 @@ export default function EditTripPage() {
 
       if (response.ok) {
         // 🚨 CRITICAL: Redirect if trip is view-only (DEPARTED, COMPLETED, CANCELLED, past, or sold-out)
-        const isPastTrip = new Date(data.trip.departureTime) < new Date()
+        // FIX: Use Ethiopia timezone for proper comparison
+        const isPastTrip = hasDepartedEthiopia(data.trip.departureTime)
         const effectiveStatus = isPastTrip && data.trip.status === "SCHEDULED" ? "DEPARTED" : data.trip.status
         const isSoldOut = data.trip.availableSlots === 0
 

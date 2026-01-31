@@ -20,7 +20,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { formatCurrency, formatDate, isTodayEthiopia } from "@/lib/utils"
+import { formatCurrency, formatDate, isTodayEthiopia, hasDepartedEthiopia, isFutureEthiopia } from "@/lib/utils"
 
 interface AssignedTrip {
   id: string
@@ -99,11 +99,12 @@ export default function CashierDashboard() {
     )
   }
 
+  // FIX: Use Ethiopia timezone for trip filtering
   const activeTrips = trips.filter(
-    (t) => new Date(t.departureTime) >= new Date() && t.availableSlots > 0
+    (t) => !hasDepartedEthiopia(t.departureTime) && t.availableSlots > 0
   )
   const upcomingTrips = trips.filter(
-    (t) => new Date(t.departureTime) > new Date()
+    (t) => isFutureEthiopia(t.departureTime)
   )
 
   return (

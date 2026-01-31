@@ -47,7 +47,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { formatCurrency, formatDate, getSlotsPercentage, isLowSlots } from "@/lib/utils"
+import { formatCurrency, formatDate, getSlotsPercentage, isLowSlots, hasDepartedEthiopia } from "@/lib/utils"
 import { PassengerMilestone } from "@/components/company/PassengerMilestone"
 import { RevenueChart } from "@/components/company/RevenueChart"
 import { BookingPieChart } from "@/components/company/BookingPieChart"
@@ -72,9 +72,9 @@ interface Trip {
 }
 
 // RULE-003: Helper to check if a trip is view-only
+// FIX: Use Ethiopia timezone for proper comparison
 const isViewOnlyTrip = (trip: Trip) => {
-  const departureTime = new Date(trip.departureTime)
-  const isPastTrip = departureTime < new Date()
+  const isPastTrip = hasDepartedEthiopia(trip.departureTime)
   const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
   return ["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)
 }

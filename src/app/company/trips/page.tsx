@@ -56,7 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { formatCurrency, formatDate, getSlotsPercentage, isLowSlots } from "@/lib/utils"
+import { formatCurrency, formatDate, getSlotsPercentage, isLowSlots, hasDepartedEthiopia } from "@/lib/utils"
 import { toast } from "sonner"
 
 interface Trip {
@@ -259,9 +259,9 @@ export default function CompanyTripsPage() {
 
   // RULE-003: Helper to check if a trip is view-only
   // Also includes sold-out trips (availableSlots === 0)
+  // FIX: Use Ethiopia timezone for proper comparison
   const isViewOnlyTrip = (trip: Trip) => {
-    const departureTime = new Date(trip.departureTime)
-    const isPastTrip = departureTime < new Date()
+    const isPastTrip = hasDepartedEthiopia(trip.departureTime)
     const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
     return ["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus) || trip.availableSlots === 0
   }
@@ -335,9 +335,9 @@ export default function CompanyTripsPage() {
         e.preventDefault()
         const filtered = filteredTripsRef.current
         // Filter out view-only trips (including sold-out trips)
+        // FIX: Use Ethiopia timezone for proper comparison
         const selectable = filtered.filter(trip => {
-          const departureTime = new Date(trip.departureTime)
-          const isPastTrip = departureTime < new Date()
+          const isPastTrip = hasDepartedEthiopia(trip.departureTime)
           const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
           return !["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus) && trip.availableSlots > 0
         })

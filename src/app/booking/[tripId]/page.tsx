@@ -608,14 +608,14 @@ export default function BookingPage() {
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Name Field - Visually Prominent */}
+                      {/* Name Field - Teal/Dark Green Prominent Styling */}
                       <div className={`space-y-2 p-4 rounded-lg border-2 transition-all ${
                         validationErrors[`passenger-${index}-name`]
                           ? "bg-destructive/5 border-destructive"
-                          : "bg-primary/5 border-primary/20"
+                          : "bg-[#0e9494]/10 border-[#0e9494]/40"
                       }`}>
-                        <Label className="text-base font-semibold flex items-center gap-2">
-                          <User className="h-4 w-4 text-primary" />
+                        <Label className="text-base font-semibold flex items-center gap-2 text-[#0d4f5c]">
+                          <User className="h-4 w-4 text-[#0e9494]" />
                           Full Name
                           <span className="text-destructive">*</span>
                         </Label>
@@ -636,7 +636,7 @@ export default function BookingPage() {
                           className={`text-lg font-medium h-12 ${
                             validationErrors[`passenger-${index}-name`]
                               ? "border-destructive border-2 bg-destructive/5"
-                              : ""
+                              : "border-[#0e9494]/30 focus:border-[#0e9494] focus:ring-[#0e9494]/20"
                           }`}
                           required
                           aria-invalid={!!validationErrors[`passenger-${index}-name`]}
@@ -649,16 +649,16 @@ export default function BookingPage() {
                         )}
                       </div>
 
-                      {/* Phone Field - Visually Prominent */}
+                      {/* Phone Field - Teal/Dark Green Prominent Styling */}
                       <div className={`space-y-2 p-4 rounded-lg border-2 transition-all ${
                         validationErrors[`passenger-${index}-phone`]
                           ? "bg-destructive/5 border-destructive"
                           : passenger.isChild
                             ? "bg-muted/30 border-muted"
-                            : "bg-primary/5 border-primary/20"
+                            : "bg-[#0e9494]/10 border-[#0e9494]/40"
                       }`}>
-                        <Label className="text-base font-semibold flex items-center gap-2">
-                          <Phone className="h-4 w-4 text-primary" />
+                        <Label className={`text-base font-semibold flex items-center gap-2 ${passenger.isChild ? "" : "text-[#0d4f5c]"}`}>
+                          <Phone className={`h-4 w-4 ${passenger.isChild ? "text-muted-foreground" : "text-[#0e9494]"}`} />
                           Phone Number
                           {!passenger.isChild && <span className="text-destructive">*</span>}
                           {passenger.isChild && <span className="text-muted-foreground text-sm font-normal">(Optional)</span>}

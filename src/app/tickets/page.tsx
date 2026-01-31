@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { formatDate, formatDuration, formatCurrency } from "@/lib/utils"
+import { formatDate, formatDuration, formatCurrency, hasDepartedEthiopia } from "@/lib/utils"
 
 interface BookingWithTrip {
   id: string
@@ -100,11 +100,12 @@ export default function MyTicketsPage() {
     return diffMinutes > 15
   }
 
+  // FIX: Use Ethiopia timezone for upcoming/past trip filtering
   const upcomingBookings = bookings.filter(
-    (b) => b.status === "PAID" && new Date(b.trip.departureTime) > new Date()
+    (b) => b.status === "PAID" && !hasDepartedEthiopia(b.trip.departureTime)
   )
   const pastBookings = bookings.filter(
-    (b) => b.status === "PAID" && new Date(b.trip.departureTime) <= new Date()
+    (b) => b.status === "PAID" && hasDepartedEthiopia(b.trip.departureTime)
   )
   const pendingBookings = bookings.filter((b) => b.status === "PENDING" && !isPaymentExpired(b))
   const expiredBookings = bookings.filter((b) => isPaymentExpired(b))

@@ -54,9 +54,10 @@ async function cleanupOldTrips() {
         const newStatus = hasBookings || trip.status === "DEPARTED" ? "COMPLETED" : "CANCELLED";
 
         // Calculate actual times based on estimated duration
+        // FIX: estimatedDuration is stored in MINUTES, not hours!
         const actualDepartureTime = trip.departureTime;
         const actualArrivalTime = new Date(
-          actualDepartureTime.getTime() + trip.estimatedDuration * 60 * 60 * 1000
+          actualDepartureTime.getTime() + trip.estimatedDuration * 60 * 1000
         );
 
         await prisma.trip.update({

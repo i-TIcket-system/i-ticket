@@ -137,25 +137,28 @@ export default function TicketsPage() {
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 
       // MOBILE FIX: Ensure minimum width for full content capture
-      // The ticket is designed for ~450px min, use 500px to ensure full content
-      const MIN_CAPTURE_WIDTH = 500
+      // Increased from 500 to 550 to ensure full bottom content (total, vehicle, distance)
+      const MIN_CAPTURE_WIDTH = 550
 
       // Store original styles to restore after capture
       const originalWidth = element.style.width
       const originalMinWidth = element.style.minWidth
       const originalMaxWidth = element.style.maxWidth
+      const originalOverflow = element.style.overflow
 
       // Temporarily expand element for capture (fixes mobile truncation)
       element.style.width = `${MIN_CAPTURE_WIDTH}px`
       element.style.minWidth = `${MIN_CAPTURE_WIDTH}px`
       element.style.maxWidth = 'none'
+      element.style.overflow = 'visible' // Ensure no content is clipped
 
-      // Wait for browser to reflow with new dimensions
-      await new Promise(resolve => setTimeout(resolve, 150))
+      // Wait longer for browser to reflow with new dimensions
+      await new Promise(resolve => setTimeout(resolve, 200))
 
-      // Get dimensions after expansion
+      // Get dimensions after expansion - add buffer for bottom content
       const captureWidth = Math.max(element.offsetWidth, MIN_CAPTURE_WIDTH)
-      const captureHeight = element.scrollHeight
+      // Add 50px buffer to ensure bottom content (total price, vehicle, distance) is captured
+      const captureHeight = Math.max(element.scrollHeight, element.offsetHeight) + 50
 
       // Generate canvas from the ticket card
       const canvas = await html2canvas(element, {
@@ -169,10 +172,18 @@ export default function TicketsPage() {
         windowHeight: captureHeight,
         // Account for scroll position to capture from top
         scrollX: 0,
-        scrollY: 0,
+        scrollY: -window.scrollY, // Account for page scroll position
         ignoreElements: (el) => {
           // Ignore elements with data-download-hide attribute
           return el.hasAttribute('data-download-hide')
+        },
+        // Ensure cloned element has proper dimensions for full capture
+        onclone: (clonedDoc, clonedElement) => {
+          clonedElement.style.width = `${captureWidth}px`
+          clonedElement.style.minWidth = `${captureWidth}px`
+          clonedElement.style.maxWidth = 'none'
+          clonedElement.style.height = 'auto'
+          clonedElement.style.overflow = 'visible'
         },
       })
 
@@ -180,6 +191,7 @@ export default function TicketsPage() {
       element.style.width = originalWidth
       element.style.minWidth = originalMinWidth
       element.style.maxWidth = originalMaxWidth
+      element.style.overflow = originalOverflow
 
       if (isIOS) {
         // iOS Safari doesn't support automatic downloads

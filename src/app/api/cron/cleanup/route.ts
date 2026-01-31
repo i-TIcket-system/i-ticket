@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
 import { cleanupExpiredSessions } from "@/lib/sms/session";
 import { getSmsGateway } from "@/lib/sms/gateway";
+import { getNowEthiopia, hasDepartedEthiopia, msUntilDepartureEthiopia } from "@/lib/utils";
 
 // GET /api/cron/cleanup
 //
@@ -226,19 +227,18 @@ async function cancelStaleBooking(booking: any) {
 /**
  * Mark trips as DELAYED when 30+ minutes past departure and still SCHEDULED
  * DELAYED trips can still accept bookings (both online and manual)
+ *
+ * CRITICAL FIX: Uses Ethiopia timezone utilities to avoid marking future trips as delayed
+ * when server runs in UTC (AWS EC2)
  */
 async function markTripsAsDelayed() {
-  const now = new Date();
-  const thirtyMinutesAgo = new Date(now.getTime() - 30 * 60 * 1000);
+  const now = getNowEthiopia();  // FIX: Use Ethiopia time, not server UTC
   let delayedCount = 0;
 
   try {
-    // Find SCHEDULED trips that are 30+ minutes past departure time
-    const tripsToDelay = await prisma.trip.findMany({
+    // Find SCHEDULED trips - we'll filter by Ethiopia time in the loop
+    const scheduledTrips = await prisma.trip.findMany({
       where: {
-        departureTime: {
-          lt: thirtyMinutesAgo,
-        },
         status: 'SCHEDULED', // Only SCHEDULED, not BOARDING or DELAYED
       },
       select: {
@@ -249,7 +249,15 @@ async function markTripsAsDelayed() {
       },
     });
 
-    for (const trip of tripsToDelay) {
+    for (const trip of scheduledTrips) {
+      // FIX: Use Ethiopia timezone for comparison
+      const msLate = -msUntilDepartureEthiopia(trip.departureTime);
+
+      // Skip if trip hasn't departed yet or is less than 30 minutes late
+      if (msLate < 30 * 60 * 1000) {
+        continue;
+      }
+
       try {
         await prisma.$transaction(async (tx) => {
           // Mark trip as DELAYED (booking NOT halted - allow both online and manual)
@@ -272,16 +280,17 @@ async function markTripsAsDelayed() {
               details: JSON.stringify({
                 oldStatus: trip.status,
                 newStatus: 'DELAYED',
-                reason: 'Automatic - 30 minutes past departure time',
+                reason: 'Automatic - 30 minutes past departure time (Ethiopia TZ)',
                 departureTime: trip.departureTime.toISOString(),
                 processedAt: now.toISOString(),
+                minutesLate: Math.round(msLate / 60000),
               }),
             },
           });
         });
 
         delayedCount++;
-        console.log(`[Cron] Trip ${trip.id} marked as DELAYED`);
+        console.log(`[Cron] Trip ${trip.id} marked as DELAYED (${Math.round(msLate / 60000)} min late)`);
       } catch (error) {
         console.error(`[Cron] Failed to mark trip ${trip.id} as DELAYED:`, error);
       }
@@ -299,19 +308,19 @@ async function markTripsAsDelayed() {
  * Mark trips as DEPARTED when their departure time has passed
  * This creates the expected SCHEDULED/DELAYED → DEPARTED → COMPLETED lifecycle
  * Also catches trips that were missed and are still SCHEDULED/BOARDING/DELAYED
+ *
+ * CRITICAL FIX: Uses Ethiopia timezone utilities to avoid marking future trips as departed
+ * when server runs in UTC (AWS EC2)
  */
 async function markTripsAsDeparted() {
-  const now = new Date();
+  const now = getNowEthiopia();  // FIX: Use Ethiopia time, not server UTC
   let departedCount = 0;
 
   try {
-    // Find ALL trips that have past departure time and are still SCHEDULED, BOARDING, or DELAYED
-    // This catches trips that may have been missed due to cron gaps
-    const pastTrips = await prisma.trip.findMany({
+    // Find trips that are still SCHEDULED, BOARDING, or DELAYED
+    // We'll filter by Ethiopia time in the loop
+    const activeTrips = await prisma.trip.findMany({
       where: {
-        departureTime: {
-          lt: now,
-        },
         status: {
           in: ['SCHEDULED', 'BOARDING', 'DELAYED'],
         },
@@ -325,11 +334,16 @@ async function markTripsAsDeparted() {
       },
     });
 
-    for (const trip of pastTrips) {
+    for (const trip of activeTrips) {
+      // FIX: Use Ethiopia timezone for comparison
+      if (!hasDepartedEthiopia(trip.departureTime)) {
+        continue; // Trip hasn't departed yet in Ethiopia time
+      }
+
       // For DELAYED trips, only auto-depart if it's been at least 1 hour past departure
       // (give staff time to manually handle delayed trips)
-      const oneHourPastDeparture = new Date(trip.departureTime.getTime() + 60 * 60 * 1000);
-      if (trip.status === 'DELAYED' && now < oneHourPastDeparture) {
+      const msLate = -msUntilDepartureEthiopia(trip.departureTime);
+      if (trip.status === 'DELAYED' && msLate < 60 * 60 * 1000) {
         continue; // Skip - give delayed trip more time
       }
 
@@ -356,17 +370,18 @@ async function markTripsAsDeparted() {
                 oldStatus: trip.status,
                 newStatus: 'DEPARTED',
                 reason: trip.status === 'DELAYED'
-                  ? 'Automatic - delayed trip auto-departed after 1 hour'
-                  : 'Automatic - departure time passed',
+                  ? 'Automatic - delayed trip auto-departed after 1 hour (Ethiopia TZ)'
+                  : 'Automatic - departure time passed (Ethiopia TZ)',
                 departureTime: trip.departureTime.toISOString(),
                 processedAt: now.toISOString(),
+                minutesPast: Math.round(msLate / 60000),
               }),
             },
           });
         });
 
         departedCount++;
-        console.log(`[Cron] Trip ${trip.id} marked as DEPARTED (was ${trip.status})`);
+        console.log(`[Cron] Trip ${trip.id} marked as DEPARTED (was ${trip.status}, ${Math.round(msLate / 60000)} min past)`);
       } catch (error) {
         console.error(`[Cron] Failed to mark trip ${trip.id} as DEPARTED:`, error);
       }
@@ -388,9 +403,11 @@ async function markTripsAsDeparted() {
  *
  * Note: This function now only handles DEPARTED trips for COMPLETED transition.
  * SCHEDULED/BOARDING/DELAYED → DEPARTED is handled by markTripsAsDeparted().
+ *
+ * CRITICAL FIX: Uses Ethiopia timezone for accurate time comparisons
  */
 async function updateOldTripStatuses() {
-  const now = new Date();
+  const now = getNowEthiopia();  // FIX: Use Ethiopia time
   let completed = 0;
   let cancelled = 0;
 
