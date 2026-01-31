@@ -71,6 +71,7 @@ interface StaffMember {
   phone: string
   email: string | null
   staffRole: string
+  staffStatus: string | null
   licenseNumber: string | null
   employeeId: string | null
   createdAt: string
@@ -85,6 +86,19 @@ const STAFF_ROLES: Record<string, { label: string; icon: any; color: string }> =
   FINANCE: { label: "Finance", icon: DollarSign, color: "bg-emerald-600 text-white" },
 }
 
+const STAFF_STATUS: Record<string, { label: string; color: string }> = {
+  AVAILABLE: { label: "Available", color: "bg-green-100 text-green-800 border-green-300" },
+  ON_TRIP: { label: "On Trip", color: "bg-blue-100 text-blue-800 border-blue-300" },
+  ON_LEAVE: { label: "On Leave", color: "bg-yellow-100 text-yellow-800 border-yellow-300" },
+}
+
+const getStatusInfo = (status: string | null) => {
+  if (!status || !STAFF_STATUS[status]) {
+    return STAFF_STATUS.AVAILABLE
+  }
+  return STAFF_STATUS[status]
+}
+
 // Helper to get role display info (handles custom roles)
 const getRoleInfo = (role: string) => {
   if (STAFF_ROLES[role]) {
@@ -96,6 +110,58 @@ const getRoleInfo = (role: string) => {
     icon: Users,
     color: "bg-gray-600 text-white"
   }
+}
+
+// Status badge with dropdown to change status
+function StatusBadge({ member, onStatusChange }: { member: StaffMember; onStatusChange: () => void }) {
+  const [isUpdating, setIsUpdating] = useState(false)
+  const statusInfo = getStatusInfo(member.staffStatus)
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (newStatus === member.staffStatus) return
+
+    setIsUpdating(true)
+    try {
+      const response = await fetch(`/api/company/staff/${member.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ staffStatus: newStatus }),
+      })
+
+      if (response.ok) {
+        toast.success(`Status updated to ${STAFF_STATUS[newStatus].label}`)
+        onStatusChange()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || "Failed to update status")
+      }
+    } catch (error) {
+      toast.error("An error occurred")
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  return (
+    <Select
+      value={member.staffStatus || "AVAILABLE"}
+      onValueChange={handleStatusChange}
+      disabled={isUpdating}
+    >
+      <SelectTrigger className={`w-[120px] h-7 text-xs border ${statusInfo.color}`}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {Object.entries(STAFF_STATUS).map(([value, info]) => (
+          <SelectItem key={value} value={value}>
+            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs ${info.color}`}>
+              {info.label}
+            </span>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
 }
 
 export default function StaffManagementPage() {
@@ -526,6 +592,7 @@ export default function StaffManagementPage() {
                   <TableRow>
                     <TableHead>Name</TableHead>
                     <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Contact</TableHead>
                     <TableHead>Employee ID</TableHead>
                     <TableHead>License</TableHead>
@@ -535,7 +602,7 @@ export default function StaffManagementPage() {
                 <TableBody>
                   {filteredStaff.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-32 text-center">
+                      <TableCell colSpan={7} className="h-32 text-center">
                         <div className="text-muted-foreground">
                           <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
                           <p>No staff members match your search</p>
@@ -571,6 +638,9 @@ export default function StaffManagementPage() {
                               <RoleIcon className="h-3 w-3 mr-1" />
                               {roleInfo.label}
                             </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <StatusBadge member={member} onStatusChange={fetchStaff} />
                           </TableCell>
                           <TableCell>
                             <div className="space-y-1">

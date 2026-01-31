@@ -56,6 +56,7 @@ export async function GET(req: NextRequest) {
         phone: true,
         email: true,
         staffRole: true,
+        staffStatus: true,
         licenseNumber: true,
         employeeId: true,
         createdAt: true,

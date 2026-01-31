@@ -20,6 +20,7 @@ model User {
 
   // Staff-specific fields (for company employees)
   staffRole      String?   // ADMIN, DRIVER, CONDUCTOR, MANUAL_TICKETER, MECHANIC, FINANCE (only for COMPANY_ADMIN role)
+  staffStatus    String?   @default("AVAILABLE") // AVAILABLE, ON_TRIP, ON_LEAVE (only for staff members)
   licenseNumber  String?   // For drivers
   employeeId     String?   // Company employee ID
 

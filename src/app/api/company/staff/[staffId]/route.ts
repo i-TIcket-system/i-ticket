@@ -13,6 +13,7 @@ const updateStaffSchema = z.object({
     .max(50, "Staff role must not exceed 50 characters")
     .regex(/^[A-Z_]+$/, "Staff role must be uppercase with underscores only (e.g., SUPERVISOR, QUALITY_INSPECTOR)")
     .optional(),
+  staffStatus: z.enum(["AVAILABLE", "ON_TRIP", "ON_LEAVE"]).optional(),
   licenseNumber: z.string().optional().or(z.literal("")),
   employeeId: z.string().optional().or(z.literal("")),
 })

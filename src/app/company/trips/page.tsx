@@ -74,6 +74,8 @@ interface Trip {
   _count: {
     bookings: number
   }
+  paidBookings?: number
+  cancelledBookings?: number
 }
 
 type BulkAction = "price" | "halt" | "resume" | "delete" | null
@@ -769,7 +771,16 @@ export default function CompanyTripsPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">{trip._count.bookings}</Badge>
+                        <div className="flex items-center gap-1">
+                          <Badge variant="secondary">
+                            {trip.paidBookings ?? trip._count.bookings}
+                          </Badge>
+                          {trip.cancelledBookings !== undefined && trip.cancelledBookings > 0 && (
+                            <span className="text-xs text-muted-foreground">
+                              ({trip.cancelledBookings} cancelled)
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-1.5">
@@ -1053,7 +1064,12 @@ export default function CompanyTripsPage() {
                     {trip.origin} → {trip.destination} ({formatDate(trip.departureTime)})
                   </span>
                   <Badge variant="secondary" className="text-xs">
-                    {trip._count.bookings} booking(s)
+                    {trip.paidBookings ?? trip._count.bookings} booking(s)
+                    {trip.cancelledBookings !== undefined && trip.cancelledBookings > 0 && (
+                      <span className="ml-1 text-muted-foreground">
+                        ({trip.cancelledBookings} cancelled)
+                      </span>
+                    )}
                   </Badge>
                 </div>
               ))}

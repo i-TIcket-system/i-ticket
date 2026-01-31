@@ -21,7 +21,37 @@ ssh -i mela-shared-key.pem ubuntu@54.147.33.168
 pm2 status | pm2 logs i-ticket | pm2 restart i-ticket
 ```
 
-**Deploy**: `cd /var/www/i-ticket && git pull && npm ci && npm run build && pm2 restart i-ticket`
+### Deployment Workflow (ALWAYS FOLLOW)
+
+**Step 1: Build locally first**
+```bash
+npm run build
+```
+Fix any errors before proceeding. Never deploy broken code.
+
+**Step 2: Commit and push**
+```bash
+git add <files>
+git commit -m "feat/fix: description"
+git push
+```
+
+**Step 3: Deploy to production**
+```bash
+ssh -i mela-shared-key.pem ubuntu@54.147.33.168
+cd /var/www/i-ticket
+git pull
+npm ci
+npx prisma db push   # Only if schema changed
+npm run build
+pm2 restart i-ticket
+pm2 logs i-ticket --lines 20  # Verify no errors
+```
+
+**Why this order?**
+- Local build catches errors before touching production
+- Production stays stable while you debug locally
+- Never waste time SSHing only to find build fails
 
 ---
 

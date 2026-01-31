@@ -50,15 +50,29 @@ export async function GET(request: NextRequest) {
               select: { name: true },
             },
             _count: {
-              select: { bookings: true },
+              select: {
+                bookings: { where: { status: "PAID" } },
+              },
+            },
+            bookings: {
+              where: { status: "CANCELLED" },
+              select: { id: true },
             },
           },
         }),
         prisma.trip.count({ where })
       ])
 
+      // Transform trips to include booking breakdown
+      const tripsWithBookingBreakdown = trips.map(trip => ({
+        ...trip,
+        paidBookings: trip._count.bookings,
+        cancelledBookings: trip.bookings.length,
+        bookings: undefined, // Remove raw bookings array from response
+      }))
+
       // Sort by status priority (active first), then departure time
-      const sortedTrips = sortTripsByStatusAndTime(trips, "desc")
+      const sortedTrips = sortTripsByStatusAndTime(tripsWithBookingBreakdown, "desc")
 
       return NextResponse.json({
         trips: sortedTrips,
@@ -80,13 +94,27 @@ export async function GET(request: NextRequest) {
           select: { name: true },
         },
         _count: {
-          select: { bookings: true },
+          select: {
+            bookings: { where: { status: "PAID" } },
+          },
+        },
+        bookings: {
+          where: { status: "CANCELLED" },
+          select: { id: true },
         },
       },
     })
 
+    // Transform trips to include booking breakdown
+    const tripsWithBookingBreakdown = trips.map(trip => ({
+      ...trip,
+      paidBookings: trip._count.bookings,
+      cancelledBookings: trip.bookings.length,
+      bookings: undefined, // Remove raw bookings array from response
+    }))
+
     // Sort by status priority (active first), then departure time
-    const sortedTrips = sortTripsByStatusAndTime(trips, "desc")
+    const sortedTrips = sortTripsByStatusAndTime(tripsWithBookingBreakdown, "desc")
 
     return NextResponse.json({ trips: sortedTrips })
   } catch (error) {
