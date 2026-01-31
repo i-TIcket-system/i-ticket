@@ -132,9 +132,29 @@ export default function TicketsPage() {
     try {
       const element = ticketCardRef.current
 
-      // Use offsetWidth for actual rendered width (not scrollWidth which can be larger)
-      // Use scrollHeight for full content height (in case of overflow)
-      const captureWidth = element.offsetWidth
+      // Detect iOS (iPhone, iPad, iPod)
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+
+      // MOBILE FIX: Ensure minimum width for full content capture
+      // The ticket is designed for ~450px min, use 500px to ensure full content
+      const MIN_CAPTURE_WIDTH = 500
+
+      // Store original styles to restore after capture
+      const originalWidth = element.style.width
+      const originalMinWidth = element.style.minWidth
+      const originalMaxWidth = element.style.maxWidth
+
+      // Temporarily expand element for capture (fixes mobile truncation)
+      element.style.width = `${MIN_CAPTURE_WIDTH}px`
+      element.style.minWidth = `${MIN_CAPTURE_WIDTH}px`
+      element.style.maxWidth = 'none'
+
+      // Wait for browser to reflow with new dimensions
+      await new Promise(resolve => setTimeout(resolve, 150))
+
+      // Get dimensions after expansion
+      const captureWidth = Math.max(element.offsetWidth, MIN_CAPTURE_WIDTH)
       const captureHeight = element.scrollHeight
 
       // Generate canvas from the ticket card
@@ -143,35 +163,97 @@ export default function TicketsPage() {
         scale: 2, // Higher quality for retina displays
         logging: false,
         useCORS: true,
-        // Fix truncation: use offsetWidth for width, scrollHeight for full height
         width: captureWidth,
         height: captureHeight,
         windowWidth: captureWidth,
         windowHeight: captureHeight,
         // Account for scroll position to capture from top
         scrollX: 0,
-        scrollY: -window.scrollY,
+        scrollY: 0,
         ignoreElements: (el) => {
           // Ignore elements with data-download-hide attribute
           return el.hasAttribute('data-download-hide')
         },
       })
 
-      // Convert to blob and download
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob)
-          const link = document.createElement("a")
-          link.href = url
-          link.download = `i-Ticket-${ticket.shortCode}-${booking.trip.origin}-${booking.trip.destination}.png`
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-          URL.revokeObjectURL(url)
+      // Restore original styles immediately after capture
+      element.style.width = originalWidth
+      element.style.minWidth = originalMinWidth
+      element.style.maxWidth = originalMaxWidth
+
+      if (isIOS) {
+        // iOS Safari doesn't support automatic downloads
+        // Convert to data URL and open in new tab for user to long-press and save
+        const dataUrl = canvas.toDataURL('image/png')
+
+        // Create a new window/tab with the image
+        const newWindow = window.open('', '_blank')
+        if (newWindow) {
+          newWindow.document.write(`
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta name="viewport" content="width=device-width, initial-scale=1">
+                <title>i-Ticket - ${ticket.shortCode}</title>
+                <style>
+                  body {
+                    margin: 0;
+                    padding: 16px;
+                    background: #f5f5f5;
+                    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+                    text-align: center;
+                  }
+                  .instructions {
+                    background: #0e9494;
+                    color: white;
+                    padding: 12px 16px;
+                    border-radius: 8px;
+                    margin-bottom: 16px;
+                    font-size: 14px;
+                  }
+                  img {
+                    max-width: 100%;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="instructions">
+                  📱 Press and hold the image, then tap "Save to Photos"
+                </div>
+                <img src="${dataUrl}" alt="i-Ticket ${ticket.shortCode}" />
+              </body>
+            </html>
+          `)
+          newWindow.document.close()
+        } else {
+          // Fallback: If popup blocked, show instructions
+          alert('Please allow popups to download your ticket, or take a screenshot of this page.')
         }
-      })
+      } else {
+        // Standard download for non-iOS devices
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement("a")
+            link.href = url
+            link.download = `i-Ticket-${ticket.shortCode}-${booking.trip.origin}-${booking.trip.destination}.png`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(url)
+          }
+        })
+      }
     } catch (error) {
       console.error("Download failed:", error)
+      // Restore styles on error
+      if (ticketCardRef.current) {
+        ticketCardRef.current.style.width = ''
+        ticketCardRef.current.style.minWidth = ''
+        ticketCardRef.current.style.maxWidth = ''
+      }
       alert("Failed to download ticket. Please try again.")
     } finally {
       setIsDownloading(false)
@@ -467,30 +549,30 @@ export default function TicketsPage() {
                             <tbody>
                               {booking.trip.driver && (
                                 <tr>
-                                  <td style={{ paddingBottom: '6px', verticalAlign: 'top', whiteSpace: 'nowrap', color: '#6b7280' }}>
+                                  <td style={{ paddingBottom: '6px', verticalAlign: 'top', whiteSpace: 'nowrap', color: '#4b5563' }}>
                                     Driver:
                                   </td>
-                                  <td style={{ paddingBottom: '6px', paddingLeft: '8px', verticalAlign: 'top', fontWeight: '500', color: '#374151' }}>
+                                  <td style={{ paddingBottom: '6px', paddingLeft: '8px', verticalAlign: 'top', fontWeight: '600', color: '#111827' }}>
                                     {booking.trip.driver.name} ({booking.trip.driver.phone})
                                   </td>
                                 </tr>
                               )}
                               {booking.trip.conductor && (
                                 <tr>
-                                  <td style={{ paddingBottom: '6px', verticalAlign: 'top', whiteSpace: 'nowrap', color: '#6b7280' }}>
+                                  <td style={{ paddingBottom: '6px', verticalAlign: 'top', whiteSpace: 'nowrap', color: '#4b5563' }}>
                                     Conductor:
                                   </td>
-                                  <td style={{ paddingBottom: '6px', paddingLeft: '8px', verticalAlign: 'top', fontWeight: '500', color: '#374151' }}>
+                                  <td style={{ paddingBottom: '6px', paddingLeft: '8px', verticalAlign: 'top', fontWeight: '600', color: '#111827' }}>
                                     {booking.trip.conductor.name} ({booking.trip.conductor.phone})
                                   </td>
                                 </tr>
                               )}
                               {booking.trip.vehicle && (
                                 <tr>
-                                  <td style={{ verticalAlign: 'top', whiteSpace: 'nowrap', color: '#6b7280' }}>
+                                  <td style={{ verticalAlign: 'top', whiteSpace: 'nowrap', color: '#4b5563' }}>
                                     Vehicle:
                                   </td>
-                                  <td style={{ paddingLeft: '8px', verticalAlign: 'top', fontWeight: '500', fontFamily: 'monospace', color: '#374151' }}>
+                                  <td style={{ paddingLeft: '8px', verticalAlign: 'top', fontWeight: '600', fontFamily: 'monospace', color: '#111827' }}>
                                     {booking.trip.vehicle.plateNumber}{booking.trip.vehicle.sideNumber && ` (${booking.trip.vehicle.sideNumber})`}
                                   </td>
                                 </tr>

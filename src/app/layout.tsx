@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider"
 import { Navbar } from "@/components/shared/Navbar"
 import { Footer } from "@/components/shared/Footer"
 import { Toaster } from "sonner"
+import { InstallPrompt } from "@/components/pwa/InstallPrompt"
 
 // Display font - Luxury magazine aesthetic, dramatic contrast
 const playfair = Playfair_Display({
@@ -34,6 +35,29 @@ export const metadata: Metadata = {
   keywords: ["bus tickets", "Ethiopia", "travel", "booking", "Addis Ababa", "Selam Bus", "Sky Bus"],
   authors: [{ name: "i-Ticket Team" }],
   manifest: "/manifest.json",
+  metadataBase: new URL("https://i-ticket.et"),
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://i-ticket.et",
+    siteName: "i-Ticket",
+    title: "i-Ticket - Book Bus Tickets in Ethiopia",
+    description: "AI-driven ticketing platform for seamless travel booking across Ethiopia. Book long-distance bus tickets from Selam, Sky, Abay, and more.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "i-Ticket - Ethiopia's #1 Bus Booking Platform",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "i-Ticket - Book Bus Tickets in Ethiopia",
+    description: "AI-driven ticketing platform for seamless travel booking across Ethiopia.",
+    images: ["/og-image.png"],
+  },
   icons: {
     icon: [
       { url: '/my-favicon/favicon.ico' },
@@ -46,6 +70,9 @@ export const metadata: Metadata = {
     apple: [
       { url: '/my-favicon/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
     ],
+  },
+  other: {
+    "msapplication-TileImage": "/my-favicon/web-app-manifest-512x512.png",
   },
 }
 
@@ -80,6 +107,7 @@ export default function RootLayout({
             <main id="main-content" className="flex-1">{children}</main>
             <Footer />
           </div>
+          <InstallPrompt />
           <Toaster
             position="top-center"
             closeButton
