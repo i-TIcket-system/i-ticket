@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
       const [trips, total] = await Promise.all([
         prisma.trip.findMany({
           where,
-          orderBy: { departureTime: "desc" },
+          orderBy: { departureTime: "asc" },
           skip,
           take: limit,
           include: {
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       }))
 
       // Sort by status priority (active first), then departure time
-      const sortedTrips = sortTripsByStatusAndTime(tripsWithBookingBreakdown, "desc")
+      const sortedTrips = sortTripsByStatusAndTime(tripsWithBookingBreakdown)
 
       return NextResponse.json({
         trips: sortedTrips,
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     // Non-paginated (default for backwards compatibility)
     const trips = await prisma.trip.findMany({
       where,
-      orderBy: { departureTime: "desc" },
+      orderBy: { departureTime: "asc" },
       include: {
         company: {
           select: { name: true },
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {
     }))
 
     // Sort by status priority (active first), then departure time
-    const sortedTrips = sortTripsByStatusAndTime(tripsWithBookingBreakdown, "desc")
+    const sortedTrips = sortTripsByStatusAndTime(tripsWithBookingBreakdown)
 
     return NextResponse.json({ trips: sortedTrips })
   } catch (error) {

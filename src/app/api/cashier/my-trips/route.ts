@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Sort by status priority (active first), then departure time
-    const sortedTrips = sortTripsByStatusAndTime(trips, "asc")
+    const sortedTrips = sortTripsByStatusAndTime(trips)
 
     // Calculate today's stats for this ticketer
     const todayStart = new Date()

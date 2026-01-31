@@ -693,7 +693,19 @@ export default function CompanyTripsPage() {
                       COMPLETED: 3,
                       CANCELLED: 4,
                     }
-                    return (statusOrder[aEffectiveStatus] || 0) - (statusOrder[bEffectiveStatus] || 0)
+
+                    const statusDiff = (statusOrder[aEffectiveStatus] || 0) - (statusOrder[bEffectiveStatus] || 0)
+
+                    // If same status, use smart time ordering
+                    if (statusDiff === 0) {
+                      const timeA = new Date(a.departureTime).getTime()
+                      const timeB = new Date(b.departureTime).getTime()
+                      // Future trips: ascending (soonest first), Past trips: descending (most recent first)
+                      const isFutureStatus = aEffectiveStatus === "SCHEDULED" || aEffectiveStatus === "BOARDING"
+                      return isFutureStatus ? timeA - timeB : timeB - timeA
+                    }
+
+                    return statusDiff
                   })
                   .map((trip) => {
                   const slotsPercentage = getSlotsPercentage(trip.availableSlots, trip.totalSlots)

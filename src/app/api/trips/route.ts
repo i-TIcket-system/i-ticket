@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
     // If sorting by departureTime (default), apply status priority sorting
     // This ensures SCHEDULED trips appear before BOARDING trips
     const finalTrips = sortBy === "departureTime"
-      ? sortTripsByStatusAndTime(trips, "asc")
+      ? sortTripsByStatusAndTime(trips)
       : trips
 
     return NextResponse.json({

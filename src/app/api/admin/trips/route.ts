@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Sorting
     const sortBy = searchParams.get('sortBy') || 'departureTime'
-    const sortOrder = searchParams.get('sortOrder') === 'asc' ? 'asc' : 'desc'
+    const sortOrder = searchParams.get('sortOrder') === 'desc' ? 'desc' : 'asc'
 
     // Build where clause
     const where: any = {}
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
     // If sorting by departureTime (default), apply status priority sorting
     // Otherwise, respect custom sorting
     const finalTrips = sortBy === 'departureTime'
-      ? sortTripsByStatusAndTime(trips, sortOrder)
+      ? sortTripsByStatusAndTime(trips)
       : trips
 
     return NextResponse.json({

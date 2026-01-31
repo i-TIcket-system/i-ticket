@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Sort by status priority (active first), then departure time
-    const sortedTrips = sortTripsByStatusAndTime(trips, "asc")
+    const sortedTrips = sortTripsByStatusAndTime(trips)
 
     return NextResponse.json({ trips: sortedTrips })
   } catch (error) {

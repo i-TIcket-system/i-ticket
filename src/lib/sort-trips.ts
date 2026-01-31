@@ -7,6 +7,10 @@
  * 3. DEPARTED - In progress
  * 4. COMPLETED - Finished trips
  * 5. CANCELLED - Cancelled trips
+ *
+ * Time ordering is smart by default:
+ * - Future/active trips (SCHEDULED, BOARDING): ascending (soonest first)
+ * - Past trips (DEPARTED, COMPLETED, CANCELLED): descending (most recent first)
  */
 
 export const TRIP_STATUS_PRIORITY: Record<string, number> = {
@@ -17,9 +21,12 @@ export const TRIP_STATUS_PRIORITY: Record<string, number> = {
   CANCELLED: 5,
 };
 
+// Statuses where ascending time makes sense (soonest first)
+const FUTURE_STATUSES = new Set(['SCHEDULED', 'BOARDING']);
+
 export function sortTripsByStatusAndTime<T extends { status: string; departureTime: Date | string }>(
   trips: T[],
-  timeOrder: 'asc' | 'desc' = 'asc'
+  timeOrder: 'asc' | 'desc' | 'smart' = 'smart'
 ): T[] {
   return trips.sort((a, b) => {
     // First, sort by status priority
@@ -33,6 +40,12 @@ export function sortTripsByStatusAndTime<T extends { status: string; departureTi
     // If same status, sort by departure time
     const timeA = new Date(a.departureTime).getTime();
     const timeB = new Date(b.departureTime).getTime();
+
+    if (timeOrder === 'smart') {
+      // Smart ordering: future trips ascending, past trips descending
+      const isFutureStatus = FUTURE_STATUSES.has(a.status);
+      return isFutureStatus ? timeA - timeB : timeB - timeA;
+    }
 
     return timeOrder === 'asc' ? timeA - timeB : timeB - timeA;
   });
