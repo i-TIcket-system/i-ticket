@@ -295,6 +295,9 @@ function TripCard({ trip, highlight = false, past = false, forceExpand = false }
   // Auto-open odometer popup when trip departs
   const [autoOpenOdometer, setAutoOpenOdometer] = useState(false)
 
+  // Auto-open end odometer popup when trip completes
+  const [autoOpenEndOdometer, setAutoOpenEndOdometer] = useState(false)
+
   // Force expand when forceExpand prop changes (from notification)
   useEffect(() => {
     if (forceExpand) {
@@ -467,6 +470,7 @@ function TripCard({ trip, highlight = false, past = false, forceExpand = false }
               hasVehicle={!!trip.vehicle}
               onStatusChange={(newStatus) => setTripStatus(newStatus)}
               onDeparted={() => setAutoOpenOdometer(true)}
+              onCompleted={() => setAutoOpenEndOdometer(true)}
             />
           </div>
         )}
@@ -479,7 +483,11 @@ function TripCard({ trip, highlight = false, past = false, forceExpand = false }
               vehicleId={trip.vehicle.id}
               tripStatus={tripStatus}
               autoOpenStart={autoOpenOdometer}
-              onDialogClose={() => setAutoOpenOdometer(false)}
+              autoOpenEnd={autoOpenEndOdometer}
+              onDialogClose={() => {
+                setAutoOpenOdometer(false)
+                setAutoOpenEndOdometer(false)
+              }}
             />
           </div>
         )}

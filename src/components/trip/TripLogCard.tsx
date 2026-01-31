@@ -64,6 +64,7 @@ interface TripLogCardProps {
   vehicleId?: string | null
   tripStatus?: string  // Trip status to control when odometer can be recorded
   autoOpenStart?: boolean  // Auto-open start readings dialog when true
+  autoOpenEnd?: boolean  // Auto-open end readings dialog when true (on completion)
   onDialogClose?: () => void  // Callback when dialog closes
 }
 
@@ -72,6 +73,7 @@ export function TripLogCard({
   vehicleId,
   tripStatus = "SCHEDULED",
   autoOpenStart = false,
+  autoOpenEnd = false,
   onDialogClose,
 }: TripLogCardProps) {
   // Check if trip has departed (can record odometer)
@@ -108,6 +110,18 @@ export function TripLogCard({
       }
     }
   }, [autoOpenStart, isLoading, canEdit, vehicleId, tripLog])
+
+  // Auto-open end dialog when autoOpenEnd prop becomes true (on trip completion)
+  useEffect(() => {
+    if (autoOpenEnd && !isLoading && canEdit && vehicleId) {
+      // Only auto-open if start is recorded but end is not
+      const hasStarted = tripLog?.startOdometer != null && tripLog.startOdometer > 0
+      const hasEnded = tripLog?.endOdometer != null && tripLog.endOdometer > 0
+      if (hasStarted && !hasEnded) {
+        openDialog("end")
+      }
+    }
+  }, [autoOpenEnd, isLoading, canEdit, vehicleId, tripLog])
 
   const fetchTripLog = async () => {
     try {

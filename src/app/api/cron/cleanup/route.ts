@@ -418,13 +418,18 @@ async function updateOldTripStatuses() {
     for (const trip of departedTrips) {
       try {
         // Calculate estimated arrival time
+        // FIX: estimatedDuration is stored in MINUTES (see CLAUDE.md), not hours!
+        // Add 2-hour safety buffer for traffic, delays, rest stops, etc.
+        const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
         const estimatedArrivalTime = new Date(
-          trip.departureTime.getTime() + trip.estimatedDuration * 60 * 60 * 1000
+          trip.departureTime.getTime() +
+          (trip.estimatedDuration * 60 * 1000) +  // minutes -> ms (FIX)
+          TWO_HOURS_MS                             // 2hr buffer
         );
 
-        // Only mark as COMPLETED if arrival time has passed
+        // Only mark as COMPLETED if arrival time + buffer has passed
         if (now < estimatedArrivalTime) {
-          continue; // Trip still in transit
+          continue; // Trip still in transit or within safety buffer
         }
 
         await prisma.$transaction(async (tx) => {
@@ -447,9 +452,10 @@ async function updateOldTripStatuses() {
               details: JSON.stringify({
                 oldStatus: 'DEPARTED',
                 newStatus: 'COMPLETED',
-                reason: 'Automatic - estimated arrival time passed',
+                reason: 'Automatic - estimated arrival time + 2hr buffer passed',
                 departureTime: trip.departureTime.toISOString(),
                 estimatedArrivalTime: estimatedArrivalTime.toISOString(),
+                safetyBufferHours: 2,
               }),
             },
           });
@@ -499,8 +505,9 @@ async function updateOldTripStatuses() {
             data: {
               status: newStatus,
               actualDepartureTime: trip.departureTime,
+              // FIX: estimatedDuration is stored in MINUTES, not hours
               actualArrivalTime: new Date(
-                trip.departureTime.getTime() + trip.estimatedDuration * 60 * 60 * 1000
+                trip.departureTime.getTime() + trip.estimatedDuration * 60 * 1000
               ),
               bookingHalted: true,
             },

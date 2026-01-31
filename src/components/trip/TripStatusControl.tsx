@@ -30,6 +30,7 @@ interface TripStatusControlProps {
   hasVehicle: boolean
   onStatusChange?: (newStatus: string) => void
   onDeparted?: () => void  // Callback to trigger odometer popup when departed
+  onCompleted?: () => void  // Callback to trigger end odometer popup when completed
 }
 
 // Status display configuration
@@ -88,6 +89,7 @@ export function TripStatusControl({
   hasVehicle,
   onStatusChange,
   onDeparted,
+  onCompleted,
 }: TripStatusControlProps) {
   const { data: session } = useSession()
   const [loading, setLoading] = useState(false)
@@ -152,6 +154,17 @@ export function TripStatusControl({
             onDeparted?.()
           }, 500)
         }
+
+        // When trip completes, trigger end odometer popup
+        if (nextAction.nextStatus === "COMPLETED" && hasVehicle) {
+          toast.info("Please record end odometer reading", {
+            description: "Recording end odometer helps track vehicle usage and fuel efficiency",
+            duration: 5000,
+          })
+          setTimeout(() => {
+            onCompleted?.()
+          }, 500)
+        }
       } else {
         toast.error(data.error || "Failed to update trip status")
       }
@@ -198,6 +211,12 @@ export function TripStatusControl({
             You'll be asked to record odometer after departing
           </p>
         )}
+        {nextAction.nextStatus === "COMPLETED" && hasVehicle && (
+          <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+            <Gauge className="h-3 w-3" />
+            You'll be asked to record end odometer after completing
+          </p>
+        )}
 
         <p className="text-xs text-muted-foreground mt-2 text-center">
           You are the assigned driver for this trip
@@ -223,6 +242,12 @@ export function TripStatusControl({
                 <span className="block text-blue-600 font-medium flex items-center gap-1">
                   <Gauge className="h-4 w-4" />
                   You'll be prompted to record the starting odometer reading.
+                </span>
+              )}
+              {nextAction.nextStatus === "COMPLETED" && hasVehicle && (
+                <span className="block text-blue-600 font-medium flex items-center gap-1">
+                  <Gauge className="h-4 w-4" />
+                  You'll be prompted to record the ending odometer reading.
                 </span>
               )}
             </AlertDialogDescription>
