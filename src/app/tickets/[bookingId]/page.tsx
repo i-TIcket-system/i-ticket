@@ -136,62 +136,86 @@ export default function TicketsPage() {
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 
-      // MOBILE FIX: Ensure minimum width for full content capture
-      // Increased from 500 to 550 to ensure full bottom content (total, vehicle, distance)
-      const MIN_CAPTURE_WIDTH = 550
+      // BULLETPROOF FIX: Force a fixed width to get consistent desktop-like layout
+      const CAPTURE_WIDTH = 600
 
-      // Store original styles to restore after capture
-      const originalWidth = element.style.width
-      const originalMinWidth = element.style.minWidth
-      const originalMaxWidth = element.style.maxWidth
-      const originalOverflow = element.style.overflow
+      // Store original styles
+      const originalStyles = {
+        width: element.style.width,
+        minWidth: element.style.minWidth,
+        maxWidth: element.style.maxWidth,
+        overflow: element.style.overflow,
+        height: element.style.height,
+        position: element.style.position,
+      }
 
-      // Temporarily expand element for capture (fixes mobile truncation)
-      element.style.width = `${MIN_CAPTURE_WIDTH}px`
-      element.style.minWidth = `${MIN_CAPTURE_WIDTH}px`
-      element.style.maxWidth = 'none'
-      element.style.overflow = 'visible' // Ensure no content is clipped
+      // Force element to render at fixed width with no clipping
+      element.style.width = `${CAPTURE_WIDTH}px`
+      element.style.minWidth = `${CAPTURE_WIDTH}px`
+      element.style.maxWidth = `${CAPTURE_WIDTH}px`
+      element.style.overflow = 'visible'
+      element.style.height = 'auto'
 
-      // Wait longer for browser to reflow with new dimensions
-      await new Promise(resolve => setTimeout(resolve, 200))
+      // Wait for browser reflow
+      await new Promise(resolve => setTimeout(resolve, 300))
 
-      // Get dimensions after expansion - add buffer for bottom content
-      const captureWidth = Math.max(element.offsetWidth, MIN_CAPTURE_WIDTH)
-      // Add 50px buffer to ensure bottom content (total price, vehicle, distance) is captured
-      const captureHeight = Math.max(element.scrollHeight, element.offsetHeight) + 50
+      // BULLETPROOF HEIGHT CALCULATION: Find the TRUE bottom of all content
+      // by checking every single child element's bounding rect
+      const elementRect = element.getBoundingClientRect()
+      let maxBottom = elementRect.bottom
 
-      // Generate canvas from the ticket card
+      const allChildren = element.querySelectorAll('*')
+      allChildren.forEach((child) => {
+        const childRect = child.getBoundingClientRect()
+        if (childRect.bottom > maxBottom) {
+          maxBottom = childRect.bottom
+        }
+      })
+
+      // Calculate TRUE height from the top of element to the bottom-most child
+      const trueHeight = Math.ceil(maxBottom - elementRect.top) + 30 // 30px safety padding
+
+      // Generate canvas with the TRUE measured dimensions
       const canvas = await html2canvas(element, {
         backgroundColor: "#ffffff",
-        scale: 2, // Higher quality for retina displays
+        scale: 2,
         logging: false,
         useCORS: true,
-        width: captureWidth,
-        height: captureHeight,
-        windowWidth: captureWidth,
-        windowHeight: captureHeight,
-        // Account for scroll position to capture from top
+        width: CAPTURE_WIDTH,
+        height: trueHeight,
+        windowWidth: CAPTURE_WIDTH,
+        windowHeight: trueHeight,
         scrollX: 0,
-        scrollY: -window.scrollY, // Account for page scroll position
-        ignoreElements: (el) => {
-          // Ignore elements with data-download-hide attribute
-          return el.hasAttribute('data-download-hide')
-        },
-        // Ensure cloned element has proper dimensions for full capture
+        scrollY: 0,
+        x: 0,
+        y: 0,
+        ignoreElements: (el) => el.hasAttribute('data-download-hide'),
         onclone: (clonedDoc, clonedElement) => {
-          clonedElement.style.width = `${captureWidth}px`
-          clonedElement.style.minWidth = `${captureWidth}px`
-          clonedElement.style.maxWidth = 'none'
+          // Force the clone to have the exact same dimensions
+          clonedElement.style.width = `${CAPTURE_WIDTH}px`
+          clonedElement.style.minWidth = `${CAPTURE_WIDTH}px`
+          clonedElement.style.maxWidth = `${CAPTURE_WIDTH}px`
           clonedElement.style.height = 'auto'
           clonedElement.style.overflow = 'visible'
+          clonedElement.style.transform = 'none'
+
+          // Also ensure all children are visible in the clone
+          const clonedChildren = clonedElement.querySelectorAll('*')
+          clonedChildren.forEach((child: Element) => {
+            if (child instanceof HTMLElement) {
+              child.style.overflow = 'visible'
+            }
+          })
         },
       })
 
       // Restore original styles immediately after capture
-      element.style.width = originalWidth
-      element.style.minWidth = originalMinWidth
-      element.style.maxWidth = originalMaxWidth
-      element.style.overflow = originalOverflow
+      element.style.width = originalStyles.width
+      element.style.minWidth = originalStyles.minWidth
+      element.style.maxWidth = originalStyles.maxWidth
+      element.style.overflow = originalStyles.overflow
+      element.style.height = originalStyles.height
+      element.style.position = originalStyles.position
 
       if (isIOS) {
         // iOS Safari doesn't support automatic downloads
@@ -265,6 +289,9 @@ export default function TicketsPage() {
         ticketCardRef.current.style.width = ''
         ticketCardRef.current.style.minWidth = ''
         ticketCardRef.current.style.maxWidth = ''
+        ticketCardRef.current.style.overflow = ''
+        ticketCardRef.current.style.height = ''
+        ticketCardRef.current.style.position = ''
       }
       alert("Failed to download ticket. Please try again.")
     } finally {
