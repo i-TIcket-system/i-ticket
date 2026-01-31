@@ -4,6 +4,36 @@
 
 ---
 
+## v2.10.14 - Jan 31, 2026
+
+### Trip Log Popup on Completion + Auto-Completion Safety Buffer
+
+**Feature 1: End Odometer Popup on Trip Completion**
+- When driver clicks "Complete Trip", auto-popup asks for end odometer/fuel readings
+- Added `onCompleted` callback to `TripStatusControl` component
+- Added `autoOpenEnd` prop to `TripLogCard` for auto-opening end readings dialog
+- UI hints now show "You'll be asked to record end odometer after completing"
+- **Files**: `TripStatusControl.tsx`, `TripLogCard.tsx`, `my-trips/page.tsx`
+
+**Feature 2: Auto-Completion 2-Hour Safety Buffer**
+- Trips now auto-complete 2 hours AFTER estimated arrival (not immediately)
+- Accounts for traffic, delays, rest stops, etc.
+
+**BUG FIX (CRITICAL): estimatedDuration Unit Error**
+- **Bug**: Cron job treated `estimatedDuration` as HOURS when DB stores MINUTES
+- **Impact**: A 360-minute (6hr) trip was being treated as 360 hours!
+- **Fix**: Changed `trip.estimatedDuration * 60 * 60 * 1000` to `trip.estimatedDuration * 60 * 1000`
+- Fixed in both auto-completion and very-old-trips cleanup logic
+- **File**: `src/app/api/cron/cleanup/route.ts`
+
+### Files Modified
+- `src/components/trip/TripStatusControl.tsx` - Added `onCompleted` callback + UI hints
+- `src/components/trip/TripLogCard.tsx` - Added `autoOpenEnd` prop + useEffect
+- `src/app/staff/my-trips/page.tsx` - Wired up state and callbacks
+- `src/app/api/cron/cleanup/route.ts` - Fixed duration bug + 2hr buffer
+
+---
+
 ## v2.10.13 - Jan 30, 2026
 
 ### CSV Import Validation Fix

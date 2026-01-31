@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.12 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.10.14 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -211,12 +211,12 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.12)
+## RECENT UPDATES (v2.10.14)
 
-**Latest**: Logo Refresh, Pagination & Docs Restructure (3 Issues)
-- Company logo now refreshes immediately after upload (`window.location.reload`)
-- Added pagination (20 items/page) to Company Trips and Vehicles pages
-- Moved changelog to `CHANGELOG.md`, slimmed CLAUDE.md from 804 to 282 lines
+**Latest**: Trip Log Popup on Completion + Auto-Completion Safety Buffer
+- End odometer popup auto-shows when driver completes trip (mirrors start odometer on depart)
+- Auto-completion now waits 2 hours after estimated arrival (safety buffer)
+- **BUG FIX**: Cron treated `estimatedDuration` as hours when DB stores minutes!
 
 **Full changelog**: See `CHANGELOG.md`
 
@@ -226,6 +226,7 @@ model TelegramSession {
 
 | Bug | Fix |
 |-----|-----|
+| Cron estimatedDuration unit (v2.10.14) | DB stores MINUTES, not hours - use `trip.estimatedDuration * 60 * 1000` not `* 60 * 60 * 1000` |
 | API multi-value query params (v2.10.11) | Don't send CSV (`status=OPEN,IN_PROGRESS`) - make parallel API calls and combine results instead |
 | Date comparison timezone (v2.10.8) | Use `isTodayEthiopia()` and `isSameDayEthiopia()` instead of `toDateString()` - JS dates compare in browser timezone, not Ethiopia |
 | Stale closure in polling (v2.10.7) | Use `useRef` to access current state in `setInterval` callbacks - state captured at setup time becomes stale |
