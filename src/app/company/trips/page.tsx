@@ -195,6 +195,21 @@ export default function CompanyTripsPage() {
     if (hidePastTrips) {
       const now = new Date()
       filtered = filtered.filter(trip => new Date(trip.departureTime) >= now)
+    } else {
+      // Smart Trip Viewing: When showing past trips, display them at the TOP
+      // This makes past trips easily accessible when user unchecks "Hide past trips"
+      const now = new Date()
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+      const pastTrips = filtered
+        .filter(trip => new Date(trip.departureTime) < startOfToday)
+        .sort((a, b) => new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime())
+
+      const todayAndFutureTrips = filtered
+        .filter(trip => new Date(trip.departureTime) >= startOfToday)
+        .sort((a, b) => new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime())
+
+      filtered = [...pastTrips, ...todayAndFutureTrips]
     }
 
     // Text search (destination, origin, driver, conductor, vehicle)
