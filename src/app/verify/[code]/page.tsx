@@ -99,16 +99,16 @@ export default function VerifyTicketPage() {
         {/* Ticket Information Card */}
         <Card className="overflow-hidden shadow-lg mb-6">
           {/* Header with Company */}
-          <div className="bg-gradient-to-r from-primary to-primary/80 text-white p-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-gradient-to-r from-primary to-primary/80 text-white p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
-                <Bus className="h-8 w-8" />
+                <Bus className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0" />
                 <div>
-                  <h2 className="text-2xl font-bold">{ticket.trip.company}</h2>
-                  <p className="text-white/80">{ticket.trip.busType} Bus</p>
+                  <h2 className="text-xl sm:text-2xl font-bold">{ticket.trip.company}</h2>
+                  <p className="text-white/80 text-sm sm:text-base">{ticket.trip.busType} Bus</p>
                 </div>
               </div>
-              <Badge className="bg-white text-primary text-lg px-4 py-2">
+              <Badge className="bg-white text-primary text-sm sm:text-lg px-3 sm:px-4 py-1.5 sm:py-2 font-bold shadow-md">
                 PAID
               </Badge>
             </div>
@@ -140,19 +140,19 @@ export default function VerifyTicketPage() {
             <Separator />
 
             {/* Passenger Details - Large and Clear */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div>
                 <p className="text-sm text-muted-foreground mb-1 uppercase tracking-wide">Passenger</p>
                 <div className="flex items-center gap-3">
-                  <User className="h-6 w-6 text-primary" />
-                  <p className="text-2xl font-bold">{ticket.passengerName}</p>
+                  <User className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+                  <p className="text-xl sm:text-2xl font-bold break-words">{ticket.passengerName}</p>
                 </div>
               </div>
               <div>
                 <p className="text-sm text-muted-foreground mb-1 uppercase tracking-wide">Seat Number</p>
                 <div className="flex items-center gap-3">
-                  <Armchair className="h-6 w-6 text-primary" />
-                  <p className="text-4xl font-bold text-primary">{ticket.seatNumber || "N/A"}</p>
+                  <Armchair className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
+                  <p className="text-2xl sm:text-4xl font-bold text-primary">{ticket.seatNumber || "N/A"}</p>
                 </div>
               </div>
             </div>

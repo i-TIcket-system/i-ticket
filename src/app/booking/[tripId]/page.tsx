@@ -608,14 +608,14 @@ export default function BookingPage() {
                     )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Name Field - Teal/Dark Green Prominent Styling */}
+                      {/* Name Field - Solid Teal Styling (No Glassmorphism) */}
                       <div className={`space-y-2 p-4 rounded-lg border-2 transition-all ${
                         validationErrors[`passenger-${index}-name`]
                           ? "bg-destructive/5 border-destructive"
-                          : "bg-[#0e9494]/10 border-[#0e9494]/40"
+                          : "bg-teal-50 dark:bg-teal-950/50 border-teal-400 dark:border-teal-600"
                       }`}>
-                        <Label className="text-base font-semibold flex items-center gap-2 text-[#0d4f5c]">
-                          <User className="h-4 w-4 text-[#0e9494]" />
+                        <Label className="text-base font-semibold flex items-center gap-2 text-teal-800 dark:text-teal-200">
+                          <User className="h-4 w-4 text-teal-600 dark:text-teal-400" />
                           Full Name
                           <span className="text-destructive">*</span>
                         </Label>
@@ -633,10 +633,10 @@ export default function BookingPage() {
                               })
                             }
                           }}
-                          className={`text-lg font-medium h-12 ${
+                          className={`text-lg font-medium h-12 bg-white dark:bg-gray-900 ${
                             validationErrors[`passenger-${index}-name`]
                               ? "border-destructive border-2 bg-destructive/5"
-                              : "border-[#0e9494]/30 focus:border-[#0e9494] focus:ring-[#0e9494]/20"
+                              : "border-teal-300 dark:border-teal-700 focus:border-teal-500 focus:ring-teal-500/20"
                           }`}
                           required
                           aria-invalid={!!validationErrors[`passenger-${index}-name`]}
@@ -649,16 +649,16 @@ export default function BookingPage() {
                         )}
                       </div>
 
-                      {/* Phone Field - Teal/Dark Green Prominent Styling */}
+                      {/* Phone Field - Solid Teal Styling (No Glassmorphism) */}
                       <div className={`space-y-2 p-4 rounded-lg border-2 transition-all ${
                         validationErrors[`passenger-${index}-phone`]
                           ? "bg-destructive/5 border-destructive"
                           : passenger.isChild
                             ? "bg-muted/30 border-muted"
-                            : "bg-[#0e9494]/10 border-[#0e9494]/40"
+                            : "bg-teal-50 dark:bg-teal-950/50 border-teal-400 dark:border-teal-600"
                       }`}>
-                        <Label className={`text-base font-semibold flex items-center gap-2 ${passenger.isChild ? "" : "text-[#0d4f5c]"}`}>
-                          <Phone className={`h-4 w-4 ${passenger.isChild ? "text-muted-foreground" : "text-[#0e9494]"}`} />
+                        <Label className={`text-base font-semibold flex items-center gap-2 ${passenger.isChild ? "" : "text-teal-800 dark:text-teal-200"}`}>
+                          <Phone className={`h-4 w-4 ${passenger.isChild ? "text-muted-foreground" : "text-teal-600 dark:text-teal-400"}`} />
                           Phone Number
                           {!passenger.isChild && <span className="text-destructive">*</span>}
                           {passenger.isChild && <span className="text-muted-foreground text-sm font-normal">(Optional)</span>}

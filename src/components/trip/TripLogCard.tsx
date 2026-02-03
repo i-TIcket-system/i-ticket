@@ -81,6 +81,7 @@ export function TripLogCard({
   const [tripLog, setTripLog] = useState<TripLog | null>(null)
   const [vehicle, setVehicle] = useState<Vehicle | null>(null)
   const [canEdit, setCanEdit] = useState(false) // From API based on user role
+  const [isAutoStatus, setIsAutoStatus] = useState(false) // Trip was auto-departed/completed by system
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -131,6 +132,7 @@ export function TripLogCard({
         setTripLog(data.tripLog)
         setVehicle(data.vehicle)
         setCanEdit(data.canEdit || false) // Set edit permission from API
+        setIsAutoStatus(data.isAutoStatus || false) // Trip was auto-transitioned
       }
     } catch (error) {
       console.error("Failed to fetch trip log:", error)
@@ -266,7 +268,7 @@ export function TripLogCard({
 
   return (
     <>
-      <Card>
+      <Card className={isAutoStatus ? "opacity-60 bg-muted/30" : ""}>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Gauge className="h-5 w-5" />
@@ -293,6 +295,15 @@ export function TripLogCard({
             <div className="text-sm text-muted-foreground">
               Vehicle: {vehicle.plateNumber}
               {vehicle.sideNumber && ` (${vehicle.sideNumber})`}
+            </div>
+          )}
+
+          {/* Auto-transitioned trip message */}
+          {isAutoStatus && (
+            <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+              <AlertCircle className="h-4 w-4 inline mr-2 text-blue-500" />
+              Trip was automatically {tripStatus === 'DEPARTED' ? 'departed' : 'completed'} by the system.
+              No manual log recording required.
             </div>
           )}
 

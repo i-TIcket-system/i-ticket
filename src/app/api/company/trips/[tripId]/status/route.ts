@@ -200,6 +200,41 @@ export async function PATCH(
       })
     }
 
+    // Auto-update staff status based on trip status
+    const staffIds = [trip.driverId, trip.conductorId].filter((id): id is string => !!id)
+
+    if (validatedData.status === "DEPARTED" && staffIds.length > 0) {
+      // Update staff status to ON_TRIP (don't change if they're ON_LEAVE)
+      await prisma.user.updateMany({
+        where: {
+          id: { in: staffIds },
+          staffStatus: { not: "ON_LEAVE" },
+        },
+        data: { staffStatus: "ON_TRIP" },
+      })
+    }
+
+    if ((validatedData.status === "COMPLETED" || validatedData.status === "CANCELLED") && staffIds.length > 0) {
+      // Check if staff have other active trips before resetting to AVAILABLE
+      for (const staffId of staffIds) {
+        const activeTrips = await prisma.trip.count({
+          where: {
+            OR: [{ driverId: staffId }, { conductorId: staffId }],
+            status: "DEPARTED",
+            id: { not: tripId },
+          },
+        })
+
+        // Only reset to AVAILABLE if no other active trips
+        if (activeTrips === 0) {
+          await prisma.user.update({
+            where: { id: staffId },
+            data: { staffStatus: "AVAILABLE" },
+          })
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       trip: updatedTrip,

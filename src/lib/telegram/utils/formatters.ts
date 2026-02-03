@@ -29,16 +29,53 @@ export function formatDate(date: Date | string, lang: Language = "EN"): string {
 
 /**
  * Format time for display (in Ethiopia timezone)
+ * For Amharic: Converts to Ethiopian 12-hour clock system
+ * Ethiopian time: 6 AM = 12 ሰዓት ጠዋት, 12 PM = 6 ሰዓት ከሰአት, etc.
  */
-export function formatTime(date: Date | string): string {
+export function formatTime(date: Date | string, lang: Language = "EN"): string {
   const dateObj = typeof date === "string" ? new Date(date) : date;
 
-  return new Intl.DateTimeFormat("en-ET", {
+  // Get standard time in Ethiopia timezone
+  const ethiopiaTime = new Intl.DateTimeFormat("en-ET", {
     hour: "numeric",
     minute: "2-digit",
     hour12: true,
     timeZone: ETHIOPIA_TIMEZONE,
   }).format(dateObj);
+
+  if (lang === "EN") {
+    return ethiopiaTime;
+  }
+
+  // For Amharic: Convert to Ethiopian 12-hour format
+  const hour24 = parseInt(
+    new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      hour12: false,
+      timeZone: ETHIOPIA_TIMEZONE,
+    }).format(dateObj)
+  );
+  const minutes = new Intl.DateTimeFormat("en-US", {
+    minute: "2-digit",
+    timeZone: ETHIOPIA_TIMEZONE,
+  }).format(dateObj);
+
+  // Ethiopian hour = (standard hour + 6) % 12, treating 0 as 12
+  const ethHour = ((hour24 + 6) % 12) || 12;
+
+  // Determine period in Amharic based on standard hour
+  let period: string;
+  if (hour24 >= 6 && hour24 < 12) {
+    period = "ጠዋት";      // Morning (6 AM - 12 PM)
+  } else if (hour24 >= 12 && hour24 < 18) {
+    period = "ከሰአት";     // Afternoon (12 PM - 6 PM)
+  } else if (hour24 >= 18 && hour24 < 24) {
+    period = "ማታ";       // Evening (6 PM - 12 AM)
+  } else {
+    period = "ለሊት";      // Night (12 AM - 6 AM)
+  }
+
+  return `${ethHour}፡${minutes.padStart(2, '0')} ሰዓት ${period}`;
 }
 
 /**
@@ -318,7 +355,7 @@ export function formatTripCard(
     return `🚌 *${companyName}*
 
 📍 ${formatRoute(trip.origin, trip.destination)}
-🕐 ${formatTime(trip.departureTime)}${durationStr}
+🕐 ${formatTime(trip.departureTime, lang)}${durationStr}
 💺 ${trip.availableSlots} ነጻ መቀመጫዎች አሉ!
 🚌 ${formatBusType(busType, lang)}${amenitiesStr}
 
@@ -328,7 +365,7 @@ export function formatTripCard(
   return `🚌 *${companyName}*
 
 📍 ${formatRoute(trip.origin, trip.destination)}
-🕐 ${formatTime(trip.departureTime)}${durationStr}
+🕐 ${formatTime(trip.departureTime, lang)}${durationStr}
 💺 ${trip.availableSlots} seats available
 🚌 ${formatBusType(busType, lang)}${amenitiesStr}
 

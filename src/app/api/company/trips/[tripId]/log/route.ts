@@ -78,11 +78,23 @@ export async function GET(
     // Only admin (without staff role) or assigned driver can EDIT
     const canEdit = (isCompanyAdmin && !session.user.staffRole) || isAssignedDriver
 
+    // Check if trip was auto-transitioned (auto-departed or auto-completed by cron)
+    const autoLog = await prisma.adminLog.findFirst({
+      where: {
+        tripId: tripId,
+        action: { in: ['TRIP_STATUS_AUTO_DEPARTED', 'TRIP_STATUS_AUTO_UPDATE', 'TRIP_STATUS_AUTO_COMPLETED'] }
+      },
+      select: { action: true, createdAt: true }
+    })
+
     return NextResponse.json({
       tripLog: trip.tripLog,
       vehicle: trip.vehicle,
       tripId: trip.id,
-      canEdit,
+      tripStatus: trip.status,
+      canEdit: canEdit && !autoLog, // Disable edit for auto-transitioned trips
+      isAutoStatus: !!autoLog,
+      autoAction: autoLog?.action || null,
     })
   } catch (error) {
     console.error('Error fetching trip log:', error)

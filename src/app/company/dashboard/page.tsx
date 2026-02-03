@@ -637,6 +637,7 @@ export default function CompanyDashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -670,12 +671,16 @@ export default function CompanyDashboard() {
                         key={trip.id}
                         className={isViewOnly ? "opacity-50 bg-muted/30" : ""}
                       >
-                        <TableCell>
+                        <TableCell className="min-w-[150px]">
                           <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-primary" />
-                            <span className="font-medium">{trip.origin}</span>
-                            <span className="text-muted-foreground">to</span>
-                            <span className="font-medium">{trip.destination}</span>
+                            <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                            <span className="font-medium truncate max-w-[80px]" title={trip.origin}>
+                              {trip.origin}
+                            </span>
+                            <span className="text-muted-foreground flex-shrink-0">→</span>
+                            <span className="font-medium truncate max-w-[80px]" title={trip.destination}>
+                              {trip.destination}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -741,6 +746,7 @@ export default function CompanyDashboard() {
                 )}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
 

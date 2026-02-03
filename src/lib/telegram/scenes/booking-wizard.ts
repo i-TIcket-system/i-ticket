@@ -359,7 +359,7 @@ export async function handleTripSearch(ctx: TelegramContext) {
         trips.map((t) => ({
           id: t.id,
           company: t.company.name,
-          time: formatTime(t.departureTime),
+          time: formatTime(t.departureTime, lang),
           availableSlots: t.availableSlots,
         }))
       );
@@ -377,7 +377,7 @@ export async function handleTripSearch(ctx: TelegramContext) {
     const tripsData = trips.map((trip) => ({
       id: trip.id,
       company: trip.company.name,
-      time: formatTime(trip.departureTime),
+      time: formatTime(trip.departureTime, lang),
       price: trip.price,
       availableSlots: trip.availableSlots,
     }));
