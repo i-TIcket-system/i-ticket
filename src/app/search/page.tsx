@@ -847,9 +847,10 @@ function SearchContent() {
                             </div>
 
                             {isCompanyAdmin ? (
-                              <Button disabled variant="secondary" size="sm" className="glass-subtle w-full">
-                                View Only
-                              </Button>
+                              <div className="w-full bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/40 dark:to-orange-900/40 border-2 border-amber-400 dark:border-amber-600 rounded-lg px-4 py-3 text-center shadow-md">
+                                <p className="text-amber-800 dark:text-amber-200 font-semibold text-sm">Admin View</p>
+                                <p className="text-amber-600 dark:text-amber-400 text-xs mt-0.5">Switch to customer account to book</p>
+                              </div>
                             ) : (
                               <>
                                 {trip.status === "COMPLETED" || trip.status === "CANCELLED" ? (

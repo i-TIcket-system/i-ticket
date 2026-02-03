@@ -509,26 +509,26 @@ export default function BookingPage() {
               </CardContent>
             </Card>
 
-            {/* Passenger Details - GLASS DRAMATIC */}
-            <Card className="glass-dramatic border-white/10 shadow-glass-lg overflow-hidden">
-              {/* Teal accent line */}
-              <div className="h-1 bg-gradient-to-r from-teal-medium to-teal-light shadow-lg shadow-primary/50" />
+            {/* Passenger Details - SOLID TEAL for Maximum Pop */}
+            <Card className="bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 border-0 shadow-2xl shadow-teal-900/40 overflow-hidden">
+              {/* White accent line for contrast */}
+              <div className="h-1.5 bg-gradient-to-r from-white/80 via-white to-white/80" />
 
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2 text-xl font-display">
-                      <div className="h-10 w-10 rounded-xl glass-teal flex items-center justify-center shadow-md">
-                        <Users className="h-5 w-5 text-primary flex-shrink-0" />
+                    <CardTitle className="flex items-center gap-2 text-xl font-display text-white">
+                      <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-md">
+                        <Users className="h-5 w-5 text-white flex-shrink-0" />
                       </div>
                       Passenger Details
                     </CardTitle>
-                    <CardDescription className="mt-2">
+                    <CardDescription className="mt-2 text-white/80">
                       {passengers.length} of {maxPassengers} passengers (max 5 per booking)
                     </CardDescription>
                   </div>
                   {passengers.length < maxPassengers && (
-                    <Button variant="outline" size="sm" onClick={addPassenger} className="glass-subtle border-white/30 hover:glass-moderate">
+                    <Button variant="outline" size="sm" onClick={addPassenger} className="bg-white/20 border-white/40 text-white hover:bg-white/30 hover:text-white">
                       <Plus className="h-4 w-4 mr-1 flex-shrink-0" />
                       Add Passenger
                     </Button>
@@ -537,7 +537,7 @@ export default function BookingPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {passengers.map((passenger, index) => (
-                  <div key={index} className="glass-subtle p-5 border border-white/20 rounded-xl space-y-4 hover:glass-moderate transition-all duration-300">
+                  <div key={index} className="bg-white dark:bg-gray-900 p-5 border-2 border-teal-200 dark:border-teal-700 rounded-xl space-y-4 shadow-lg hover:shadow-xl transition-all duration-300">
                     <div className="flex items-center justify-between">
                       <h4 className="font-medium">
                         {index === 0 ? (
