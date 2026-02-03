@@ -11,11 +11,6 @@ import {
   Ticket,
   TrendingUp,
   AlertTriangle,
-  Calendar,
-  MapPin,
-  Clock,
-  Eye,
-  Edit,
   Loader2,
   Check,
   X,
@@ -32,14 +27,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -47,7 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { formatCurrency, formatDate, getSlotsPercentage, isLowSlots, hasDepartedEthiopia } from "@/lib/utils"
+import { formatCurrency, isLowSlots } from "@/lib/utils"
 import { PassengerMilestone } from "@/components/company/PassengerMilestone"
 import { RevenueChart } from "@/components/company/RevenueChart"
 import { BookingPieChart } from "@/components/company/BookingPieChart"
@@ -69,14 +56,6 @@ interface Trip {
   _count: {
     bookings: number
   }
-}
-
-// RULE-003: Helper to check if a trip is view-only
-// FIX: Use Ethiopia timezone for proper comparison
-const isViewOnlyTrip = (trip: Trip) => {
-  const isPastTrip = hasDepartedEthiopia(trip.departureTime)
-  const effectiveStatus = isPastTrip && trip.status === "SCHEDULED" ? "DEPARTED" : trip.status
-  return ["DEPARTED", "COMPLETED", "CANCELLED"].includes(effectiveStatus)
 }
 
 interface Stats {
@@ -124,10 +103,6 @@ export default function CompanyDashboard() {
     }
     return new Set()
   })
-
-  // Pagination state for trips table
-  const [currentPage, setCurrentPage] = useState(1)
-  const ITEMS_PER_PAGE = 10
 
   // Ref to prevent request stacking on slow networks
   const isFetchingRef = useRef(false)
@@ -373,20 +348,6 @@ export default function CompanyDashboard() {
   const lowSlotTrips = trips.filter(
     (t) => t.availableSlots > 0 && isLowSlots(t.availableSlots, t.totalSlots) && t.bookingHalted && !dismissedAlerts.has(t.id)
   )
-
-  // Paginated trips for the table
-  const paginatedTrips = trips.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  )
-  const totalPages = Math.ceil(trips.length / ITEMS_PER_PAGE)
-
-  // Reset to page 1 when trips data changes significantly
-  useEffect(() => {
-    if (currentPage > Math.ceil(trips.length / ITEMS_PER_PAGE)) {
-      setCurrentPage(1)
-    }
-  }, [trips.length, currentPage])
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8">
@@ -645,160 +606,6 @@ export default function CompanyDashboard() {
           {occupancyData.length > 0 && <OccupancyBarChart data={occupancyData} />}
           {topRoutes.length > 0 && <TopRoutesCard routes={topRoutes} />}
         </div>
-
-        {/* Trips Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Your Trips</CardTitle>
-            <CardDescription>
-              Manage your scheduled trips and monitor bookings
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Route</TableHead>
-                  <TableHead>Departure</TableHead>
-                  <TableHead>Price</TableHead>
-                  <TableHead>Seats</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {trips.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8">
-                      <Bus className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
-                      <p className="text-muted-foreground">No trips yet</p>
-                      <Button variant="link" asChild>
-                        <Link href="/company/trips/new">Create your first trip</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  paginatedTrips.map((trip) => {
-                    const slotsPercent = getSlotsPercentage(trip.availableSlots, trip.totalSlots)
-                    const lowSlots = isLowSlots(trip.availableSlots, trip.totalSlots)
-                    const isViewOnly = isViewOnlyTrip(trip)
-
-                    return (
-                      <TableRow
-                        key={trip.id}
-                        className={isViewOnly ? "opacity-50 bg-muted/30" : ""}
-                      >
-                        <TableCell className="min-w-[150px]">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                            <span className="font-medium truncate max-w-[80px]" title={trip.origin}>
-                              {trip.origin}
-                            </span>
-                            <span className="text-muted-foreground flex-shrink-0">→</span>
-                            <span className="font-medium truncate max-w-[80px]" title={trip.destination}>
-                              {trip.destination}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            {formatDate(trip.departureTime)}
-                          </div>
-                        </TableCell>
-                        <TableCell>{formatCurrency(Number(trip.price))}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={
-                                lowSlots ? "text-red-500 font-medium" : "text-green-600"
-                              }
-                            >
-                              {trip.availableSlots} left
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              / {trip.totalSlots}
-                            </span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {trip.bookingHalted ? (
-                            <Badge variant="warning">Halted</Badge>
-                          ) : new Date(trip.departureTime) > new Date() ? (
-                            <Badge variant="success">Active</Badge>
-                          ) : (
-                            <Badge variant="secondary">Completed</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button variant="ghost" size="sm" aria-label="View trip details" asChild>
-                              <Link href={`/company/trips/${trip.id}`}>
-                                <Eye className="h-4 w-4" />
-                              </Link>
-                            </Button>
-                            {/* RULE-003: Disable Edit for view-only trips */}
-                            {isViewOnly ? (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                aria-label="Edit trip (view-only)"
-                                disabled
-                                title="View-only: departed, completed, cancelled or past trips cannot be edited"
-                              >
-                                <Edit className="h-4 w-4 opacity-50" />
-                              </Button>
-                            ) : (
-                              <Button variant="ghost" size="sm" aria-label="Edit trip" asChild>
-                                <Link href={`/company/trips/${trip.id}/edit`}>
-                                  <Edit className="h-4 w-4" />
-                                </Link>
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })
-                )}
-              </TableBody>
-            </Table>
-            </div>
-
-            {/* Pagination Controls */}
-            {trips.length > ITEMS_PER_PAGE && (
-              <div className="flex items-center justify-between mt-4 pt-4 border-t">
-                <p className="text-sm text-muted-foreground">
-                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
-                  {Math.min(currentPage * ITEMS_PER_PAGE, trips.length)} of{" "}
-                  {trips.length} trips
-                </p>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                  >
-                    Previous
-                  </Button>
-                  <span className="text-sm px-3 py-1 bg-muted rounded">
-                    Page {currentPage} of {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Alert Response Dialog */}
         <Dialog open={!!alertTrip} onOpenChange={() => setAlertTrip(null)}>
