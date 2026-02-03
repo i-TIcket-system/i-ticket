@@ -108,7 +108,7 @@ export default function VerifyTicketPage() {
                   <p className="text-white/80 text-sm sm:text-base">{ticket.trip.busType} Bus</p>
                 </div>
               </div>
-              <Badge className="bg-white text-primary text-sm sm:text-lg px-3 sm:px-4 py-1.5 sm:py-2 font-bold shadow-md">
+              <Badge className="bg-white text-emerald-700 text-sm sm:text-lg px-3 sm:px-4 py-1.5 sm:py-2 font-bold shadow-md border-2 border-white/50">
                 PAID
               </Badge>
             </div>

@@ -99,6 +99,8 @@ export default function CompanyTripsPage() {
   const [dateFilter, setDateFilter] = useState("")
   const [filteredTrips, setFilteredTrips] = useState<Trip[]>([])
   const [hidePastTrips, setHidePastTrips] = useState(true)
+  // NEW: Track which past date we're viewing (only used when hidePastTrips=false)
+  const [pastViewDate, setPastViewDate] = useState<Date | null>(null)
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
@@ -188,28 +190,43 @@ export default function CompanyTripsPage() {
   }
 
   // P2: Filter trips based on search query, status, and date
+  // Track previous filter values to determine if we should reset page
+  const prevSearchRef = useRef(searchQuery)
+  const prevStatusRef = useRef(statusFilter)
+  const prevDateFilterRef = useRef(dateFilter)
+
   useEffect(() => {
     let filtered = [...trips]
+    const now = new Date()
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
     // Hide past trips by default (Issue 2 fix)
     if (hidePastTrips) {
-      const now = new Date()
-      filtered = filtered.filter(trip => new Date(trip.departureTime) >= now)
+      // FUTURE VIEW: Show all future trips (today onwards) - current behavior
+      filtered = filtered.filter(trip => new Date(trip.departureTime) >= startOfToday)
+      // Sort: soonest first
+      filtered.sort((a, b) => new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime())
     } else {
-      // Smart Trip Viewing: When showing past trips, display them at the TOP
-      // This makes past trips easily accessible when user unchecks "Hide past trips"
-      const now = new Date()
-      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      // PAST VIEW: Show only ONE specific past day
+      const viewDate = pastViewDate || (() => {
+        // Default to yesterday when first entering past view
+        const yesterday = new Date(startOfToday)
+        yesterday.setDate(yesterday.getDate() - 1)
+        return yesterday
+      })()
 
-      const pastTrips = filtered
-        .filter(trip => new Date(trip.departureTime) < startOfToday)
-        .sort((a, b) => new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime())
+      if (!pastViewDate) setPastViewDate(viewDate)
 
-      const todayAndFutureTrips = filtered
-        .filter(trip => new Date(trip.departureTime) >= startOfToday)
-        .sort((a, b) => new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime())
-
-      filtered = [...pastTrips, ...todayAndFutureTrips]
+      filtered = filtered.filter(trip => {
+        const tripDate = new Date(trip.departureTime)
+        return (
+          tripDate.getFullYear() === viewDate.getFullYear() &&
+          tripDate.getMonth() === viewDate.getMonth() &&
+          tripDate.getDate() === viewDate.getDate()
+        )
+      })
+      // Sort: earliest first within the day
+      filtered.sort((a, b) => new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime())
     }
 
     // Text search (destination, origin, driver, conductor, vehicle)
@@ -249,9 +266,20 @@ export default function CompanyTripsPage() {
     }
 
     setFilteredTrips(filtered)
-    // Reset to page 1 when filters change
-    setCurrentPage(1)
-  }, [searchQuery, statusFilter, dateFilter, trips, hidePastTrips])
+
+    // Only reset page when search/status/date filters change, NOT when navigating dates
+    const filtersChanged =
+      prevSearchRef.current !== searchQuery ||
+      prevStatusRef.current !== statusFilter ||
+      prevDateFilterRef.current !== dateFilter
+
+    if (filtersChanged) {
+      setCurrentPage(1)
+      prevSearchRef.current = searchQuery
+      prevStatusRef.current = statusFilter
+      prevDateFilterRef.current = dateFilter
+    }
+  }, [searchQuery, statusFilter, dateFilter, trips, hidePastTrips, pastViewDate])
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredTrips.length / itemsPerPage)
@@ -571,12 +599,24 @@ export default function CompanyTripsPage() {
               placeholder="Filter by date"
             />
           </div>
-          {/* Hide Past Trips Toggle */}
-          <div className="mt-4 flex items-center gap-2">
+          {/* Hide Past Trips Toggle with Date Navigation */}
+          <div className="mt-4 flex flex-wrap items-center gap-2">
             <Checkbox
               id="hidePastTrips"
               checked={hidePastTrips}
-              onCheckedChange={(checked) => setHidePastTrips(checked === true)}
+              onCheckedChange={(checked) => {
+                setHidePastTrips(checked === true)
+                if (checked) {
+                  // Returning to future view - clear past date
+                  setPastViewDate(null)
+                } else {
+                  // Entering past view - set to yesterday
+                  const yesterday = new Date()
+                  yesterday.setDate(yesterday.getDate() - 1)
+                  setPastViewDate(yesterday)
+                }
+                setCurrentPage(1) // Reset page when switching modes
+              }}
             />
             <label
               htmlFor="hidePastTrips"
@@ -584,9 +624,58 @@ export default function CompanyTripsPage() {
             >
               Hide past trips
             </label>
+
+            {/* Date navigation - only shown in past view */}
+            {!hidePastTrips && pastViewDate && (
+              <div className="flex items-center gap-2 ml-4 border-l pl-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newDate = new Date(pastViewDate)
+                    newDate.setDate(newDate.getDate() - 1)
+                    setPastViewDate(newDate)
+                    setCurrentPage(1)
+                  }}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                </Button>
+
+                <span className="font-medium px-3 text-sm min-w-[120px] text-center">
+                  {pastViewDate.toLocaleDateString("en-ET", {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                </span>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newDate = new Date(pastViewDate)
+                    newDate.setDate(newDate.getDate() + 1)
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+
+                    if (newDate >= today) {
+                      // Reached today - switch back to future view
+                      setHidePastTrips(true)
+                      setPastViewDate(null)
+                    } else {
+                      setPastViewDate(newDate)
+                    }
+                    setCurrentPage(1)
+                  }}
+                >
+                  Next <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            )}
+
             {!hidePastTrips && (
               <span className="text-xs text-muted-foreground ml-2">
-                (Showing all trips including past)
+                (Viewing past: {pastViewDate ? pastViewDate.toLocaleDateString("en-ET", { month: "short", day: "numeric" }) : "yesterday"})
               </span>
             )}
           </div>

@@ -857,22 +857,18 @@ function SearchContent() {
                                     {trip.status === "COMPLETED" ? "Trip Completed" : "Cancelled"}
                                   </Button>
                                 ) : (
-                                  <Link
-                                    href={`/booking/${trip.id}`}
+                                  <Button
+                                    disabled={trip.availableSlots === 0 || trip.status === "DEPARTED"}
+                                    className="glass-button w-full shadow-md hover:shadow-lg active:scale-95 transition-all min-h-[44px]"
+                                    size="sm"
                                     onClick={() => {
                                       // Clear any previous booking data for this trip (prevents guest data persistence)
                                       sessionStorage.removeItem(`booking-${trip.id}-passengers`)
+                                      router.push(`/booking/${trip.id}`)
                                     }}
-                                    className="w-full"
                                   >
-                                    <Button
-                                      disabled={trip.availableSlots === 0 || trip.status === "DEPARTED"}
-                                      className="glass-button w-full shadow-md hover:shadow-lg hover:scale-105 transition-all"
-                                      size="sm"
-                                    >
-                                      {trip.availableSlots === 0 ? "Sold Out" : trip.status === "DEPARTED" ? "Departed" : "Select"}
-                                    </Button>
-                                  </Link>
+                                    {trip.availableSlots === 0 ? "Sold Out" : trip.status === "DEPARTED" ? "Departed" : "Select"}
+                                  </Button>
                                 )}
                               </>
                             )}

@@ -125,6 +125,10 @@ export default function CompanyDashboard() {
     return new Set()
   })
 
+  // Pagination state for trips table
+  const [currentPage, setCurrentPage] = useState(1)
+  const ITEMS_PER_PAGE = 10
+
   // Ref to prevent request stacking on slow networks
   const isFetchingRef = useRef(false)
 
@@ -369,6 +373,20 @@ export default function CompanyDashboard() {
   const lowSlotTrips = trips.filter(
     (t) => t.availableSlots > 0 && isLowSlots(t.availableSlots, t.totalSlots) && t.bookingHalted && !dismissedAlerts.has(t.id)
   )
+
+  // Paginated trips for the table
+  const paginatedTrips = trips.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  )
+  const totalPages = Math.ceil(trips.length / ITEMS_PER_PAGE)
+
+  // Reset to page 1 when trips data changes significantly
+  useEffect(() => {
+    if (currentPage > Math.ceil(trips.length / ITEMS_PER_PAGE)) {
+      setCurrentPage(1)
+    }
+  }, [trips.length, currentPage])
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-muted/30 py-8">
@@ -661,7 +679,7 @@ export default function CompanyDashboard() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  trips.map((trip) => {
+                  paginatedTrips.map((trip) => {
                     const slotsPercent = getSlotsPercentage(trip.availableSlots, trip.totalSlots)
                     const lowSlots = isLowSlots(trip.availableSlots, trip.totalSlots)
                     const isViewOnly = isViewOnlyTrip(trip)
@@ -747,6 +765,38 @@ export default function CompanyDashboard() {
               </TableBody>
             </Table>
             </div>
+
+            {/* Pagination Controls */}
+            {trips.length > ITEMS_PER_PAGE && (
+              <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to{" "}
+                  {Math.min(currentPage * ITEMS_PER_PAGE, trips.length)} of{" "}
+                  {trips.length} trips
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </Button>
+                  <span className="text-sm px-3 py-1 bg-muted rounded">
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
