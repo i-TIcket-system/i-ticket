@@ -179,6 +179,7 @@ export default function StaffManagementPage() {
   // Filter & Pagination state
   const [searchTerm, setSearchTerm] = useState("")
   const [roleFilter, setRoleFilter] = useState<string>("all")
+  const [statusFilter, setStatusFilter] = useState<string>("all")
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 15
 
@@ -340,7 +341,7 @@ export default function StaffManagementPage() {
   // Reset to page 1 when filters change (must be before early return)
   useEffect(() => {
     setCurrentPage(1)
-  }, [searchTerm, roleFilter])
+  }, [searchTerm, roleFilter, statusFilter])
 
   if (status === "loading" || isLoading) {
     return (
@@ -369,7 +370,7 @@ export default function StaffManagementPage() {
   // Get all unique roles for filter dropdown (including custom roles)
   const uniqueRoles = Array.from(new Set(staff.map(s => s.staffRole))).sort()
 
-  // Filter staff by search term and role
+  // Filter staff by search term, role, and status
   const filteredStaff = staff.filter((member) => {
     const searchLower = searchTerm.toLowerCase()
     const matchesSearch = !searchTerm ||
@@ -381,7 +382,11 @@ export default function StaffManagementPage() {
 
     const matchesRole = roleFilter === "all" || member.staffRole === roleFilter
 
-    return matchesSearch && matchesRole
+    // Status filter - treat null/undefined as AVAILABLE
+    const memberStatus = member.staffStatus || "AVAILABLE"
+    const matchesStatus = statusFilter === "all" || memberStatus === statusFilter
+
+    return matchesSearch && matchesRole && matchesStatus
   })
 
   // Pagination
@@ -511,7 +516,7 @@ export default function StaffManagementPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="relative md:col-span-2">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -538,25 +543,40 @@ export default function StaffManagementPage() {
                   })}
                 </SelectContent>
               </Select>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  {Object.entries(STAFF_STATUS).map(([value, info]) => (
+                    <SelectItem key={value} value={value}>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs ${info.color}`}>
+                        {info.label}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            {(searchTerm || roleFilter !== "all") && (
+            {(searchTerm || roleFilter !== "all" || statusFilter !== "all") && (
               <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
                 <span>
                   Showing {filteredStaff.length} of {staff.length} staff members
                 </span>
-                {(searchTerm || roleFilter !== "all") && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setSearchTerm("")
-                      setRoleFilter("all")
-                    }}
-                  >
-                    Clear filters
-                  </Button>
-                )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchTerm("")
+                    setRoleFilter("all")
+                    setStatusFilter("all")
+                  }}
+                >
+                  Clear filters
+                </Button>
               </div>
             )}
           </CardContent>
@@ -605,12 +625,13 @@ export default function StaffManagementPage() {
                       <TableCell colSpan={7} className="h-32 text-center">
                         <div className="text-muted-foreground">
                           <Search className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                          <p>No staff members match your search</p>
+                          <p>No staff members match your filters</p>
                           <Button
                             variant="link"
                             onClick={() => {
                               setSearchTerm("")
                               setRoleFilter("all")
+                              setStatusFilter("all")
                             }}
                           >
                             Clear filters
