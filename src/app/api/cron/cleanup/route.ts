@@ -336,6 +336,8 @@ async function markTripsAsDeparted() {
         departureTime: true,
         companyId: true,
         delayedAt: true,
+        driverId: true,
+        conductorId: true,
       },
     });
 
@@ -364,6 +366,18 @@ async function markTripsAsDeparted() {
             },
           });
 
+          // Auto-update staff status to ON_TRIP (admin can override manually)
+          const staffIds = [trip.driverId, trip.conductorId].filter((id): id is string => !!id);
+          if (staffIds.length > 0) {
+            await tx.user.updateMany({
+              where: {
+                id: { in: staffIds },
+                staffStatus: { not: 'ON_LEAVE' }, // Don't change if on leave
+              },
+              data: { staffStatus: 'ON_TRIP' },
+            });
+          }
+
           // Create audit log
           await tx.adminLog.create({
             data: {
@@ -380,6 +394,7 @@ async function markTripsAsDeparted() {
                 departureTime: trip.departureTime.toISOString(),
                 processedAt: now.toISOString(),
                 minutesPast: Math.round(msLate / 60000),
+                staffUpdated: staffIds,
               }),
             },
           });
@@ -465,6 +480,24 @@ async function updateOldTripStatuses() {
             },
           });
 
+          // Reset staff status to AVAILABLE (only if they have no other active trips)
+          const staffIds = [trip.driverId, trip.conductorId].filter((id): id is string => !!id);
+          for (const staffId of staffIds) {
+            const otherActiveTrips = await tx.trip.count({
+              where: {
+                OR: [{ driverId: staffId }, { conductorId: staffId }],
+                status: 'DEPARTED',
+                id: { not: trip.id },
+              },
+            });
+            if (otherActiveTrips === 0) {
+              await tx.user.update({
+                where: { id: staffId },
+                data: { staffStatus: 'AVAILABLE' },
+              });
+            }
+          }
+
           await tx.adminLog.create({
             data: {
               userId: 'SYSTEM',
@@ -478,6 +511,7 @@ async function updateOldTripStatuses() {
                 departureTime: trip.departureTime.toISOString(),
                 estimatedArrivalTime: estimatedArrivalTime.toISOString(),
                 safetyBufferHours: 2,
+                staffReset: staffIds,
               }),
             },
           });
@@ -535,6 +569,24 @@ async function updateOldTripStatuses() {
             },
           });
 
+          // Reset staff status to AVAILABLE (only if no other active trips)
+          const staffIds = [trip.driverId, trip.conductorId].filter((id): id is string => !!id);
+          for (const staffId of staffIds) {
+            const otherActiveTrips = await tx.trip.count({
+              where: {
+                OR: [{ driverId: staffId }, { conductorId: staffId }],
+                status: 'DEPARTED',
+                id: { not: trip.id },
+              },
+            });
+            if (otherActiveTrips === 0) {
+              await tx.user.update({
+                where: { id: staffId },
+                data: { staffStatus: 'AVAILABLE' },
+              });
+            }
+          }
+
           await tx.adminLog.create({
             data: {
               userId: 'SYSTEM',
@@ -547,6 +599,7 @@ async function updateOldTripStatuses() {
                 reason: 'Automatic cleanup - trip 24+ hours past departure',
                 departureTime: trip.departureTime.toISOString(),
                 hasBookings,
+                staffReset: staffIds,
               }),
             },
           });
