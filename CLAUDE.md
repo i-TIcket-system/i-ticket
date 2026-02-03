@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.14 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.10.15 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -241,9 +241,15 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.14)
+## RECENT UPDATES (v2.10.15)
 
-**Latest**: Trip Log Popup on Completion + Auto-Completion Safety Buffer
+**Latest**: Staff Status Auto-Sync & Management Improvements
+- Staff status auto-syncs with trip lifecycle (DEPARTED → ON_TRIP, COMPLETED → AVAILABLE)
+- Respects ON_LEAVE (never auto-changed), admin can override manually
+- Added status filter to staff management page (Available / On Trip / On Leave)
+- Cleaned up 205 trips violating 24-hour resource allocation rule (RULE-005)
+
+**v2.10.14**: Trip Log Popup on Completion + Auto-Completion Safety Buffer
 - End odometer popup auto-shows when driver completes trip (mirrors start odometer on depart)
 - Auto-completion now waits 2 hours after estimated arrival (safety buffer)
 - **BUG FIX**: Cron treated `estimatedDuration` as hours when DB stores minutes!

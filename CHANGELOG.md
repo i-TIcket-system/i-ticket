@@ -4,6 +4,44 @@
 
 ---
 
+## v2.10.15 - Feb 3, 2026
+
+### Staff Status Auto-Sync & Management Improvements
+
+**Feature 1: Staff Status Auto-Sync with Trip Status**
+- Staff (driver/conductor) status now automatically syncs with trip lifecycle:
+  - **DEPARTED trip** → Staff set to `ON_TRIP`
+  - **COMPLETED trip** → Staff set to `AVAILABLE` (only if no other active trips)
+- Respects `ON_LEAVE` status (never auto-changed)
+- Admin can still manually override status at any time
+- **File**: `src/app/api/cron/cleanup/route.ts`
+
+**Feature 2: Status Filter on Staff Management Page**
+- Added status filter dropdown (Available / On Trip / On Leave)
+- Works alongside existing search and role filters
+- Filter grid now 4-column layout on desktop
+- "Clear filters" resets all three filters
+- **File**: `src/app/company/staff/page.tsx`
+
+**Maintenance: 24-Hour Conflict Cleanup (RULE-005)**
+- Created one-time script to remove trips violating 24-hour resource rule
+- Same driver/conductor/vehicle cannot be scheduled within 24 hours
+- Cleaned up 205 conflicting trips from production
+- **Script**: `scripts/cleanup-24hr-conflicts.ts`
+
+**Maintenance: Staff Status Fix Script**
+- Created one-time script to fix existing staff on DEPARTED trips
+- Updated staff to `ON_TRIP` for 9 active trips
+- **Script**: `scripts/fix-current-staff-status.ts`
+
+### Files Modified
+- `src/app/api/cron/cleanup/route.ts` - Added staff status sync to auto-departure and auto-completion
+- `src/app/company/staff/page.tsx` - Added status filter dropdown
+- `scripts/cleanup-24hr-conflicts.ts` - New cleanup script
+- `scripts/fix-current-staff-status.ts` - New fix script
+
+---
+
 ## v2.10.14 - Jan 31, 2026
 
 ### Trip Log Popup on Completion + Auto-Completion Safety Buffer
