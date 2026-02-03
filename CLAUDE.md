@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.15 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.10.16 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -241,9 +241,14 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.15)
+## RECENT UPDATES (v2.10.16)
 
-**Latest**: Staff Status Auto-Sync & Management Improvements
+**Latest**: Manifest Cleanup, Today's Trips Display & Contact Tab Upgrade
+- Removed National ID column from manifests (verification now at boarding)
+- Show all today's trips including DEPARTED/COMPLETED (smart display for future trips)
+- Contact i-Ticket tab upgraded with search, date filters, and filter indicators
+
+**v2.10.15**: Staff Status Auto-Sync & Management Improvements
 - Staff status auto-syncs with trip lifecycle (DEPARTED → ON_TRIP, COMPLETED → AVAILABLE)
 - Respects ON_LEAVE (never auto-changed), admin can override manually
 - Added status filter to staff management page (Available / On Trip / On Leave)

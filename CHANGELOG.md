@@ -4,6 +4,38 @@
 
 ---
 
+## v2.10.16 - Feb 4, 2026
+
+### Manifest Cleanup, Today's Trips Display & Contact Tab Upgrade
+
+**Feature 1: Remove National ID from Passenger Manifests**
+- Removed National ID column from Excel manifest exports
+- Verification now happens at boarding via staff app, not manifest review
+- Simplifies manifest layout (10 columns instead of 11)
+- **File**: `src/lib/report-generator.ts`
+
+**Feature 2: Show All Today's Trips (Including Departed/Completed)**
+- Company trips page now shows ALL trips for current date regardless of status
+- Previously, departed/completed trips were hidden by default
+- Uses `isTodayEthiopia()` for timezone-correct comparison
+- Future trips continue to work as before (smart trip display)
+- **File**: `src/app/company/trips/page.tsx`
+
+**Feature 3: Contact i-Ticket Tab Upgrade**
+- Added search bar to filter messages by content or sender
+- Added date range filters (start date, end date)
+- Expandable filter panel with clear visual indicators
+- Shows "X of Y messages" when filters are active
+- Filter badges with quick-clear buttons
+- **File**: `src/components/company/ContactChat.tsx`
+
+### Files Modified
+- `src/lib/report-generator.ts` - Removed National ID column from manifests
+- `src/app/company/trips/page.tsx` - Show all today's trips including departed
+- `src/components/company/ContactChat.tsx` - Added search and date filters
+
+---
+
 ## v2.10.15 - Feb 3, 2026
 
 ### Staff Status Auto-Sync & Management Improvements
