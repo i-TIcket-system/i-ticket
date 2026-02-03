@@ -8,31 +8,31 @@ datasource db {
 }
 
 model User {
-  id             String    @id @default(cuid())
-  name           String?   // Nullable for guest users (SMS)
-  phone          String    @unique
-  email          String?
-  password       String?   // Nullable for guest users (SMS)
-  nationalId     String?
-  role           String    @default("CUSTOMER") // CUSTOMER, COMPANY_ADMIN, SUPER_ADMIN
-  companyId      String?
-  company        Company?  @relation(fields: [companyId], references: [id])
+  id         String   @id @default(cuid())
+  name       String? // Nullable for guest users (SMS)
+  phone      String   @unique
+  email      String?
+  password   String? // Nullable for guest users (SMS)
+  nationalId String?
+  role       String   @default("CUSTOMER") // CUSTOMER, COMPANY_ADMIN, SUPER_ADMIN
+  companyId  String?
+  company    Company? @relation(fields: [companyId], references: [id])
 
   // Staff-specific fields (for company employees)
-  staffRole      String?   // ADMIN, DRIVER, CONDUCTOR, MANUAL_TICKETER, MECHANIC, FINANCE (only for COMPANY_ADMIN role)
-  staffStatus    String?   @default("AVAILABLE") // AVAILABLE, ON_TRIP, ON_LEAVE (only for staff members)
-  licenseNumber  String?   // For drivers
-  employeeId     String?   // Company employee ID
+  staffRole     String? // ADMIN, DRIVER, CONDUCTOR, MANUAL_TICKETER, MECHANIC, FINANCE (only for COMPANY_ADMIN role)
+  staffStatus   String? @default("AVAILABLE") // AVAILABLE, ON_TRIP, ON_LEAVE (only for staff members)
+  licenseNumber String? // For drivers
+  employeeId    String? // Company employee ID
 
-  nextOfKinName  String?
-  nextOfKinPhone String?
-  profilePicture String?   // URL/path to profile picture
-  isGuestUser    Boolean   @default(false) // True for SMS users without full registration
-  mustChangePassword Boolean @default(false) // True for new company admins with temp passwords
-  bookings       Booking[]
+  nextOfKinName      String?
+  nextOfKinPhone     String?
+  profilePicture     String? // URL/path to profile picture
+  isGuestUser        Boolean   @default(false) // True for SMS users without full registration
+  mustChangePassword Boolean   @default(false) // True for new company admins with temp passwords
+  bookings           Booking[]
 
   // Sales referral (if user was referred by a sales person)
-  salesReferral  SalesReferral?
+  salesReferral SalesReferral?
 
   // Password reset tokens
   passwordResets PasswordReset[]
@@ -46,78 +46,78 @@ model User {
   companyMessages CompanyMessage[]
 
   // Platform staff (if user is i-Ticket employee)
-  platformStaff   PlatformStaff?
+  platformStaff PlatformStaff?
 
   // Telegram bot sessions
   telegramSessions TelegramSession[]
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([role])
   @@index([companyId])
   @@index([isGuestUser, createdAt])
   @@index([companyId, staffRole])
-  @@index([phone, isGuestUser])  // P3-2: Optimize guest user lookups
-  @@index([mustChangePassword])  // For force password change redirects
+  @@index([phone, isGuestUser]) // P3-2: Optimize guest user lookups
+  @@index([mustChangePassword]) // For force password change redirects
 }
 
 model Company {
-  id        String   @id @default(cuid())
-  name      String
-  logo      String?
-  phones    String   @default("[]") // JSON array stored as string
-  email     String
-  isActive  Boolean  @default(true)
-  disableAutoHaltGlobally Boolean @default(false)  // Company-wide auto-halt preference
+  id                      String  @id @default(cuid())
+  name                    String
+  logo                    String?
+  phones                  String  @default("[]") // JSON array stored as string
+  email                   String
+  isActive                Boolean @default(true)
+  disableAutoHaltGlobally Boolean @default(false) // Company-wide auto-halt preference
 
   // Additional contact information (optional)
-  fax         String?  // Fax number
-  website     String?  // Company website URL
-  address     String?  // Physical address
-  poBox       String?  // P.O. Box number
-  tinNumber   String?  // Tax Identification Number
+  fax       String? // Fax number
+  website   String? // Company website URL
+  address   String? // Physical address
+  poBox     String? // P.O. Box number
+  tinNumber String? // Tax Identification Number
 
   // Bank information
-  bankName      String?  // Bank name
-  bankAccount   String?  // Bank account number
-  bankBranch    String?  // Bank branch
+  bankName    String? // Bank name
+  bankAccount String? // Bank account number
+  bankBranch  String? // Bank branch
 
   // Key contacts
-  adminName     String?  // Company admin/manager name
-  adminPhone    String?  // Company admin/manager phone
-  adminEmail    String?  // Company admin/manager email
-  supportName   String?  // Support contact name
-  supportPhone  String?  // Support contact phone
+  adminName    String? // Company admin/manager name
+  adminPhone   String? // Company admin/manager phone
+  adminEmail   String? // Company admin/manager email
+  supportName  String? // Support contact name
+  supportPhone String? // Support contact phone
 
   // Report signatures (for accounting/financial reports)
-  preparedBy  String?  // Name of person who prepares reports
-  reviewedBy  String?  // Name of person who reviews reports
-  approvedBy  String?  // Name of person who approves reports
+  preparedBy String? // Name of person who prepares reports
+  reviewedBy String? // Name of person who reviews reports
+  approvedBy String? // Name of person who approves reports
 
-  users     User[]
-  trips     Trip[]
-  vehicles  Vehicle[]
-  tripTemplates TripTemplate[]
+  users           User[]
+  trips           Trip[]
+  vehicles        Vehicle[]
+  tripTemplates   TripTemplate[]
   companyMessages CompanyMessage[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 }
 
 // Trip templates for quick trip creation
 model TripTemplate {
-  id              String   @id @default(cuid())
-  companyId       String
-  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Template identification
-  name            String   // User-defined name (e.g., "Addis-Dire Standard Route")
-  origin          String
-  destination     String
+  name        String // User-defined name (e.g., "Addis-Dire Standard Route")
+  origin      String
+  destination String
 
   // Default values (all editable when used)
-  estimatedDuration Int    // hours
-  distance          Int?   // km
+  estimatedDuration Int // hours
+  distance          Int? // km
   price             Float
   busType           String
   hasWater          Boolean @default(false)
@@ -125,67 +125,67 @@ model TripTemplate {
   intermediateStops String? // JSON array
 
   // Usage tracking
-  timesUsed       Int      @default(0)
-  lastUsedAt      DateTime?
+  timesUsed  Int       @default(0)
+  lastUsedAt DateTime?
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([companyId, origin, destination])
   @@index([companyId, name])
 }
 
 model Trip {
-  id                String    @id @default(cuid())
-  companyId         String
-  company           Company   @relation(fields: [companyId], references: [id])
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
 
   // Staff assignments (nullable - can be assigned later)
-  driverId          String?
-  driver            User?     @relation("TripDriver", fields: [driverId], references: [id], onDelete: SetNull)
-  conductorId       String?
-  conductor         User?     @relation("TripConductor", fields: [conductorId], references: [id], onDelete: SetNull)
-  manualTicketerId  String?
-  manualTicketer    User?     @relation("TripManualTicketer", fields: [manualTicketerId], references: [id], onDelete: SetNull)
+  driverId         String?
+  driver           User?   @relation("TripDriver", fields: [driverId], references: [id], onDelete: SetNull)
+  conductorId      String?
+  conductor        User?   @relation("TripConductor", fields: [conductorId], references: [id], onDelete: SetNull)
+  manualTicketerId String?
+  manualTicketer   User?   @relation("TripManualTicketer", fields: [manualTicketerId], references: [id], onDelete: SetNull)
 
   // Vehicle assignment (optional - can be assigned later)
-  vehicleId         String?
-  vehicle           Vehicle?  @relation("VehicleTrips", fields: [vehicleId], references: [id], onDelete: SetNull)
+  vehicleId String?
+  vehicle   Vehicle? @relation("VehicleTrips", fields: [vehicleId], references: [id], onDelete: SetNull)
 
-  origin            String
-  destination       String
-  route             String?
-  intermediateStops String?
-  departureTime     DateTime
-  estimatedDuration Int      // Duration in hours
-  actualDepartureTime DateTime?  // Actual departure time (recorded when status → DEPARTED)
-  actualArrivalTime   DateTime?  // Actual arrival time (recorded when status → COMPLETED)
-  distance          Int?     // Distance in kilometers (optional)
-  price             Float
-  busType           String
-  totalSlots        Int
-  availableSlots    Int
-  hasWater          Boolean   @default(false)
-  hasFood           Boolean   @default(false)
-  isActive          Boolean   @default(true)
-  status            String    @default("SCHEDULED") // SCHEDULED, DELAYED, BOARDING, DEPARTED, COMPLETED, CANCELLED
-  delayReason       String?   // TRAFFIC, BREAKDOWN, WEATHER, WAITING_PASSENGERS, OTHER
-  delayedAt         DateTime? // When trip was marked as delayed
-  lowSlotAlertSent         Boolean   @default(false)
-  bookingHalted            Boolean   @default(false)
-  adminResumedFromAutoHalt Boolean   @default(false)
-  autoResumeEnabled        Boolean   @default(false)  // Admin preference to prevent future auto-halts
-  reportGenerated          Boolean   @default(false)
-  version           Int       @default(0)  // P3: Optimistic locking version
-  bookings          Booking[]
-  tickets           Ticket[]
-  tripLog           TripLog?  // Before/after odometer and fuel readings
-  manifestDownloads ManifestDownload[]  // Auto-generated manifest files
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  origin                   String
+  destination              String
+  route                    String?
+  intermediateStops        String?
+  departureTime            DateTime
+  estimatedDuration        Int // Duration in hours
+  actualDepartureTime      DateTime? // Actual departure time (recorded when status → DEPARTED)
+  actualArrivalTime        DateTime? // Actual arrival time (recorded when status → COMPLETED)
+  distance                 Int? // Distance in kilometers (optional)
+  price                    Float
+  busType                  String
+  totalSlots               Int
+  availableSlots           Int
+  hasWater                 Boolean            @default(false)
+  hasFood                  Boolean            @default(false)
+  isActive                 Boolean            @default(true)
+  status                   String             @default("SCHEDULED") // SCHEDULED, DELAYED, BOARDING, DEPARTED, COMPLETED, CANCELLED
+  delayReason              String? // TRAFFIC, BREAKDOWN, WEATHER, WAITING_PASSENGERS, OTHER
+  delayedAt                DateTime? // When trip was marked as delayed
+  lowSlotAlertSent         Boolean            @default(false)
+  bookingHalted            Boolean            @default(false)
+  adminResumedFromAutoHalt Boolean            @default(false)
+  autoResumeEnabled        Boolean            @default(false) // Admin preference to prevent future auto-halts
+  reportGenerated          Boolean            @default(false)
+  version                  Int                @default(0) // P3: Optimistic locking version
+  bookings                 Booking[]
+  tickets                  Ticket[]
+  tripLog                  TripLog? // Before/after odometer and fuel readings
+  manifestDownloads        ManifestDownload[] // Auto-generated manifest files
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
 
   @@index([origin, destination, departureTime])
-  @@index([version])  // P3: Index for optimistic locking queries
+  @@index([version]) // P3: Index for optimistic locking queries
   @@index([departureTime])
   @@index([companyId])
   @@index([driverId])
@@ -199,41 +199,41 @@ model Trip {
 
 // Trip odometer and fuel tracking (before/after readings)
 model TripLog {
-  id            String   @id @default(cuid())
-  tripId        String   @unique
-  trip          Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  tripId String @unique
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
-  vehicleId     String
-  vehicle       Vehicle  @relation("VehicleTripLogs", fields: [vehicleId], references: [id])
+  vehicleId String
+  vehicle   Vehicle @relation("VehicleTripLogs", fields: [vehicleId], references: [id])
 
-  companyId     String
+  companyId String
 
   // Start readings (before trip departure)
-  startOdometer Int?           // km reading before trip
-  startFuel     Float?         // Fuel level (liters or %)
-  startFuelUnit String?        // LITERS, PERCENTAGE
-  startedAt     DateTime?      // When readings were recorded
-  startedById   String?        // Driver/staff who recorded
-  startedByName String?        // Denormalized name
+  startOdometer Int? // km reading before trip
+  startFuel     Float? // Fuel level (liters or %)
+  startFuelUnit String? // LITERS, PERCENTAGE
+  startedAt     DateTime? // When readings were recorded
+  startedById   String? // Driver/staff who recorded
+  startedByName String? // Denormalized name
 
   // End readings (after trip arrival)
-  endOdometer   Int?           // km reading after trip
-  endFuel       Float?         // Fuel level after trip
-  endedAt       DateTime?      // When readings were recorded
-  endedById     String?        // Driver/staff who recorded
-  endedByName   String?        // Denormalized name
+  endOdometer Int? // km reading after trip
+  endFuel     Float? // Fuel level after trip
+  endedAt     DateTime? // When readings were recorded
+  endedById   String? // Driver/staff who recorded
+  endedByName String? // Denormalized name
 
   // Calculated fields (auto-computed on end entry)
-  distanceTraveled Int?        // endOdometer - startOdometer
-  fuelConsumed     Float?      // startFuel - endFuel (if same unit)
-  fuelEfficiency   Float?      // km per liter
+  distanceTraveled Int? // endOdometer - startOdometer
+  fuelConsumed     Float? // startFuel - endFuel (if same unit)
+  fuelEfficiency   Float? // km per liter
 
   // Notes
-  startNotes    String?  @db.Text
-  endNotes      String?  @db.Text
+  startNotes String? @db.Text
+  endNotes   String? @db.Text
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([tripId])
   @@index([vehicleId])
@@ -244,25 +244,25 @@ model TripLog {
 
 // Manifest download tracking (Super Admin auto-tracking + Company manual downloads)
 model ManifestDownload {
-  id              String   @id @default(cuid())
-  tripId          String
-  trip            Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
-  companyId       String   // Company that owns the trip
+  id        String @id @default(cuid())
+  tripId    String
+  trip      Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  companyId String // Company that owns the trip
 
-  filePath        String   // /manifests/company-{id}/trip-{id}-{timestamp}.xlsx
-  fileSize        Int      // bytes
+  filePath String // /manifests/company-{id}/trip-{id}-{timestamp}.xlsx
+  fileSize Int // bytes
 
   // Download tracking
-  downloadType    String   // "AUTO_DEPARTED", "AUTO_FULL_CAPACITY", "MANUAL_COMPANY"
-  downloadedBy    String?  // userId if manual company download, null if auto (SYSTEM)
-  downloadedAt    DateTime @default(now())
+  downloadType String // "AUTO_DEPARTED", "AUTO_FULL_CAPACITY", "MANUAL_COMPANY"
+  downloadedBy String? // userId if manual company download, null if auto (SYSTEM)
+  downloadedAt DateTime @default(now())
 
   // Trip summary (for quick filtering without joins)
-  passengerCount  Int
-  totalRevenue    Float
-  origin          String
-  destination     String
-  departureTime   DateTime
+  passengerCount Int
+  totalRevenue   Float
+  origin         String
+  destination    String
+  departureTime  DateTime
 
   @@index([tripId])
   @@index([companyId, downloadedAt])
@@ -271,86 +271,86 @@ model ManifestDownload {
 }
 
 model Vehicle {
-  id          String   @id @default(cuid())
-  companyId   String
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Ethiopian dual identification
-  plateNumber String   // Required: Standard registration (e.g., "3-12345")
-  sideNumber  String?  // Optional: Bus identifier (e.g., "Bus 7", "07")
+  plateNumber String // Required: Standard registration (e.g., "3-12345")
+  sideNumber  String? // Optional: Bus identifier (e.g., "Bus 7", "07")
 
   // Vehicle specifications
-  make        String   // Manufacturer (Toyota, Isuzu, Mercedes-Benz, etc.)
-  model       String   // Model name (Coaster, NPR, Sprinter, etc.)
-  year        Int      // Manufacturing year
-  busType     String   // MINI, STANDARD, LUXURY (matches Trip.busType)
-  color       String?  // Optional: Vehicle color
-  totalSeats  Int      // Total passenger capacity
+  make       String // Manufacturer (Toyota, Isuzu, Mercedes-Benz, etc.)
+  model      String // Model name (Coaster, NPR, Sprinter, etc.)
+  year       Int // Manufacturing year
+  busType    String // MINI, STANDARD, LUXURY (matches Trip.busType)
+  color      String? // Optional: Vehicle color
+  totalSeats Int // Total passenger capacity
 
   // Status and maintenance tracking
-  status      String   @default("ACTIVE") // ACTIVE, MAINTENANCE, INACTIVE
+  status             String    @default("ACTIVE") // ACTIVE, MAINTENANCE, INACTIVE
   registrationExpiry DateTime? // Vehicle registration expiration date
   insuranceExpiry    DateTime? // Insurance expiration date
   lastServiceDate    DateTime? // Last maintenance/service date
   nextServiceDate    DateTime? // Scheduled next maintenance date
 
   // Phase 2: Operational data for predictive maintenance
-  currentOdometer       Int?      // Current mileage in kilometers
-  odometerLastUpdated   DateTime? // When odometer was last recorded
-  engineHours           Int?      // Total engine runtime hours
-  fuelCapacity          Int?      // Tank capacity in liters
-  fuelType              String?   // DIESEL, PETROL, CNG, ELECTRIC
+  currentOdometer     Int? // Current mileage in kilometers
+  odometerLastUpdated DateTime? // When odometer was last recorded
+  engineHours         Int? // Total engine runtime hours
+  fuelCapacity        Int? // Tank capacity in liters
+  fuelType            String? // DIESEL, PETROL, CNG, ELECTRIC
 
   // Phase 2: Performance metrics (calculated/updated periodically)
-  utilizationRate       Float?    // % of time vehicle is on trips
-  avgSpeedKmh           Float?    // Average speed from GPS data
-  idleTimePercentage    Float?    // % of engine time spent idling
-  fuelEfficiencyL100km  Float?    // Liters per 100 km
+  utilizationRate      Float? // % of time vehicle is on trips
+  avgSpeedKmh          Float? // Average speed from GPS data
+  idleTimePercentage   Float? // % of engine time spent idling
+  fuelEfficiencyL100km Float? // Liters per 100 km
 
   // Phase 2: Cost tracking
-  costPerKm             Float?    // Total cost per km (calculated)
-  revenuePerKm          Float?    // Revenue per km (from bookings)
-  fuelCostMTD           Float     @default(0) // Month-to-date fuel cost
-  fuelCostYTD           Float     @default(0) // Year-to-date fuel cost
-  maintenanceCostMTD    Float     @default(0) // Month-to-date maintenance
-  maintenanceCostYTD    Float     @default(0) // Year-to-date maintenance
+  costPerKm          Float? // Total cost per km (calculated)
+  revenuePerKm       Float? // Revenue per km (from bookings)
+  fuelCostMTD        Float  @default(0) // Month-to-date fuel cost
+  fuelCostYTD        Float  @default(0) // Year-to-date fuel cost
+  maintenanceCostMTD Float  @default(0) // Month-to-date maintenance
+  maintenanceCostYTD Float  @default(0) // Year-to-date maintenance
 
   // Phase 2: Predictive maintenance AI
-  maintenanceRiskScore  Int?      // 0-100 (AI prediction, 100 = immediate attention)
-  predictedFailureDate  DateTime? // When AI predicts next failure
-  predictedFailureType  String?   // Engine, Brake, Transmission, etc.
-  lastPredictionUpdate  DateTime? // When AI last ran
+  maintenanceRiskScore Int? // 0-100 (AI prediction, 100 = immediate attention)
+  predictedFailureDate DateTime? // When AI predicts next failure
+  predictedFailureType String? // Engine, Brake, Transmission, etc.
+  lastPredictionUpdate DateTime? // When AI last ran
 
   // Phase 2: Inspection tracking
-  lastInspectionDate    DateTime? // Last safety inspection
-  inspectionDueDate     DateTime? // Next inspection due
-  defectCount           Int       @default(0) // Open defects
-  criticalDefectCount   Int       @default(0) // Critical defects requiring immediate attention
+  lastInspectionDate  DateTime? // Last safety inspection
+  inspectionDueDate   DateTime? // Next inspection due
+  defectCount         Int       @default(0) // Open defects
+  criticalDefectCount Int       @default(0) // Critical defects requiring immediate attention
 
   // Relations
-  trips                 Trip[]                @relation("VehicleTrips")
-  maintenanceSchedules  MaintenanceSchedule[]
-  workOrders            WorkOrder[]
-  fuelEntries           FuelEntry[]
-  inspections           VehicleInspection[]
-  odometerLogs          OdometerLog[]
-  tripLogs              TripLog[]             @relation("VehicleTripLogs")
+  trips                Trip[]                @relation("VehicleTrips")
+  maintenanceSchedules MaintenanceSchedule[]
+  workOrders           WorkOrder[]
+  fuelEntries          FuelEntry[]
+  inspections          VehicleInspection[]
+  odometerLogs         OdometerLog[]
+  tripLogs             TripLog[]             @relation("VehicleTripLogs")
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  // Unique constraints: plate and side numbers must be unique per company
+  @@unique([companyId, plateNumber])
+  @@unique([companyId, sideNumber])
   // Indexes for performance
   @@index([companyId])
   @@index([status])
   @@index([plateNumber])
   @@index([sideNumber])
   @@index([maintenanceRiskScore]) // Phase 2: For high-risk vehicle queries
-  @@index([inspectionDueDate])    // Phase 2: For compliance alerts
+  @@index([inspectionDueDate]) // Phase 2: For compliance alerts
   @@index([predictedFailureDate]) // Phase 2: For proactive maintenance
-  @@index([currentOdometer])      // Phase 2: For mileage-based scheduling
-  // Unique constraints: plate and side numbers must be unique per company
-  @@unique([companyId, plateNumber])
-  @@unique([companyId, sideNumber])
+  @@index([currentOdometer]) // Phase 2: For mileage-based scheduling
 }
 
 model Booking {
@@ -361,7 +361,7 @@ model Booking {
   user          User        @relation(fields: [userId], references: [id])
   passengers    Passenger[]
   totalAmount   Float
-  commission    Float       // Base platform commission (5% of totalAmount)
+  commission    Float // Base platform commission (5% of totalAmount)
   commissionVAT Float       @default(0) // VAT on commission (15% of commission)
   status        String      @default("PENDING") // PENDING, PAID, CANCELLED, COMPLETED
   isQuickTicket Boolean     @default(false)
@@ -371,8 +371,8 @@ model Booking {
   // Sales commission (if user was referred by a sales person)
   salesCommission SalesCommission?
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId, status])
   @@index([tripId])
@@ -412,7 +412,7 @@ model Ticket {
 
   @@index([tripId])
   @@index([shortCode])
-  @@index([shortCode, isUsed])  // P3-2: Optimize ticket verification queries
+  @@index([shortCode, isUsed]) // P3-2: Optimize ticket verification queries
 }
 
 model Payment {
@@ -420,7 +420,7 @@ model Payment {
   bookingId     String   @unique
   booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   amount        Float
-  method        String   // TELEBIRR, DEMO
+  method        String // TELEBIRR, DEMO
   transactionId String?
   status        String   @default("PENDING") // PENDING, SUCCESS, FAILED, TIMEOUT
   initiatedVia  String   @default("WEB") // WEB or SMS (for analytics)
@@ -433,16 +433,16 @@ model Payment {
 }
 
 model City {
-  id        String   @id @default(cuid())
-  name      String   @unique
+  id        String  @id @default(cuid())
+  name      String  @unique
   region    String?
-  isActive  Boolean  @default(true)
-  tripCount Int      @default(0)
+  isActive  Boolean @default(true)
+  tripCount Int     @default(0)
 
   // GPS coordinates for OsmAnd integration (Phase 1)
-  latitude  Float?   // e.g., 9.0220 for Addis Ababa
-  longitude Float?   // e.g., 38.7468 for Addis Ababa
-  timezone  String?  // e.g., "Africa/Addis_Ababa"
+  latitude  Float? // e.g., 9.0220 for Addis Ababa
+  longitude Float? // e.g., 38.7468 for Addis Ababa
+  timezone  String? // e.g., "Africa/Addis_Ababa"
 
   createdAt DateTime @default(now())
 
@@ -456,7 +456,7 @@ model AdminLog {
   action    String
   details   String?
   tripId    String?
-  companyId String?  // For company-related audit logs (activation/deactivation)
+  companyId String? // For company-related audit logs (activation/deactivation)
   createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
@@ -466,29 +466,29 @@ model AdminLog {
 }
 
 model SmsSession {
-  id              String   @id @default(cuid())
-  phone           String   // User identifier (09XXXXXXXX)
-  sessionId       String   @unique // Unique session ID
-  state           String   // IDLE, SEARCH, SELECT_TRIP, ASK_PASSENGER_COUNT, etc.
-  language        String   @default("EN") // EN or AM
+  id        String @id @default(cuid())
+  phone     String // User identifier (09XXXXXXXX)
+  sessionId String @unique // Unique session ID
+  state     String // IDLE, SEARCH, SELECT_TRIP, ASK_PASSENGER_COUNT, etc.
+  language  String @default("EN") // EN or AM
 
   // Journey data (accumulated during conversation)
-  origin          String?
-  destination     String?
-  date            String?
-  selectedTripId  String?
-  passengerCount  Int      @default(1) // Number of passengers (1-5)
-  passengerData   String?  // JSON array: [{name, id}, {name, id}, ...]
-  currentPassengerIndex Int @default(0) // Track which passenger we're collecting info for
-  bookingId       String?
+  origin                String?
+  destination           String?
+  date                  String?
+  selectedTripId        String?
+  passengerCount        Int     @default(1) // Number of passengers (1-5)
+  passengerData         String? // JSON array: [{name, id}, {name, id}, ...]
+  currentPassengerIndex Int     @default(0) // Track which passenger we're collecting info for
+  bookingId             String?
 
   // Session management
-  lastMessageAt   DateTime @default(now())
-  expiresAt       DateTime // Auto-expire after 15 min inactivity
-  messageCount    Int      @default(0)
+  lastMessageAt DateTime @default(now())
+  expiresAt     DateTime // Auto-expire after 15 min inactivity
+  messageCount  Int      @default(0)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([phone])
   @@index([sessionId])
@@ -496,37 +496,37 @@ model SmsSession {
 }
 
 model TelegramSession {
-  id              String   @id @default(cuid())
-  chatId          BigInt   @unique
-  userId          String?
-  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id     String  @id @default(cuid())
+  chatId BigInt  @unique
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
 
-  sessionId       String   @unique
-  state           String   @default("IDLE")
-  language        String   @default("EN")
+  sessionId String @unique
+  state     String @default("IDLE")
+  language  String @default("EN")
 
   // Journey data (accumulated during booking flow)
-  origin          String?
-  destination     String?
-  date            DateTime?
-  selectedTripId  String?
-  passengerCount  Int      @default(0)
-  seatPreference  String?  // AUTO or MANUAL
-  passengerData   String?  // JSON array
-  currentPassengerIndex Int @default(0)
-  selectedSeats   String?  // JSON array
+  origin                String?
+  destination           String?
+  date                  DateTime?
+  selectedTripId        String?
+  passengerCount        Int       @default(0)
+  seatPreference        String? // AUTO or MANUAL
+  passengerData         String? // JSON array
+  currentPassengerIndex Int       @default(0)
+  selectedSeats         String? // JSON array
 
   // Booking state
-  bookingId       String?
+  bookingId            String?
   paymentTransactionId String?
 
   // Session management
-  lastMessageAt   DateTime @default(now())
-  expiresAt       DateTime
-  messageCount    Int      @default(0)
+  lastMessageAt DateTime @default(now())
+  expiresAt     DateTime
+  messageCount  Int      @default(0)
 
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([chatId])
   @@index([sessionId])
@@ -535,37 +535,37 @@ model TelegramSession {
 }
 
 model SupportTicket {
-  id            String   @id @default(cuid())
-  ticketNumber  String   @unique // Format: SUP-XXXXXX (6 chars)
+  id           String @id @default(cuid())
+  ticketNumber String @unique // Format: SUP-XXXXXX (6 chars)
 
   // Contact details
-  name          String
-  email         String
-  phone         String?
+  name  String
+  email String
+  phone String?
 
   // Ticket details
-  subject       String
-  message       String   @db.Text
-  category      String   @default("GENERAL") // GENERAL, TECHNICAL, BOOKING, PAYMENT, ACCOUNT, FEEDBACK
-  priority      Int      @default(2) // 1=Low, 2=Medium, 3=High, 4=Urgent
-  status        String   @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  subject  String
+  message  String @db.Text
+  category String @default("GENERAL") // GENERAL, TECHNICAL, BOOKING, PAYMENT, ACCOUNT, FEEDBACK
+  priority Int    @default(2) // 1=Low, 2=Medium, 3=High, 4=Urgent
+  status   String @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
 
   // Assignment & Resolution
-  assignedToId  String?  // Admin user ID
-  resolvedBy    String?  // Admin user ID who resolved it
-  resolution    String?  @db.Text
-  resolvedAt    DateTime?
+  assignedToId String? // Admin user ID
+  resolvedBy   String? // Admin user ID who resolved it
+  resolution   String?   @db.Text
+  resolvedAt   DateTime?
 
   // Scoring/Evaluation
-  satisfactionScore Int?  // 1-5 rating from user
-  internalNotes String?  @db.Text // Admin notes
+  satisfactionScore Int? // 1-5 rating from user
+  internalNotes     String? @db.Text // Admin notes
 
   // Metadata
-  userAgent     String?
-  ipAddress     String?
+  userAgent String?
+  ipAddress String?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([ticketNumber])
   @@index([status, priority])
@@ -576,37 +576,37 @@ model SupportTicket {
 // ==================== SALES PERSON REFERRAL SYSTEM ====================
 
 model SalesPerson {
-  id             String    @id @default(cuid())
-  name           String
-  phone          String    @unique
-  email          String?
-  password       String    // Hashed password for login
-  referralCode   String    @unique // e.g., "ABEL23" - permanent unique code
-  status         String    @default("ACTIVE") // ACTIVE, INACTIVE
+  id           String  @id @default(cuid())
+  name         String
+  phone        String  @unique
+  email        String?
+  password     String // Hashed password for login
+  referralCode String  @unique // e.g., "ABEL23" - permanent unique code
+  status       String  @default("ACTIVE") // ACTIVE, INACTIVE
 
   // Multi-tier sales (pyramid structure)
-  recruiterId    String?   // Sales person who recruited this person (null for Tier 1)
-  recruiter      SalesPerson?  @relation("SalesHierarchy", fields: [recruiterId], references: [id], onDelete: SetNull)
-  recruits       SalesPerson[] @relation("SalesHierarchy") // Sales persons recruited by this person
-  tier           Int       @default(1) // 1 = Admin-created, 2+ = Recruited by another sales person
+  recruiterId String? // Sales person who recruited this person (null for Tier 1)
+  recruiter   SalesPerson?  @relation("SalesHierarchy", fields: [recruiterId], references: [id], onDelete: SetNull)
+  recruits    SalesPerson[] @relation("SalesHierarchy") // Sales persons recruited by this person
+  tier        Int           @default(1) // 1 = Admin-created, 2+ = Recruited by another sales person
 
   // Payment/Contact settings
-  bankAccountName    String?  // Name on bank account for payouts
-  bankAccountNumber  String?  // Bank account number
-  bankName           String?  // Bank name (e.g., "CBE", "Abyssinia Bank")
-  alternativePhone   String?  // Alternative contact number
-  profilePicture     String?  // URL/path to profile picture
+  bankAccountName   String? // Name on bank account for payouts
+  bankAccountNumber String? // Bank account number
+  bankName          String? // Bank name (e.g., "CBE", "Abyssinia Bank")
+  alternativePhone  String? // Alternative contact number
+  profilePicture    String? // URL/path to profile picture
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  lastLoginAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
 
   // Relations
-  qrScans        SalesQrScan[]
-  referrals      SalesReferral[]
-  commissions    SalesCommission[]
+  qrScans              SalesQrScan[]
+  referrals            SalesReferral[]
+  commissions          SalesCommission[]
   recruiterCommissions SalesCommission[] @relation("RecruiterCommissions") // Commissions earned from recruits
-  payouts        SalesPayout[]
+  payouts              SalesPayout[]
 
   @@index([referralCode])
   @@index([phone])
@@ -616,76 +616,76 @@ model SalesPerson {
 }
 
 model SalesQrScan {
-  id              String      @id @default(cuid())
-  salesPersonId   String
-  salesPerson     SalesPerson @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
+  id            String      @id @default(cuid())
+  salesPersonId String
+  salesPerson   SalesPerson @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
 
   // Visitor fingerprint (for unique visitor tracking)
-  visitorHash     String      // Hash of IP + User-Agent for deduplication
+  visitorHash String // Hash of IP + User-Agent for deduplication
 
   // Device/browser info
-  deviceType      String?     // MOBILE, DESKTOP, TABLET
-  browser         String?     // Chrome, Safari, Firefox, etc.
-  os              String?     // Android, iOS, Windows, etc.
+  deviceType String? // MOBILE, DESKTOP, TABLET
+  browser    String? // Chrome, Safari, Firefox, etc.
+  os         String? // Android, iOS, Windows, etc.
 
   // Location (if available via IP geolocation)
-  city            String?
-  region          String?
-  country         String?
+  city    String?
+  region  String?
+  country String?
 
   // Referrer info
-  referrerUrl     String?     // Where they came from
-  landingPage     String      @default("/") // Which page they landed on
+  referrerUrl String? // Where they came from
+  landingPage String  @default("/") // Which page they landed on
 
-  createdAt       DateTime    @default(now())
+  createdAt DateTime @default(now())
 
   @@index([salesPersonId, createdAt])
   @@index([visitorHash])
 }
 
 model SalesReferral {
-  id              String      @id @default(cuid())
-  salesPersonId   String
-  salesPerson     SalesPerson @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
+  id            String      @id @default(cuid())
+  salesPersonId String
+  salesPerson   SalesPerson @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
 
-  userId          String      @unique // Each user can only be referred once
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique // Each user can only be referred once
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Attribution metadata
-  attributedAt    DateTime    @default(now()) // When the user registered with this referral
+  attributedAt DateTime @default(now()) // When the user registered with this referral
 
   @@index([salesPersonId])
   @@index([userId])
 }
 
 model SalesCommission {
-  id                  String       @id @default(cuid())
-  salesPersonId       String
-  salesPerson         SalesPerson  @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
+  id            String      @id @default(cuid())
+  salesPersonId String
+  salesPerson   SalesPerson @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
 
-  bookingId           String       @unique
-  booking             Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  bookingId String  @unique
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
   // Commission calculation
-  ticketAmount        Float        // Total ticket price
-  platformCommission  Float        // Platform's 5% (stored for reference)
-  salesCommission     Float        // Sales person's 5% of platform's 5% = 0.25% of ticket
+  ticketAmount       Float // Total ticket price
+  platformCommission Float // Platform's 5% (stored for reference)
+  salesCommission    Float // Sales person's 5% of platform's 5% = 0.25% of ticket
 
   // Multi-tier commission tracking (70/30 split)
-  recruiterCommissionAmount Float  @default(0) // Amount that went to recruiter (30% of salesCommission)
-  recruiterId                String? // Recruiter who earned the 30%
-  recruiter                  SalesPerson? @relation("RecruiterCommissions", fields: [recruiterId], references: [id], onDelete: SetNull)
-  isRecruiterCommission     Boolean @default(false) // True if this is a recruiter's 30% commission
+  recruiterCommissionAmount Float        @default(0) // Amount that went to recruiter (30% of salesCommission)
+  recruiterId               String? // Recruiter who earned the 30%
+  recruiter                 SalesPerson? @relation("RecruiterCommissions", fields: [recruiterId], references: [id], onDelete: SetNull)
+  isRecruiterCommission     Boolean      @default(false) // True if this is a recruiter's 30% commission
 
   // Status tracking
-  status              String       @default("PENDING") // PENDING, APPROVED, PAID
+  status String @default("PENDING") // PENDING, APPROVED, PAID
 
   // Payout tracking
-  payoutId            String?
-  payout              SalesPayout? @relation(fields: [payoutId], references: [id])
-  paidAt              DateTime?
+  payoutId String?
+  payout   SalesPayout? @relation(fields: [payoutId], references: [id])
+  paidAt   DateTime?
 
-  createdAt           DateTime     @default(now())
+  createdAt DateTime @default(now())
 
   @@index([salesPersonId, status])
   @@index([bookingId])
@@ -696,42 +696,42 @@ model SalesCommission {
 }
 
 model SalesPayout {
-  id              String            @id @default(cuid())
-  salesPersonId   String
-  salesPerson     SalesPerson       @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
+  id            String      @id @default(cuid())
+  salesPersonId String
+  salesPerson   SalesPerson @relation(fields: [salesPersonId], references: [id], onDelete: Cascade)
 
-  amount          Float             // Total payout amount
-  commissionCount Int               // Number of commissions included
+  amount          Float // Total payout amount
+  commissionCount Int // Number of commissions included
 
   // Payment details
-  paymentMethod   String            // TELEBIRR, CASH
-  paymentRef      String?           // Transaction reference
+  paymentMethod String // TELEBIRR, CASH
+  paymentRef    String? // Transaction reference
 
   // Admin tracking
-  processedBy     String            // Admin user ID who processed payout
-  notes           String?
+  processedBy String // Admin user ID who processed payout
+  notes       String?
 
-  createdAt       DateTime          @default(now())
+  createdAt DateTime @default(now())
 
   // Related commissions
-  commissions     SalesCommission[]
+  commissions SalesCommission[]
 
   @@index([salesPersonId, createdAt])
 }
 
 model ProcessedCallback {
-  id              String   @id @default(cuid())
-  transactionId   String   @unique
-  bookingId       String
-  callbackHash    String   @unique
-  nonce           String?
-  status          String
-  processedAt     DateTime @default(now())
+  id            String   @id @default(cuid())
+  transactionId String   @unique
+  bookingId     String
+  callbackHash  String   @unique
+  nonce         String?
+  status        String
+  processedAt   DateTime @default(now())
 
   // Metadata for debugging
-  amount          Float
-  signature       String
-  rawPayload      String   @db.Text
+  amount     Float
+  signature  String
+  rawPayload String @db.Text
 
   @@index([transactionId])
   @@index([bookingId])
@@ -740,16 +740,16 @@ model ProcessedCallback {
 }
 
 model PasswordReset {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  tokenHash       String   @unique  // Hashed token (bcrypt)
-  expiresAt       DateTime
-  isUsed          Boolean  @default(false)
-  usedAt          DateTime?
+  tokenHash String    @unique // Hashed token (bcrypt)
+  expiresAt DateTime
+  isUsed    Boolean   @default(false)
+  usedAt    DateTime?
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId, isUsed])
   @@index([tokenHash, isUsed])
@@ -759,38 +759,38 @@ model PasswordReset {
 // ==================== TRIP-BASED MESSAGING SYSTEM ====================
 
 model TripMessage {
-  id              String   @id @default(cuid())
-  tripId          String   // Messages are scoped to specific trips
+  id     String @id @default(cuid())
+  tripId String // Messages are scoped to specific trips
 
   // Sender info
-  senderId        String
-  senderName      String   // Denormalized for display
-  senderRole      String   // ADMIN, DRIVER, CONDUCTOR, MANUAL_TICKETER, MAINTENANCE
+  senderId   String
+  senderName String // Denormalized for display
+  senderRole String // ADMIN, DRIVER, CONDUCTOR, MANUAL_TICKETER, MAINTENANCE
 
   // Message content
-  message         String   @db.Text
-  type            String   @default("CHAT") // CHAT, ALERT, UPDATE, SYSTEM
+  message String @db.Text
+  type    String @default("CHAT") // CHAT, ALERT, UPDATE, SYSTEM
 
   // Metadata
-  isEdited        Boolean  @default(false)
-  editedAt        DateTime?
+  isEdited Boolean   @default(false)
+  editedAt DateTime?
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 
   // Read receipts
-  readReceipts    TripMessageReadReceipt[]
+  readReceipts TripMessageReadReceipt[]
 
   @@index([tripId, createdAt])
   @@index([senderId])
 }
 
 model TripMessageReadReceipt {
-  id              String      @id @default(cuid())
-  messageId       String
-  message         TripMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  id        String      @id @default(cuid())
+  messageId String
+  message   TripMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
-  userId          String      // Staff member who read the message
-  readAt          DateTime    @default(now())
+  userId String // Staff member who read the message
+  readAt DateTime @default(now())
 
   @@unique([messageId, userId]) // Each user can only read a message once
   @@index([messageId])
@@ -800,47 +800,47 @@ model TripMessageReadReceipt {
 // ==================== NOTIFICATION SYSTEM ====================
 
 model Notification {
-  id              String    @id @default(cuid())
+  id String @id @default(cuid())
 
   // Recipient info
-  recipientId     String    // User ID or SalesPerson ID
-  recipientType   String    // "USER" | "SALES_PERSON"
+  recipientId   String // User ID or SalesPerson ID
+  recipientType String // "USER" | "SALES_PERSON"
 
   // Notification content
-  type            String    // TRIP_ASSIGNMENT, TRIP_MESSAGE, BOOKING_NEW, BOOKING_PAID,
-                            // BOOKING_CANCELLED, SYSTEM_ALERT, COMMISSION_EARNED,
-                            // REFERRAL_NEW, TRIP_HALTED, TRIP_RESUMED, LOW_SLOTS
-  title           String
-  message         String    @db.Text
+  type    String // TRIP_ASSIGNMENT, TRIP_MESSAGE, BOOKING_NEW, BOOKING_PAID,
+  // BOOKING_CANCELLED, SYSTEM_ALERT, COMMISSION_EARNED,
+  // REFERRAL_NEW, TRIP_HALTED, TRIP_RESUMED, LOW_SLOTS
+  title   String
+  message String @db.Text
 
   // Related entities (nullable - for deep linking)
-  tripId          String?
-  bookingId       String?
-  companyId       String?
+  tripId    String?
+  bookingId String?
+  companyId String?
 
   // Metadata for rendering (JSON)
-  metadata        String?   @db.Text // JSON: {route, amount, seatNumbers, etc.}
+  metadata String? @db.Text // JSON: {route, amount, seatNumbers, etc.}
 
   // Status tracking
-  isRead          Boolean   @default(false)
-  readAt          DateTime?
+  isRead Boolean   @default(false)
+  readAt DateTime?
 
   // Priority for display ordering (1=Low, 2=Normal, 3=High, 4=Urgent)
-  priority        Int       @default(2)
+  priority Int @default(2)
 
   // Notification Grouping System (Phase 2.5)
-  groupKey        String?   // e.g., "trip-abc123" or "workorder-456"
-  groupType       String?   // "TRIP", "WORK_ORDER", "STAFF", "SYSTEM"
-  parentId        String?   // For nested notifications
-  isGroupHeader   Boolean   @default(false) // This is the summary notification
-  childCount      Int       @default(0) // Number of grouped notifications
+  groupKey      String? // e.g., "trip-abc123" or "workorder-456"
+  groupType     String? // "TRIP", "WORK_ORDER", "STAFF", "SYSTEM"
+  parentId      String? // For nested notifications
+  isGroupHeader Boolean @default(false) // This is the summary notification
+  childCount    Int     @default(0) // Number of grouped notifications
 
-  parent          Notification?   @relation("NotificationHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
-  children        Notification[]  @relation("NotificationHierarchy")
+  parent   Notification?  @relation("NotificationHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children Notification[] @relation("NotificationHierarchy")
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @default(now()) @updatedAt // Auto-updated when group changes
-  expiresAt       DateTime? // Optional expiration for time-sensitive notifications
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt // Auto-updated when group changes
+  expiresAt DateTime? // Optional expiration for time-sensitive notifications
 
   @@index([recipientId, recipientType, isRead])
   @@index([recipientId, recipientType, createdAt])
@@ -857,34 +857,34 @@ model Notification {
 
 // Automated maintenance schedules (preventive maintenance)
 model MaintenanceSchedule {
-  id                String   @id @default(cuid())
-  vehicleId         String
-  vehicle           Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
-  taskName          String   // "Oil Change", "Tire Rotation", "Brake Inspection"
-  taskType          String   // PREVENTIVE, INSPECTION, SERVICE
-  description       String?  @db.Text
+  taskName    String // "Oil Change", "Tire Rotation", "Brake Inspection"
+  taskType    String // PREVENTIVE, INSPECTION, SERVICE
+  description String? @db.Text
 
   // Trigger conditions (either mileage OR time based)
-  intervalKm        Int?     // Trigger every X km (e.g., 5000 km for oil change)
-  intervalDays      Int?     // Trigger every X days (e.g., 90 days)
+  intervalKm   Int? // Trigger every X km (e.g., 5000 km for oil change)
+  intervalDays Int? // Trigger every X days (e.g., 90 days)
 
-  lastCompletedAt   DateTime? // When last completed
-  lastCompletedKm   Int?      // Odometer reading at last completion
+  lastCompletedAt DateTime? // When last completed
+  lastCompletedKm Int? // Odometer reading at last completion
 
-  nextDueDate       DateTime? // Calculated next due date
-  nextDueKm         Int?      // Calculated next due mileage
+  nextDueDate DateTime? // Calculated next due date
+  nextDueKm   Int? // Calculated next due mileage
 
-  isActive          Boolean  @default(true)
-  priority          Int      @default(2) // 1=Low, 2=Normal, 3=High, 4=Urgent
-  estimatedCostBirr Float?   // Expected cost in ETB
-  estimatedDuration Int?     // Expected duration in minutes
+  isActive          Boolean @default(true)
+  priority          Int     @default(2) // 1=Low, 2=Normal, 3=High, 4=Urgent
+  estimatedCostBirr Float? // Expected cost in ETB
+  estimatedDuration Int? // Expected duration in minutes
 
   // Auto work order creation
   autoCreateWorkOrder Boolean @default(true)
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([vehicleId, nextDueDate])
   @@index([vehicleId, nextDueKm])
@@ -893,84 +893,95 @@ model MaintenanceSchedule {
 
 // Work orders for maintenance tasks
 model WorkOrder {
-  id                String   @id @default(cuid())
-  workOrderNumber   String   @unique // WO-XXXXXX
+  id              String @id @default(cuid())
+  workOrderNumber String @unique // WO-XXXXXX
 
-  vehicleId         String
-  vehicle           Vehicle  @relation(fields: [vehicleId], references: [id])
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
 
-  companyId         String
+  companyId String
 
   // Work order details
-  title             String
-  description       String?  @db.Text
-  taskType          String   // PREVENTIVE, CORRECTIVE, INSPECTION, EMERGENCY
-  priority          Int      @default(2) // 1=Low, 2=Normal, 3=High, 4=Urgent
+  title       String
+  description String? @db.Text
+  taskType    String // PREVENTIVE, CORRECTIVE, INSPECTION, EMERGENCY
+  priority    Int     @default(2) // 1=Low, 2=Normal, 3=High, 4=Urgent
 
   // Assignment
-  assignedToId      String?  // Mechanic user ID (deprecated - use assignedStaffIds)
-  assignedToName    String?  // Denormalized name (deprecated)
-  assignedStaffIds  String?  @db.Text // JSON array of staff user IDs (supports multiple assignments)
-  serviceProvider   String?  // External shop name (if outsourced)
+  assignedToId     String? // Mechanic user ID (deprecated - use assignedStaffIds)
+  assignedToName   String? // Denormalized name (deprecated)
+  assignedStaffIds String? @db.Text // JSON array of staff user IDs (supports multiple assignments)
+  serviceProvider  String? // External shop name (if outsourced)
 
   // Status tracking
-  status            String   @default("OPEN") // OPEN, IN_PROGRESS, BLOCKED, COMPLETED, CANCELLED
+  status String @default("OPEN") // OPEN, IN_PROGRESS, BLOCKED, COMPLETED, CANCELLED
 
   // Scheduling
-  scheduledDate     DateTime?
-  startedAt         DateTime?
-  completedAt       DateTime?
+  scheduledDate DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
 
   // Odometer at service
   odometerAtService Int?
 
   // Cost tracking
-  laborCost         Float    @default(0)
-  partsCost         Float    @default(0)
-  totalCost         Float    @default(0)
+  laborCost Float @default(0)
+  partsCost Float @default(0)
+  totalCost Float @default(0)
 
   // Parts used
-  partsUsed         WorkOrderPart[]
+  partsUsed WorkOrderPart[]
 
   // Completion notes
-  completionNotes   String?  @db.Text
-  mechanicSignature String?  // Digital signature or name
+  completionNotes   String? @db.Text
+  mechanicSignature String? // Digital signature or name
 
   // Linked to schedule (if auto-created)
-  scheduleId        String?
+  scheduleId String?
+
+  // Field Repair - Allows drivers/conductors to mark repairs done on the road
+  fixedOnTheJob      Boolean   @default(false) // True if fixed during a trip
+  fixedByStaffId     String? // Driver/conductor who fixed it
+  fixedByStaffName   String? // Denormalized name for display
+  fixedOnDate        DateTime? // When it was fixed
+  fixedAtLocation    String? // City name or description
+  fieldRepairNotes   String?   @db.Text // What was done, observations
+  externalGarageName String? // Name of roadside garage/mechanic used
+  externalGarageCost Float? // Cost paid to external service
 
   // Internal communication
-  messages          WorkOrderMessage[]
+  messages WorkOrderMessage[]
 
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([vehicleId, status])
   @@index([workOrderNumber])
   @@index([scheduledDate])
   @@index([companyId])
   @@index([status, priority])
+  @@index([fixedOnTheJob])
 }
 
 model WorkOrderPart {
-  id            String     @id @default(cuid())
-  workOrderId   String
-  workOrder     WorkOrder  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
-  partName      String
-  partNumber    String?
-  quantity      Int
-  unitPrice     Float
-  totalPrice    Float
-  supplier      String?
+  partName   String
+  partNumber String?
+  quantity   Int
+  unitPrice  Float
+  totalPrice Float
+  supplier   String?
 
   // Parts request workflow
-  status        String?    @default("APPROVED")  // REQUESTED, APPROVED, ORDERED, REJECTED
-  notes         String?
-  requestedBy   String?    // User ID of mechanic who requested
-  requestedAt   DateTime?
-  approvedBy    String?    // User ID of admin who approved
-  approvedAt    DateTime?
+  status      String?   @default("APPROVED") // REQUESTED, APPROVED, ORDERED, REJECTED
+  notes       String?
+  requestedBy String? // User ID of mechanic who requested
+  requestedAt DateTime?
+  approvedBy  String? // User ID of admin who approved
+  approvedAt  DateTime?
 
   @@index([workOrderId])
   @@index([status])
@@ -978,30 +989,30 @@ model WorkOrderPart {
 
 // Digital vehicle inspections (daily/weekly)
 model VehicleInspection {
-  id                String   @id @default(cuid())
-  vehicleId         String
-  vehicle           Vehicle  @relation(fields: [vehicleId], references: [id])
+  id        String  @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
 
-  inspectionType    String   // DAILY, WEEKLY, PRE_TRIP, POST_TRIP, ANNUAL
-  inspectedByUserId String   // Driver or mechanic
-  inspectedByName   String   // Denormalized
+  inspectionType    String // DAILY, WEEKLY, PRE_TRIP, POST_TRIP, ANNUAL
+  inspectedByUserId String // Driver or mechanic
+  inspectedByName   String // Denormalized
 
-  odometerReading   Int?
+  odometerReading Int?
 
   // Inspection results (JSON for flexibility)
-  checklistResults  String   @db.Text // JSON: {tires: "OK", brakes: "DEFECT", lights: "OK"}
+  checklistResults String @db.Text // JSON: {tires: "OK", brakes: "DEFECT", lights: "OK"}
 
   // Overall status
-  status            String   // PASS, FAIL, PASS_WITH_DEFECTS
-  defectsFound      Int      @default(0)
-  criticalDefects   Int      @default(0)
+  status          String // PASS, FAIL, PASS_WITH_DEFECTS
+  defectsFound    Int    @default(0)
+  criticalDefects Int    @default(0)
 
-  notes             String?  @db.Text
+  notes String? @db.Text
 
   // If failed, link to work order
-  workOrderId       String?
+  workOrderId String?
 
-  createdAt         DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([vehicleId, createdAt])
   @@index([status])
@@ -1010,39 +1021,39 @@ model VehicleInspection {
 
 // Fuel consumption tracking
 model FuelEntry {
-  id                String   @id @default(cuid())
-  vehicleId         String
-  vehicle           Vehicle  @relation(fields: [vehicleId], references: [id])
+  id        String  @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
 
-  companyId         String
+  companyId String
 
   // Fuel details
-  fuelType          String   // DIESEL, PETROL, CNG
-  liters            Float
-  costBirr          Float
-  costPerLiter      Float
+  fuelType     String // DIESEL, PETROL, CNG
+  liters       Float
+  costBirr     Float
+  costPerLiter Float
 
   // Odometer
-  odometerReading   Int      // Odometer at fill-up
+  odometerReading Int // Odometer at fill-up
 
   // Location
-  station           String?  // Gas station name
-  city              String?
+  station String? // Gas station name
+  city    String?
 
   // Payment
-  paymentMethod     String?  // CASH, FUEL_CARD, TELEBIRR
-  receiptNumber     String?
-  receiptPhoto      String?  // URL to receipt image
+  paymentMethod String? // CASH, FUEL_CARD, TELEBIRR
+  receiptNumber String?
+  receiptPhoto  String? // URL to receipt image
 
   // Recorded by
-  recordedByUserId  String?  // Driver or admin
-  recordedByName    String?
+  recordedByUserId String? // Driver or admin
+  recordedByName   String?
 
   // Calculated fields (from previous entry)
-  kmSinceLastFill   Int?     // Distance traveled since last fill
-  litersPer100Km    Float?   // Fuel efficiency (calculated)
+  kmSinceLastFill Int? // Distance traveled since last fill
+  litersPer100Km  Float? // Fuel efficiency (calculated)
 
-  createdAt         DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([vehicleId, createdAt])
   @@index([companyId])
@@ -1051,17 +1062,17 @@ model FuelEntry {
 
 // Odometer tracking (separate from fuel entries for accuracy)
 model OdometerLog {
-  id          String   @id @default(cuid())
-  vehicleId   String
-  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  id        String  @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
-  reading     Int      // Odometer reading in km
-  source      String   // MANUAL, GPS, FUEL_ENTRY, WORK_ORDER
+  reading Int // Odometer reading in km
+  source  String // MANUAL, GPS, FUEL_ENTRY, WORK_ORDER
 
-  recordedBy  String?  // User ID
-  notes       String?
+  recordedBy String? // User ID
+  notes      String?
 
-  timestamp   DateTime @default(now())
+  timestamp DateTime @default(now())
 
   @@index([vehicleId, timestamp])
   @@index([timestamp])
@@ -1069,21 +1080,21 @@ model OdometerLog {
 
 // Work order internal messaging (Admin, Mechanic, Driver, Finance communication)
 model WorkOrderMessage {
-  id              String   @id @default(cuid())
-  workOrderId     String
-  workOrder       WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
-  senderId        String   // User ID who sent the message
-  senderName      String   // Denormalized for display
-  senderRole      String   // ADMIN, MECHANIC, DRIVER, FINANCE, CONDUCTOR
+  senderId   String // User ID who sent the message
+  senderName String // Denormalized for display
+  senderRole String // ADMIN, MECHANIC, DRIVER, FINANCE, CONDUCTOR
 
-  message         String   @db.Text
-  type            String   @default("TEXT") // TEXT, STATUS_UPDATE, COST_APPROVAL, URGENT
+  message String @db.Text
+  type    String @default("TEXT") // TEXT, STATUS_UPDATE, COST_APPROVAL, URGENT
 
-  createdAt       DateTime @default(now())
+  createdAt DateTime @default(now())
 
   // Read receipts
-  readReceipts    WorkOrderMessageReadReceipt[]
+  readReceipts WorkOrderMessageReadReceipt[]
 
   @@index([workOrderId, createdAt])
   @@index([createdAt])
@@ -1091,12 +1102,12 @@ model WorkOrderMessage {
 
 // Track who has read work order messages
 model WorkOrderMessageReadReceipt {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   messageId String
   message   WorkOrderMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
-  userId    String
-  readAt    DateTime @default(now())
+  userId String
+  readAt DateTime @default(now())
 
   @@unique([messageId, userId])
   @@index([messageId])
@@ -1112,24 +1123,24 @@ model CompanyMessage {
   updatedAt DateTime @updatedAt
 
   // Message content
-  message   String   @db.Text
+  message String @db.Text
 
   // Attachments (JSON array of file objects)
   // [{name: "invoice.pdf", url: "/uploads/...", size: 12345, type: "application/pdf"}]
   attachments String? @db.Text
 
   // Sender info (denormalized for performance)
-  senderId     String
-  senderName   String
-  senderRole   String  // COMPANY_ADMIN or SUPER_ADMIN
+  senderId   String
+  senderName String
+  senderRole String // COMPANY_ADMIN or SUPER_ADMIN
 
   // Company context (for segregation)
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   // Read tracking
-  isReadByAdmin   Boolean @default(false)  // Has admin read this message?
-  isReadByCompany Boolean @default(false)  // Has company read this message?
+  isReadByAdmin   Boolean @default(false) // Has admin read this message?
+  isReadByCompany Boolean @default(false) // Has company read this message?
 
   // Foreign key to sender
   sender User @relation(fields: [senderId], references: [id], onDelete: Cascade)
@@ -1144,36 +1155,36 @@ model CompanyMessage {
 // i-Ticket Platform Staff (separate from company staff)
 // These are employees of the i-Ticket platform itself
 model PlatformStaff {
-  id            String   @id @default(cuid())
-  userId        String   @unique // Links to User model
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique // Links to User model
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Staff role/department
-  role          String   // See PLATFORM_STAFF_ROLES enum below
-  department    String   // FINANCE, OPERATIONS, SUPPORT, MARKETING, TECHNICAL, COMPLIANCE, MANAGEMENT
+  role       String // See PLATFORM_STAFF_ROLES enum below
+  department String // FINANCE, OPERATIONS, SUPPORT, MARKETING, TECHNICAL, COMPLIANCE, MANAGEMENT
 
   // Contact info
-  employeeId    String   @unique // Employee ID (e.g., "iTKT-001")
-  email         String   @unique
-  phone         String
+  employeeId String @unique // Employee ID (e.g., "iTKT-001")
+  email      String @unique
+  phone      String
 
   // Employment details
-  position      String   // Job title (e.g., "Senior Accountant", "Customer Support Agent")
-  hireDate      DateTime
-  status        String   @default("ACTIVE") // ACTIVE, ON_LEAVE, SUSPENDED, TERMINATED
+  position String // Job title (e.g., "Senior Accountant", "Customer Support Agent")
+  hireDate DateTime
+  status   String   @default("ACTIVE") // ACTIVE, ON_LEAVE, SUSPENDED, TERMINATED
 
   // Reporting structure
-  reportsTo     String?  // userId of manager/supervisor
+  reportsTo String? // userId of manager/supervisor
 
   // Permissions (JSON)
   // {canViewFinance: true, canManageStaff: false, canAccessReports: true}
-  permissions   String   @default("{}") @db.Text
+  permissions String @default("{}") @db.Text
 
   // Additional info
-  notes         String?  @db.Text
+  notes String? @db.Text
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([role, status])
   @@index([department])

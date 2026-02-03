@@ -15,12 +15,27 @@ import {
   Pause,
   MessageSquare,
   Send,
+  MapPin,
+  Building2,
+  DollarSign,
+  CheckCircle2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { toast } from "sonner"
 
 /**
@@ -54,6 +69,14 @@ interface WorkOrder {
   odometerAtService: number | null
   completionNotes: string | null
   createdAt: string
+  // Field repair fields
+  fixedOnTheJob: boolean
+  fixedByStaffName: string | null
+  fixedOnDate: string | null
+  fixedAtLocation: string | null
+  fieldRepairNotes: string | null
+  externalGarageName: string | null
+  externalGarageCost: number | null
   messages: Array<{
     id: string
     senderId: string
@@ -89,6 +112,16 @@ export default function StaffWorkOrderDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [newMessage, setNewMessage] = useState("")
   const [isSending, setIsSending] = useState(false)
+
+  // Field repair state
+  const [showFieldRepairDialog, setShowFieldRepairDialog] = useState(false)
+  const [fieldRepairData, setFieldRepairData] = useState({
+    fixedAtLocation: "",
+    fieldRepairNotes: "",
+    externalGarageName: "",
+    externalGarageCost: "",
+  })
+  const [isSubmittingFieldRepair, setIsSubmittingFieldRepair] = useState(false)
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -162,6 +195,43 @@ export default function StaffWorkOrderDetailPage() {
       toast.error("An error occurred")
     } finally {
       setIsSending(false)
+    }
+  }
+
+  const submitFieldRepair = async () => {
+    if (!fieldRepairData.fieldRepairNotes.trim() || fieldRepairData.fieldRepairNotes.trim().length < 10) {
+      toast.error("Please provide details about what was fixed (minimum 10 characters)")
+      return
+    }
+
+    setIsSubmittingFieldRepair(true)
+    try {
+      const response = await fetch(`/api/staff/work-orders/${workOrderId}/field-repair`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fieldRepairData),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success("Field repair marked successfully!")
+        setShowFieldRepairDialog(false)
+        setFieldRepairData({
+          fixedAtLocation: "",
+          fieldRepairNotes: "",
+          externalGarageName: "",
+          externalGarageCost: "",
+        })
+        fetchWorkOrder() // Refresh to show updated status
+      } else {
+        toast.error(data.error || "Failed to submit field repair")
+      }
+    } catch (error) {
+      console.error("Failed to submit field repair:", error)
+      toast.error("An error occurred")
+    } finally {
+      setIsSubmittingFieldRepair(false)
     }
   }
 
@@ -435,11 +505,186 @@ export default function StaffWorkOrderDetailPage() {
                   </p>
                 </div>
               )}
+
+              {/* Field Repair Button - Only for OPEN or IN_PROGRESS */}
+              {["OPEN", "IN_PROGRESS"].includes(workOrder.status) && (
+                <Dialog open={showFieldRepairDialog} onOpenChange={setShowFieldRepairDialog}>
+                  <DialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full mt-4 border-green-500 text-green-700 hover:bg-green-50 hover:text-green-800"
+                    >
+                      <Wrench className="h-4 w-4 mr-2" />
+                      Mark as Field Repair
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-green-600" />
+                        Mark as Field Repair
+                      </DialogTitle>
+                      <DialogDescription>
+                        Use this if you fixed the issue on the road or at an external garage during your trip.
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-4">
+                      {/* Repair Notes (Required) */}
+                      <div className="space-y-2">
+                        <Label htmlFor="fieldRepairNotes" className="flex items-center gap-1">
+                          What was fixed? <span className="text-red-500">*</span>
+                        </Label>
+                        <Textarea
+                          id="fieldRepairNotes"
+                          placeholder="Describe what was done to fix the issue (minimum 10 characters)..."
+                          value={fieldRepairData.fieldRepairNotes}
+                          onChange={(e) =>
+                            setFieldRepairData((prev) => ({ ...prev, fieldRepairNotes: e.target.value }))
+                          }
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* Location (Optional) */}
+                      <div className="space-y-2">
+                        <Label htmlFor="fixedAtLocation" className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4 text-muted-foreground" />
+                          Location (Optional)
+                        </Label>
+                        <Input
+                          id="fixedAtLocation"
+                          placeholder="e.g., Adama, near main garage"
+                          value={fieldRepairData.fixedAtLocation}
+                          onChange={(e) =>
+                            setFieldRepairData((prev) => ({ ...prev, fixedAtLocation: e.target.value }))
+                          }
+                        />
+                      </div>
+
+                      {/* External Garage (Optional) */}
+                      <div className="space-y-2">
+                        <Label htmlFor="externalGarageName" className="flex items-center gap-1">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          External Garage/Mechanic (Optional)
+                        </Label>
+                        <Input
+                          id="externalGarageName"
+                          placeholder="e.g., Abebe's Auto Repair"
+                          value={fieldRepairData.externalGarageName}
+                          onChange={(e) =>
+                            setFieldRepairData((prev) => ({ ...prev, externalGarageName: e.target.value }))
+                          }
+                        />
+                      </div>
+
+                      {/* Cost (Optional) */}
+                      <div className="space-y-2">
+                        <Label htmlFor="externalGarageCost" className="flex items-center gap-1">
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          Cost Paid (ETB) (Optional)
+                        </Label>
+                        <Input
+                          id="externalGarageCost"
+                          type="number"
+                          placeholder="e.g., 500"
+                          value={fieldRepairData.externalGarageCost}
+                          onChange={(e) =>
+                            setFieldRepairData((prev) => ({ ...prev, externalGarageCost: e.target.value }))
+                          }
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Admin will review and reimburse if applicable.
+                        </p>
+                      </div>
+                    </div>
+
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowFieldRepairDialog(false)}
+                        disabled={isSubmittingFieldRepair}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={submitFieldRepair}
+                        disabled={isSubmittingFieldRepair || fieldRepairData.fieldRepairNotes.trim().length < 10}
+                        className="bg-green-600 hover:bg-green-700"
+                      >
+                        {isSubmittingFieldRepair ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            Mark as Fixed
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              )}
             </CardContent>
           </Card>
 
+          {/* Field Repair Info (if fixed on the job) */}
+          {workOrder.fixedOnTheJob && (
+            <Card className="border-green-200 bg-green-50/50">
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2 text-green-800">
+                  <Wrench className="h-5 w-5" />
+                  Field Repair
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {workOrder.fixedByStaffName && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Fixed by</p>
+                    <p className="text-sm font-medium">{workOrder.fixedByStaffName}</p>
+                  </div>
+                )}
+                {workOrder.fixedOnDate && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Fixed on</p>
+                    <p className="text-sm font-medium">
+                      {new Date(workOrder.fixedOnDate).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+                {workOrder.fixedAtLocation && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Location</p>
+                    <p className="text-sm font-medium">{workOrder.fixedAtLocation}</p>
+                  </div>
+                )}
+                {workOrder.externalGarageName && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">External Garage</p>
+                    <p className="text-sm font-medium">{workOrder.externalGarageName}</p>
+                  </div>
+                )}
+                {workOrder.externalGarageCost && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Cost Paid</p>
+                    <p className="text-sm font-medium font-mono">{workOrder.externalGarageCost.toLocaleString()} ETB</p>
+                  </div>
+                )}
+                {workOrder.fieldRepairNotes && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Notes</p>
+                    <p className="text-sm whitespace-pre-wrap">{workOrder.fieldRepairNotes}</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Completion Notes */}
-          {workOrder.completionNotes && (
+          {workOrder.completionNotes && !workOrder.fixedOnTheJob && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Completion Notes</CardTitle>

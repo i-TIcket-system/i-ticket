@@ -442,9 +442,9 @@ export async function PUT(
       minute: "2-digit",
     })
 
-    // Driver assignment notifications
+    // Driver assignment notifications and status update
     if (driverId !== undefined && driverId !== existingTrip.driverId) {
-      // Notify new driver of assignment
+      // Notify new driver of assignment and set status to ON_TRIP
       if (driverId) {
         createNotification({
           recipientId: driverId,
@@ -452,8 +452,15 @@ export async function PUT(
           type: "TRIP_ASSIGNED",
           data: { tripId, tripRoute, departureTime: departureStr, role: "Driver" },
         })
+        // Auto-update staff status to ON_TRIP (only for active trips)
+        if (!['COMPLETED', 'CANCELLED'].includes(updatedTrip.status)) {
+          await prisma.user.update({
+            where: { id: driverId },
+            data: { staffStatus: 'ON_TRIP' }
+          }).catch(err => console.error(`Failed to update driver status: ${err}`))
+        }
       }
-      // Notify old driver of unassignment
+      // Notify old driver of unassignment and reset status to AVAILABLE
       if (existingTrip.driverId) {
         createNotification({
           recipientId: existingTrip.driverId,
@@ -461,10 +468,24 @@ export async function PUT(
           type: "TRIP_UNASSIGNED",
           data: { tripId, tripRoute, departureTime: departureStr, role: "Driver" },
         })
+        // Check if old driver has any other active trips before resetting status
+        const otherActiveTrips = await prisma.trip.count({
+          where: {
+            driverId: existingTrip.driverId,
+            id: { not: tripId },
+            status: { notIn: ['COMPLETED', 'CANCELLED'] }
+          }
+        })
+        if (otherActiveTrips === 0) {
+          await prisma.user.update({
+            where: { id: existingTrip.driverId },
+            data: { staffStatus: 'AVAILABLE' }
+          }).catch(err => console.error(`Failed to reset driver status: ${err}`))
+        }
       }
     }
 
-    // Conductor assignment notifications
+    // Conductor assignment notifications and status update
     if (conductorId !== undefined && conductorId !== existingTrip.conductorId) {
       if (conductorId) {
         createNotification({
@@ -473,6 +494,13 @@ export async function PUT(
           type: "TRIP_ASSIGNED",
           data: { tripId, tripRoute, departureTime: departureStr, role: "Conductor" },
         })
+        // Auto-update staff status to ON_TRIP
+        if (!['COMPLETED', 'CANCELLED'].includes(updatedTrip.status)) {
+          await prisma.user.update({
+            where: { id: conductorId },
+            data: { staffStatus: 'ON_TRIP' }
+          }).catch(err => console.error(`Failed to update conductor status: ${err}`))
+        }
       }
       if (existingTrip.conductorId) {
         createNotification({
@@ -481,10 +509,24 @@ export async function PUT(
           type: "TRIP_UNASSIGNED",
           data: { tripId, tripRoute, departureTime: departureStr, role: "Conductor" },
         })
+        // Check if old conductor has any other active trips
+        const otherActiveTrips = await prisma.trip.count({
+          where: {
+            conductorId: existingTrip.conductorId,
+            id: { not: tripId },
+            status: { notIn: ['COMPLETED', 'CANCELLED'] }
+          }
+        })
+        if (otherActiveTrips === 0) {
+          await prisma.user.update({
+            where: { id: existingTrip.conductorId },
+            data: { staffStatus: 'AVAILABLE' }
+          }).catch(err => console.error(`Failed to reset conductor status: ${err}`))
+        }
       }
     }
 
-    // Ticketer assignment notifications
+    // Ticketer assignment notifications only (no status change - ticketers work at station, don't travel)
     if (manualTicketerId !== undefined && manualTicketerId !== existingTrip.manualTicketerId) {
       if (manualTicketerId) {
         createNotification({
@@ -493,6 +535,7 @@ export async function PUT(
           type: "TRIP_ASSIGNED",
           data: { tripId, tripRoute, departureTime: departureStr, role: "Ticketer" },
         })
+        // NOTE: Don't set ON_TRIP for ticketers - they work at the station, not on the bus
       }
       if (existingTrip.manualTicketerId) {
         createNotification({

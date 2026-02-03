@@ -251,10 +251,10 @@ export default function FAQPage() {
                   <AccordionTrigger>How long do I have to complete payment after booking?</AccordionTrigger>
                   <AccordionContent>
                     <p className="mb-2">
-                      You have <strong>15 minutes</strong> to complete payment after creating a booking. During this time, your seats are temporarily reserved.
+                      You have <strong>10 minutes</strong> to complete payment after creating a booking. During this time, your seats are temporarily reserved.
                     </p>
                     <p className="mb-2">
-                      If payment is not completed within 15 minutes:
+                      If payment is not completed within 10 minutes:
                     </p>
                     <ul className="list-disc list-inside space-y-1 ml-2">
                       <li>The booking will be <strong>automatically cancelled</strong></li>
@@ -845,7 +845,7 @@ export default function FAQPage() {
                     <ul className="list-disc list-inside space-y-1 ml-2">
                       <li>Use SMS bundles or unlimited SMS plans</li>
                       <li>Have all passenger information ready before starting</li>
-                      <li>Complete booking in one session (sessions expire after 15 minutes of inactivity)</li>
+                      <li>Complete booking in one session (sessions expire after 10 minutes of inactivity)</li>
                     </ul>
                   </AccordionContent>
                 </AccordionItem>
@@ -875,7 +875,7 @@ export default function FAQPage() {
                   <AccordionTrigger>What if my SMS session expires?</AccordionTrigger>
                   <AccordionContent>
                     <p className="mb-2">
-                      SMS sessions expire after <strong>15 minutes of inactivity</strong> for security reasons.
+                      SMS sessions expire after <strong>10 minutes of inactivity</strong> for security reasons.
                     </p>
                     <p className="mb-2">
                       If your session expires:

@@ -504,7 +504,7 @@ export default function PaymentPage() {
                 {/* Timer Notice */}
                 <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
                   <Clock className="h-4 w-4" />
-                  Booking held for 15 minutes. Complete payment to confirm your seats.
+                  Booking held for 10 minutes. Complete payment to confirm your seats.
                 </div>
               </CardContent>
             </Card>

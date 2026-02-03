@@ -11,7 +11,7 @@ import { getNowEthiopia, hasDepartedEthiopia, msUntilDepartureEthiopia } from "@
 // 2. Handle payment timeouts
 // 3. General cleanup tasks
 //
-// Should be configured to run every 5-15 minutes via Vercel Cron or external scheduler
+// Should be configured to run every 5-10 minutes via Vercel Cron or external scheduler
 // Example Vercel cron config (vercel.json):
 // { "crons": [{ "path": "/api/cron/cleanup", "schedule": "*/15 * * * *" }] }
 export async function GET(request: NextRequest) {
@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
       tripsDeparted: 0,
       tripsCompleted: 0,
       tripsCancelled: 0,
+      staffStatusReset: 0,
       timestamp: new Date().toISOString()
     };
 
@@ -71,16 +72,16 @@ export async function GET(request: NextRequest) {
       results.notificationsSent++;
     }
 
-    // 3. Cleanup old pending bookings (> 15 minutes old)
+    // 3. Cleanup old pending bookings (> 10 minutes old)
     // This includes:
     // - Bookings with no payment record at all
     // - Bookings with PENDING payment (user created payment intent but didn't complete)
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
 
     const stalePendingBookings = await prisma.booking.findMany({
       where: {
         status: 'PENDING',
-        createdAt: { lt: fifteenMinutesAgo }
+        createdAt: { lt: tenMinutesAgo }
       },
       include: {
         passengers: true,
@@ -107,6 +108,10 @@ export async function GET(request: NextRequest) {
     const oldTripsResult = await updateOldTripStatuses();
     results.tripsCompleted = oldTripsResult.completed;
     results.tripsCancelled = oldTripsResult.cancelled;
+
+    // 5. Reset staff status for completed/cancelled trips
+    // Drivers and conductors who no longer have active trips should be set to AVAILABLE
+    results.staffStatusReset = await resetStaffStatusForCompletedTrips();
 
     console.log('[Cron] Cleanup completed:', results);
 
@@ -216,7 +221,7 @@ async function cancelStaleBooking(booking: any) {
         tripId: booking.tripId,
         details: JSON.stringify({
           bookingId: booking.id,
-          reason: 'No payment completed within 15 minutes',
+          reason: 'No payment completed within 10 minutes',
           hadPaymentIntent: !!booking.payment
         })
       }
@@ -565,6 +570,56 @@ async function updateOldTripStatuses() {
   }
 
   return { completed, cancelled };
+}
+
+/**
+ * Reset staff status to AVAILABLE for staff whose trips have completed/cancelled
+ * Only applies to drivers and conductors (they travel with the bus)
+ * Manual ticketers work at stations and don't have ON_TRIP status
+ */
+async function resetStaffStatusForCompletedTrips(): Promise<number> {
+  let resetCount = 0;
+  try {
+    // Find drivers/conductors who are ON_TRIP but may have no active trips
+    const staffOnTrip = await prisma.user.findMany({
+      where: {
+        staffStatus: 'ON_TRIP',
+        role: 'COMPANY_ADMIN', // Staff are stored with COMPANY_ADMIN role + staffRole
+        staffRole: { in: ['DRIVER', 'CONDUCTOR'] } // Only traveling staff
+      },
+      select: { id: true, name: true, staffRole: true }
+    });
+
+    for (const staff of staffOnTrip) {
+      // Check if this staff has any active trips (based on their role)
+      const activeTripsCount = await prisma.trip.count({
+        where: {
+          status: { notIn: ['COMPLETED', 'CANCELLED'] },
+          OR: [
+            ...(staff.staffRole === 'DRIVER' ? [{ driverId: staff.id }] : []),
+            ...(staff.staffRole === 'CONDUCTOR' ? [{ conductorId: staff.id }] : [])
+          ]
+        }
+      });
+
+      if (activeTripsCount === 0) {
+        // No active trips, reset to AVAILABLE
+        await prisma.user.update({
+          where: { id: staff.id },
+          data: { staffStatus: 'AVAILABLE' }
+        });
+        resetCount++;
+        console.log(`[Cron] Reset ${staff.name} (${staff.staffRole}) status to AVAILABLE - no active trips`);
+      }
+    }
+
+    if (resetCount > 0) {
+      console.log(`[Cron] Reset ${resetCount} staff members to AVAILABLE status`);
+    }
+  } catch (error) {
+    console.error('[Cron] Error resetting staff status:', error);
+  }
+  return resetCount;
 }
 
 /**

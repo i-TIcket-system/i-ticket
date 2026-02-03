@@ -146,7 +146,7 @@ export default function TermsPage() {
 
             <h3 className="text-xl font-semibold mt-6 mb-3">4.5 Booking Hold Period</h3>
             <p>
-              Upon booking creation, seats are temporarily reserved for <strong>15 minutes</strong>. Payment must be completed
+              Upon booking creation, seats are temporarily reserved for <strong>10 minutes</strong>. Payment must be completed
               within this window, or the booking will be <strong>automatically cancelled</strong> and seats released to other users.
             </p>
 
@@ -354,7 +354,7 @@ export default function TermsPage() {
 
             <h3 className="text-xl font-semibold mt-6 mb-3">7.4 Arrival Time</h3>
             <p>
-              Passengers must arrive at the departure point at least <strong>15 minutes before</strong> the scheduled departure time.
+              Passengers must arrive at the departure point at least <strong>10 minutes before</strong> the scheduled departure time.
               Buses may depart on time, and late passengers will not receive refunds.
             </p>
 
@@ -392,7 +392,7 @@ export default function TermsPage() {
 
             <h3 className="text-xl font-semibold mt-6 mb-3">8.3 SMS Session Management</h3>
             <p>
-              SMS conversations are managed through sessions that expire after <strong>15 minutes of inactivity</strong>.
+              SMS conversations are managed through sessions that expire after <strong>10 minutes of inactivity</strong>.
               You can restart a session at any time by sending a new command.
             </p>
 

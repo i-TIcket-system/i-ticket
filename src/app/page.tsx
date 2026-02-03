@@ -357,8 +357,9 @@ export default function HomePage() {
                           value={date}
                           onChange={(e) => setDate(e.target.value)}
                           min={today}
-                          className="pl-11 h-12 transition-all duration-300 focus:shadow-md focus:shadow-primary/10 focus:ring-2 focus:ring-primary/50 text-gray-900 dark:text-gray-100"
+                          className="pl-11 h-12 w-full max-w-full transition-all duration-300 focus:shadow-md focus:shadow-primary/10 focus:ring-2 focus:ring-primary/50 text-gray-900 dark:text-gray-100 [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                           aria-label="Select travel date"
+                          style={{ WebkitAppearance: 'none', appearance: 'none' }}
                         />
                       </div>
                     </div>

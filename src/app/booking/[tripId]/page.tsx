@@ -509,26 +509,26 @@ export default function BookingPage() {
               </CardContent>
             </Card>
 
-            {/* Passenger Details - SOLID TEAL for Maximum Pop */}
-            <Card className="bg-gradient-to-br from-teal-600 via-teal-500 to-emerald-500 border-0 shadow-2xl shadow-teal-900/40 overflow-hidden">
-              {/* White accent line for contrast */}
-              <div className="h-1.5 bg-gradient-to-r from-white/80 via-white to-white/80" />
+            {/* Passenger Details - Glassmorphism with teal accents on required fields */}
+            <Card className="glass-dramatic border-white/20 shadow-glass-lg overflow-hidden">
+              {/* Teal accent line */}
+              <div className="h-1.5 bg-gradient-to-r from-teal-500 via-teal-400 to-emerald-400" />
 
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2 text-xl font-display text-white">
-                      <div className="h-10 w-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-md">
+                    <CardTitle className="flex items-center gap-2 text-xl font-display text-foreground">
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center shadow-md">
                         <Users className="h-5 w-5 text-white flex-shrink-0" />
                       </div>
                       Passenger Details
                     </CardTitle>
-                    <CardDescription className="mt-2 text-white/80">
+                    <CardDescription className="mt-2">
                       {passengers.length} of {maxPassengers} passengers (max 5 per booking)
                     </CardDescription>
                   </div>
                   {passengers.length < maxPassengers && (
-                    <Button variant="outline" size="sm" onClick={addPassenger} className="bg-white/20 border-white/40 text-white hover:bg-white/30 hover:text-white">
+                    <Button variant="outline" size="sm" onClick={addPassenger} className="border-teal-400 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/50">
                       <Plus className="h-4 w-4 mr-1 flex-shrink-0" />
                       Add Passenger
                     </Button>

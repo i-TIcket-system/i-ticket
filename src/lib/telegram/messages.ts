@@ -312,7 +312,7 @@ Your TeleBirr payment has been initiated.
 
 Please complete the payment on your TeleBirr app.
 
-⏱ Payment expires in 15 minutes.`,
+⏱ Payment expires in 10 minutes.`,
     AM: `💳 *ክፍያ በሂደት ላይ*
 
 የእርስዎ TeleBirr ክፍያ ተጀምሯል።
@@ -321,7 +321,7 @@ Please complete the payment on your TeleBirr app.
 
 እባክዎን በእርስዎ TeleBirr መተግበሪያ ላይ ክፍያውን ያጠናቅቁ።
 
-⏱ ክፍያው በ15 ደቂቃዎች ውስጥ ያልቃል።`,
+⏱ ክፍያው በ10 ደቂቃዎች ውስጥ ያልቃል።`,
   },
 
   paymentSuccess: {
