@@ -105,7 +105,7 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   logoCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.lightGray } }
 
   // Document Title
-  sheet.mergeCells(`C${currentRow}:K${currentRow}`)
+  sheet.mergeCells(`C${currentRow}:J${currentRow}`)
   const titleCell = sheet.getCell(`C${currentRow}`)
   titleCell.value = "PASSENGER MANIFEST"
   titleCell.font = { bold: true, size: 20, color: { argb: colors.darkGray } }
@@ -114,7 +114,7 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   currentRow++
 
   // Subtitle
-  sheet.mergeCells(`C${currentRow}:K${currentRow}`)
+  sheet.mergeCells(`C${currentRow}:J${currentRow}`)
   const subtitleCell = sheet.getCell(`C${currentRow}`)
   subtitleCell.value = "Official Bus Passenger List"
   subtitleCell.font = { size: 11, color: { argb: "FF666666" }, italic: true }
@@ -196,7 +196,7 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   // Trip Log - Odometer & Fuel Readings
   if (trip.tripLog) {
     currentRow++
-    sheet.mergeCells(`A${currentRow}:K${currentRow}`)
+    sheet.mergeCells(`A${currentRow}:J${currentRow}`)
     const tripLogHeader = sheet.getCell(`A${currentRow}`)
     tripLogHeader.value = "TRIP LOG - ODOMETER & FUEL READINGS"
     tripLogHeader.font = { bold: true, size: 11, color: { argb: colors.white } }
@@ -279,7 +279,7 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   // ============================================
 
   // Section header
-  sheet.mergeCells(`A${currentRow}:K${currentRow}`)
+  sheet.mergeCells(`A${currentRow}:J${currentRow}`)
   const sectionHeader = sheet.getCell(`A${currentRow}`)
   sectionHeader.value = "SECTION 1: I-TICKET PLATFORM BOOKINGS"
   sectionHeader.font = { bold: true, size: 12, color: { argb: colors.white } }
@@ -292,7 +292,6 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   const columnHeaders = [
     "Seat",
     "Passenger Name",
-    "National ID",
     "Phone Number",
     "Pickup Location",
     "Dropoff Location",
@@ -352,7 +351,6 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
     const row = sheet.addRow([
       p.seatNumber || "N/A",
       isManualSale ? "" : p.name,
-      isManualSale ? "" : p.nationalId,
       isManualSale ? "" : p.phone,
       isManualSale ? "" : (p.pickupLocation || "Standard"),
       isManualSale ? "" : (p.dropoffLocation || "Standard"),
@@ -383,8 +381,8 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
         cell.font = { bold: true, size: 11, color: { argb: colors.primary } }
       }
 
-      // Status column - green for PAID, yellow for MANUAL
-      if (colNumber === 11) {
+      // Status column - green for PAID, yellow for MANUAL (now column 10 after removing National ID)
+      if (colNumber === 10) {
         const statusColor = isManualSale ? colors.warning : colors.success
         cell.font = { bold: true, color: { argb: statusColor } }
       }
@@ -404,7 +402,7 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   // SUMMARY NOTES SECTION
   // ============================================
 
-  sheet.mergeCells(`A${currentRow}:K${currentRow}`)
+  sheet.mergeCells(`A${currentRow}:J${currentRow}`)
   const noteHeader = sheet.getCell(`A${currentRow}`)
   noteHeader.value = "BOOKING SUMMARY"
   noteHeader.font = { bold: true, size: 12, color: { argb: colors.white } }
@@ -424,7 +422,7 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   sheet.getCell(`E${currentRow}`).font = { size: 11, color: { argb: colors.warning } }
   currentRow++
 
-  sheet.mergeCells(`A${currentRow}:K${currentRow}`)
+  sheet.mergeCells(`A${currentRow}:J${currentRow}`)
   sheet.getCell(`A${currentRow}`).value = "Note: Manual ticket passengers are shown with seat numbers only. Details can be collected at boarding."
   sheet.getCell(`A${currentRow}`).font = { italic: true, size: 10, color: { argb: "FF666666" } }
   sheet.getCell(`A${currentRow}`).alignment = { horizontal: "center" }
@@ -435,7 +433,7 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   // SUMMARY SECTION
   // ============================================
 
-  sheet.mergeCells(`A${currentRow}:K${currentRow}`)
+  sheet.mergeCells(`A${currentRow}:J${currentRow}`)
   const summaryHeader = sheet.getCell(`A${currentRow}`)
   summaryHeader.value = "REVENUE & CAPACITY SUMMARY"
   summaryHeader.font = { bold: true, size: 12, color: { argb: colors.white } }
@@ -507,7 +505,7 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   currentRow++
 
   // Footer divider
-  sheet.mergeCells(`A${currentRow}:K${currentRow}`)
+  sheet.mergeCells(`A${currentRow}:J${currentRow}`)
   const footerDivider = sheet.getCell(`A${currentRow}`)
   footerDivider.border = { top: { style: "medium", color: { argb: colors.primary } } }
   currentRow++
@@ -601,19 +599,18 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   // ============================================
 
   sheet.getColumn(1).width = 8   // Seat
-  sheet.getColumn(2).width = 22  // Passenger Name
-  sheet.getColumn(3).width = 15  // National ID
-  sheet.getColumn(4).width = 14  // Phone
-  sheet.getColumn(5).width = 18  // Pickup
-  sheet.getColumn(6).width = 18  // Dropoff
-  sheet.getColumn(7).width = 20  // Booked By
-  sheet.getColumn(8).width = 16  // Booking Time
-  sheet.getColumn(9).width = 12  // Booking ID
-  sheet.getColumn(10).width = 12 // Ticket Code
-  sheet.getColumn(11).width = 10 // Status
+  sheet.getColumn(2).width = 24  // Passenger Name (wider now)
+  sheet.getColumn(3).width = 15  // Phone
+  sheet.getColumn(4).width = 18  // Pickup
+  sheet.getColumn(5).width = 18  // Dropoff
+  sheet.getColumn(6).width = 22  // Booked By
+  sheet.getColumn(7).width = 16  // Booking Time
+  sheet.getColumn(8).width = 12  // Booking ID
+  sheet.getColumn(9).width = 12  // Ticket Code
+  sheet.getColumn(10).width = 10 // Status
 
-  // Set print area to include all content
-  sheet.pageSetup.printArea = `A1:K${currentRow + 1}`
+  // Set print area to include all content (now column J after removing National ID)
+  sheet.pageSetup.printArea = `A1:J${currentRow + 1}`
   sheet.pageSetup.printTitlesRow = '1:13' // Repeat header rows on each page
 
   // Generate buffer

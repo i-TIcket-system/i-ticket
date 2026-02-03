@@ -1,11 +1,13 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
-import { Send, Paperclip, Download, FileText, X, Loader2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Send, Paperclip, Download, FileText, X, Loader2, Search, Filter, Calendar } from "lucide-react"
 import { toast } from "sonner"
 import { formatDistanceToNow } from "date-fns"
 
@@ -37,6 +39,49 @@ export default function ContactChat() {
   const [fetching, setFetching] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Filter state
+  const [searchQuery, setSearchQuery] = useState("")
+  const [startDate, setStartDate] = useState("")
+  const [endDate, setEndDate] = useState("")
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Filter messages based on search and date
+  const filteredMessages = useMemo(() => {
+    let filtered = [...messages]
+
+    // Text search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(msg =>
+        msg.message.toLowerCase().includes(query) ||
+        msg.senderName.toLowerCase().includes(query)
+      )
+    }
+
+    // Date range filter
+    if (startDate) {
+      const start = new Date(startDate)
+      start.setHours(0, 0, 0, 0)
+      filtered = filtered.filter(msg => new Date(msg.createdAt) >= start)
+    }
+
+    if (endDate) {
+      const end = new Date(endDate)
+      end.setHours(23, 59, 59, 999)
+      filtered = filtered.filter(msg => new Date(msg.createdAt) <= end)
+    }
+
+    return filtered
+  }, [messages, searchQuery, startDate, endDate])
+
+  const hasActiveFilters = searchQuery || startDate || endDate
+
+  const clearFilters = () => {
+    setSearchQuery("")
+    setStartDate("")
+    setEndDate("")
+  }
 
   // Auto-scroll to bottom
   const scrollToBottom = () => {
@@ -184,6 +229,85 @@ export default function ContactChat() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)]">
+      {/* Search and Filter Bar */}
+      <div className="border-b bg-white p-3 space-y-3">
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search messages..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button
+            variant={showFilters ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setShowFilters(!showFilters)}
+            className="gap-2"
+          >
+            <Filter className="h-4 w-4" />
+            Filters
+            {hasActiveFilters && (
+              <Badge variant="destructive" className="h-5 w-5 p-0 flex items-center justify-center text-xs">
+                !
+              </Badge>
+            )}
+          </Button>
+        </div>
+
+        {/* Expandable date range filter */}
+        {showFilters && (
+          <div className="flex flex-wrap items-center gap-3 pt-2 border-t">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">Date range:</span>
+            </div>
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-[140px] h-8"
+              placeholder="From"
+            />
+            <span className="text-muted-foreground">to</span>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-[140px] h-8"
+              placeholder="To"
+            />
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="h-4 w-4 mr-1" />
+                Clear all
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Filter indicator */}
+        {hasActiveFilters && (
+          <div className="text-sm text-muted-foreground flex items-center gap-2">
+            <span>Showing {filteredMessages.length} of {messages.length} messages</span>
+            {searchQuery && (
+              <Badge variant="secondary" className="gap-1">
+                Search: {searchQuery}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchQuery("")} />
+              </Badge>
+            )}
+            {(startDate || endDate) && (
+              <Badge variant="secondary" className="gap-1">
+                {startDate && endDate ? `${startDate} to ${endDate}` : startDate ? `From ${startDate}` : `Until ${endDate}`}
+                <X className="h-3 w-3 cursor-pointer" onClick={() => { setStartDate(""); setEndDate("") }} />
+              </Badge>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
         {messages.length === 0 ? (
@@ -191,8 +315,15 @@ export default function ContactChat() {
             <p>No messages yet</p>
             <p className="text-sm mt-2">Send your first message to i-Ticket support</p>
           </div>
+        ) : filteredMessages.length === 0 ? (
+          <div className="text-center text-muted-foreground py-12">
+            <p>No messages match your filters</p>
+            <Button variant="link" onClick={clearFilters} className="mt-2">
+              Clear filters
+            </Button>
+          </div>
         ) : (
-          messages.map((msg) => {
+          filteredMessages.map((msg) => {
             const isFromCompany = msg.senderRole === "COMPANY_ADMIN"
             const attachments = parseAttachments(msg.attachments)
 

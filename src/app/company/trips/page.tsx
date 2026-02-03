@@ -56,7 +56,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { formatCurrency, formatDate, getSlotsPercentage, isLowSlots, hasDepartedEthiopia } from "@/lib/utils"
+import { formatCurrency, formatDate, getSlotsPercentage, isLowSlots, hasDepartedEthiopia, isTodayEthiopia } from "@/lib/utils"
 import { toast } from "sonner"
 
 interface Trip {
@@ -202,9 +202,14 @@ export default function CompanyTripsPage() {
 
     // Hide past trips by default (Issue 2 fix)
     if (hidePastTrips) {
-      // FUTURE VIEW: Show all future trips (today onwards) - current behavior
-      filtered = filtered.filter(trip => new Date(trip.departureTime) >= startOfToday)
-      // Sort: soonest first
+      // Show ALL trips from today (including DEPARTED/COMPLETED) + future trips
+      // Use isTodayEthiopia() for timezone-correct comparison
+      filtered = filtered.filter(trip => {
+        const tripTime = new Date(trip.departureTime)
+        // Include if: today's trip (any status) OR future trip
+        return isTodayEthiopia(tripTime) || tripTime >= startOfToday
+      })
+      // Sort: today's trips by time, then future trips by departure time
       filtered.sort((a, b) => new Date(a.departureTime).getTime() - new Date(b.departureTime).getTime())
     } else {
       // PAST VIEW: Show only ONE specific past day
