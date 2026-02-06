@@ -5,6 +5,8 @@ const nextConfig = {
   experimental: {
     missingSuspenseWithCSRBailout: false,
   },
+  // Hide X-Powered-By header (prevents server info disclosure)
+  poweredByHeader: false,
   images: {
     remotePatterns: [
       {
@@ -19,6 +21,8 @@ const nextConfig = {
     ],
   },
   async headers() {
+    // CSP is handled by middleware.ts (nonce-based, per-request)
+    // Only static headers that don't need per-request values go here
     return [
       {
         // Apply security headers to all routes
@@ -34,7 +38,7 @@ const nextConfig = {
           },
           {
             key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
+            value: 'DENY'
           },
           {
             key: 'X-Content-Type-Options',
@@ -50,21 +54,44 @@ const nextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()'
+            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), magnetometer=(), gyroscope=(), accelerometer=()'
           },
           {
-            key: 'Content-Security-Policy',
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-inline/eval
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // Tailwind + Google Fonts
-              "img-src 'self' data: https:", // Allow data URIs for QR codes
-              "font-src 'self' data: https://fonts.gstatic.com", // Google Fonts CDN
-              "connect-src 'self' https://api.telebirr.com https://api.webirr.com",
-              "frame-ancestors 'self'",
-              "base-uri 'self'",
-              "form-action 'self'",
-            ].join('; ')
+            // Default Cache-Control for all pages
+            key: 'Cache-Control',
+            value: 'no-store'
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache'
+          }
+        ]
+      },
+      {
+        // Cache-Control for sensitive pages (auth, account) - extra strict
+        source: '/(login|register|account|admin|company|staff|cashier|mechanic|finance|sales)/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate, proxy-revalidate'
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache'
+          },
+          {
+            key: 'Expires',
+            value: '0'
+          }
+        ]
+      },
+      {
+        // Cache-Control for API routes (no caching of sensitive data)
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate'
           }
         ]
       }
