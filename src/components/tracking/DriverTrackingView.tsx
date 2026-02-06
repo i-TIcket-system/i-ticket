@@ -4,8 +4,9 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import dynamic from "next/dynamic"
 import {
   MapPin, Navigation, Wifi, WifiOff, AlertTriangle,
-  ShieldCheck, ShieldAlert, MonitorSmartphone,
+  ShieldCheck, ShieldAlert, MonitorSmartphone, Crosshair,
 } from "lucide-react"
+import type L from "leaflet"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import ETABadge from "./ETABadge"
@@ -67,6 +68,11 @@ export default function DriverTrackingView() {
   const lastGpsCallbackRef = useRef<number>(Date.now())
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const tripRef = useRef<TripData | null>(null)
+  const mapRef = useRef<L.Map | null>(null)
+
+  const handleMapReady = useCallback((map: L.Map) => {
+    mapRef.current = map
+  }, [])
 
   // Wake Lock
   const wakeLock = useWakeLock()
@@ -308,7 +314,7 @@ export default function DriverTrackingView() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="h-dvh flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-300">Loading trip data...</p>
@@ -319,7 +325,7 @@ export default function DriverTrackingView() {
 
   if (error && !trip) {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
+      <div className="h-dvh flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
         <Card className="max-w-md w-full p-6 text-center">
           <AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" />
           <h2 className="text-lg font-semibold mb-2">No Active Trip</h2>
@@ -341,10 +347,10 @@ export default function DriverTrackingView() {
       : [9.02, 38.75]
 
   return (
-    <div className="h-screen flex flex-col relative">
+    <div className="h-dvh flex flex-col relative">
       {/* Map (full screen) */}
       <div className="flex-1 relative">
-        <TrackingMap center={mapCenter} zoom={currentPos ? 13 : 8} autoRecenter>
+        <TrackingMap center={mapCenter} zoom={currentPos ? 13 : 8} autoRecenter onMapReady={handleMapReady}>
           <RouteOverlay
             origin={trip.origin as { name: string; latitude: number; longitude: number }}
             destination={trip.destination as { name: string; latitude: number; longitude: number }}
@@ -358,6 +364,19 @@ export default function DriverTrackingView() {
             />
           )}
         </TrackingMap>
+
+        {/* Recenter button */}
+        {currentPos && tracking && (
+          <button
+            onClick={() => {
+              mapRef.current?.flyTo([currentPos.lat, currentPos.lng], 14, { duration: 0.8 })
+            }}
+            className="absolute bottom-4 right-4 z-[1000] bg-white dark:bg-gray-800 rounded-full p-2.5 shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            title="Recenter on my position"
+          >
+            <Crosshair className="h-5 w-5 text-teal-600" />
+          </button>
+        )}
 
         {/* CSS for bus marker animation */}
         <style jsx global>{`

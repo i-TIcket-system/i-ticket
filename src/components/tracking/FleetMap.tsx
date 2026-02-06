@@ -11,7 +11,14 @@ import TrackingStatus from "./TrackingStatus"
 import type L from "leaflet"
 
 // Dynamic imports (no SSR)
-const TrackingMap = dynamic(() => import("./TrackingMap"), { ssr: false })
+const TrackingMap = dynamic(() => import("./TrackingMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-full w-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+    </div>
+  ),
+})
 const BusMarker = dynamic(() => import("./BusMarker"), { ssr: false })
 
 interface FleetVehicle {
@@ -318,7 +325,7 @@ export default function FleetMap() {
         </div>
 
         {/* Map */}
-        <div className="flex-1 h-[500px] lg:h-[600px] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="relative flex-1 h-[500px] lg:h-[600px] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
           <TrackingMap
             center={[9.02, 38.75]}
             zoom={6}
@@ -372,6 +379,19 @@ export default function FleetMap() {
               ) : null
             )}
           </TrackingMap>
+
+          {/* Empty state overlay when no departed trips */}
+          {data.fleet.length === 0 && (
+            <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-black/5 dark:bg-black/20 pointer-events-none">
+              <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-6 text-center pointer-events-auto max-w-xs">
+                <Bus className="h-10 w-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                <h3 className="font-semibold text-gray-700 dark:text-gray-200 mb-1">No Departed Trips</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Buses will appear on the map once trips are marked as departed and drivers enable GPS tracking.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* CSS for bus marker animation */}
           <style jsx global>{`

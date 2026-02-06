@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import dynamic from "next/dynamic"
-import { Bus, Loader2 } from "lucide-react"
+import { Bus, Loader2, Crosshair } from "lucide-react"
+import type L from "leaflet"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import ETABadge from "./ETABadge"
 import TrackingStatus from "./TrackingStatus"
@@ -45,6 +46,11 @@ export default function PassengerTrackingView({ tripId }: PassengerTrackingViewP
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const mapRef = useRef<L.Map | null>(null)
+
+  const handleMapReady = useCallback((map: L.Map) => {
+    mapRef.current = map
+  }, [])
 
   const fetchTracking = async () => {
     try {
@@ -167,8 +173,8 @@ export default function PassengerTrackingView({ tripId }: PassengerTrackingViewP
         />
 
         {/* Map */}
-        <div className="h-[300px] sm:h-[400px] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-          <TrackingMap center={mapCenter} zoom={pos ? 11 : 7}>
+        <div className="relative h-[300px] sm:h-[400px] rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+          <TrackingMap center={mapCenter} zoom={pos ? 11 : 7} onMapReady={handleMapReady}>
             <RouteOverlay
               origin={data.route.origin as { name: string; latitude: number; longitude: number }}
               destination={data.route.destination as { name: string; latitude: number; longitude: number }}
@@ -198,6 +204,19 @@ export default function PassengerTrackingView({ tripId }: PassengerTrackingViewP
               />
             )}
           </TrackingMap>
+
+          {/* Recenter button */}
+          {pos && (
+            <button
+              onClick={() => {
+                mapRef.current?.flyTo([pos.latitude, pos.longitude], 13, { duration: 0.8 })
+              }}
+              className="absolute bottom-3 right-3 z-[1000] bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              title="Recenter on bus"
+            >
+              <Crosshair className="h-4 w-4 text-teal-600" />
+            </button>
+          )}
 
           {/* CSS for bus marker animation */}
           <style jsx global>{`

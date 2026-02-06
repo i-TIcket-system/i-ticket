@@ -1116,6 +1116,11 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 }
 
+/* Safe area bottom utility (for fixed bottom bars on notched phones) */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 /* ===================================
    LEAFLET Z-INDEX FIX
    Prevent Leaflet controls from overlapping navbar/sidebar

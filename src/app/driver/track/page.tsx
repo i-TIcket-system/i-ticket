@@ -22,7 +22,7 @@ export default function DriverTrackPage() {
 
   if (status === "loading") {
     return (
-      <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
+      <div className="h-dvh flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-teal-600" />
       </div>
     )

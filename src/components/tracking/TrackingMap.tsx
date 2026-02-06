@@ -59,11 +59,12 @@ function MapController({
   }, [center, zoom, map])
 
   // Auto-recenter on prop changes (only if enabled)
+  // Uses panTo instead of setView to preserve user's zoom level
   useEffect(() => {
     if (autoRecenter && initializedRef.current && center) {
-      map.setView(center, zoom ?? map.getZoom(), { animate: true })
+      map.panTo(center, { animate: true })
     }
-  }, [center, zoom, map, autoRecenter])
+  }, [center, map, autoRecenter])
 
   // One-shot flyTo
   useEffect(() => {
