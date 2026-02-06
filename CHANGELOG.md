@@ -4,6 +4,97 @@
 
 ---
 
+## v2.11.0 - Feb 6, 2026
+
+### Phase 2: Predictive Maintenance AI Dashboard, Trip Integration & Fleet Reports
+
+Major feature release adding fleet analytics, predictive maintenance visualization, trip-maintenance safety integration, and comprehensive fleet reporting with Excel exports.
+
+**Phase A: Database Schema**
+- New model `VehicleRiskHistory` - daily risk score snapshots with factor breakdown (JSON)
+- New model `VehicleDowntime` - tracks vehicle time in maintenance with duration and reason
+- Added `purchasePrice` (Float?) and `purchaseDate` (DateTime?) to Vehicle model for TCO calculations
+- Indexes on vehicleId+recordedAt and companyId+startedAt for efficient queries
+
+**Phase B: Fleet Analytics Dashboard (`/company/fleet-analytics`)**
+- Fleet health score gauge (SVG half-circle, color-coded green/teal/amber/red)
+- Risk distribution pie chart (LOW/MEDIUM/HIGH/CRITICAL buckets)
+- Risk trend lines per vehicle over time (from VehicleRiskHistory)
+- Cost forecast chart (30/60/90 day projections, stacked bars + total line)
+- Failure timeline with color-coded urgency indicators
+- Vehicle comparison table with inline risk bar visualizations
+- High-risk vehicle alert cards
+- 30s polling with Promise.allSettled and visibility change detection
+- 8 analytics API routes under `/api/company/analytics/`
+
+**Phase C: Trip-Maintenance Integration**
+- Vehicle risk warnings on trip creation/edit forms (orange >= 70, red >= 85)
+- Pre-trip safety check: vehicles with risk >= 85 require PRE_TRIP inspection within 24h before departure
+- Admin override with reason field for pre-trip check (logged to AdminLog)
+- Maintenance window suggestions (analyzes gaps between scheduled trips)
+- Route-based wear analysis (wear index from fuel degradation + post-trip defects)
+
+**Phase D: Reporting & Cost Analysis**
+- Maintenance cost report API with monthly breakdown by vehicle, task type, parts vs labor
+- Vehicle TCO report (purchase + maintenance + fuel over lifetime)
+- Downtime report (hours per vehicle, reason breakdown, ongoing duration)
+- Excel exports via ExcelJS: maintenance report (Summary + Parts Used sheets), fleet analytics (conditional formatting on risk scores)
+- Compliance calendar API (registration/insurance/inspection dates by month)
+- Downtime automation: vehicle status → MAINTENANCE auto-creates VehicleDowntime, → ACTIVE auto-closes it
+
+**Phase E: Reports Page Enhancement**
+- Top-level report type selector (Staff Reports / Fleet Analytics)
+- Fleet Analytics section with 4 tabs: Maintenance Costs, Vehicle TCO, Downtime, Compliance
+- Export buttons for maintenance and fleet analytics Excel reports
+- Compliance calendar component with CSS grid, month navigation, event badges, overdue highlighting
+
+**AI Module Enhancements (`src/lib/ai/predictive-maintenance.ts`)**
+- `recordRiskHistory()` - saves daily VehicleRiskHistory snapshots for all active vehicles
+- `generateCostForecast(companyId)` - 30/60/90 day cost projections from historical patterns
+- Cron job (`/api/cron/predictive-maintenance`) now records risk history after batch update
+
+### New Files (22)
+```
+src/app/company/fleet-analytics/page.tsx
+src/app/api/company/analytics/fleet-health/route.ts
+src/app/api/company/analytics/risk-trends/route.ts
+src/app/api/company/analytics/failure-timeline/route.ts
+src/app/api/company/analytics/cost-forecast/route.ts
+src/app/api/company/analytics/vehicle-comparison/route.ts
+src/app/api/company/analytics/maintenance-windows/route.ts
+src/app/api/company/analytics/route-wear/route.ts
+src/app/api/company/analytics/compliance-calendar/route.ts
+src/app/api/company/reports/maintenance/route.ts
+src/app/api/company/reports/maintenance/export/route.ts
+src/app/api/company/reports/vehicle-tco/route.ts
+src/app/api/company/reports/downtime/route.ts
+src/app/api/company/reports/fleet-analytics/export/route.ts
+src/components/fleet/FleetHealthGauge.tsx
+src/components/fleet/RiskDistributionChart.tsx
+src/components/fleet/RiskTrendChart.tsx
+src/components/fleet/CostForecastChart.tsx
+src/components/fleet/FailureTimelineChart.tsx
+src/components/fleet/VehicleComparisonTable.tsx
+src/components/fleet/MaintenanceWindowSuggestions.tsx
+src/components/fleet/RouteWearChart.tsx
+src/components/fleet/ComplianceCalendar.tsx
+src/components/fleet/TCOChart.tsx
+```
+
+### Modified Files (10)
+- `prisma/schema.prisma` - 2 new models + 2 Vehicle fields
+- `src/lib/ai/predictive-maintenance.ts` - recordRiskHistory, generateCostForecast
+- `src/app/api/cron/predictive-maintenance/route.ts` - daily risk history recording
+- `src/app/company/layout.tsx` - Fleet Analytics sidebar item
+- `src/app/company/reports/page.tsx` - fleet analytics tabs
+- `src/app/company/trips/new/page.tsx` - vehicle risk warning banner
+- `src/app/company/trips/[tripId]/edit/page.tsx` - vehicle risk warning banner
+- `src/app/api/company/trips/[tripId]/status/route.ts` - pre-trip safety check
+- `src/app/api/company/vehicles/[vehicleId]/route.ts` - downtime automation
+- `package.json` - added exceljs dependency
+
+---
+
 ## v2.10.17 - Feb 6, 2026
 
 ### VM Security Hardening (Vulnerability Assessment Remediation)

@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.17 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.11.0 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -88,7 +88,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | **Auth** | Multi-role (Customer, Company Admin, Super Admin, Staff, Sales), NextAuth.js |
 | **Booking** | Real-time slots, seat selection, multi-passenger, TeleBirr (5% + 15% VAT) |
 | **Trips** | CRUD, intermediate stops, mandatory staff/vehicle, status lifecycle |
-| **Fleet** | AI risk scoring, maintenance schedules, work orders, inspections |
+| **Fleet** | AI risk scoring, fleet analytics dashboard, predictive maintenance, work orders, inspections, TCO/downtime reporting |
 | **Manifests** | Auto-generate on DEPARTED + full capacity |
 | **Portals** | Super Admin, Company Admin, Staff, Cashier, Mechanic, Finance, Sales |
 | **Telegram Bot** | Bilingual booking via @i_ticket_busBot (see Telegram Bot section below) |
@@ -98,7 +98,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 ## DATABASE MODELS
 
 **Core**: User, Company, Trip, TripTemplate, Booking, Passenger, Ticket, Payment, City
-**Fleet**: Vehicle, MaintenanceSchedule, WorkOrder, VehicleInspection
+**Fleet**: Vehicle, MaintenanceSchedule, WorkOrder, VehicleInspection, VehicleRiskHistory, VehicleDowntime
 **Comms**: TripMessage, Notification, SupportTicket, CompanyMessage
 **Sales**: SalesPerson, SalesReferral, SalesCommission
 **Security**: ProcessedCallback, AdminLog
@@ -112,6 +112,8 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 |----------|--------|
 | **Public** | `/api/trips`, `/api/track/[code]` |
 | **Company** | `/api/company/trips`, `/api/company/trip-templates`, `/api/company/staff`, `/api/company/vehicles` |
+| **Fleet Analytics** | `/api/company/analytics/fleet-health`, `risk-trends`, `cost-forecast`, `failure-timeline`, `vehicle-comparison`, `maintenance-windows`, `route-wear`, `compliance-calendar` |
+| **Fleet Reports** | `/api/company/reports/maintenance`, `maintenance/export`, `vehicle-tco`, `downtime`, `fleet-analytics/export` |
 | **Admin** | `/api/admin/stats`, `/api/admin/companies`, `/api/admin/trips` |
 | **Cron** | `/api/cron/cleanup`, `/api/cron/trip-reminders` |
 | **Telegram** | `/api/telegram/webhook` (bot updates) |
@@ -122,7 +124,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 - `/(auth)` - Login, Register
 - `/(customer)` - Search, Booking, Tickets
-- `/(company)` - Dashboard, Trips, Staff, Vehicles
+- `/(company)` - Dashboard, Trips, Staff, Vehicles, Fleet Analytics, Reports
 - `/(admin)` - Dashboard, Companies, Trips, Manifests
 - `/(staff|cashier|mechanic|finance|sales)` - Role portals
 
@@ -237,20 +239,28 @@ model TelegramSession {
 
 ### TODO (Next Session)
 - [x] ~~Send tickets to passenger's Telegram if they have an account (in addition to SMS)~~ DONE
-- [ ] Phase 2: Predictive Maintenance AI features
+- [x] ~~Phase 2: Predictive Maintenance AI features~~ DONE (v2.11.0)
 
 ---
 
-## RECENT UPDATES (v2.10.17)
+## RECENT UPDATES (v2.11.0)
 
-**Latest**: VM Security Hardening (Vulnerability Assessment Remediation)
+**Latest**: Phase 2 - Predictive Maintenance AI Dashboard, Trip Integration & Fleet Reports
+- Fleet Analytics dashboard at `/company/fleet-analytics` with health gauge, risk distribution, trend charts, cost forecast, failure timeline, vehicle comparison
+- 8 analytics APIs: fleet-health, risk-trends, failure-timeline, cost-forecast, vehicle-comparison, maintenance-windows, route-wear, compliance-calendar
+- 5 report APIs with Excel exports: maintenance costs, vehicle TCO, downtime, fleet analytics
+- Trip-maintenance integration: risk warnings on trip forms (orange >= 70, red >= 85), pre-trip safety check for critical vehicles requiring recent inspection
+- 10 new chart components under `src/components/fleet/`
+- Reports page enhanced with fleet analytics tabs (Maintenance Costs, TCO, Downtime, Compliance)
+- Downtime automation: auto-create/close VehicleDowntime records on vehicle status change
+- Daily risk history snapshots via cron job for trend analysis
+- Schema: VehicleRiskHistory, VehicleDowntime models + Vehicle purchasePrice/purchaseDate
+
+**v2.10.17**: VM Security Hardening (Vulnerability Assessment Remediation)
 - Cloudflare: TLS 1.2 minimum enforced (was TLS 1.0), HSTS enabled with preload
 - CSP via middleware: `unsafe-eval` removed, Report-To/Reporting-Endpoints added
 - Tightened `img-src` from `https:` to `https://api.qrserver.com` only
 - Added `Cache-Control: no-store` + `Pragma: no-cache` for all routes
-- `X-Frame-Options` upgraded from SAMEORIGIN to DENY, expanded Permissions-Policy
-- `X-Powered-By` header hidden (`poweredByHeader: false`)
-- **Note**: `unsafe-inline` in script-src required by Next.js 14 (nonce needs Next.js 15+)
 
 **v2.10.16**: Manifest Cleanup, Today's Trips Display & Contact Tab Upgrade
 - Removed National ID column from manifests (verification now at boarding)
