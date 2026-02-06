@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/db'
 import { z } from 'zod'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 /**
  * v2.10.6: Work Order Excel Export API
@@ -176,43 +176,74 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Create workbook
-    const workbook = XLSX.utils.book_new()
-    const worksheet = XLSX.utils.json_to_sheet(excelData)
+    // Create workbook using ExcelJS
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet("Work Orders")
 
-    // Set column widths
-    const colWidths = [
-      { wch: 20 }, // WO Number
-      { wch: 30 }, // Title
-      { wch: 15 }, // Vehicle
-      { wch: 10 }, // Side #
-      { wch: 25 }, // Vehicle Model
-      { wch: 12 }, // Task Type
-      { wch: 10 }, // Priority
-      { wch: 15 }, // Status
-      { wch: 20 }, // Assigned To
-      { wch: 20 }, // External Provider
-      { wch: 15 }, // Labor Cost
-      { wch: 15 }, // Parts Cost
-      { wch: 15 }, // Total Cost
-      { wch: 15 }, // Scheduled Date
-      { wch: 20 }, // Started At
-      { wch: 20 }, // Completed At
-      { wch: 20 }, // Created At
-      { wch: 40 }, // Description
-      { wch: 40 }, // Completion Notes
-      { wch: 25 }, // Part Name
-      { wch: 10 }, // Part Qty
-      { wch: 15 }, // Part Unit Price
-      { wch: 15 }, // Part Total
-      { wch: 12 }, // Part Status
+    // Define columns with headers and widths
+    const columns = [
+      { header: "WO Number", key: "woNumber", width: 20 },
+      { header: "Title", key: "title", width: 30 },
+      { header: "Vehicle", key: "vehicle", width: 15 },
+      { header: "Side #", key: "sideNumber", width: 10 },
+      { header: "Vehicle Model", key: "vehicleModel", width: 25 },
+      { header: "Task Type", key: "taskType", width: 12 },
+      { header: "Priority", key: "priority", width: 10 },
+      { header: "Status", key: "status", width: 15 },
+      { header: "Assigned To", key: "assignedTo", width: 20 },
+      { header: "External Provider", key: "externalProvider", width: 20 },
+      { header: "Labor Cost (Birr)", key: "laborCost", width: 15 },
+      { header: "Parts Cost (Birr)", key: "partsCost", width: 15 },
+      { header: "Total Cost (Birr)", key: "totalCost", width: 15 },
+      { header: "Scheduled Date", key: "scheduledDate", width: 15 },
+      { header: "Started At", key: "startedAt", width: 20 },
+      { header: "Completed At", key: "completedAt", width: 20 },
+      { header: "Created At", key: "createdAt", width: 20 },
+      { header: "Description", key: "description", width: 40 },
+      { header: "Completion Notes", key: "completionNotes", width: 40 },
+      { header: "Part Name", key: "partName", width: 25 },
+      { header: "Part Qty", key: "partQty", width: 10 },
+      { header: "Part Unit Price", key: "partUnitPrice", width: 15 },
+      { header: "Part Total", key: "partTotal", width: 15 },
+      { header: "Part Status", key: "partStatus", width: 12 },
     ]
-    worksheet["!cols"] = colWidths
+    worksheet.columns = columns
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Work Orders")
+    // Style header row
+    worksheet.getRow(1).font = { bold: true }
+
+    // Add data rows
+    for (const row of excelData) {
+      worksheet.addRow({
+        woNumber: row["WO Number"],
+        title: row["Title"],
+        vehicle: row["Vehicle"],
+        sideNumber: row["Side #"],
+        vehicleModel: row["Vehicle Model"],
+        taskType: row["Task Type"],
+        priority: row["Priority"],
+        status: row["Status"],
+        assignedTo: row["Assigned To"],
+        externalProvider: row["External Provider"],
+        laborCost: row["Labor Cost (Birr)"],
+        partsCost: row["Parts Cost (Birr)"],
+        totalCost: row["Total Cost (Birr)"],
+        scheduledDate: row["Scheduled Date"],
+        startedAt: row["Started At"],
+        completedAt: row["Completed At"],
+        createdAt: row["Created At"],
+        description: row["Description"],
+        completionNotes: row["Completion Notes"],
+        partName: row["Part Name"],
+        partQty: row["Part Qty"],
+        partUnitPrice: row["Part Unit Price"],
+        partTotal: row["Part Total"],
+        partStatus: row["Part Status"],
+      })
+    }
 
     // Generate buffer
-    const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" })
+    const buffer = await workbook.xlsx.writeBuffer()
 
     // Create filename with date range
     let filename = "work-orders"
