@@ -75,7 +75,7 @@ export default function AdminDashboard() {
   const [bookingsTotalPages, setBookingsTotalPages] = useState(1)
   const [bookingsTotal, setBookingsTotal] = useState(0)
   const [bookingsStatusFilter, setBookingsStatusFilter] = useState("ALL")
-  const [bookingsCompanyFilter, setBookingsCompanyFilter] = useState("")
+  const [bookingsCompanyFilter, setBookingsCompanyFilter] = useState("ALL")
   const [bookingsStartDate, setBookingsStartDate] = useState("")
   const [bookingsEndDate, setBookingsEndDate] = useState("")
   const [bookingsSearchInput, setBookingsSearchInput] = useState("")
@@ -217,7 +217,7 @@ export default function AdminDashboard() {
       params.set("page", bookingsPage.toString())
       params.set("limit", "10")
       if (bookingsStatusFilter !== "ALL") params.set("status", bookingsStatusFilter)
-      if (bookingsCompanyFilter) params.set("companyId", bookingsCompanyFilter)
+      if (bookingsCompanyFilter && bookingsCompanyFilter !== "ALL") params.set("companyId", bookingsCompanyFilter)
       if (bookingsStartDate) params.set("startDate", bookingsStartDate)
       if (bookingsEndDate) params.set("endDate", bookingsEndDate)
       if (bookingsSearch) params.set("search", bookingsSearch)
@@ -257,14 +257,14 @@ export default function AdminDashboard() {
 
   const clearBookingsFilters = () => {
     setBookingsStatusFilter("ALL")
-    setBookingsCompanyFilter("")
+    setBookingsCompanyFilter("ALL")
     setBookingsStartDate("")
     setBookingsEndDate("")
     setBookingsSearchInput("")
     setBookingsPage(1)
   }
 
-  const hasActiveBookingsFilters = bookingsStatusFilter !== "ALL" || bookingsCompanyFilter || bookingsStartDate || bookingsEndDate || bookingsSearchInput
+  const hasActiveBookingsFilters = bookingsStatusFilter !== "ALL" || (bookingsCompanyFilter && bookingsCompanyFilter !== "ALL") || bookingsStartDate || bookingsEndDate || bookingsSearchInput
 
   const downloadRevenueReport = async () => {
     setIsDownloading(true)
@@ -1141,7 +1141,7 @@ export default function AdminDashboard() {
                   <SelectValue placeholder="All Companies" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Companies</SelectItem>
+                  <SelectItem value="ALL">All Companies</SelectItem>
                   {allCompanies.map((company) => (
                     <SelectItem key={company.id} value={company.id}>
                       {company.name}
@@ -1217,18 +1217,18 @@ export default function AdminDashboard() {
                       {formatDate(booking.createdAt)}
                     </TableCell>
                     <TableCell>
-                      <div className="text-sm font-medium">{booking.user.name}</div>
-                      <div className="text-xs text-muted-foreground">{booking.user.phone}</div>
+                      <div className="text-sm font-medium">{booking.user?.name ?? "Guest"}</div>
+                      <div className="text-xs text-muted-foreground">{booking.user?.phone ?? "—"}</div>
                     </TableCell>
                     <TableCell>
                       <div className="text-sm">
-                        {booking.trip.origin} → {booking.trip.destination}
+                        {booking.trip?.origin ?? "—"} → {booking.trip?.destination ?? "—"}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {formatDate(booking.trip.departureTime)}
+                        {booking.trip?.departureTime ? formatDate(booking.trip.departureTime) : "—"}
                       </div>
                     </TableCell>
-                    <TableCell className="text-sm">{booking.trip.company.name}</TableCell>
+                    <TableCell className="text-sm">{booking.trip?.company?.name ?? "—"}</TableCell>
                     <TableCell className="text-sm font-medium">
                       {formatCurrency(booking.totalAmount)}
                     </TableCell>
