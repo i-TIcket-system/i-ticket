@@ -4,6 +4,59 @@
 
 ---
 
+## v2.10.17 - Feb 6, 2026
+
+### VM Security Hardening (Vulnerability Assessment Remediation)
+
+Resolved findings from Tenable WAS vulnerability scan (27 total: 2 Medium, 5 Low, 20 Informational).
+
+**Cloudflare Configuration (Applied via MCP)**
+- Set minimum TLS version to 1.2 (fixes TLS 1.0/1.1 Medium findings, CVSS 6.1)
+- Enabled HSTS on Cloudflare (1 year max-age, includeSubDomains, preload)
+
+**CSP Middleware (`src/middleware.ts` - NEW)**
+- Moved CSP from static `next.config.js` headers to dynamic middleware
+- Removed `unsafe-eval` from `script-src` (only needed in dev, not production)
+- Added `Report-To` header (Reporting API v1) for broader browser support
+- Added `Reporting-Endpoints` header (Reporting API v2)
+- CSP violations now reported to `/api/csp-report`
+- **Note**: `unsafe-inline` retained in `script-src` - Next.js 14 does not propagate nonces to inline scripts; nonce-based CSP requires Next.js 15+
+
+**Security Headers (`next.config.js`)**
+- Tightened `img-src` from `https:` (any HTTPS) to `https://api.qrserver.com` (specific)
+- Added default `Cache-Control: no-store` + `Pragma: no-cache` for all routes
+- Added strict Cache-Control for sensitive pages (auth, admin, company portals)
+- Added Cache-Control for API routes (no caching of sensitive data)
+- Upgraded `X-Frame-Options` from `SAMEORIGIN` to `DENY`
+- Expanded `Permissions-Policy` (added payment, usb, bluetooth, magnetometer, gyroscope, accelerometer)
+- Hidden `X-Powered-By` header (`poweredByHeader: false`)
+
+**Bug Fix: Nonce CSP Breaks Next.js 14**
+- Initially implemented nonce + `strict-dynamic` CSP via middleware
+- Next.js 14.2 does NOT add `nonce=""` attributes to its inline `<script>` tags
+- With `strict-dynamic`, browsers ignore `'self'` → ALL JavaScript execution blocked
+- Reverted to `'self' 'unsafe-inline'` which works correctly with Next.js 14
+
+### Files Modified
+- `src/middleware.ts` - **NEW** - Dynamic CSP with Report-To/Reporting-Endpoints
+- `next.config.js` - Removed CSP (now in middleware), added Cache-Control, tightened headers
+- `deployment/nginx-security.conf` - Security hardening reference
+
+### VM Report Findings Resolution
+| Finding | Severity | Status |
+|---------|----------|--------|
+| TLS 1.0 Weak Protocol | Medium | **FIXED** - TLS 1.2 min |
+| TLS 1.1 Weak Protocol | Medium | **FIXED** - TLS 1.2 min |
+| CSP missing Report-To | Low | **FIXED** - Both v1 & v2 |
+| Permissive CSP (img-src) | Low | **FIXED** - Restricted to QR API |
+| Missing Cache-Control | Low | **FIXED** - no-store all routes |
+| HTTP Header Info Disclosure | Low | **PARTIAL** - X-Powered-By hidden |
+| Weak Cipher Suites | Low | **MITIGATED** - TLS 1.2 min |
+| `unsafe-eval` in CSP | Low | **FIXED** - Removed |
+| `unsafe-inline` in CSP | Low | **DEFERRED** - Needs Next.js 15 |
+
+---
+
 ## v2.10.16 - Feb 4, 2026
 
 ### Manifest Cleanup, Today's Trips Display & Contact Tab Upgrade

@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.10.16 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.10.17 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -241,9 +241,18 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.10.16)
+## RECENT UPDATES (v2.10.17)
 
-**Latest**: Manifest Cleanup, Today's Trips Display & Contact Tab Upgrade
+**Latest**: VM Security Hardening (Vulnerability Assessment Remediation)
+- Cloudflare: TLS 1.2 minimum enforced (was TLS 1.0), HSTS enabled with preload
+- CSP via middleware: `unsafe-eval` removed, Report-To/Reporting-Endpoints added
+- Tightened `img-src` from `https:` to `https://api.qrserver.com` only
+- Added `Cache-Control: no-store` + `Pragma: no-cache` for all routes
+- `X-Frame-Options` upgraded from SAMEORIGIN to DENY, expanded Permissions-Policy
+- `X-Powered-By` header hidden (`poweredByHeader: false`)
+- **Note**: `unsafe-inline` in script-src required by Next.js 14 (nonce needs Next.js 15+)
+
+**v2.10.16**: Manifest Cleanup, Today's Trips Display & Contact Tab Upgrade
 - Removed National ID column from manifests (verification now at boarding)
 - Show all today's trips including DEPARTED/COMPLETED (smart display for future trips)
 - Contact i-Ticket tab upgraded with search, date filters, and filter indicators
@@ -267,6 +276,7 @@ model TelegramSession {
 
 | Bug | Fix |
 |-----|-----|
+| **Nonce CSP breaks Next.js 14 (v2.10.17)** | Next.js 14 does NOT propagate nonces to inline `<script>` tags. Using `'strict-dynamic'` with nonce causes `'self'` to be ignored → ALL JS blocked. Use `'self' 'unsafe-inline'` instead. Nonce CSP requires Next.js 15+ |
 | **UTC vs Ethiopia timezone (v2.10.15)** | Use `hasDepartedEthiopia()` from `@/lib/utils` instead of `new Date(departureTime) < new Date()` - AWS EC2 runs in UTC causing trips to be marked DEPARTED 3 hours early |
 | Cron estimatedDuration unit (v2.10.14) | DB stores MINUTES, not hours - use `trip.estimatedDuration * 60 * 1000` not `* 60 * 60 * 1000` |
 | API multi-value query params (v2.10.11) | Don't send CSV (`status=OPEN,IN_PROGRESS`) - make parallel API calls and combine results instead |
