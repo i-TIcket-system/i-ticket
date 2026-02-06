@@ -134,6 +134,10 @@ export default function FleetMap() {
       position: [item.position.latitude, item.position.longitude],
       zoom: 14,
     })
+    // On mobile, hide list to reveal the map
+    if (window.innerWidth < 1024) {
+      setShowList(false)
+    }
   }, [])
 
   const fitAll = useCallback(() => {
@@ -235,20 +239,20 @@ export default function FleetMap() {
             onClick={() => setShowList(!showList)}
             variant="outline"
             size="sm"
-            className="h-8 lg:hidden"
+            className="h-8"
           >
             {showList ? "Hide List" : "Show List"}
           </Button>
         </div>
       </div>
 
-      {/* Map + Vehicle List side-by-side on desktop */}
-      <div className="flex gap-4">
+      {/* Map + Vehicle List: stacked on mobile, side-by-side on desktop */}
+      <div className="flex flex-col lg:flex-row gap-4">
         {/* Vehicle list panel */}
         <div
           className={`${
             showList ? "block" : "hidden"
-          } lg:block w-full lg:w-[320px] shrink-0 max-h-[600px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900`}
+          } lg:block w-full lg:w-[320px] lg:shrink-0 max-h-[300px] lg:max-h-[600px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900`}
         >
           <div className="p-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-[1]">
             <p className="text-xs font-medium text-gray-500">
