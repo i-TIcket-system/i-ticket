@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
-
   const cspReportUri = 'https://i-ticket.et/api/csp-report'
 
+  // Next.js 14 does NOT propagate nonces to its inline <script> tags,
+  // so 'unsafe-inline' is required for script-src. 'unsafe-eval' is
+  // removed (only needed in dev for hot reload, not production).
+  // Full nonce-based CSP requires Next.js 15+.
   const cspHeader = `
     default-src 'self';
-    script-src 'self' 'nonce-${nonce}' 'strict-dynamic';
+    script-src 'self' 'unsafe-inline';
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' data: https://api.qrserver.com;
     font-src 'self' data: https://fonts.gstatic.com;
@@ -23,15 +25,7 @@ export function middleware(request: NextRequest) {
 
   const cspHeaderValue = cspHeader.replace(/\s{2,}/g, ' ').trim()
 
-  const requestHeaders = new Headers(request.headers)
-  requestHeaders.set('x-nonce', nonce)
-  requestHeaders.set('Content-Security-Policy', cspHeaderValue)
-
-  const response = NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  })
+  const response = NextResponse.next()
 
   response.headers.set('Content-Security-Policy', cspHeaderValue)
   response.headers.set(
