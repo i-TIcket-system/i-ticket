@@ -2,13 +2,23 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import dynamic from "next/dynamic"
-import { MapPin, Navigation, Wifi, WifiOff, AlertTriangle } from "lucide-react"
+import {
+  MapPin, Navigation, Wifi, WifiOff, AlertTriangle,
+  ShieldCheck, ShieldAlert, MonitorSmartphone,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import ETABadge from "./ETABadge"
 import TrackingStatus from "./TrackingStatus"
 import { enqueuePosition, flushQueue, getQueueSize } from "@/lib/tracking/position-queue"
 import { formatETA } from "@/lib/tracking/eta"
+import { useWakeLock } from "@/hooks/use-wake-lock"
+import {
+  startAudioKeepAlive,
+  stopAudioKeepAlive,
+  resumeAudioKeepAlive,
+  isAudioKeepAliveActive,
+} from "@/lib/tracking/audio-keep-alive"
 
 // Dynamic imports for Leaflet (no SSR)
 const TrackingMap = dynamic(() => import("./TrackingMap"), { ssr: false })
@@ -33,6 +43,9 @@ interface TripData {
   company: string
 }
 
+const HEARTBEAT_INTERVAL = 30000 // 30s watchdog
+const GPS_THROTTLE = 10000 // 10s between API sends
+
 export default function DriverTrackingView() {
   const [trip, setTrip] = useState<TripData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -47,10 +60,16 @@ export default function DriverTrackingView() {
   const [etaMinutes, setEtaMinutes] = useState<number | null>(null)
   const [etaDistance, setEtaDistance] = useState<number | null>(null)
   const [estimatedArrival, setEstimatedArrival] = useState<string | null>(null)
+  const [recoveryFlash, setRecoveryFlash] = useState(false)
 
   const watchIdRef = useRef<number | null>(null)
   const lastSendRef = useRef<number>(0)
+  const lastGpsCallbackRef = useRef<number>(Date.now())
+  const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const tripRef = useRef<TripData | null>(null)
+
+  // Wake Lock
+  const wakeLock = useWakeLock()
 
   // Keep ref in sync
   useEffect(() => {
@@ -66,7 +85,6 @@ export default function DriverTrackingView() {
   useEffect(() => {
     const handleOnline = () => {
       setIsOnline(true)
-      // Flush queued positions
       flushQueue().then((sent) => {
         if (sent > 0) setQueuedCount(getQueueSize())
       })
@@ -82,6 +100,30 @@ export default function DriverTrackingView() {
       window.removeEventListener("offline", handleOffline)
     }
   }, [])
+
+  // Visibility recovery: re-acquire wake lock, resume audio, flush queue
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && tracking) {
+        // Show recovery flash
+        setRecoveryFlash(true)
+        setTimeout(() => setRecoveryFlash(false), 2000)
+
+        // Resume audio keep-alive
+        resumeAudioKeepAlive()
+
+        // Flush offline queue
+        if (navigator.onLine) {
+          flushQueue().then((sent) => {
+            if (sent > 0) setQueuedCount(getQueueSize())
+          })
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility)
+    return () => document.removeEventListener("visibilitychange", handleVisibility)
+  }, [tracking])
 
   const fetchTrip = async () => {
     try {
@@ -143,7 +185,6 @@ export default function DriverTrackingView() {
             setEtaMinutes(mins > 0 ? mins : null)
           }
         } else {
-          // Queue for retry
           enqueuePosition(positionData)
           setQueuedCount(getQueueSize())
         }
@@ -155,27 +196,24 @@ export default function DriverTrackingView() {
     []
   )
 
-  const startTracking = useCallback(() => {
-    if (!("geolocation" in navigator)) {
-      setError("Geolocation is not supported by your browser")
-      return
+  const createGpsWatch = useCallback(() => {
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current)
     }
-
-    setTracking(true)
-    setGpsStatus("acquiring")
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude, altitude, accuracy, heading: hdg, speed: spd } = position.coords
 
+        lastGpsCallbackRef.current = Date.now()
         setCurrentPos({ lat: latitude, lng: longitude })
         setHeading(hdg)
-        setSpeed(spd ? spd * 3.6 : null) // m/s → km/h
+        setSpeed(spd ? spd * 3.6 : null)
         setGpsStatus("active")
 
         // Throttle: send every 10 seconds
         const now = Date.now()
-        if (now - lastSendRef.current >= 10000) {
+        if (now - lastSendRef.current >= GPS_THROTTLE) {
           lastSendRef.current = now
           sendPosition(
             latitude,
@@ -204,14 +242,56 @@ export default function DriverTrackingView() {
     )
   }, [sendPosition])
 
+  const startTracking = useCallback(() => {
+    if (!("geolocation" in navigator)) {
+      setError("Geolocation is not supported by your browser")
+      return
+    }
+
+    setTracking(true)
+    setGpsStatus("acquiring")
+
+    // Layer 1: Wake Lock
+    wakeLock.request()
+
+    // Layer 2: Audio keep-alive (must be in user gesture handler)
+    startAudioKeepAlive()
+
+    // Layer 3: GPS watch
+    createGpsWatch()
+
+    // Heartbeat watchdog: if no GPS callback for 30s, restart watchPosition
+    lastGpsCallbackRef.current = Date.now()
+    heartbeatRef.current = setInterval(() => {
+      const elapsed = Date.now() - lastGpsCallbackRef.current
+      if (elapsed > HEARTBEAT_INTERVAL) {
+        console.warn("[GPS] Heartbeat: no callback for 30s, restarting watchPosition")
+        createGpsWatch()
+      }
+
+      // Also ensure audio is still playing
+      if (!isAudioKeepAliveActive()) {
+        resumeAudioKeepAlive()
+      }
+    }, HEARTBEAT_INTERVAL)
+  }, [wakeLock, createGpsWatch])
+
   const stopTracking = useCallback(() => {
     if (watchIdRef.current !== null) {
       navigator.geolocation.clearWatch(watchIdRef.current)
       watchIdRef.current = null
     }
+    if (heartbeatRef.current) {
+      clearInterval(heartbeatRef.current)
+      heartbeatRef.current = null
+    }
+
+    wakeLock.release()
+    stopAudioKeepAlive()
+
     setTracking(false)
     setGpsStatus("acquiring")
-  }, [])
+  }, [wakeLock])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -219,6 +299,10 @@ export default function DriverTrackingView() {
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current)
       }
+      if (heartbeatRef.current) {
+        clearInterval(heartbeatRef.current)
+      }
+      stopAudioKeepAlive()
     }
   }, [])
 
@@ -260,7 +344,7 @@ export default function DriverTrackingView() {
     <div className="h-screen flex flex-col relative">
       {/* Map (full screen) */}
       <div className="flex-1 relative">
-        <TrackingMap center={mapCenter} zoom={currentPos ? 13 : 8}>
+        <TrackingMap center={mapCenter} zoom={currentPos ? 13 : 8} autoRecenter>
           <RouteOverlay
             origin={trip.origin as { name: string; latitude: number; longitude: number }}
             destination={trip.destination as { name: string; latitude: number; longitude: number }}
@@ -314,9 +398,58 @@ export default function DriverTrackingView() {
           </Card>
         </div>
 
+        {/* Background recovery flash */}
+        {recoveryFlash && (
+          <div className="absolute top-[70px] left-3 right-3 z-[1000] animate-fade-in">
+            <div className="bg-green-500 text-white text-xs font-medium py-1.5 px-3 rounded-lg text-center">
+              Background recovery — GPS resumed
+            </div>
+          </div>
+        )}
+
+        {/* Wake lock / background status indicators */}
+        {tracking && (
+          <div className="absolute top-[70px] left-3 z-[1000] flex flex-col gap-1.5">
+            {wakeLock.isSupported && (
+              <div
+                className={`flex items-center gap-1.5 text-xs font-medium py-1 px-2.5 rounded-full ${
+                  wakeLock.isActive
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400"
+                    : "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400"
+                }`}
+              >
+                {wakeLock.isActive ? (
+                  <>
+                    <ShieldCheck className="h-3 w-3" />
+                    Screen locked on
+                  </>
+                ) : (
+                  <>
+                    <ShieldAlert className="h-3 w-3" />
+                    Screen lock lost
+                  </>
+                )}
+              </div>
+            )}
+
+            {!wakeLock.isSupported && (
+              <div className="flex items-center gap-1.5 text-xs font-medium py-1 px-2.5 rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-400">
+                <MonitorSmartphone className="h-3 w-3" />
+                Keep app open &amp; screen on
+              </div>
+            )}
+
+            {queuedCount > 0 && isOnline && (
+              <div className="flex items-center gap-1.5 text-xs font-medium py-1 px-2.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">
+                {queuedCount} queued
+              </div>
+            )}
+          </div>
+        )}
+
         {/* ETA overlay */}
         {tracking && etaMinutes != null && (
-          <div className="absolute top-[80px] left-3 right-3 z-[1000]">
+          <div className="absolute top-[80px] left-3 right-3 z-[999]">
             <ETABadge
               remainingMinutes={etaMinutes}
               remainingDistanceKm={etaDistance}

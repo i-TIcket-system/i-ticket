@@ -20,7 +20,9 @@ export default function FleetTrackingPage() {
         </p>
       </div>
 
-      <FleetMap />
+      <div className="relative z-0">
+        <FleetMap />
+      </div>
     </div>
   )
 }
