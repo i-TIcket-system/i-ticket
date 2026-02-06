@@ -4,6 +4,105 @@
 
 ---
 
+## v2.12.0 - Feb 6, 2026
+
+### Real-Time GPS Bus Tracking — Driver, Passenger, Fleet & Telegram
+
+Major feature release adding live bus tracking using the driver's phone as a GPS device, Leaflet + OpenStreetMap maps for passengers and company admins, and Telegram integration for bus location queries.
+
+**GPS Tracking System**
+- Driver tracking page (`/driver/track`) uses browser `watchPosition()` to send GPS coordinates every 10 seconds
+- Offline GPS queue (localStorage) buffers up to 200 positions when driver loses connectivity, auto-flushes on reconnect
+- Rate limiting: 12 req/min per user (driver GPS), 30 req/min per IP (public position queries)
+- Stale detection: positions older than 120 seconds marked as "stale" for UI display
+
+**Passenger Live Map**
+- `/track/[code]` page now shows live bus position on map when trip status is DEPARTED
+- Polls `/api/tracking/[tripId]` every 12 seconds with GPS trail history
+- Shows route overlay (origin → intermediate stops → destination), ETA badge, bus marker with heading rotation
+- Silently hides tracking section if no GPS data available (graceful degradation)
+
+**Company Fleet Map**
+- New page at `/company/fleet-tracking` shows all active (DEPARTED) company buses on one map
+- Polls every 15 seconds, click popup shows driver, vehicle, occupancy, ETA
+- Lists untracked departed trips below the map
+- Added "Fleet Tracking" to company admin sidebar (MapPin icon)
+
+**Telegram Integration**
+- `/whereismybus` command finds user's DEPARTED bookings and shows GPS status, ETA, speed
+- "Track Bus" inline button added to ticket display when trip is DEPARTED
+- "Show Location" callback sends native Telegram location via `ctx.replyWithLocation()`
+- "Track on Map" web link to `/track/[code]` page
+- Bilingual messages (EN/AM)
+
+**Database Schema**
+- New model `TripPosition` — GPS position records with lat, lon, altitude, accuracy, heading, speed, recordedAt
+- Indexes on `[tripId, receivedAt]` and `[vehicleId, receivedAt]`
+- Trip model: added `trackingActive`, `lastLatitude`, `lastLongitude`, `lastSpeed`, `lastPositionAt`, `estimatedArrival`
+- Vehicle model: added `lastLatitude`, `lastLongitude`, `lastPositionAt`
+- Trip model: added index on `[trackingActive, status]`
+
+**ETA Calculation**
+- Uses Haversine distance (reuses `calculateDistance()` from `src/lib/osmand/gpx-generator.ts`)
+- Remaining distance divided by average speed × 1.3 winding factor (Ethiopian roads)
+- Minimum speed floor of 20 km/h, default speed 60 km/h when no GPS speed available
+
+**Security & Headers**
+- CSP: added `https://*.tile.openstreetmap.org` to `img-src` and `connect-src` for map tiles
+- Permissions-Policy: changed `geolocation=()` to `geolocation=(self)` to allow GPS on our domain
+- Both changes compatible with VM security report (v2.10.17) — narrowly scoped, no security regression
+
+**Auto-Deactivation & Cleanup**
+- Trip status → COMPLETED or CANCELLED automatically sets `trackingActive: false` in 4 code paths:
+  - Company trip status API, Staff trip status API, Cron auto-completion, Cron old trip cleanup
+- Cron cleanup purges TripPosition records >7 days old for completed/cancelled trips
+
+### New Files (17)
+```
+src/app/api/tracking/update/route.ts          — Driver GPS submission endpoint
+src/app/api/tracking/[tripId]/route.ts        — Public bus position endpoint
+src/app/api/tracking/active-trip/route.ts     — Driver's current trip endpoint
+src/app/api/tracking/fleet/route.ts           — Company fleet positions endpoint
+src/app/driver/track/page.tsx                 — Driver tracking page
+src/app/company/fleet-tracking/page.tsx       — Company fleet map page
+src/components/tracking/TrackingMap.tsx        — Base Leaflet + OSM wrapper
+src/components/tracking/BusMarker.tsx          — Bus icon with heading rotation
+src/components/tracking/RouteOverlay.tsx       — Route polyline + stop markers
+src/components/tracking/ETABadge.tsx           — Floating ETA display
+src/components/tracking/TrackingStatus.tsx     — GPS status indicator (Live/Stale/Off)
+src/components/tracking/DriverTrackingView.tsx — Full driver GPS interface
+src/components/tracking/PassengerTrackingView.tsx — Passenger polling map
+src/components/tracking/FleetMap.tsx           — Multi-bus admin map
+src/lib/tracking/eta.ts                       — ETA calculation utilities
+src/lib/tracking/position-queue.ts            — Offline GPS queue (localStorage)
+src/lib/telegram/handlers/tracking.ts         — /whereismybus + location callbacks
+```
+
+### Modified Files (16)
+- `prisma/schema.prisma` — TripPosition model + Trip/Vehicle tracking fields
+- `package.json` — Added leaflet, react-leaflet@4, @types/leaflet
+- `next.config.js` — Permissions-Policy: `geolocation=(self)`
+- `src/middleware.ts` — CSP: OSM tile domains in img-src + connect-src
+- `src/app/api/track/[code]/route.ts` — Returns trip.status + trackingActive
+- `src/app/track/[code]/page.tsx` — PassengerTrackingView for DEPARTED trips
+- `src/app/company/layout.tsx` — Fleet Tracking sidebar item
+- `src/app/staff/layout.tsx` — GPS Tracking link for DRIVER/CONDUCTOR
+- `src/app/api/company/trips/[tripId]/status/route.ts` — trackingActive=false on COMPLETED/CANCELLED
+- `src/app/api/staff/trip/[tripId]/status/route.ts` — trackingActive=false on COMPLETED
+- `src/app/api/cron/cleanup/route.ts` — trackingActive deactivation + TripPosition purge
+- `src/lib/telegram/bot.ts` — Registered /whereismybus + track_loc_ callback
+- `src/lib/telegram/handlers/tickets.ts` — "Track Bus" button for DEPARTED trips
+- `src/lib/telegram/messages.ts` — /whereismybus in help text (EN + AM)
+- `.gitignore` — Added leaflet assets
+- `package-lock.json` — Updated dependencies
+
+### Dependencies
+- `leaflet` — Map rendering library (~40KB)
+- `react-leaflet@4` — React bindings for Leaflet (v4 required for React 18; v5 requires React 19)
+- `@types/leaflet` — TypeScript types
+
+---
+
 ## v2.11.0 - Feb 6, 2026
 
 ### Phase 2: Predictive Maintenance AI Dashboard, Trip Integration & Fleet Reports

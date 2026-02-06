@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.11.0 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.12.0 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -89,6 +89,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | **Booking** | Real-time slots, seat selection, multi-passenger, TeleBirr (5% + 15% VAT) |
 | **Trips** | CRUD, intermediate stops, mandatory staff/vehicle, status lifecycle |
 | **Fleet** | AI risk scoring, fleet analytics dashboard, predictive maintenance, work orders, inspections, TCO/downtime reporting |
+| **GPS Tracking** | Real-time bus tracking via driver phone GPS, passenger live map, company fleet map, Telegram /whereismybus |
 | **Manifests** | Auto-generate on DEPARTED + full capacity |
 | **Portals** | Super Admin, Company Admin, Staff, Cashier, Mechanic, Finance, Sales |
 | **Telegram Bot** | Bilingual booking via @i_ticket_busBot (see Telegram Bot section below) |
@@ -99,6 +100,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 **Core**: User, Company, Trip, TripTemplate, Booking, Passenger, Ticket, Payment, City
 **Fleet**: Vehicle, MaintenanceSchedule, WorkOrder, VehicleInspection, VehicleRiskHistory, VehicleDowntime
+**Tracking**: TripPosition
 **Comms**: TripMessage, Notification, SupportTicket, CompanyMessage
 **Sales**: SalesPerson, SalesReferral, SalesCommission
 **Security**: ProcessedCallback, AdminLog
@@ -111,6 +113,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | Category | Routes |
 |----------|--------|
 | **Public** | `/api/trips`, `/api/track/[code]` |
+| **GPS Tracking** | `/api/tracking/update` (driver GPS), `/api/tracking/[tripId]` (public position), `/api/tracking/fleet` (company), `/api/tracking/active-trip` (driver) |
 | **Company** | `/api/company/trips`, `/api/company/trip-templates`, `/api/company/staff`, `/api/company/vehicles` |
 | **Fleet Analytics** | `/api/company/analytics/fleet-health`, `risk-trends`, `cost-forecast`, `failure-timeline`, `vehicle-comparison`, `maintenance-windows`, `route-wear`, `compliance-calendar` |
 | **Fleet Reports** | `/api/company/reports/maintenance`, `maintenance/export`, `vehicle-tco`, `downtime`, `fleet-analytics/export` |
@@ -124,8 +127,9 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 
 - `/(auth)` - Login, Register
 - `/(customer)` - Search, Booking, Tickets
-- `/(company)` - Dashboard, Trips, Staff, Vehicles, Fleet Analytics, Reports
+- `/(company)` - Dashboard, Trips, Staff, Vehicles, Fleet Analytics, Fleet Tracking, Reports
 - `/(admin)` - Dashboard, Companies, Trips, Manifests
+- `/(driver)` - GPS Tracking (`/driver/track`)
 - `/(staff|cashier|mechanic|finance|sales)` - Role portals
 
 ---
@@ -163,6 +167,7 @@ Bilingual (English/Amharic) Telegram bot for bus ticket booking. Users can searc
 | `/start` | Welcome + language selection |
 | `/book` | Start booking flow |
 | `/mytickets` | View booked tickets |
+| `/whereismybus` | Track bus location (GPS) |
 | `/help` | Show help message |
 | `/cancel` | Cancel current operation |
 
@@ -177,7 +182,8 @@ src/lib/telegram/
 ├── handlers/
 │   ├── commands.ts           # Command handlers (/start, /book, etc.)
 │   ├── payment.ts            # Payment processing, SMS sending
-│   └── tickets.ts            # Ticket viewing with QR codes
+│   ├── tickets.ts            # Ticket viewing with QR codes
+│   └── tracking.ts           # /whereismybus + location sharing
 ├── scenes/
 │   └── booking-wizard.ts     # Multi-step booking flow
 └── utils/
@@ -204,6 +210,7 @@ src/lib/telegram/
 - **SMS Confirmation**: Tickets sent via SMS with shortcodes
 - **QR Tickets**: Each ticket has QR code for verification
 - **Session Persistence**: 30-minute session timeout
+- **Bus Tracking**: `/whereismybus` shows live GPS location + ETA for departed trips
 
 ### Environment Variables
 ```bash
@@ -240,12 +247,29 @@ model TelegramSession {
 ### TODO (Next Session)
 - [x] ~~Send tickets to passenger's Telegram if they have an account (in addition to SMS)~~ DONE
 - [x] ~~Phase 2: Predictive Maintenance AI features~~ DONE (v2.11.0)
+- [x] ~~Real-time GPS bus tracking + Telegram /whereismybus~~ DONE (v2.12.0)
 
 ---
 
-## RECENT UPDATES (v2.11.0)
+## RECENT UPDATES (v2.12.0)
 
-**Latest**: Phase 2 - Predictive Maintenance AI Dashboard, Trip Integration & Fleet Reports
+**Latest**: Real-Time GPS Bus Tracking — Driver, Passenger, Fleet & Telegram
+- Driver tracking page (`/driver/track`) — browser Geolocation API sends GPS every 10s
+- Passenger live map on `/track/[code]` — polls bus position every 12s for DEPARTED trips
+- Company fleet map (`/company/fleet-tracking`) — all active buses on one map, 15s polling
+- Telegram `/whereismybus` command — shows GPS location, ETA, speed; "Track Bus" button on tickets
+- New `TripPosition` model for GPS history (lat, lon, altitude, accuracy, heading, speed)
+- Trip fields: `trackingActive`, `lastLatitude`, `lastLongitude`, `lastSpeed`, `lastPositionAt`, `estimatedArrival`
+- Vehicle fields: `lastLatitude`, `lastLongitude`, `lastPositionAt`
+- ETA calculation: Haversine distance / avg speed x 1.3 winding factor for Ethiopian roads
+- Offline GPS queue (localStorage) — buffers positions when driver loses connectivity
+- Auto-deactivate tracking on COMPLETED/CANCELLED; cron purges positions >7 days
+- 8 tracking components under `src/components/tracking/`
+- Dependencies: `leaflet`, `react-leaflet@4` (v4 for React 18; v5 requires React 19), `@types/leaflet`
+- CSP: added `https://*.tile.openstreetmap.org` to img-src and connect-src
+- Permissions-Policy: `geolocation=(self)` (was `geolocation=()`)
+
+**v2.11.0**: Phase 2 - Predictive Maintenance AI Dashboard, Trip Integration & Fleet Reports
 - Fleet Analytics dashboard at `/company/fleet-analytics` with health gauge, risk distribution, trend charts, cost forecast, failure timeline, vehicle comparison
 - 8 analytics APIs: fleet-health, risk-trends, failure-timeline, cost-forecast, vehicle-comparison, maintenance-windows, route-wear, compliance-calendar
 - 5 report APIs with Excel exports: maintenance costs, vehicle TCO, downtime, fleet analytics
