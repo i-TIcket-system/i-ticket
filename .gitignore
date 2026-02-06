@@ -40,3 +40,4 @@ prisma/*.db
 prisma/*.db-journal
 deployment-secrets.env
 deployment-configs/
+.mcp.json

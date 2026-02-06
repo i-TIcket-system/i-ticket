@@ -25,6 +25,7 @@ import {
   MessageSquare,
   Upload,
   Gauge,
+  MapPin,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -79,6 +80,11 @@ const sidebarItems = [
     title: "Fleet Analytics",
     href: "/company/fleet-analytics",
     icon: Gauge,
+  },
+  {
+    title: "Fleet Tracking",
+    href: "/company/fleet-tracking",
+    icon: MapPin,
   },
   {
     title: "Work Orders",

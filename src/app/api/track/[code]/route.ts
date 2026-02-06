@@ -29,7 +29,7 @@ export async function GET(
             id: true,
             name: true,
             seatNumber: true,
-            phone: true,
+            // phone removed for privacy - public endpoint should not expose PII
           }
         },
         trip: {
@@ -39,6 +39,8 @@ export async function GET(
             destination: true,
             departureTime: true,
             busType: true,
+            status: true,
+            trackingActive: true,
             company: {
               select: {
                 name: true,
@@ -67,7 +69,7 @@ export async function GET(
                   id: true,
                   name: true,
                   seatNumber: true,
-                  phone: true,
+                  // phone removed for privacy - public endpoint should not expose PII
                 }
               },
               trip: {
@@ -77,6 +79,8 @@ export async function GET(
                   destination: true,
                   departureTime: true,
                   busType: true,
+                  status: true,
+                  trackingActive: true,
                   company: {
                     select: {
                       name: true,

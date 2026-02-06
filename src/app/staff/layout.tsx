@@ -15,6 +15,7 @@ import {
   Bus,
   QrCode,
   Wrench,
+  Navigation,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
@@ -30,6 +31,15 @@ const getSidebarItems = (staffRole?: string) => {
       icon: Bus,
     },
   ]
+
+  // GPS Tracking link for Driver/Conductor
+  if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") {
+    items.push({
+      title: "GPS Tracking",
+      href: "/driver/track",
+      icon: Navigation,
+    })
+  }
 
   // BUG FIX v2.10.5: Add Work Orders link for Driver/Conductor
   if (staffRole === "DRIVER" || staffRole === "CONDUCTOR") {

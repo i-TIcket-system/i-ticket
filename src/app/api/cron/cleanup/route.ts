@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
       tripsCompleted: 0,
       tripsCancelled: 0,
       staffStatusReset: 0,
+      positionsPurged: 0,
       timestamp: new Date().toISOString()
     };
 
@@ -112,6 +113,9 @@ export async function GET(request: NextRequest) {
     // 5. Reset staff status for completed/cancelled trips
     // Drivers and conductors who no longer have active trips should be set to AVAILABLE
     results.staffStatusReset = await resetStaffStatusForCompletedTrips();
+
+    // 6. Purge old GPS tracking positions (>7 days for completed/cancelled trips)
+    results.positionsPurged = await purgeOldTrackingPositions();
 
     console.log('[Cron] Cleanup completed:', results);
 
@@ -477,6 +481,7 @@ async function updateOldTripStatuses() {
               actualDepartureTime: trip.actualDepartureTime || trip.departureTime,
               actualArrivalTime: now,
               bookingHalted: true,
+              trackingActive: false, // Deactivate GPS tracking
             },
           });
 
@@ -566,6 +571,7 @@ async function updateOldTripStatuses() {
                 trip.departureTime.getTime() + trip.estimatedDuration * 60 * 1000
               ),
               bookingHalted: true,
+              trackingActive: false, // Deactivate GPS tracking
             },
           });
 
@@ -673,6 +679,34 @@ async function resetStaffStatusForCompletedTrips(): Promise<number> {
     console.error('[Cron] Error resetting staff status:', error);
   }
   return resetCount;
+}
+
+/**
+ * Purge old GPS tracking positions for completed/cancelled trips (>7 days)
+ * Keeps recent positions for analytics/replay
+ */
+async function purgeOldTrackingPositions(): Promise<number> {
+  try {
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+    const result = await prisma.tripPosition.deleteMany({
+      where: {
+        receivedAt: { lt: sevenDaysAgo },
+        trip: {
+          status: { in: ['COMPLETED', 'CANCELLED'] },
+        },
+      },
+    });
+
+    if (result.count > 0) {
+      console.log(`[Cron] Purged ${result.count} old GPS tracking positions`);
+    }
+
+    return result.count;
+  } catch (error) {
+    console.error('[Cron] Error purging tracking positions:', error);
+    return 0;
+  }
 }
 
 /**

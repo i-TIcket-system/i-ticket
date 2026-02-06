@@ -8,6 +8,7 @@ import { getMessage, Language } from "../messages";
 import { prisma } from "@/lib/db";
 import { formatDateTime, formatRoute, formatBookingStatus, formatCurrency } from "../utils/formatters";
 import { mainMenuKeyboard } from "../keyboards";
+import { Markup } from "telegraf";
 
 /**
  * Handle viewing tickets for a booking
@@ -158,6 +159,26 @@ ${booking.payment?.transactionId ? `*ግብይት:* \`${booking.payment.transact
           ? "⚠️ No tickets generated yet. Please contact support if payment was completed."
           : "⚠️ ትኬቶች ገና አልተፈጠሩም። ክፍያ ከተጠናቀቀ ድጋፍን ያግኙ።"
       );
+    }
+
+    // Show "Track Bus" button if trip is DEPARTED
+    if (trip.status === "DEPARTED") {
+      const trackUrl = `${process.env.NEXTAUTH_URL || "https://i-ticket.et"}/track/${bookingId}`
+      await ctx.reply(
+        lang === "EN"
+          ? "🚌 Your bus is on the way! Track it live:"
+          : "🚌 አውቶቡስዎ በመንገድ ላይ ነው! በቀጥታ ይከታተሉ:",
+        Markup.inlineKeyboard([
+          [Markup.button.url(
+            lang === "EN" ? "🗺 Track Bus on Map" : "🗺 አውቶቡስ በካርታ ይከታተሉ",
+            trackUrl
+          )],
+          [Markup.button.callback(
+            lang === "EN" ? "📍 Show Location" : "📍 አካባቢ አሳይ",
+            `track_loc_${bookingId}`
+          )],
+        ])
+      )
     }
 
     // Show main menu

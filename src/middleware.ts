@@ -11,9 +11,9 @@ export function middleware(request: NextRequest) {
     default-src 'self';
     script-src 'self' 'unsafe-inline';
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
-    img-src 'self' data: https://api.qrserver.com;
+    img-src 'self' data: https://api.qrserver.com https://*.tile.openstreetmap.org;
     font-src 'self' data: https://fonts.gstatic.com;
-    connect-src 'self' https://api.telebirr.com https://api.webirr.com;
+    connect-src 'self' https://api.telebirr.com https://api.webirr.com https://*.tile.openstreetmap.org;
     frame-ancestors 'none';
     base-uri 'self';
     form-action 'self';

@@ -70,6 +70,10 @@ export function initializeBot() {
   bot.command("mytickets", handleMyTickets);
   bot.command("help", handleHelp);
   bot.command("cancel", handleCancel);
+  bot.command("whereismybus", async (ctx) => {
+    const { handleWhereIsMyBus } = await import("./handlers/tracking");
+    await handleWhereIsMyBus(ctx);
+  });
 
   // ==================== CALLBACK QUERIES ====================
 
@@ -255,6 +259,13 @@ export function initializeBot() {
     await handleViewTickets(ctx, bookingId);
   });
 
+  // Bus tracking - show location
+  bot.action(/^track_loc_(.+)$/, async (ctx) => {
+    const bookingId = ctx.match[1];
+    const { handleTrackLocationCallback } = await import("./handlers/tracking");
+    await handleTrackLocationCallback(ctx, bookingId);
+  });
+
   // ==================== TEXT MESSAGES ====================
 
   // Handle phone number from contact share
@@ -401,6 +412,7 @@ export function initializeBot() {
   console.log("  - /start");
   console.log("  - /book");
   console.log("  - /mytickets");
+  console.log("  - /whereismybus");
   console.log("  - /help");
   console.log("  - /cancel");
 }

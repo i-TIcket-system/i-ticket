@@ -126,6 +126,7 @@ export async function PATCH(
     if (validatedData.status === "COMPLETED") {
       updateData.actualArrivalTime = new Date()
       updateData.bookingHalted = true // Ensure booking is halted
+      updateData.trackingActive = false // Deactivate GPS tracking
     }
 
     // Update trip status

@@ -177,10 +177,20 @@ model Trip {
   autoResumeEnabled        Boolean            @default(false) // Admin preference to prevent future auto-halts
   reportGenerated          Boolean            @default(false)
   version                  Int                @default(0) // P3: Optimistic locking version
+
+  // Phase 3: GPS Tracking
+  trackingActive    Boolean   @default(false)
+  lastLatitude      Float?
+  lastLongitude     Float?
+  lastSpeed         Float?
+  lastPositionAt    DateTime?
+  estimatedArrival  DateTime?
+
   bookings                 Booking[]
   tickets                  Ticket[]
   tripLog                  TripLog? // Before/after odometer and fuel readings
   manifestDownloads        ManifestDownload[] // Auto-generated manifest files
+  positions                TripPosition[] // GPS tracking positions
   createdAt                DateTime           @default(now())
   updatedAt                DateTime           @updatedAt
 
@@ -195,6 +205,7 @@ model Trip {
   @@index([status])
   @@index([companyId, status])
   @@index([companyId, status, departureTime]) // Compound index for filtered company trip queries
+  @@index([trackingActive, status]) // Phase 3: For fleet tracking queries
 }
 
 // Trip odometer and fuel tracking (before/after readings)
@@ -330,6 +341,11 @@ model Vehicle {
   // Phase 2: Purchase/TCO data
   purchasePrice Float? // Purchase price in ETB (for TCO calculation)
   purchaseDate  DateTime? // When the vehicle was purchased
+
+  // Phase 3: GPS Tracking (last known position)
+  lastLatitude   Float?
+  lastLongitude  Float?
+  lastPositionAt DateTime?
 
   // Relations
   trips                Trip[]                @relation("VehicleTrips")
@@ -1153,6 +1169,27 @@ model VehicleDowntime {
 
   @@index([vehicleId, startedAt])
   @@index([companyId, startedAt])
+}
+
+// ==================== PHASE 3: GPS TRACKING ====================
+
+// Store GPS positions from driver's phone during active trips
+model TripPosition {
+  id        String   @id @default(cuid())
+  tripId    String
+  trip      Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  vehicleId String?
+  latitude  Float
+  longitude Float
+  altitude  Float?
+  accuracy  Float?   // GPS accuracy in meters
+  heading   Float?   // 0-360 degrees
+  speed     Float?   // km/h from Geolocation API
+  recordedAt DateTime // Device timestamp
+  receivedAt DateTime @default(now())
+
+  @@index([tripId, receivedAt])
+  @@index([vehicleId, receivedAt])
 }
 
 // ==================== COMPANY-PLATFORM COMMUNICATION ====================

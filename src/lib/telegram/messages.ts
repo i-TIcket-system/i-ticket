@@ -441,6 +441,7 @@ QR ኮዶች በማውረድ ላይ... 📥`,
 *Commands:*
 /book - Search and book tickets
 /mytickets - View your bookings
+/whereismybus - Track your bus live
 /cancel - Cancel current action
 /help - Show this help message
 
@@ -466,6 +467,7 @@ Mon-Sun: 6:00 AM - 10:00 PM EAT`,
 *ትዕዛዞች:*
 /book - ትኬት ፈልግ እና አስይዝ
 /mytickets - ማስያዝዎን ይመልከቱ
+/whereismybus - አውቶቡስዎን በቀጥታ ይከታተሉ
 /cancel - የአሁኑን ድርጊት ይሰርዙ
 /help - ይህን የእገዛ መልዕክት አሳይ
 

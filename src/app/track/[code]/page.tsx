@@ -22,6 +22,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { formatCurrency, formatDate } from "@/lib/utils"
+import dynamic from "next/dynamic"
+
+const PassengerTrackingView = dynamic(
+  () => import("@/components/tracking/PassengerTrackingView"),
+  { ssr: false }
+)
 
 interface Passenger {
   id: string
@@ -36,6 +42,8 @@ interface Trip {
   destination: string
   departureTime: string
   busType: string
+  status: string
+  trackingActive: boolean
   company: {
     name: string
   }
@@ -256,6 +264,13 @@ export default function TrackBookingPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Live Bus Tracking (only when trip is DEPARTED) */}
+        {booking.trip.status === "DEPARTED" && (
+          <div className="mb-6">
+            <PassengerTrackingView tripId={booking.trip.id} />
+          </div>
+        )}
 
         {/* Passengers */}
         <Card className="mb-6">
