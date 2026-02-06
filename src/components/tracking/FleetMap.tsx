@@ -68,7 +68,9 @@ export default function FleetMap() {
   const [focusedTripId, setFocusedTripId] = useState<string | null>(null)
   const [flyTo, setFlyTo] = useState<{ position: [number, number]; zoom: number } | null>(null)
   const mapRef = useRef<L.Map | null>(null)
-  const [showList, setShowList] = useState(true)
+  const [showList, setShowList] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth >= 1024 : true
+  )
 
   const fetchFleet = async () => {
     try {
@@ -103,7 +105,16 @@ export default function FleetMap() {
 
   const handleMapReady = useCallback((map: L.Map) => {
     mapRef.current = map
+    // Leaflet may initialize before container is fully sized — recalculate
+    setTimeout(() => map.invalidateSize(), 200)
   }, [])
+
+  // When list visibility changes, Leaflet needs to recalculate container size
+  useEffect(() => {
+    if (mapRef.current) {
+      setTimeout(() => mapRef.current?.invalidateSize(), 100)
+    }
+  }, [showList])
 
   // Filter vehicles by search + status
   const filteredFleet = useMemo(() => {
@@ -255,11 +266,11 @@ export default function FleetMap() {
 
       {/* Map + Vehicle List: stacked on mobile, side-by-side on desktop */}
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* Vehicle list panel */}
+        {/* Vehicle list panel — second on mobile (below map), first on desktop (sidebar) */}
         <div
           className={`${
             showList ? "block" : "hidden"
-          } lg:block w-full lg:w-[320px] lg:shrink-0 max-h-[300px] lg:max-h-[600px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900`}
+          } order-2 lg:order-1 lg:block w-full lg:w-[320px] lg:shrink-0 max-h-[300px] lg:max-h-[600px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900`}
         >
           <div className="p-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-[1]">
             <p className="text-xs font-medium text-gray-500">
@@ -324,8 +335,8 @@ export default function FleetMap() {
           )}
         </div>
 
-        {/* Map */}
-        <div className="relative flex-1 h-[500px] lg:h-[600px] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
+        {/* Map — first on mobile (visible immediately), second on desktop (right side) */}
+        <div className="order-1 lg:order-2 relative flex-1 h-[60dvh] lg:h-[600px] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
           <TrackingMap
             center={[9.02, 38.75]}
             zoom={6}

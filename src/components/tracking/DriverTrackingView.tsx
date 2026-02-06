@@ -72,6 +72,8 @@ export default function DriverTrackingView() {
 
   const handleMapReady = useCallback((map: L.Map) => {
     mapRef.current = map
+    // Leaflet may initialize before container is fully sized — recalculate
+    setTimeout(() => map.invalidateSize(), 200)
   }, [])
 
   // Wake Lock
