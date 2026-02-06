@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
           id: ticket.booking.id,
           totalAmount: ticket.booking.totalAmount,
           bookedBy: ticket.booking.user.name,
-          bookedByPhone: ticket.booking.user.phone,
+          // bookedByPhone removed for privacy - phone not needed for verification
           passengerCount: ticket.booking.passengers.length,
           status: ticket.booking.status,
         }

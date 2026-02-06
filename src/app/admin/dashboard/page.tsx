@@ -17,7 +17,12 @@ import {
   ArrowDown,
   Download,
   MapPin,
-  Award
+  Award,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Filter
 } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -29,6 +34,14 @@ import { formatCurrency, formatDate } from "@/lib/utils"
 import { exportBookingsToCSV } from "@/lib/csv-export"
 import { StatCardSkeleton, TableRowSkeleton, TodayActivityCardSkeleton, InsightsCardSkeleton } from "@/components/ui/skeleton"
 import { DateRangeSelector } from "@/components/ui/date-range-selector"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { useDebounce } from "@/hooks/use-debounce"
 import { ProfitMarginChart } from "@/components/admin/ProfitMarginChart"
 import { IncomeExpensesChart } from "@/components/admin/IncomeExpensesChart"
 import { BudgetProgressChart } from "@/components/admin/BudgetProgressChart"
@@ -54,6 +67,22 @@ export default function AdminDashboard() {
   const [salesCommissions, setSalesCommissions] = useState<any>(null)
   const [monthlyTrends, setMonthlyTrends] = useState<any[]>([])
   const [budgetProgress, setBudgetProgress] = useState<any>(null)
+
+  // Bookings filters and pagination state
+  const [bookings, setBookings] = useState<any[]>([])
+  const [bookingsLoading, setBookingsLoading] = useState(false)
+  const [bookingsPage, setBookingsPage] = useState(1)
+  const [bookingsTotalPages, setBookingsTotalPages] = useState(1)
+  const [bookingsTotal, setBookingsTotal] = useState(0)
+  const [bookingsStatusFilter, setBookingsStatusFilter] = useState("ALL")
+  const [bookingsCompanyFilter, setBookingsCompanyFilter] = useState("")
+  const [bookingsStartDate, setBookingsStartDate] = useState("")
+  const [bookingsEndDate, setBookingsEndDate] = useState("")
+  const [bookingsSearchInput, setBookingsSearchInput] = useState("")
+  const [allCompanies, setAllCompanies] = useState<{id: string, name: string}[]>([])
+
+  // Debounce search input
+  const bookingsSearch = useDebounce(bookingsSearchInput, 300)
 
   // Memoize date range callback to prevent infinite loop
   const handleDateRangeChange = useCallback((start: string, end: string) => {
@@ -166,6 +195,76 @@ export default function AdminDashboard() {
       fetchAnalytics()
     }
   }, [dateRangeStart, dateRangeEnd]) // Removed session from deps to prevent loop
+
+  // Fetch all companies for filter dropdown
+  const fetchCompanies = async () => {
+    try {
+      const response = await fetch("/api/admin/companies")
+      if (response.ok) {
+        const data = await response.json()
+        setAllCompanies(data.companies?.map((c: any) => ({ id: c.id, name: c.name })) || [])
+      }
+    } catch (error) {
+      console.error("Failed to fetch companies:", error)
+    }
+  }
+
+  // Fetch bookings with filters
+  const fetchBookings = async () => {
+    setBookingsLoading(true)
+    try {
+      const params = new URLSearchParams()
+      params.set("page", bookingsPage.toString())
+      params.set("limit", "10")
+      if (bookingsStatusFilter !== "ALL") params.set("status", bookingsStatusFilter)
+      if (bookingsCompanyFilter) params.set("companyId", bookingsCompanyFilter)
+      if (bookingsStartDate) params.set("startDate", bookingsStartDate)
+      if (bookingsEndDate) params.set("endDate", bookingsEndDate)
+      if (bookingsSearch) params.set("search", bookingsSearch)
+
+      const response = await fetch(`/api/admin/bookings?${params.toString()}`)
+      if (response.ok) {
+        const data = await response.json()
+        setBookings(data.bookings)
+        setBookingsTotalPages(data.pagination.totalPages)
+        setBookingsTotal(data.pagination.total)
+      }
+    } catch (error) {
+      console.error("Failed to fetch bookings:", error)
+    } finally {
+      setBookingsLoading(false)
+    }
+  }
+
+  // Fetch bookings when filters/page change
+  useEffect(() => {
+    if (session?.user?.role === "SUPER_ADMIN") {
+      fetchBookings()
+    }
+  }, [bookingsPage, bookingsStatusFilter, bookingsCompanyFilter, bookingsStartDate, bookingsEndDate, bookingsSearch])
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setBookingsPage(1)
+  }, [bookingsStatusFilter, bookingsCompanyFilter, bookingsStartDate, bookingsEndDate, bookingsSearch])
+
+  // Fetch companies on mount
+  useEffect(() => {
+    if (session?.user?.role === "SUPER_ADMIN") {
+      fetchCompanies()
+    }
+  }, [session])
+
+  const clearBookingsFilters = () => {
+    setBookingsStatusFilter("ALL")
+    setBookingsCompanyFilter("")
+    setBookingsStartDate("")
+    setBookingsEndDate("")
+    setBookingsSearchInput("")
+    setBookingsPage(1)
+  }
+
+  const hasActiveBookingsFilters = bookingsStatusFilter !== "ALL" || bookingsCompanyFilter || bookingsStartDate || bookingsEndDate || bookingsSearchInput
 
   const downloadRevenueReport = async () => {
     setIsDownloading(true)
@@ -960,7 +1059,7 @@ export default function AdminDashboard() {
         </Card>
       </div>
 
-      {/* Recent Bookings */}
+      {/* Recent Bookings with Filters and Pagination */}
       <Card className="mb-8 backdrop-blur-lg bg-white/50 border-white/40 shadow-lg">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -971,7 +1070,11 @@ export default function AdminDashboard() {
                 </div>
                 Recent Bookings
               </CardTitle>
-              <CardDescription>Latest bookings across all companies</CardDescription>
+              <CardDescription>
+                {bookingsTotal > 0
+                  ? `Showing ${Math.min((bookingsPage - 1) * 10 + 1, bookingsTotal)} - ${Math.min(bookingsPage * 10, bookingsTotal)} of ${bookingsTotal} bookings`
+                  : "Latest bookings across all companies"}
+              </CardDescription>
             </div>
             <Button
               variant="outline"
@@ -998,11 +1101,94 @@ export default function AdminDashboard() {
                   alert('Failed to export data')
                 }
               }}
-              disabled={!stats?.recentBookings || stats.recentBookings.length === 0}
+              disabled={bookings.length === 0}
             >
               <Download className="h-4 w-4 mr-2" />
               Export CSV
             </Button>
+          </div>
+
+          {/* Filter Bar */}
+          <div className="mt-4 space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+              {/* Search */}
+              <div className="relative md:col-span-2">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or phone..."
+                  value={bookingsSearchInput}
+                  onChange={(e) => setBookingsSearchInput(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+
+              {/* Status Filter */}
+              <Select value={bookingsStatusFilter} onValueChange={setBookingsStatusFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">All Status</SelectItem>
+                  <SelectItem value="PAID">Paid</SelectItem>
+                  <SelectItem value="PENDING">Pending</SelectItem>
+                  <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Company Filter */}
+              <Select value={bookingsCompanyFilter} onValueChange={setBookingsCompanyFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Companies" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Companies</SelectItem>
+                  {allCompanies.map((company) => (
+                    <SelectItem key={company.id} value={company.id}>
+                      {company.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Date Filter Toggle */}
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={bookingsStartDate}
+                  onChange={(e) => setBookingsStartDate(e.target.value)}
+                  className="flex-1"
+                  placeholder="From"
+                />
+              </div>
+            </div>
+
+            {/* Second row for end date and clear button */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Date range:</span>
+                <Input
+                  type="date"
+                  value={bookingsEndDate}
+                  onChange={(e) => setBookingsEndDate(e.target.value)}
+                  className="w-[160px]"
+                  placeholder="To"
+                />
+              </div>
+
+              {hasActiveBookingsFilters && (
+                <Button variant="ghost" size="sm" onClick={clearBookingsFilters}>
+                  <X className="h-4 w-4 mr-1" />
+                  Clear all filters
+                </Button>
+              )}
+
+              {bookingsLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Loading...
+                </div>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -1018,44 +1204,84 @@ export default function AdminDashboard() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {stats?.recentBookings?.map((booking: any) => (
-                <TableRow key={booking.id}>
-                  <TableCell className="text-sm">
-                    {formatDate(booking.createdAt)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm font-medium">{booking.user.name}</div>
-                    <div className="text-xs text-muted-foreground">{booking.user.phone}</div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-sm">
-                      {booking.trip.origin} → {booking.trip.destination}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatDate(booking.trip.departureTime)}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm">{booking.trip.company.name}</TableCell>
-                  <TableCell className="text-sm font-medium">
-                    {formatCurrency(booking.totalAmount)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        booking.status === "PAID"
-                          ? "default"
-                          : booking.status === "PENDING"
-                          ? "secondary"
-                          : "destructive"
-                      }
-                    >
-                      {booking.status}
-                    </Badge>
+              {bookings.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    {bookingsLoading ? "Loading..." : "No bookings match your filters"}
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                bookings.map((booking: any) => (
+                  <TableRow key={booking.id}>
+                    <TableCell className="text-sm">
+                      {formatDate(booking.createdAt)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm font-medium">{booking.user.name}</div>
+                      <div className="text-xs text-muted-foreground">{booking.user.phone}</div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        {booking.trip.origin} → {booking.trip.destination}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {formatDate(booking.trip.departureTime)}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm">{booking.trip.company.name}</TableCell>
+                    <TableCell className="text-sm font-medium">
+                      {formatCurrency(booking.totalAmount)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          booking.status === "PAID"
+                            ? "default"
+                            : booking.status === "PENDING"
+                            ? "secondary"
+                            : "destructive"
+                        }
+                      >
+                        {booking.status}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
+
+          {/* Pagination */}
+          {bookingsTotalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                Page {bookingsPage} of {bookingsTotalPages} ({bookingsTotal} total)
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBookingsPage(p => Math.max(1, p - 1))}
+                  disabled={bookingsPage === 1 || bookingsLoading}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                <span className="text-sm px-3 py-1 bg-muted rounded">
+                  {bookingsPage} / {bookingsTotalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setBookingsPage(p => Math.min(bookingsTotalPages, p + 1))}
+                  disabled={bookingsPage === bookingsTotalPages || bookingsLoading}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
