@@ -2,7 +2,6 @@
 
 import { useEffect } from "react"
 import { MapContainer, TileLayer, useMap } from "react-leaflet"
-import "leaflet/dist/leaflet.css"
 
 // Fix Leaflet default icon paths (broken by bundlers)
 import L from "leaflet"
