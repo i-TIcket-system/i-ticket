@@ -24,6 +24,7 @@ import {
   FileText,
   MessageSquare,
   Upload,
+  Gauge,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -73,6 +74,11 @@ const sidebarItems = [
     title: "Vehicles",
     href: "/company/vehicles",
     icon: Truck,
+  },
+  {
+    title: "Fleet Analytics",
+    href: "/company/fleet-analytics",
+    icon: Gauge,
   },
   {
     title: "Work Orders",

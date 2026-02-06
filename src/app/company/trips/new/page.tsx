@@ -90,6 +90,8 @@ export default function NewTripPage() {
     model: string;
     status: string;
     totalSeats: number;
+    maintenanceRiskScore: number | null;
+    predictedFailureType: string | null;
   }>>([])
 
   // Template state
@@ -1107,6 +1109,38 @@ export default function NewTripPage() {
                   )}
                 </div>
               )}
+
+              {/* Vehicle Maintenance Risk Warning */}
+              {(() => {
+                const selectedVehicle = vehicles.find(v => v.id === formData.vehicleId)
+                const riskScore = selectedVehicle?.maintenanceRiskScore || 0
+                if (!selectedVehicle || riskScore < 70) return null
+
+                const isCritical = riskScore >= 85
+                return (
+                  <div className={`border p-4 rounded-lg space-y-2 ${
+                    isCritical
+                      ? "border-red-500 bg-red-50"
+                      : "border-orange-500 bg-orange-50"
+                  }`}>
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className={`h-5 w-5 mt-0.5 ${isCritical ? "text-red-600" : "text-orange-600"}`} />
+                      <div className="flex-1">
+                        <h4 className={`font-medium ${isCritical ? "text-red-900" : "text-orange-900"}`}>
+                          {isCritical ? "Critical Maintenance Risk" : "High Maintenance Risk"}
+                        </h4>
+                        <p className={`text-sm mt-1 ${isCritical ? "text-red-800" : "text-orange-800"}`}>
+                          Vehicle {selectedVehicle.plateNumber} has a maintenance risk score of {riskScore}/100.
+                          {selectedVehicle.predictedFailureType && ` Predicted issue: ${selectedVehicle.predictedFailureType}.`}
+                          {isCritical
+                            ? " This vehicle should undergo maintenance before being assigned to trips."
+                            : " Consider scheduling maintenance soon."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
 
               {/* ═══════════════════════════════════════════════════════════
                   5. BUS TYPE & SEATS

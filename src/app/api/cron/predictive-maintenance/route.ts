@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   updateAllVehicleRiskScores,
   autoCreateDueWorkOrders,
+  recordRiskHistory,
 } from '@/lib/ai/predictive-maintenance'
 
 /**
@@ -55,6 +56,11 @@ export async function POST(request: NextRequest) {
     const riskResults = await updateAllVehicleRiskScores()
     console.log(`[CRON] Updated ${riskResults.processed} vehicles, ${riskResults.highRisk} high-risk`)
 
+    // Step 3: Record daily risk history snapshots (for trend charts)
+    console.log('[CRON] Step 3: Recording risk history snapshots...')
+    const historyResult = await recordRiskHistory()
+    console.log(`[CRON] Recorded ${historyResult.recorded} risk history snapshots`)
+
     const duration = Date.now() - startTime
     console.log(`[CRON] Predictive maintenance job completed in ${duration}ms`)
 
@@ -68,6 +74,9 @@ export async function POST(request: NextRequest) {
         riskScores: {
           vehiclesProcessed: riskResults.processed,
           highRiskCount: riskResults.highRisk,
+        },
+        riskHistory: {
+          recorded: historyResult.recorded,
         },
         performance: {
           durationMs: duration,

@@ -96,6 +96,61 @@ export async function PATCH(
       )
     }
 
+    // Pre-trip safety check: If vehicle risk >= 85, require recent PRE_TRIP inspection
+    if (validatedData.status === "DEPARTED" && trip.vehicleId) {
+      const vehicle = await prisma.vehicle.findUnique({
+        where: { id: trip.vehicleId },
+        select: { maintenanceRiskScore: true, plateNumber: true },
+      })
+
+      if (vehicle && vehicle.maintenanceRiskScore && vehicle.maintenanceRiskScore >= 85) {
+        const skipCheck = body.skipPreTripCheck === true
+        const skipReason = typeof body.skipPreTripCheckReason === "string" ? body.skipPreTripCheckReason : ""
+
+        if (!skipCheck) {
+          // Check for recent PRE_TRIP inspection within 24 hours
+          const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000)
+          const recentInspection = await prisma.vehicleInspection.findFirst({
+            where: {
+              vehicleId: trip.vehicleId,
+              inspectionType: "PRE_TRIP",
+              createdAt: { gte: twentyFourHoursAgo },
+              status: { in: ["PASS", "PASS_WITH_DEFECTS"] },
+            },
+            orderBy: { createdAt: "desc" },
+          })
+
+          if (!recentInspection) {
+            return NextResponse.json(
+              {
+                error: `Vehicle ${vehicle.plateNumber} has critical risk score (${vehicle.maintenanceRiskScore}/100). A PRE_TRIP inspection within the last 24 hours is required before departure.`,
+                requiresPreTripInspection: true,
+                vehicleRiskScore: vehicle.maintenanceRiskScore,
+                canOverride: true,
+              },
+              { status: 422 }
+            )
+          }
+        } else if (skipReason.length < 10) {
+          return NextResponse.json(
+            { error: "Override reason must be at least 10 characters" },
+            { status: 400 }
+          )
+        } else {
+          // Log the override
+          await prisma.adminLog.create({
+            data: {
+              userId: session.user.id,
+              action: "PRE_TRIP_CHECK_OVERRIDE",
+              details: `Skipped pre-trip inspection for critical vehicle ${vehicle.plateNumber} (risk: ${vehicle.maintenanceRiskScore}). Reason: ${skipReason}`,
+              tripId,
+              companyId: trip.companyId,
+            },
+          })
+        }
+      }
+    }
+
     // Prepare update data with explicit TypeScript typing for boolean flags
     interface TripStatusUpdate {
       status: string

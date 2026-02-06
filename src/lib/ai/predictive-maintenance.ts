@@ -552,6 +552,169 @@ export async function updateAllVehicleRiskScores(): Promise<{
   }
 }
 
+// ==================== RISK HISTORY RECORDING ====================
+
+/**
+ * Record daily risk score snapshots for all active vehicles
+ * Called by cron after updateAllVehicleRiskScores()
+ */
+export async function recordRiskHistory(): Promise<{ recorded: number }> {
+  const vehicles = await prisma.vehicle.findMany({
+    where: {
+      status: { in: ['ACTIVE', 'MAINTENANCE'] },
+      maintenanceRiskScore: { not: null },
+    },
+    select: {
+      id: true,
+      maintenanceRiskScore: true,
+      currentOdometer: true,
+      lastServiceDate: true,
+      defectCount: true,
+      criticalDefectCount: true,
+      fuelEfficiencyL100km: true,
+      registrationExpiry: true,
+      insuranceExpiry: true,
+    },
+  })
+
+  let recorded = 0
+
+  for (const vehicle of vehicles) {
+    try {
+      // Build factor breakdown
+      const factors: Record<string, number> = {}
+      const score = vehicle.maintenanceRiskScore || 0
+
+      // Approximate factor breakdown based on score ranges
+      if (vehicle.currentOdometer) factors.odometer = Math.min(40, Math.round(score * 0.4))
+      if (vehicle.lastServiceDate) {
+        const days = Math.floor((Date.now() - vehicle.lastServiceDate.getTime()) / (86400000))
+        factors.timeSinceService = days > 180 ? 20 : days > 90 ? 15 : days > 60 ? 10 : 5
+      }
+      factors.defects = vehicle.criticalDefectCount > 0 ? 20 : vehicle.defectCount > 3 ? 15 : 5
+      if (vehicle.fuelEfficiencyL100km) factors.fuelEfficiency = Math.min(10, Math.round(score * 0.1))
+      factors.compliance = Math.min(10, Math.round(score * 0.1))
+
+      await prisma.vehicleRiskHistory.create({
+        data: {
+          vehicleId: vehicle.id,
+          riskScore: score,
+          factors: JSON.stringify(factors),
+        },
+      })
+      recorded++
+    } catch (error) {
+      console.error(`Error recording risk history for vehicle ${vehicle.id}:`, error)
+    }
+  }
+
+  return { recorded }
+}
+
+// ==================== COST FORECAST ====================
+
+/**
+ * Generate cost forecast for a company (30/60/90 day projections)
+ * Based on historical work order costs and scheduled maintenance
+ */
+export async function generateCostForecast(companyId: string): Promise<{
+  thirtyDay: number
+  sixtyDay: number
+  ninetyDay: number
+  breakdown: { category: string; thirtyDay: number; sixtyDay: number; ninetyDay: number }[]
+}> {
+  const now = new Date()
+  const ninetyDaysAgo = new Date(now.getTime() - 90 * 86400000)
+
+  // Get historical monthly costs from completed work orders
+  const recentWorkOrders = await prisma.workOrder.findMany({
+    where: {
+      companyId,
+      status: 'COMPLETED',
+      completedAt: { gte: ninetyDaysAgo },
+    },
+    select: {
+      taskType: true,
+      totalCost: true,
+      laborCost: true,
+      partsCost: true,
+      completedAt: true,
+    },
+  })
+
+  // Calculate monthly averages by task type
+  const costByType: Record<string, number[]> = {}
+  for (const wo of recentWorkOrders) {
+    if (!costByType[wo.taskType]) costByType[wo.taskType] = []
+    costByType[wo.taskType].push(wo.totalCost)
+  }
+
+  // Monthly average cost rate
+  const monthsInRange = Math.max(1, (Date.now() - ninetyDaysAgo.getTime()) / (30 * 86400000))
+
+  const breakdown: { category: string; thirtyDay: number; sixtyDay: number; ninetyDay: number }[] = []
+  let totalMonthly = 0
+
+  for (const [type, costs] of Object.entries(costByType)) {
+    const total = costs.reduce((sum, c) => sum + c, 0)
+    const monthlyRate = total / monthsInRange
+    totalMonthly += monthlyRate
+
+    breakdown.push({
+      category: type,
+      thirtyDay: Math.round(monthlyRate),
+      sixtyDay: Math.round(monthlyRate * 2),
+      ninetyDay: Math.round(monthlyRate * 3),
+    })
+  }
+
+  // Add upcoming scheduled maintenance costs
+  const upcomingSchedules = await prisma.maintenanceSchedule.findMany({
+    where: {
+      vehicle: { companyId },
+      isActive: true,
+      nextDueDate: { lte: new Date(now.getTime() + 90 * 86400000) },
+      estimatedCostBirr: { not: null },
+    },
+    select: {
+      taskName: true,
+      estimatedCostBirr: true,
+      nextDueDate: true,
+    },
+  })
+
+  let scheduledThirty = 0
+  let scheduledSixty = 0
+  let scheduledNinety = 0
+
+  for (const s of upcomingSchedules) {
+    const cost = s.estimatedCostBirr || 0
+    const daysUntil = s.nextDueDate
+      ? Math.floor((s.nextDueDate.getTime() - now.getTime()) / 86400000)
+      : 90
+
+    if (daysUntil <= 30) scheduledThirty += cost
+    if (daysUntil <= 60) scheduledSixty += cost
+    if (daysUntil <= 90) scheduledNinety += cost
+  }
+
+  if (scheduledNinety > 0) {
+    breakdown.push({
+      category: 'SCHEDULED',
+      thirtyDay: Math.round(scheduledThirty),
+      sixtyDay: Math.round(scheduledSixty),
+      ninetyDay: Math.round(scheduledNinety),
+    })
+  }
+
+  return {
+    thirtyDay: Math.round(totalMonthly + scheduledThirty),
+    sixtyDay: Math.round(totalMonthly * 2 + scheduledSixty),
+    ninetyDay: Math.round(totalMonthly * 3 + scheduledNinety),
+    breakdown,
+  }
+}
+
 // ==================== NOTIFICATIONS ====================
 
 async function createMaintenanceNotification(

@@ -327,6 +327,10 @@ model Vehicle {
   defectCount         Int       @default(0) // Open defects
   criticalDefectCount Int       @default(0) // Critical defects requiring immediate attention
 
+  // Phase 2: Purchase/TCO data
+  purchasePrice Float? // Purchase price in ETB (for TCO calculation)
+  purchaseDate  DateTime? // When the vehicle was purchased
+
   // Relations
   trips                Trip[]                @relation("VehicleTrips")
   maintenanceSchedules MaintenanceSchedule[]
@@ -335,6 +339,8 @@ model Vehicle {
   inspections          VehicleInspection[]
   odometerLogs         OdometerLog[]
   tripLogs             TripLog[]             @relation("VehicleTripLogs")
+  riskHistory          VehicleRiskHistory[]
+  downtimeRecords      VehicleDowntime[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1112,6 +1118,41 @@ model WorkOrderMessageReadReceipt {
   @@unique([messageId, userId])
   @@index([messageId])
   @@index([userId])
+}
+
+// ==================== PHASE 2: PREDICTIVE MAINTENANCE - RISK HISTORY & DOWNTIME ====================
+
+// Daily risk score snapshots for trend charts
+model VehicleRiskHistory {
+  id        String @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  riskScore  Int // 0-100
+  factors    String @db.Text // JSON breakdown: {odometer: 40, timeSinceService: 15, ...}
+  recordedAt DateTime @default(now())
+
+  @@index([vehicleId, recordedAt])
+  @@index([recordedAt])
+}
+
+// Track time vehicles spend in maintenance (for downtime reporting)
+model VehicleDowntime {
+  id        String  @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  companyId String
+
+  reason        String // SCHEDULED_MAINTENANCE, BREAKDOWN, INSPECTION, PARTS_WAITING, OTHER
+  startedAt     DateTime @default(now())
+  endedAt       DateTime?
+  durationHours Float? // Calculated when endedAt is set
+  workOrderId   String? // Linked work order (if applicable)
+  notes         String? @db.Text
+
+  @@index([vehicleId, startedAt])
+  @@index([companyId, startedAt])
 }
 
 // ==================== COMPANY-PLATFORM COMMUNICATION ====================

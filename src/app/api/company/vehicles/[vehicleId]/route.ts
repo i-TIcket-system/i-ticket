@@ -130,7 +130,8 @@ export async function PATCH(
         id: true,
         companyId: true,
         plateNumber: true,
-        sideNumber: true
+        sideNumber: true,
+        status: true,
       }
     })
 
@@ -169,6 +170,9 @@ export async function PATCH(
       }
     }
 
+    // Check if status is changing for downtime tracking
+    const previousStatus = vehicle.status || "ACTIVE"
+
     // Update vehicle
     const updatedVehicle = await prisma.vehicle.update({
       where: { id: params.vehicleId },
@@ -180,6 +184,42 @@ export async function PATCH(
         nextServiceDate: updates.nextServiceDate ? new Date(updates.nextServiceDate) : undefined,
       }
     })
+
+    // Downtime automation: auto-create/close VehicleDowntime records on status change
+    if (updates.status && updates.status !== previousStatus) {
+      if (updates.status === "MAINTENANCE") {
+        // Create a new downtime record
+        await prisma.vehicleDowntime.create({
+          data: {
+            vehicleId: params.vehicleId,
+            companyId: session.user.companyId,
+            reason: "SCHEDULED_MAINTENANCE",
+            startedAt: new Date(),
+          },
+        })
+      } else if (previousStatus === "MAINTENANCE" && updates.status === "ACTIVE") {
+        // Close any open downtime records
+        const openDowntime = await prisma.vehicleDowntime.findFirst({
+          where: {
+            vehicleId: params.vehicleId,
+            companyId: session.user.companyId,
+            endedAt: null,
+          },
+          orderBy: { startedAt: "desc" },
+        })
+
+        if (openDowntime) {
+          const durationHours = (Date.now() - openDowntime.startedAt.getTime()) / 3600000
+          await prisma.vehicleDowntime.update({
+            where: { id: openDowntime.id },
+            data: {
+              endedAt: new Date(),
+              durationHours: Math.round(durationHours * 10) / 10,
+            },
+          })
+        }
+      }
+    }
 
     // Log the action
     await prisma.adminLog.create({
