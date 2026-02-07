@@ -482,11 +482,11 @@ export default function DriverTrackingView() {
       </div>
 
       {/* Bottom action bar */}
-      <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 safe-area-bottom">
+      <div className="pt-3 pb-6 px-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-[0_-2px_10px_rgba(0,0,0,0.08)] safe-area-bottom">
         {!tracking ? (
           <Button
             onClick={startTracking}
-            className="w-full h-14 text-lg font-semibold"
+            className="w-full h-16 text-lg font-semibold"
             style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}
           >
             <Navigation className="h-5 w-5 mr-2" />
@@ -520,7 +520,7 @@ export default function DriverTrackingView() {
             <Button
               onClick={stopTracking}
               variant="destructive"
-              className="h-14 px-6"
+              className="h-16 px-6"
             >
               Stop
             </Button>

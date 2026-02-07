@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import dynamic from "next/dynamic"
-import { Loader2, Bus, RefreshCw, Search, Crosshair, Maximize, X } from "lucide-react"
+import { Loader2, Bus, RefreshCw, Search, Crosshair, Maximize, X, SlidersHorizontal, List } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -71,6 +71,7 @@ export default function FleetMap() {
   const [showList, setShowList] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth >= 1024 : true
   )
+  const [showFilters, setShowFilters] = useState(false)
 
   const fetchFleet = async () => {
     try {
@@ -194,9 +195,9 @@ export default function FleetMap() {
   if (!data) return null
 
   return (
-    <div className="space-y-4">
-      {/* Stats bar */}
-      <div className="flex items-center gap-4 flex-wrap">
+    <div className="flex flex-col h-full lg:space-y-4 lg:block lg:h-auto">
+      {/* ===== Stats bar — desktop only ===== */}
+      <div className="hidden lg:flex items-center gap-4 flex-wrap">
         <Badge variant="outline" className="text-sm py-1 px-3">
           <Bus className="h-3.5 w-3.5 mr-1.5" />
           {data.totalDeparted} Departed
@@ -214,8 +215,77 @@ export default function FleetMap() {
         </Button>
       </div>
 
-      {/* Search + Filter bar */}
-      <div className="flex items-center gap-3 flex-wrap">
+      {/* ===== Toolbar: compact on mobile, full on desktop ===== */}
+      {/* Mobile toolbar */}
+      <div className="flex lg:hidden items-center gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shrink-0">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+          <Input
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8 h-8 text-sm"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <Button
+          onClick={() => setShowFilters(!showFilters)}
+          variant={statusFilter !== "all" ? "default" : "outline"}
+          size="sm"
+          className="h-8 w-8 p-0 shrink-0"
+          title="Filters"
+        >
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          onClick={fitAll}
+          variant="outline"
+          size="sm"
+          className="h-8 w-8 p-0 shrink-0"
+          title="Fit all vehicles"
+        >
+          <Maximize className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          onClick={() => setShowList(!showList)}
+          variant={showList ? "default" : "outline"}
+          size="sm"
+          className="h-8 w-8 p-0 shrink-0"
+          title={showList ? "Hide list" : "Show list"}
+        >
+          <List className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      {/* Mobile filter row (toggled by filter button) */}
+      {showFilters && (
+        <div className="flex lg:hidden items-center gap-1.5 px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0">
+          {(["all", "live", "stale", "off"] as StatusFilter[]).map((s) => (
+            <Button
+              key={s}
+              size="sm"
+              variant={statusFilter === s ? "default" : "outline"}
+              onClick={() => {
+                setStatusFilter(s)
+                setShowFilters(false)
+              }}
+              className="h-7 text-xs capitalize flex-1"
+            >
+              {s === "off" ? "No GPS" : s === "all" ? `All (${data.fleet.length})` : s}
+            </Button>
+          ))}
+        </div>
+      )}
+
+      {/* Desktop toolbar */}
+      <div className="hidden lg:flex items-center gap-3 flex-wrap">
         <div className="relative flex-1 min-w-[200px] max-w-[360px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -264,13 +334,15 @@ export default function FleetMap() {
         </div>
       </div>
 
-      {/* Map + Vehicle List: stacked on mobile, side-by-side on desktop */}
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* Vehicle list panel — second on mobile (below map), first on desktop (sidebar) */}
+      {/* ===== Map + Vehicle List ===== */}
+      {/* Mobile: map fills remaining space with floating vehicle list overlay */}
+      {/* Desktop: side-by-side layout */}
+      <div className="flex-1 min-h-0 flex flex-col lg:flex-row lg:gap-4 lg:flex-none relative">
+        {/* Vehicle list panel — desktop sidebar */}
         <div
           className={`${
             showList ? "block" : "hidden"
-          } order-2 lg:order-1 lg:block w-full lg:w-[320px] lg:shrink-0 max-h-[300px] lg:max-h-[600px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900`}
+          } hidden lg:block w-full lg:w-[320px] lg:shrink-0 max-h-[300px] lg:max-h-[600px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900`}
         >
           <div className="p-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-[1]">
             <p className="text-xs font-medium text-gray-500">
@@ -335,8 +407,8 @@ export default function FleetMap() {
           )}
         </div>
 
-        {/* Map — first on mobile (visible immediately), second on desktop (right side) */}
-        <div className="order-1 lg:order-2 relative flex-1 h-[60dvh] lg:h-[600px] rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 shadow-sm">
+        {/* Map container */}
+        <div className="flex-1 min-h-0 lg:h-[600px] relative rounded-none lg:rounded-xl overflow-hidden border-0 lg:border border-gray-200 dark:border-gray-700 lg:shadow-sm">
           <TrackingMap
             center={[9.02, 38.75]}
             zoom={6}
@@ -391,6 +463,58 @@ export default function FleetMap() {
             )}
           </TrackingMap>
 
+          {/* Mobile floating vehicle list overlay */}
+          {showList && (
+            <div className="lg:hidden absolute bottom-0 left-0 right-0 z-[1000] max-h-[40%] overflow-y-auto rounded-t-xl border-t border-gray-200 dark:border-gray-700 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-[0_-4px_20px_rgba(0,0,0,0.15)]">
+              <div className="sticky top-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm z-[1] px-3 py-2 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                <p className="text-xs font-medium text-gray-500">
+                  {filteredFleet.length} vehicle{filteredFleet.length !== 1 ? "s" : ""}
+                </p>
+                <button onClick={() => setShowList(false)} className="text-gray-400 hover:text-gray-600 p-1">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {filteredFleet.length === 0 ? (
+                <div className="p-4 text-center text-sm text-gray-400">
+                  No vehicles match your filters
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {filteredFleet.map((item) => (
+                    <button
+                      key={item.tripId}
+                      onClick={() => focusVehicle(item)}
+                      disabled={!item.position}
+                      className={`w-full text-left px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                        focusedTripId === item.tripId
+                          ? "bg-teal-50 dark:bg-teal-900/20 border-l-2 border-teal-500"
+                          : ""
+                      } ${!item.position ? "opacity-50 cursor-default" : "cursor-pointer"}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium text-sm truncate">
+                          {item.origin} → {item.destination}
+                        </span>
+                        <TrackingStatus status={item.tracking} />
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {item.vehicle && (
+                          <span className="text-xs text-gray-500">{item.vehicle.plateNumber}</span>
+                        )}
+                        {item.position?.speed != null && (
+                          <span className="text-xs text-gray-400">
+                            {Math.round(item.position.speed)} km/h
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Empty state overlay when no departed trips */}
           {data.fleet.length === 0 && (
             <div className="absolute inset-0 z-[1000] flex items-center justify-center bg-black/5 dark:bg-black/20 pointer-events-none">
@@ -414,9 +538,9 @@ export default function FleetMap() {
         </div>
       </div>
 
-      {/* Untracked trips list (only show if not already filtered to "off") */}
+      {/* Untracked trips list — desktop only */}
       {statusFilter !== "off" && untracked.length > 0 && (
-        <Card>
+        <Card className="hidden lg:block">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-gray-500">
               Departed Without GPS ({untracked.length})
