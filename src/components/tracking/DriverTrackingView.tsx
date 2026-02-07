@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import ETABadge from "./ETABadge"
 import TrackingStatus from "./TrackingStatus"
+import OsmAndSetup from "./OsmAndSetup"
 import { enqueuePosition, flushQueue, getQueueSize } from "@/lib/tracking/position-queue"
 import { formatETA } from "@/lib/tracking/eta"
 import { useWakeLock } from "@/hooks/use-wake-lock"
@@ -481,51 +482,56 @@ export default function DriverTrackingView() {
         )}
       </div>
 
-      {/* Bottom action bar */}
-      <div className="pt-3 pb-6 px-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-[0_-2px_10px_rgba(0,0,0,0.08)] safe-area-bottom">
-        {!tracking ? (
-          <Button
-            onClick={startTracking}
-            className="w-full h-16 text-lg font-semibold"
-            style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}
-          >
-            <Navigation className="h-5 w-5 mr-2" />
-            Start GPS Tracking
-          </Button>
-        ) : (
-          <div className="flex gap-3">
-            <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg px-4">
-              <div className="text-center">
-                {gpsStatus === "acquiring" ? (
-                  <p className="text-sm text-yellow-600 font-medium">Acquiring GPS...</p>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    {isOnline ? (
-                      <Wifi className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <WifiOff className="h-4 w-4 text-orange-500" />
-                    )}
-                    <span className="text-sm font-medium">
-                      {speed != null ? `${Math.round(speed)} km/h` : "Tracking..."}
-                    </span>
-                    {etaMinutes != null && (
-                      <span className="text-sm text-teal-600 font-semibold">
-                        ETA {formatETA(etaMinutes)}
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
+      {/* Bottom section: OsmAnd setup + action bar */}
+      <div className="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 shadow-[0_-2px_10px_rgba(0,0,0,0.08)] safe-area-bottom">
+        {/* OsmAnd background tracking setup (only when tracking is active) */}
+        {tracking && <OsmAndSetup tripId={trip.id} />}
+
+        <div className="pt-3 pb-6 px-4">
+          {!tracking ? (
             <Button
-              onClick={stopTracking}
-              variant="destructive"
-              className="h-16 px-6"
+              onClick={startTracking}
+              className="w-full h-16 text-lg font-semibold"
+              style={{ background: "linear-gradient(135deg, #0e9494 0%, #20c4c4 100%)" }}
             >
-              Stop
+              <Navigation className="h-5 w-5 mr-2" />
+              Start GPS Tracking
             </Button>
-          </div>
-        )}
+          ) : (
+            <div className="flex gap-3">
+              <div className="flex-1 flex items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg px-4">
+                <div className="text-center">
+                  {gpsStatus === "acquiring" ? (
+                    <p className="text-sm text-yellow-600 font-medium">Acquiring GPS...</p>
+                  ) : (
+                    <div className="flex items-center gap-3">
+                      {isOnline ? (
+                        <Wifi className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <WifiOff className="h-4 w-4 text-orange-500" />
+                      )}
+                      <span className="text-sm font-medium">
+                        {speed != null ? `${Math.round(speed)} km/h` : "Tracking..."}
+                      </span>
+                      {etaMinutes != null && (
+                        <span className="text-sm text-teal-600 font-semibold">
+                          ETA {formatETA(etaMinutes)}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <Button
+                onClick={stopTracking}
+                variant="destructive"
+                className="h-16 px-6"
+              >
+                Stop
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

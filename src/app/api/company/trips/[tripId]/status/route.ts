@@ -158,6 +158,7 @@ export async function PATCH(
       actualArrivalTime?: Date
       bookingHalted?: boolean // Explicit boolean type (not truthy/falsy)
       trackingActive?: boolean
+      trackingToken?: string | null
       delayReason?: string | null
       delayedAt?: Date | null
     }
@@ -187,12 +188,14 @@ export async function PATCH(
       updateData.actualArrivalTime = new Date()
       updateData.bookingHalted = true as boolean // Force halt - trip is complete
       updateData.trackingActive = false // Deactivate GPS tracking
+      updateData.trackingToken = null // Invalidate OsmAnd token
     }
 
     // Force halt when status changes to CANCELLED
     if (validatedData.status === "CANCELLED") {
       updateData.bookingHalted = true as boolean // Force halt - trip is cancelled
       updateData.trackingActive = false // Deactivate GPS tracking
+      updateData.trackingToken = null // Invalidate OsmAnd token
     }
 
     // Update the trip status

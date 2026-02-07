@@ -6,7 +6,7 @@
  */
 
 const QUEUE_KEY = 'iticket_gps_queue'
-const MAX_QUEUE_SIZE = 200 // Prevent localStorage bloat
+const MAX_QUEUE_SIZE = 1000 // ~2h 46min offline at 10s intervals (~200KB)
 
 interface QueuedPosition {
   tripId: string

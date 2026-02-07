@@ -3,7 +3,7 @@ import { z } from 'zod'
 import prisma from '@/lib/db'
 import { requireAuth, handleAuthError } from '@/lib/auth-helpers'
 import { checkEnhancedRateLimit } from '@/lib/rate-limit'
-import { calculateETA, calculateAverageSpeed, getRemainingStops } from '@/lib/tracking/eta'
+import { processPositionUpdate } from '@/lib/tracking/update-position'
 
 const RATE_LIMIT = { maxRequests: 12, windowMs: 60 * 1000 } // 12 req/min per user
 
@@ -77,127 +77,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const recordedAt = new Date(data.recordedAt)
-    const now = new Date()
-
-    // Insert position record
-    await prisma.tripPosition.create({
-      data: {
-        tripId: data.tripId,
-        vehicleId: trip.vehicleId,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        altitude: data.altitude ?? null,
-        accuracy: data.accuracy ?? null,
-        heading: data.heading ?? null,
-        speed: data.speed ?? null,
-        recordedAt,
-      },
+    const { estimatedArrival } = await processPositionUpdate({
+      tripId: data.tripId,
+      vehicleId: trip.vehicleId,
+      latitude: data.latitude,
+      longitude: data.longitude,
+      altitude: data.altitude ?? null,
+      accuracy: data.accuracy ?? null,
+      heading: data.heading ?? null,
+      speed: data.speed ?? null,
+      recordedAt: new Date(data.recordedAt),
+      destination: trip.destination,
+      intermediateStops: trip.intermediateStops,
     })
-
-    // Calculate ETA using recent positions
-    let estimatedArrival: Date | null = null
-
-    try {
-      // Get destination city coordinates
-      const destCity = await prisma.city.findFirst({
-        where: { name: trip.destination },
-        select: { latitude: true, longitude: true, name: true },
-      })
-
-      if (destCity?.latitude && destCity?.longitude) {
-        // Get recent positions for average speed
-        const recentPositions = await prisma.tripPosition.findMany({
-          where: { tripId: data.tripId },
-          orderBy: { recordedAt: 'desc' },
-          take: 10,
-          select: {
-            latitude: true,
-            longitude: true,
-            recordedAt: true,
-            speed: true,
-          },
-        })
-
-        const avgSpeed = calculateAverageSpeed(recentPositions.reverse())
-
-        // Get remaining intermediate stops
-        let remainingStops: Array<{ name: string; latitude: number; longitude: number }> = []
-        if (trip.intermediateStops) {
-          try {
-            const stops = JSON.parse(trip.intermediateStops) as string[]
-            const stopCities = await prisma.city.findMany({
-              where: { name: { in: stops } },
-              select: { name: true, latitude: true, longitude: true },
-            })
-
-            const stopsWithCoords = stopCities.filter(
-              (c): c is { name: string; latitude: number; longitude: number } =>
-                c.latitude != null && c.longitude != null
-            )
-
-            // Get origin for remaining stops calculation
-            const originCity = await prisma.city.findFirst({
-              where: { name: { equals: trip.destination } }, // We'll get actual origin below
-              select: { latitude: true, longitude: true, name: true },
-            })
-
-            if (stopsWithCoords.length > 0) {
-              remainingStops = getRemainingStops(
-                data.latitude,
-                data.longitude,
-                { name: destCity.name, latitude: destCity.latitude, longitude: destCity.longitude },
-                stopsWithCoords
-              )
-            }
-          } catch {
-            // Ignore intermediate stops parse errors
-          }
-        }
-
-        const eta = calculateETA(
-          data.latitude,
-          data.longitude,
-          { name: destCity.name, latitude: destCity.latitude, longitude: destCity.longitude },
-          avgSpeed,
-          remainingStops.length > 0 ? remainingStops : undefined
-        )
-
-        estimatedArrival = eta.estimatedArrival
-      }
-    } catch {
-      // ETA calculation is best-effort
-    }
-
-    // Update trip with latest position
-    const tripUpdate: Record<string, unknown> = {
-      trackingActive: true,
-      lastLatitude: data.latitude,
-      lastLongitude: data.longitude,
-      lastSpeed: data.speed ?? null,
-      lastPositionAt: now,
-    }
-
-    if (estimatedArrival) {
-      tripUpdate.estimatedArrival = estimatedArrival
-    }
-
-    await prisma.trip.update({
-      where: { id: data.tripId },
-      data: tripUpdate,
-    })
-
-    // Update vehicle position if assigned
-    if (trip.vehicleId) {
-      await prisma.vehicle.update({
-        where: { id: trip.vehicleId },
-        data: {
-          lastLatitude: data.latitude,
-          lastLongitude: data.longitude,
-          lastPositionAt: now,
-        },
-      })
-    }
 
     return NextResponse.json({
       success: true,

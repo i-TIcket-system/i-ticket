@@ -482,6 +482,7 @@ async function updateOldTripStatuses() {
               actualArrivalTime: now,
               bookingHalted: true,
               trackingActive: false, // Deactivate GPS tracking
+              trackingToken: null, // Invalidate OsmAnd token
             },
           });
 
@@ -572,6 +573,7 @@ async function updateOldTripStatuses() {
               ),
               bookingHalted: true,
               trackingActive: false, // Deactivate GPS tracking
+              trackingToken: null, // Invalidate OsmAnd token
             },
           });
 

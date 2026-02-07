@@ -180,6 +180,7 @@ model Trip {
 
   // Phase 3: GPS Tracking
   trackingActive    Boolean   @default(false)
+  trackingToken     String?   @unique  // OsmAnd background tracking auth token
   lastLatitude      Float?
   lastLongitude     Float?
   lastSpeed         Float?

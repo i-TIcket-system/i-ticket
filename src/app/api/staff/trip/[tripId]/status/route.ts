@@ -127,6 +127,7 @@ export async function PATCH(
       updateData.actualArrivalTime = new Date()
       updateData.bookingHalted = true // Ensure booking is halted
       updateData.trackingActive = false // Deactivate GPS tracking
+      updateData.trackingToken = null // Invalidate OsmAnd token
     }
 
     // Update trip status
