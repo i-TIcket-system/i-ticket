@@ -26,7 +26,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false)
 
   // Hide navbar on routes that have their own layouts
-  const hiddenRoutes = ["/admin", "/company", "/staff", "/cashier", "/mechanic", "/finance", "/sales"]
+  const hiddenRoutes = ["/admin", "/company", "/staff", "/cashier", "/mechanic", "/finance", "/sales", "/driver"]
   const shouldHide = hiddenRoutes.some((route) => pathname?.startsWith(route))
 
   // Track scroll position for navbar styling

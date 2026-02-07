@@ -34,7 +34,7 @@ export function Footer() {
   const pathname = usePathname()
 
   // Hide footer on routes that have their own layouts
-  const hiddenRoutes = ["/admin", "/company", "/staff", "/cashier", "/sales"]
+  const hiddenRoutes = ["/admin", "/company", "/staff", "/cashier", "/sales", "/driver"]
   const shouldHide = hiddenRoutes.some((route) => pathname?.startsWith(route))
 
   if (shouldHide) {

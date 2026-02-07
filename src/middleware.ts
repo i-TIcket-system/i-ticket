@@ -35,6 +35,10 @@ export function middleware(request: NextRequest) {
   )
   response.headers.set('Reporting-Endpoints', `csp-endpoint="${cspReportUri}"`)
 
+  // Prevent Cloudflare/browser from caching pages with stale CSP headers
+  response.headers.set('Cache-Control', 'no-store')
+  response.headers.set('Pragma', 'no-cache')
+
   return response
 }
 
