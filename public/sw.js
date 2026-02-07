@@ -1,5 +1,6 @@
 // i-Ticket Service Worker
-const CACHE_NAME = 'i-ticket-v1'
+// v2: Skip cross-origin requests (fixes grey map tiles in PWA mode)
+const CACHE_NAME = 'i-ticket-v2'
 
 // Assets to cache for offline use
 const STATIC_ASSETS = [
@@ -46,6 +47,11 @@ self.addEventListener('fetch', (event) => {
 
   // Skip API requests (always fetch from network)
   if (event.request.url.includes('/api/')) return
+
+  // Skip cross-origin requests (map tiles, CDN assets, etc.)
+  // Let the browser handle these natively to avoid interference
+  const url = new URL(event.request.url)
+  if (url.origin !== self.location.origin) return
 
   event.respondWith(
     fetch(event.request)

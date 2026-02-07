@@ -42,11 +42,31 @@ export default function RouteOverlay({
     routePoints.push([destination.latitude, destination.longitude])
   }
 
-  // GPS trail polyline
-  const trailPoints: Array<[number, number]> = (trail || []).map((p) => [
-    p.latitude,
-    p.longitude,
-  ])
+  // GPS trail polyline — deduplicate points that are too close together
+  // to avoid spaghetti lines when driver is stationary or moving slowly
+  const rawTrail = trail || []
+  const trailPoints: Array<[number, number]> = []
+  for (const p of rawTrail) {
+    if (trailPoints.length === 0) {
+      trailPoints.push([p.latitude, p.longitude])
+    } else {
+      const prev = trailPoints[trailPoints.length - 1]
+      // ~50m minimum distance between displayed points (0.0005° ≈ 55m)
+      const dLat = Math.abs(p.latitude - prev[0])
+      const dLng = Math.abs(p.longitude - prev[1])
+      if (dLat > 0.0005 || dLng > 0.0005) {
+        trailPoints.push([p.latitude, p.longitude])
+      }
+    }
+  }
+  // Always include the last point (current position) for accuracy
+  if (rawTrail.length > 1) {
+    const last = rawTrail[rawTrail.length - 1]
+    const lastInTrail = trailPoints[trailPoints.length - 1]
+    if (last.latitude !== lastInTrail[0] || last.longitude !== lastInTrail[1]) {
+      trailPoints.push([last.latitude, last.longitude])
+    }
+  }
 
   return (
     <>

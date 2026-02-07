@@ -50,6 +50,7 @@ export default function PassengerTrackingView({ tripId }: PassengerTrackingViewP
 
   const handleMapReady = useCallback((map: L.Map) => {
     mapRef.current = map
+    setTimeout(() => map.invalidateSize(), 200)
   }, [])
 
   const fetchTracking = async () => {
@@ -209,7 +210,9 @@ export default function PassengerTrackingView({ tripId }: PassengerTrackingViewP
           {pos && (
             <button
               onClick={() => {
-                mapRef.current?.flyTo([pos.latitude, pos.longitude], 13, { duration: 0.8 })
+                const currentZoom = mapRef.current?.getZoom() ?? 13
+                const zoom = Math.max(currentZoom, 13) // Don't zoom out, only in
+                mapRef.current?.flyTo([pos.latitude, pos.longitude], zoom, { duration: 0.8 })
               }}
               className="absolute bottom-3 right-3 z-[1000] bg-white dark:bg-gray-800 rounded-full p-2 shadow-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               title="Recenter on bus"

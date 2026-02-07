@@ -60,6 +60,7 @@ export default function FleetMap() {
   const [data, setData] = useState<FleetData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [refreshing, setRefreshing] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // UX state
@@ -73,7 +74,8 @@ export default function FleetMap() {
   )
   const [showFilters, setShowFilters] = useState(false)
 
-  const fetchFleet = async () => {
+  const fetchFleet = async (manual = false) => {
+    if (manual) setRefreshing(true)
     try {
       const res = await fetch("/api/tracking/fleet")
       if (res.ok) {
@@ -87,6 +89,7 @@ export default function FleetMap() {
       setError("Connection error")
     } finally {
       setLoading(false)
+      if (manual) setTimeout(() => setRefreshing(false), 500)
     }
   }
 
@@ -184,7 +187,7 @@ export default function FleetMap() {
     return (
       <Card className="p-6 text-center">
         <p className="text-gray-500 mb-3">{error}</p>
-        <Button onClick={fetchFleet} variant="outline" size="sm">
+        <Button onClick={() => fetchFleet()} variant="outline" size="sm">
           <RefreshCw className="h-4 w-4 mr-2" />
           Retry
         </Button>
@@ -209,9 +212,9 @@ export default function FleetMap() {
           <span className="h-2 w-2 rounded-full bg-green-500 mr-1.5 inline-block" />
           {data.totalTracking} Tracking
         </Badge>
-        <Button onClick={fetchFleet} variant="ghost" size="sm" className="ml-auto">
-          <RefreshCw className="h-4 w-4 mr-1" />
-          Refresh
+        <Button onClick={() => fetchFleet(true)} variant="ghost" size="sm" className="ml-auto" disabled={refreshing}>
+          <RefreshCw className={`h-4 w-4 mr-1 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "Refreshing..." : "Refresh"}
         </Button>
       </div>
 
