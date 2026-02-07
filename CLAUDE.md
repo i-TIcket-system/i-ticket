@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.12.0 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.12.2 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -119,6 +119,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | **Fleet Reports** | `/api/company/reports/maintenance`, `maintenance/export`, `vehicle-tco`, `downtime`, `fleet-analytics/export` |
 | **Admin** | `/api/admin/stats`, `/api/admin/companies`, `/api/admin/trips` |
 | **Cron** | `/api/cron/cleanup`, `/api/cron/trip-reminders` |
+| **Security** | `/api/csp-report` (CSP violation reports, logged to PM2) |
 | **Telegram** | `/api/telegram/webhook` (bot updates) |
 
 ---
@@ -150,6 +151,8 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 - Row-level locking, transaction timeouts (10s)
 - parseInt validation (rejects scientific notation)
 - bcrypt passwords, 30-day sessions
+- CSP via middleware (report violations to `/api/csp-report`)
+- Cloudflare: Email Obfuscation OFF (breaks React hydration), TLS 1.2+, HSTS preload
 
 ---
 
@@ -251,9 +254,36 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.12.0)
+## RECENT UPDATES (v2.12.2)
 
-**Latest**: Real-Time GPS Bus Tracking — Driver, Passenger, Fleet & Telegram
+**Latest**: Mobile UX Overhaul — Fleet Tracking, Driver Tracking, Sidebar, Service Worker
+- FleetMap: full-viewport app-like layout on mobile (map fills screen minus toolbar)
+- FleetMap: stats bar hidden on mobile; compact icon-only toolbar (search, refresh, filters, fit-all, list)
+- FleetMap: floating vehicle list overlay on mobile (bottom sheet with backdrop-blur)
+- FleetMap: show/hide list toggle now works on desktop (was `hidden lg:block` ignoring state)
+- FleetMap: refresh button added to mobile toolbar (was desktop-only in stats bar)
+- FleetMap: refresh spinner extended to 1.2s for visible feedback
+- FleetMap: untracked vehicles section hidden on mobile
+- Company sidebar: nav section scrollable on mobile (`overflow-y-auto`) — Sign Out now reachable
+- Driver tracking: navbar/footer hidden for `/driver` routes (was showing 64px navbar, pushing Start button below fold)
+- Driver tracking: larger bottom bar padding (`pb-6`) and button height (`h-16`) for mobile
+- Service worker v2: skip cross-origin requests (fixes grey map tiles in PWA mode)
+- Passenger tracking: GPS trail deduplication (<50m between points) to prevent spaghetti lines
+- Passenger tracking: recenter button preserves current zoom level (was forcing zoom 13)
+- Passenger tracking: `invalidateSize()` on map ready for reliable tile rendering
+- CSP: `Cache-Control: no-store` + `Pragma: no-cache` to prevent stale CSP header caching
+- Test passenger script: `scripts/create-test-passenger.ts` for creating test bookings on DEPARTED trips
+
+**v2.12.1**: Fleet Map Mobile Fix + CSP Fix for Map Tiles
+- FleetMap: vertical stack on mobile (was horizontal flex causing 0-width map)
+- FleetMap: auto-hides vehicle list when clicking a vehicle on mobile
+- FleetMap: show/hide list button visible on all screen sizes (was desktop-only)
+- CSP: allow Cloudflare Web Analytics beacon (`static.cloudflareinsights.com`)
+- CSP report endpoint deployed (`/api/csp-report`) — logs violations to PM2
+- Cloudflare: disabled Email Address Obfuscation (was modifying HTML, breaking React hydration)
+- Nginx: fixed API rate limit from 60r/m back to 30r/s (was blocking fleet polling)
+
+**v2.12.0**: Real-Time GPS Bus Tracking — Driver, Passenger, Fleet & Telegram
 - Driver tracking page (`/driver/track`) — browser Geolocation API sends GPS every 10s
 - Passenger live map on `/track/[code]` — polls bus position every 12s for DEPARTED trips
 - Company fleet map (`/company/fleet-tracking`) — all active buses on one map, 15s polling
@@ -267,6 +297,9 @@ model TelegramSession {
 - 8 tracking components under `src/components/tracking/`
 - Dependencies: `leaflet`, `react-leaflet@4` (v4 for React 18; v5 requires React 19), `@types/leaflet`
 - CSP: added `https://*.tile.openstreetmap.org` to img-src and connect-src
+- CSP: added `https://static.cloudflareinsights.com` to script-src (Cloudflare Web Analytics beacon)
+- CSP: added `https://cloudflareinsights.com` to connect-src (beacon telemetry)
+- CSP report endpoint at `/api/csp-report` logs violations to PM2
 - Permissions-Policy: `geolocation=(self)` (was `geolocation=()`)
 
 **v2.11.0**: Phase 2 - Predictive Maintenance AI Dashboard, Trip Integration & Fleet Reports
@@ -310,6 +343,12 @@ model TelegramSession {
 
 | Bug | Fix |
 |-----|-----|
+| **Grey map tiles in PWA (v2.12.2)** | Service worker intercepted cross-origin tile requests (OpenStreetMap CDN). Fix: skip non-same-origin URLs in sw.js fetch handler (`url.origin !== self.location.origin`), bump cache name to `i-ticket-v2` to purge old cache |
+| **Show/hide list toggle no-op (v2.12.2)** | Desktop vehicle list panel had `hidden lg:block` which always showed on desktop regardless of `showList` state. Fix: `hidden ${showList ? "lg:block" : "lg:hidden"}` |
+| **Company sidebar can't scroll on mobile (v2.12.2)** | 13 sidebar nav items overflow mobile viewport, Sign Out unreachable. Fix: add `overflow-y-auto` to `<nav>` element in company layout |
+| **Driver Start button below fold (v2.12.2)** | `/driver` routes still showed 64px navbar, pushing `h-dvh` content below viewport. Fix: add `/driver` to Navbar/Footer `hiddenRoutes` |
+| **Cloudflare beacon blocks map tiles (v2.12.1)** | Cloudflare injects `beacon.min.js` from `static.cloudflareinsights.com` into all pages. CSP `script-src` must include this domain, otherwise the blocked script cascades and prevents Leaflet dynamic imports from loading → grey map tiles. Also disable Cloudflare Email Obfuscation (Scrape Shield) as it modifies HTML and breaks React hydration |
+| **Fleet map invisible on mobile (v2.12.1)** | FleetMap vehicle list had `w-full shrink-0` in a `flex` row — took 100% width on mobile, map got 0 width. Fix: `flex-col lg:flex-row` + auto-hide list on vehicle click |
 | **Nonce CSP breaks Next.js 14 (v2.10.17)** | Next.js 14 does NOT propagate nonces to inline `<script>` tags. Using `'strict-dynamic'` with nonce causes `'self'` to be ignored → ALL JS blocked. Use `'self' 'unsafe-inline'` instead. Nonce CSP requires Next.js 15+ |
 | **UTC vs Ethiopia timezone (v2.10.15)** | Use `hasDepartedEthiopia()` from `@/lib/utils` instead of `new Date(departureTime) < new Date()` - AWS EC2 runs in UTC causing trips to be marked DEPARTED 3 hours early |
 | Cron estimatedDuration unit (v2.10.14) | DB stores MINUTES, not hours - use `trip.estimatedDuration * 60 * 1000` not `* 60 * 60 * 1000` |

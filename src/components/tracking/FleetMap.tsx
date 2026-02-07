@@ -89,7 +89,7 @@ export default function FleetMap() {
       setError("Connection error")
     } finally {
       setLoading(false)
-      if (manual) setTimeout(() => setRefreshing(false), 500)
+      if (manual) setTimeout(() => setRefreshing(false), 1200)
     }
   }
 
@@ -239,6 +239,16 @@ export default function FleetMap() {
           )}
         </div>
         <Button
+          onClick={() => fetchFleet(true)}
+          variant="outline"
+          size="sm"
+          className="h-8 w-8 p-0 shrink-0"
+          title="Refresh"
+          disabled={refreshing}
+        >
+          <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+        </Button>
+        <Button
           onClick={() => setShowFilters(!showFilters)}
           variant={statusFilter !== "all" ? "default" : "outline"}
           size="sm"
@@ -343,9 +353,9 @@ export default function FleetMap() {
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row lg:gap-4 lg:flex-none relative">
         {/* Vehicle list panel — desktop sidebar */}
         <div
-          className={`${
-            showList ? "block" : "hidden"
-          } hidden lg:block w-full lg:w-[320px] lg:shrink-0 max-h-[300px] lg:max-h-[600px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900`}
+          className={`hidden ${
+            showList ? "lg:block" : "lg:hidden"
+          } w-full lg:w-[320px] lg:shrink-0 max-h-[300px] lg:max-h-[600px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900`}
         >
           <div className="p-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-[1]">
             <p className="text-xs font-medium text-gray-500">

@@ -318,7 +318,7 @@ export default function CompanyLayout({
             </div>
 
             {/* Navigation */}
-            <nav className={cn("flex-1 p-4 space-y-1.5", collapsed && "p-2")}>
+            <nav className={cn("flex-1 overflow-y-auto p-4 space-y-1.5", collapsed && "p-2")}>
               {filteredSidebarItems.map((item) => {
                 // Exact match for the href, OR sub-routes (e.g., /company/trips/123)
                 // Special handling: /company/trips should NOT match /company/trips/new
