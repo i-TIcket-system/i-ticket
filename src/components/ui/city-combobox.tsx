@@ -4,6 +4,7 @@ import * as React from "react"
 import { MapPin, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { fuzzyMatch } from "@/lib/fuzzy-match"
 
 export interface CityComboboxProps {
   value: string
@@ -33,25 +34,14 @@ export const CityCombobox = React.forwardRef<HTMLInputElement, CityComboboxProps
       setInputValue(value)
     }, [value])
 
-    // Filter suggestions based on input
+    // Filter suggestions based on input (fuzzy matching)
     const filteredSuggestions = React.useMemo(() => {
-      // Filter out any empty, null, or undefined values first
       const validSuggestions = suggestions.filter(s => s && typeof s === 'string' && s.trim().length > 0)
+      const available = validSuggestions.filter(s => s !== excludeCity)
 
-      if (!inputValue) {
-        const result = validSuggestions.filter(s => s !== excludeCity)
-        console.log('[CityCombobox] Showing', result.length, 'suggestions:', result)
-        return result
-      }
+      if (!inputValue) return available
 
-      const result = validSuggestions
-        .filter(city =>
-          city !== excludeCity &&
-          city.toLowerCase().includes(inputValue.toLowerCase())
-        )
-
-      console.log('[CityCombobox] Filtered suggestions for "' + inputValue + '":', result)
-      return result
+      return fuzzyMatch(inputValue, available, 15).map(m => m.value)
     }, [inputValue, suggestions, excludeCity])
 
     // Handle input change

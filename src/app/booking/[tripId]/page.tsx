@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import Link from "next/link"
@@ -57,6 +57,8 @@ import { formatCurrency, formatDuration, formatDate, BUS_TYPES } from "@/lib/uti
 import { calculateBookingAmounts } from "@/lib/commission"
 import { SeatMap } from "@/components/booking/SeatMap"
 import { BookingPageSkeleton } from "@/components/skeletons/TripCardSkeleton"
+import { RouteStopCombobox } from "@/components/ui/route-stop-combobox"
+import { PickupMapModal } from "@/components/booking/PickupMapModal"
 
 interface Trip {
   id: string
@@ -114,6 +116,23 @@ export default function BookingPage() {
   const [passengerToRemove, setPassengerToRemove] = useState<number | null>(null)
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+
+  // Route stops for autocomplete + map modal
+  const routeStops = useMemo(() => {
+    if (!trip) return []
+    const stops = [trip.origin]
+    if (trip.intermediateStops) {
+      try { stops.push(...JSON.parse(trip.intermediateStops)) } catch { /* ignore */ }
+    }
+    stops.push(trip.destination)
+    return stops
+  }, [trip])
+
+  const [mapModal, setMapModal] = useState<{
+    open: boolean
+    passengerIndex: number
+    field: "pickupLocation" | "dropoffLocation"
+  } | null>(null)
 
   // Memoize callback to prevent infinite loop in SeatMap useEffect (fix from commit 98ce741)
   const handleSeatsSelected = useCallback((seats: number[]) => {
@@ -692,15 +711,13 @@ export default function BookingPage() {
 
                       <div className="space-y-2">
                         <Label>Pickup Location (Optional)</Label>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="e.g., Meskel Square, Bole Airport"
-                            value={passenger.pickupLocation || ""}
-                            onChange={(e) => updatePassenger(index, "pickupLocation", e.target.value)}
-                            className="pl-10"
-                          />
-                        </div>
+                        <RouteStopCombobox
+                          value={passenger.pickupLocation || ""}
+                          onChange={(v) => updatePassenger(index, "pickupLocation", v)}
+                          routeStops={routeStops}
+                          placeholder="e.g., Meskel Square, Bole Airport"
+                          onOpenMap={() => setMapModal({ open: true, passengerIndex: index, field: "pickupLocation" })}
+                        />
                         <p className="text-xs text-muted-foreground">
                           Where should the bus pick you up along the route?
                         </p>
@@ -708,15 +725,13 @@ export default function BookingPage() {
 
                       <div className="space-y-2">
                         <Label>Dropoff Location (Optional)</Label>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            placeholder="e.g., City Center, Bus Station"
-                            value={passenger.dropoffLocation || ""}
-                            onChange={(e) => updatePassenger(index, "dropoffLocation", e.target.value)}
-                            className="pl-10"
-                          />
-                        </div>
+                        <RouteStopCombobox
+                          value={passenger.dropoffLocation || ""}
+                          onChange={(v) => updatePassenger(index, "dropoffLocation", v)}
+                          routeStops={routeStops}
+                          placeholder="e.g., City Center, Bus Station"
+                          onOpenMap={() => setMapModal({ open: true, passengerIndex: index, field: "dropoffLocation" })}
+                        />
                         <p className="text-xs text-muted-foreground">
                           Where should the bus drop you off?
                         </p>
@@ -940,6 +955,20 @@ export default function BookingPage() {
           </div>
         </div>
       </div>
+
+      {/* Pickup/Dropoff Map Selection Modal */}
+      {mapModal && (
+        <PickupMapModal
+          open={mapModal.open}
+          onClose={() => setMapModal(null)}
+          routeStops={routeStops}
+          title={mapModal.field === "pickupLocation" ? "Select Pickup Location" : "Select Dropoff Location"}
+          onSelect={(locationName) => {
+            updatePassenger(mapModal.passengerIndex, mapModal.field, locationName)
+            setMapModal(null)
+          }}
+        />
+      )}
 
       {/* Passenger Removal Confirmation Dialog */}
       <AlertDialog open={passengerToRemove !== null} onOpenChange={() => setPassengerToRemove(null)}>

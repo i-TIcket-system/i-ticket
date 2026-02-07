@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
     style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
     img-src 'self' data: https://api.qrserver.com https://*.tile.openstreetmap.org https://unpkg.com;
     font-src 'self' data: https://fonts.gstatic.com;
-    connect-src 'self' https://api.telebirr.com https://api.webirr.com https://*.tile.openstreetmap.org https://cloudflareinsights.com;
+    connect-src 'self' https://api.telebirr.com https://api.webirr.com https://*.tile.openstreetmap.org https://nominatim.openstreetmap.org https://cloudflareinsights.com;
     media-src 'self' data: blob:;
     frame-ancestors 'none';
     base-uri 'self';
