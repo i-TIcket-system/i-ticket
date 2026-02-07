@@ -4,6 +4,83 @@
 
 ---
 
+## v2.13.0 - Feb 8, 2026
+
+### Pickup/Dropoff Autocomplete, OsmAnd Background GPS, Fleet Map UX, Admin Bookings
+
+Feature release adding smart pickup/dropoff selection with map integration, OsmAnd-based background GPS tracking for drivers, major fleet map UX improvements, and admin bookings management.
+
+**Pickup/Dropoff Autocomplete + Map Selection**
+- `RouteStopCombobox`: autocomplete dropdown with fuzzy matching for route stops and city landmarks (Meskel Square, Bole Airport, etc.)
+- `PickupMapModal`: interactive map to select pickup/dropoff by clicking route stops or anywhere along the route line
+- Snap-to-route logic + reverse geocode via Nominatim for arbitrary map clicks
+- Shared fuzzy-match utility (`src/lib/fuzzy-match.ts`) extracted from Telegram bot for reuse
+- `CityCombobox` upgraded from substring to fuzzy matching
+- New API: `GET /api/cities/coordinates` for lazy-loading city lat/lon for maps
+
+**OsmAnd Background GPS Tracking**
+- New endpoint `GET /api/tracking/osmand` — accepts OsmAnd "Online GPS Tracking" plugin requests with token-based auth
+- Token generation API `POST /api/tracking/generate-token` — creates unique `trackingToken` per trip (idempotent)
+- `OsmAndSetup` component: collapsible panel in driver tracking with URL generation, copy button, and setup instructions
+- Shared position processing logic (`src/lib/tracking/update-position.ts`) used by both web and OsmAnd APIs
+- Schema: `Trip.trackingToken` field (unique, nullable) for OsmAnd authentication
+- Offline GPS queue increased from 200 to 1000 positions (~2h 46min offline at 10s intervals, ~200KB)
+
+**Background GPS Persistence (3-layer defense)**
+- Wake Lock API (`src/hooks/use-wake-lock.ts`) to prevent screen dimming on Chrome Android 84+
+- Silent audio keep-alive (`src/lib/tracking/audio-keep-alive.ts`) to prevent browser JS suspension
+- Heartbeat watchdog restarts `watchPosition` if GPS goes silent for >15s
+- Visibility recovery: re-acquires wake lock, resumes audio, flushes offline queue
+- UI indicators: screen lock status badge, unsupported device warning, offline queue count
+
+**Fleet Map UX Overhaul**
+- Stopped auto-recentering map on every 15s poll (preserves user's pan/zoom)
+- Search bar: filter vehicles by plate number, route, or driver name
+- Status filter dropdown: All / Live / Stale / No GPS
+- Vehicle list panel with click-to-focus (`flyTo` zoom 14)
+- "Fit All" button to zoom out to show all tracked vehicles
+- BusMarker `highlighted` prop: larger icon + CSS glow ring when focused
+- Leaflet z-index cap: map controls no longer overlap navbar/sidebar
+- CSP: added `media-src` for silent audio data URI
+
+**Admin Dashboard Enhancements**
+- Bookings table with search, status filter, company filter, date range picker, and pagination (10/page)
+- New API: `GET /api/admin/bookings` with comprehensive query params
+- New hook: `useDebounce` for search input performance
+- Removed `bookedByPhone` from ticket verify response (privacy)
+- Fixed Radix Select crash: `SelectItem value=""` crashes Radix UI (requires non-empty string), changed default to `"ALL"`
+- Added null safety for `booking.trip` and `booking.user` in table rendering
+
+**Mobile UX Overhaul (v2.12.2 fixes now included)**
+- FleetMap: full-viewport app-like layout on mobile, compact icon-only toolbar, floating vehicle list overlay
+- Company sidebar scrollable on mobile (`overflow-y-auto`), driver tracking navbar/footer hidden
+- Service worker v2: skip cross-origin requests (fixes grey map tiles in PWA)
+- Passenger tracking: GPS trail deduplication (<50m), recenter preserves zoom
+
+**Security**
+- Resolved 6 of 7 Dependabot vulnerabilities
+- CSP: added `nominatim.openstreetmap.org` to connect-src for reverse geocoding
+
+### New Files (12)
+```
+src/app/api/cities/coordinates/route.ts       — City lat/lon for map data
+src/app/api/admin/bookings/route.ts           — Admin bookings with filters/pagination
+src/app/api/csp-report/route.ts               — CSP violation reporting endpoint
+src/app/api/tracking/generate-token/route.ts  — OsmAnd token generation
+src/app/api/tracking/osmand/route.ts          — OsmAnd GPS tracking endpoint
+src/components/booking/PickupMapModal.tsx      — Interactive pickup/dropoff map
+src/components/tracking/OsmAndSetup.tsx        — OsmAnd setup instructions panel
+src/components/ui/route-stop-combobox.tsx      — Fuzzy autocomplete for route stops
+src/hooks/use-debounce.ts                     — Debounce hook for search inputs
+src/hooks/use-wake-lock.ts                    — Wake Lock API hook for GPS persistence
+src/lib/fuzzy-match.ts                        — Levenshtein + token matching utility
+src/lib/route-locations.ts                    — Ethiopian city landmarks database
+src/lib/tracking/audio-keep-alive.ts          — Silent audio to prevent JS suspension
+src/lib/tracking/update-position.ts           — Shared GPS position processing
+```
+
+---
+
 ## v2.12.0 - Feb 6, 2026
 
 ### Real-Time GPS Bus Tracking — Driver, Passenger, Fleet & Telegram

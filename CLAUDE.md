@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.12.2 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.13.0 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -89,7 +89,8 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | **Booking** | Real-time slots, seat selection, multi-passenger, TeleBirr (5% + 15% VAT) |
 | **Trips** | CRUD, intermediate stops, mandatory staff/vehicle, status lifecycle |
 | **Fleet** | AI risk scoring, fleet analytics dashboard, predictive maintenance, work orders, inspections, TCO/downtime reporting |
-| **GPS Tracking** | Real-time bus tracking via driver phone GPS, passenger live map, company fleet map, Telegram /whereismybus |
+| **GPS Tracking** | Real-time bus tracking via driver phone GPS + OsmAnd background tracking, passenger live map, company fleet map, Telegram /whereismybus |
+| **Booking UX** | Pickup/dropoff autocomplete with fuzzy matching, interactive map stop selection, Nominatim reverse geocoding |
 | **Manifests** | Auto-generate on DEPARTED + full capacity |
 | **Portals** | Super Admin, Company Admin, Staff, Cashier, Mechanic, Finance, Sales |
 | **Telegram Bot** | Bilingual booking via @i_ticket_busBot (see Telegram Bot section below) |
@@ -113,11 +114,12 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | Category | Routes |
 |----------|--------|
 | **Public** | `/api/trips`, `/api/track/[code]` |
-| **GPS Tracking** | `/api/tracking/update` (driver GPS), `/api/tracking/[tripId]` (public position), `/api/tracking/fleet` (company), `/api/tracking/active-trip` (driver) |
+| **GPS Tracking** | `/api/tracking/update` (driver GPS), `/api/tracking/osmand` (OsmAnd background GPS), `/api/tracking/generate-token` (OsmAnd token), `/api/tracking/[tripId]` (public position), `/api/tracking/fleet` (company), `/api/tracking/active-trip` (driver) |
 | **Company** | `/api/company/trips`, `/api/company/trip-templates`, `/api/company/staff`, `/api/company/vehicles` |
 | **Fleet Analytics** | `/api/company/analytics/fleet-health`, `risk-trends`, `cost-forecast`, `failure-timeline`, `vehicle-comparison`, `maintenance-windows`, `route-wear`, `compliance-calendar` |
 | **Fleet Reports** | `/api/company/reports/maintenance`, `maintenance/export`, `vehicle-tco`, `downtime`, `fleet-analytics/export` |
-| **Admin** | `/api/admin/stats`, `/api/admin/companies`, `/api/admin/trips` |
+| **Public** | `/api/cities/coordinates` (city lat/lon for map) |
+| **Admin** | `/api/admin/stats`, `/api/admin/companies`, `/api/admin/trips`, `/api/admin/bookings` |
 | **Cron** | `/api/cron/cleanup`, `/api/cron/trip-reminders` |
 | **Security** | `/api/csp-report` (CSP violation reports, logged to PM2) |
 | **Telegram** | `/api/telegram/webhook` (bot updates) |
@@ -251,28 +253,65 @@ model TelegramSession {
 - [x] ~~Send tickets to passenger's Telegram if they have an account (in addition to SMS)~~ DONE
 - [x] ~~Phase 2: Predictive Maintenance AI features~~ DONE (v2.11.0)
 - [x] ~~Real-time GPS bus tracking + Telegram /whereismybus~~ DONE (v2.12.0)
+- [x] ~~Pickup/dropoff autocomplete with map selection~~ DONE (v2.13.0)
+- [x] ~~OsmAnd background GPS tracking~~ DONE (v2.13.0)
+- [x] ~~Fleet map UX overhaul (search, filters, fit-all)~~ DONE (v2.13.0)
+- [x] ~~Admin bookings with filters/pagination~~ DONE (v2.13.0)
 
 ---
 
-## RECENT UPDATES (v2.12.2)
+## RECENT UPDATES (v2.13.0)
 
-**Latest**: Mobile UX Overhaul — Fleet Tracking, Driver Tracking, Sidebar, Service Worker
-- FleetMap: full-viewport app-like layout on mobile (map fills screen minus toolbar)
-- FleetMap: stats bar hidden on mobile; compact icon-only toolbar (search, refresh, filters, fit-all, list)
-- FleetMap: floating vehicle list overlay on mobile (bottom sheet with backdrop-blur)
-- FleetMap: show/hide list toggle now works on desktop (was `hidden lg:block` ignoring state)
-- FleetMap: refresh button added to mobile toolbar (was desktop-only in stats bar)
-- FleetMap: refresh spinner extended to 1.2s for visible feedback
-- FleetMap: untracked vehicles section hidden on mobile
-- Company sidebar: nav section scrollable on mobile (`overflow-y-auto`) — Sign Out now reachable
-- Driver tracking: navbar/footer hidden for `/driver` routes (was showing 64px navbar, pushing Start button below fold)
-- Driver tracking: larger bottom bar padding (`pb-6`) and button height (`h-16`) for mobile
-- Service worker v2: skip cross-origin requests (fixes grey map tiles in PWA mode)
-- Passenger tracking: GPS trail deduplication (<50m between points) to prevent spaghetti lines
-- Passenger tracking: recenter button preserves current zoom level (was forcing zoom 13)
-- Passenger tracking: `invalidateSize()` on map ready for reliable tile rendering
-- CSP: `Cache-Control: no-store` + `Pragma: no-cache` to prevent stale CSP header caching
-- Test passenger script: `scripts/create-test-passenger.ts` for creating test bookings on DEPARTED trips
+**Latest**: Pickup/Dropoff Autocomplete, OsmAnd Background GPS, Fleet Map UX, Admin Bookings
+
+*Pickup/Dropoff Autocomplete + Map Selection*
+- `RouteStopCombobox`: autocomplete dropdown with fuzzy matching for route stops and city landmarks (Meskel Square, Bole Airport, etc.)
+- `PickupMapModal`: interactive map to select pickup/dropoff by clicking route stops or anywhere along route line (snap-to-route + reverse geocode via Nominatim)
+- Shared fuzzy-match utility (`src/lib/fuzzy-match.ts`) extracted from Telegram bot for reuse
+- `CityCombobox` upgraded from substring to fuzzy matching
+- City coordinates API (`/api/cities/coordinates`) for lazy-loading map data
+- CSP: added `nominatim.openstreetmap.org` to connect-src
+
+*OsmAnd Background GPS Tracking*
+- OsmAnd endpoint (`/api/tracking/osmand`) accepts GET requests with token-based auth (no session needed)
+- Token generation API (`/api/tracking/generate-token`) creates unique `trackingToken` per trip
+- `OsmAndSetup` component in driver tracking page — collapsible panel with URL generation, copy button, setup instructions
+- Shared position processing logic (`src/lib/tracking/update-position.ts`) used by both web and OsmAnd APIs
+- Schema: `Trip.trackingToken` field (unique, nullable)
+- Offline GPS queue increased from 200 to 1000 positions (~2h 46min offline at 10s intervals)
+
+*Background GPS Persistence (3-layer defense)*
+- Wake Lock API to prevent screen dimming (Chrome Android 84+)
+- Silent audio keep-alive (`src/lib/tracking/audio-keep-alive.ts`) to prevent browser JS suspension
+- Heartbeat watchdog restarts `watchPosition` if GPS goes silent
+- Visibility recovery: re-acquires wake lock, resumes audio, flushes queue
+- UI indicators: screen lock status, unsupported device warning, queue count
+
+*Fleet Map UX Overhaul*
+- Stop auto-recentering map on every 15s poll
+- Search bar: filter by plate, route, driver name
+- Status filter: All / Live / Stale / No GPS
+- Vehicle list panel with click-to-focus (`flyTo` zoom 14)
+- "Fit All" button to zoom out to all tracked vehicles
+- BusMarker highlighted prop: larger icon + glow ring when focused
+- Leaflet z-index cap: map controls no longer overlap navbar/sidebar
+
+*Admin Dashboard Enhancements*
+- Bookings table with search, status filter, company filter, date range, and pagination (10/page)
+- New API: `GET /api/admin/bookings` with query params
+- `useDebounce` hook for search input
+- Removed `bookedByPhone` from ticket verify response (privacy fix)
+- Fixed Radix Select crash on empty value (changed default to `"ALL"`)
+
+*Security*
+- Resolved 6 of 7 Dependabot vulnerabilities
+
+**v2.12.2**: Mobile UX Overhaul — Fleet Tracking, Driver Tracking, Sidebar, Service Worker
+- FleetMap: full-viewport app-like layout on mobile, compact icon-only toolbar, floating vehicle list overlay
+- Company sidebar scrollable on mobile, driver tracking navbar/footer hidden
+- Service worker v2: skip cross-origin requests (fixes grey map tiles in PWA)
+- Passenger tracking: GPS trail deduplication, recenter preserves zoom
+- CSP: `Cache-Control: no-store` + `Pragma: no-cache`
 
 **v2.12.1**: Fleet Map Mobile Fix + CSP Fix for Map Tiles
 - FleetMap: vertical stack on mobile (was horizontal flex causing 0-width map)
