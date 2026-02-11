@@ -513,11 +513,6 @@ export default function DriverTrackingView() {
                       <span className="text-sm font-medium">
                         {speed != null ? `${Math.round(speed)} km/h` : "Tracking..."}
                       </span>
-                      {etaMinutes != null && (
-                        <span className="text-sm text-teal-600 font-semibold">
-                          ETA {formatETA(etaMinutes)}
-                        </span>
-                      )}
                     </div>
                   )}
                 </div>

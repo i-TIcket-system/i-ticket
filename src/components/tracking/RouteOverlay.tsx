@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect, useRef } from "react"
 import { Polyline, CircleMarker, Tooltip } from "react-leaflet"
 
 interface RoutePoint {
@@ -17,7 +18,7 @@ interface RouteOverlayProps {
 }
 
 /**
- * Route visualization: dashed line origin→stops→destination + GPS trail.
+ * Route visualization: OSRM road route (or dashed fallback) + GPS trail + stop markers.
  */
 export default function RouteOverlay({
   origin,
@@ -25,7 +26,35 @@ export default function RouteOverlay({
   stops = [],
   trail,
 }: RouteOverlayProps) {
-  // Build route points for the dashed line
+  const [roadGeometry, setRoadGeometry] = useState<Array<[number, number]>>([])
+  const fetchedRef = useRef(false)
+
+  // Fetch OSRM road geometry once on mount
+  useEffect(() => {
+    if (fetchedRef.current) return
+
+    const waypoints = [origin, ...stops, destination]
+      .filter((p) => p.latitude != null && p.longitude != null)
+      .map((p) => `${p.longitude},${p.latitude}`) // OSRM uses lon,lat
+
+    if (waypoints.length < 2) return
+    fetchedRef.current = true
+
+    fetch(
+      `https://router.project-osrm.org/route/v1/driving/${waypoints.join(";")}`
+        + `?overview=full&geometries=geojson`
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.code === "Ok" && data.routes?.[0]?.geometry?.coordinates) {
+          const coords: Array<[number, number]> = data.routes[0].geometry.coordinates
+          setRoadGeometry(coords.map(([lon, lat]) => [lat, lon] as [number, number]))
+        }
+      })
+      .catch(() => {}) // Silent fail — dashed fallback line remains
+  }, [origin, destination, stops])
+
+  // Build straight-line route points for dashed fallback
   const routePoints: Array<[number, number]> = []
 
   if (origin.latitude != null && origin.longitude != null) {
@@ -70,20 +99,31 @@ export default function RouteOverlay({
 
   return (
     <>
-      {/* Planned route (dashed) */}
-      {routePoints.length >= 2 && (
+      {/* Layer 1: Road route (OSRM) or dashed straight-line fallback */}
+      {roadGeometry.length >= 2 ? (
         <Polyline
-          positions={routePoints}
+          positions={roadGeometry}
           pathOptions={{
-            color: "#94a3b8",
-            weight: 3,
-            dashArray: "8 8",
-            opacity: 0.7,
+            color: "#3b82f6",
+            weight: 4,
+            opacity: 0.5,
           }}
         />
+      ) : (
+        routePoints.length >= 2 && (
+          <Polyline
+            positions={routePoints}
+            pathOptions={{
+              color: "#94a3b8",
+              weight: 3,
+              dashArray: "8 8",
+              opacity: 0.7,
+            }}
+          />
+        )
       )}
 
-      {/* GPS trail (solid) */}
+      {/* Layer 2: GPS trail (solid) */}
       {trailPoints.length >= 2 && (
         <Polyline
           positions={trailPoints}
