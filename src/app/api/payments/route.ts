@@ -71,16 +71,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // CRITICAL: Block payment if booking is older than 15 minutes
-    // This prevents duplicate bookings when users pay after the 15-minute window
-    const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+    // CRITICAL: Block payment if booking is older than 10 minutes
+    // This prevents duplicate bookings when users pay after the 10-minute window
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
     const bookingCreatedAt = new Date(booking.createdAt);
 
-    if (bookingCreatedAt < fifteenMinutesAgo) {
+    if (bookingCreatedAt < tenMinutesAgo) {
       return NextResponse.json(
         {
           error: "Payment window expired",
-          message: "This booking was created more than 15 minutes ago and has expired. Please create a new booking."
+          message: "This booking was created more than 10 minutes ago and has expired. Please create a new booking."
         },
         { status: 400 }
       )

@@ -360,7 +360,7 @@ export default function FAQPage() {
                     <ol className="list-decimal list-inside space-y-1 ml-2">
                       <li>Check your TeleBirr wallet balance</li>
                       <li>Ensure you have network connectivity</li>
-                      <li>Try the payment again within the 15-minute window</li>
+                      <li>Try the payment again within the 10-minute window</li>
                       <li>If it still fails, create a new booking and try again</li>
                     </ol>
                     <p className="mt-2 text-sm text-muted-foreground">
@@ -660,7 +660,7 @@ export default function FAQPage() {
                       <li>Confirm cancellation</li>
                     </ol>
                     <p className="mb-2"><strong>For SMS Users:</strong></p>
-                    <p className="mb-2">Contact customer support at +251-91-123-4567 or email support@i-ticket.et with your booking reference.</p>
+                    <p className="mb-2">Contact customer support at +251 911 550 001 or email support@i-ticket.et with your booking reference.</p>
                     <p className="text-sm text-muted-foreground">
                       Refunds are processed within 5-7 business days back to your original TeleBirr account.
                     </p>
@@ -887,7 +887,7 @@ export default function FAQPage() {
                       <li>Your previous bookings and tickets are still saved and accessible</li>
                     </ul>
                     <p className="mt-2 text-sm text-green-600">
-                      <strong>Tip:</strong> Have all passenger information ready before starting to complete booking within the 15-minute window.
+                      <strong>Tip:</strong> Have all passenger information ready before starting to complete booking within the 10-minute window.
                     </p>
                   </AccordionContent>
                 </AccordionItem>
@@ -1014,7 +1014,7 @@ export default function FAQPage() {
                         <strong>Email:</strong> support@i-ticket.et (Response within 24-48 hours)
                       </li>
                       <li>
-                        <strong>Phone:</strong> +251-91-123-4567 (Mon-Sat, 8am-6pm EAT)
+                        <strong>Phone:</strong> +251 911 550 001 (Mon-Sat, 8am-6pm EAT)
                       </li>
                       <li>
                         <strong>Contact Form:</strong> <Link href="/contact" className="text-primary hover:underline">Visit our contact page</Link>
@@ -1092,9 +1092,9 @@ export default function FAQPage() {
                       Contact Support
                     </Link>
                   </Button>
-                  <a href="tel:+251911234567">
+                  <a href="tel:+251911550001">
                     <Button variant="outline" className="w-full sm:w-auto">
-                      Call +251-91-123-4567
+                      Call +251 911 550 001
                     </Button>
                   </a>
                 </div>

@@ -265,14 +265,11 @@ export function formatPhoneForTelebirr(phone: string): string {
 
 /**
  * Calculate TeleBirr transaction fee
- * TeleBirr typically charges 1% with minimum fee
+ * TeleBirr charges 0.5% per transaction (deducted from i-Ticket's commission)
  *
- * @param amount - Transaction amount in ETB
+ * @param amount - Total transaction amount in ETB (what passenger pays)
  * @returns Fee amount in ETB
  */
 export function calculateTelebirrFee(amount: number): number {
-  const percentageFee = amount * 0.01; // 1%
-  const minimumFee = 5; // 5 ETB minimum
-
-  return Math.max(percentageFee, minimumFee);
+  return amount * 0.005; // 0.5%
 }

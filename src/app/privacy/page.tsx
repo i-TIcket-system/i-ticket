@@ -597,7 +597,7 @@ export default function PrivacyPage() {
               <li><strong>Seat Assignment:</strong> Automatically assigns seats sequentially (A1, A2, A3, etc.)</li>
               <li><strong>Fraud Detection:</strong> Flags suspicious booking patterns for manual review</li>
               <li><strong>Payment Verification:</strong> Automatically confirms payments via TeleBirr callbacks</li>
-              <li><strong>Booking Cancellation:</strong> Automatically cancels unpaid bookings after 15 minutes</li>
+              <li><strong>Booking Cancellation:</strong> Automatically cancels unpaid bookings after 10 minutes</li>
             </ul>
 
             <h3 className="text-xl font-semibold mt-6 mb-3">15.2 No Profiling for Discriminatory Purposes</h3>

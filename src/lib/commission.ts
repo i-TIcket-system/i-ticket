@@ -11,6 +11,7 @@
 
 export const COMMISSION_RATE = 0.05 // 5% platform commission
 export const VAT_RATE = 0.15 // 15% Ethiopian VAT
+export const TELEBIRR_FEE_RATE = 0.005 // 0.5% TeleBirr transaction fee (absorbed by i-Ticket)
 
 export interface CommissionBreakdown {
   baseCommission: number // 5% of totalAmount
@@ -89,5 +90,37 @@ export function calculateCompanyRevenue(ticketPrice: number, totalAmount: number
     ticketPrice, // Company gets the full ticket price
     totalAmount, // Passenger paid ticket + commission + VAT
     commission, // Platform gets commission + VAT
+  }
+}
+
+/**
+ * Calculate i-Ticket's net revenue after TeleBirr transaction fee
+ *
+ * TeleBirr charges 0.5% of the total transaction amount.
+ * This fee is absorbed by i-Ticket (NOT passed to the customer).
+ *
+ * Example: 850 ETB ticket
+ * - Commission (5%): 42.50 ETB
+ * - TeleBirr fee (0.5% of 898.88): ~4.49 ETB
+ * - Net to i-Ticket: ~38.01 ETB
+ * - VAT (15% of 42.50): 6.38 ETB → tax authority
+ *
+ * @param totalAmount - Total amount charged to passenger
+ * @param baseCommission - i-Ticket's 5% commission
+ * @returns Net platform revenue after TeleBirr fee
+ */
+export function calculateNetPlatformRevenue(
+  totalAmount: number,
+  baseCommission: number
+): {
+  telebirrFee: number       // 0.5% of totalAmount — paid to TeleBirr
+  netCommission: number     // baseCommission minus TeleBirr fee — i-Ticket keeps
+} {
+  const telebirrFee = totalAmount * TELEBIRR_FEE_RATE
+  const netCommission = baseCommission - telebirrFee
+
+  return {
+    telebirrFee: Math.round(telebirrFee * 100) / 100,
+    netCommission: Math.round(netCommission * 100) / 100,
   }
 }

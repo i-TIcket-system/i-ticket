@@ -54,8 +54,8 @@ export const MESSAGES: MessageTemplates = {
   },
 
   help: {
-    EN: "i-TICKET SMS HELP\n\nCommands:\nBOOK [from] [to] [date]\n  Example: BOOK ADDIS HAWASSA JAN15\n\nCHECK [code]\n  Example: CHECK ABC123\n\nSTATUS - Your bookings\nCANCEL - Exit session\n\nSupport: 0911234567",
-    AM: "የአይ-ቲኬት ኤስኤምኤስ እገዛ\n\nትዕዛዞች:\nመጽሐፍ [ከ] [ወደ] [ቀን]\n  ምሳሌ: መጽሐፍ አዲስ ሀዋሳ ጃን15\n\nማረጋገጫ [ኮድ]\n  ምሳሌ: ማረጋገጫ ABC123\n\nሁኔታ - የእርስዎ ቦታዎች\nሰርዝ - ውጣ\n\nድጋፍ: 0911234567"
+    EN: "i-TICKET SMS HELP\n\nCommands:\nBOOK [from] [to] [date]\n  Example: BOOK ADDIS HAWASSA JAN15\n\nCHECK [code]\n  Example: CHECK ABC123\n\nSTATUS - Your bookings\nCANCEL - Exit session\n\nSupport: 0911550001",
+    AM: "የአይ-ቲኬት ኤስኤምኤስ እገዛ\n\nትዕዛዞች:\nመጽሐፍ [ከ] [ወደ] [ቀን]\n  ምሳሌ: መጽሐፍ አዲስ ሀዋሳ ጃን15\n\nማረጋገጫ [ኮድ]\n  ምሳሌ: ማረጋገጫ ABC123\n\nሁኔታ - የእርስዎ ቦታዎች\nሰርዝ - ውጣ\n\nድጋፍ: 0911550001"
   },
 
   // Search & Trip Selection
@@ -155,8 +155,8 @@ export const MESSAGES: MessageTemplates = {
   },
 
   paymentFailed: {
-    EN: "Payment failed.\nPlease try again or contact support: 0911234567",
-    AM: "ክፍያ አልተሳካም።\nእባክዎን እንደገና ይሞክሩ ወይም ድጋፍ ያግኙ: 0911234567"
+    EN: "Payment failed.\nPlease try again or contact support: 0911550001",
+    AM: "ክፍያ አልተሳካም።\nእባክዎን እንደገና ይሞክሩ ወይም ድጋፍ ያግኙ: 0911550001"
   },
 
   // Ticket Verification
@@ -184,9 +184,9 @@ export const MESSAGES: MessageTemplates = {
   // Error Messages
   invalidCommand: {
     EN: (command: string) =>
-      `Unknown command: ${command}\n\nTry:\nBOOK ADDIS HAWASSA JAN15\nCHECK ABC123\nHELP\n\nFor assistance: 0911234567`,
+      `Unknown command: ${command}\n\nTry:\nBOOK ADDIS HAWASSA JAN15\nCHECK ABC123\nHELP\n\nFor assistance: 0911550001`,
     AM: (command: string) =>
-      `ያልታወቀ ትዕዛዝ: ${command}\n\nይሞክሩ:\nመጽሐፍ አዲስ ሀዋሳ ጃን15\nማረጋገጫ ABC123\nእርዳታ\n\nለእገዛ: 0911234567`
+      `ያልታወቀ ትዕዛዝ: ${command}\n\nይሞክሩ:\nመጽሐፍ አዲስ ሀዋሳ ጃን15\nማረጋገጫ ABC123\nእርዳታ\n\nለእገዛ: 0911550001`
   },
 
   invalidInput: {
@@ -210,8 +210,8 @@ export const MESSAGES: MessageTemplates = {
   },
 
   systemError: {
-    EN: "System error. Please try again.\nIf problem persists, call: 0911234567",
-    AM: "የስርዓት ስህተት። እባክዎን እንደገና ይሞክሩ።\nችግሩ ከቀጠለ፣ ይደውሉ: 0911234567"
+    EN: "System error. Please try again.\nIf problem persists, call: 0911550001",
+    AM: "የስርዓት ስህተት። እባክዎን እንደገና ይሞክሩ።\nችግሩ ከቀጠለ፣ ይደውሉ: 0911550001"
   }
 };
 

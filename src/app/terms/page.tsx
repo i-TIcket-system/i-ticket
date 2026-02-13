@@ -202,7 +202,7 @@ export default function TermsPage() {
             <h3 className="text-xl font-semibold mt-6 mb-3">5.5 Payment Failure</h3>
             <p>
               If payment fails due to insufficient balance, incorrect PIN, or other errors, you may retry payment
-              within the 15-minute booking hold period. After this period, you must create a new booking.
+              within the 10-minute booking hold period. After this period, you must create a new booking.
             </p>
 
             <h3 className="text-xl font-semibold mt-6 mb-3">5.6 Currency and Exchange Rates</h3>

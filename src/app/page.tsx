@@ -33,7 +33,6 @@ import { toast } from "sonner"
 
 const busCompanies = [
   { name: "Selam Bus", logo: "S", color: "from-blue-500 to-blue-600" },
-  { name: "Sky Bus", logo: "SK", color: "from-purple-500 to-purple-600" },
   { name: "Abay Bus", logo: "A", color: "from-emerald-500 to-emerald-600" },
   { name: "Ghion Bus", logo: "G", color: "from-orange-500 to-orange-600" },
   { name: "Awash Bus", logo: "AW", color: "from-rose-500 to-rose-600" },

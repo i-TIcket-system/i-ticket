@@ -20,9 +20,9 @@ const footerLinks = {
   ],
   partners: [
     { label: "Selam Bus", href: "/search?company=selam" },
-    { label: "Sky Bus", href: "/search?company=sky" },
     { label: "Abay Bus", href: "/search?company=abay" },
     { label: "Ghion Bus", href: "/search?company=ghion" },
+    { label: "Awash Bus", href: "/search?company=awash" },
   ],
 }
 
@@ -136,13 +136,13 @@ export function Footer() {
             <ul className="space-y-4">
               <li>
                 <a
-                  href="tel:+251911234567"
+                  href="tel:+251911550001"
                   className="flex items-center gap-3 text-white/60 hover:text-white transition-colors text-sm group"
                 >
                   <div className="h-9 w-9 rounded-lg bg-[#20c4c4]/20 flex items-center justify-center group-hover:bg-[#20c4c4]/30 transition-colors">
                     <Phone className="h-4 w-4 text-[#20c4c4]" />
                   </div>
-                  <span>+251 911 234 567</span>
+                  <span>+251 911 550 001</span>
                 </a>
               </li>
               <li>

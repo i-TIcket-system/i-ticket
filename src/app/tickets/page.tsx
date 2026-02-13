@@ -91,13 +91,13 @@ export default function MyTicketsPage() {
     )
   }
 
-  // Helper to check if payment has expired (15 minutes)
+  // Helper to check if payment has expired (10 minutes)
   const isPaymentExpired = (booking: BookingWithTrip) => {
     if (booking.status !== "PENDING") return false
     const createdAt = new Date(booking.createdAt)
     const now = new Date()
     const diffMinutes = (now.getTime() - createdAt.getTime()) / (1000 * 60)
-    return diffMinutes > 15
+    return diffMinutes > 10
   }
 
   // FIX: Use Ethiopia timezone for upcoming/past trip filtering

@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.13.0 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.13.1 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -89,7 +89,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | **Booking** | Real-time slots, seat selection, multi-passenger, TeleBirr (5% + 15% VAT) |
 | **Trips** | CRUD, intermediate stops, mandatory staff/vehicle, status lifecycle |
 | **Fleet** | AI risk scoring, fleet analytics dashboard, predictive maintenance, work orders, inspections, TCO/downtime reporting |
-| **GPS Tracking** | Real-time bus tracking via driver phone GPS + OsmAnd background tracking, passenger live map, company fleet map, Telegram /whereismybus |
+| **GPS Tracking** | Real-time bus tracking via driver phone GPS + OsmAnd background tracking, OSRM road route overlay, passenger live map, company fleet map, Telegram /whereismybus |
 | **Booking UX** | Pickup/dropoff autocomplete with fuzzy matching, interactive map stop selection, Nominatim reverse geocoding |
 | **Manifests** | Auto-generate on DEPARTED + full capacity |
 | **Portals** | Super Admin, Company Admin, Staff, Cashier, Mechanic, Finance, Sales |
@@ -260,9 +260,26 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.13.0)
+## RECENT UPDATES (v2.13.1)
 
-**Latest**: Pickup/Dropoff Autocomplete, OsmAnd Background GPS, Fleet Map UX, Admin Bookings
+**Latest**: OSRM Road Route on Tracking Maps, Driver ETA Cleanup
+
+*OSRM Road Route on Tracking Maps*
+- `RouteOverlay` fetches actual road geometry from OSRM public routing API (`router.project-osrm.org`)
+- Replaces straight dashed line with real highway path (blue `#3b82f6`, weight 4, opacity 0.5)
+- GPS trail renders on top (teal `#0e9494`), stop markers on top of both
+- Fetched once per mount via `useRef` guard — no refetch on 12s/15s polling
+- Falls back to gray dashed straight line if OSRM is unreachable
+- OSRM uses `lon,lat` order — coordinates flipped to Leaflet `[lat, lon]` format
+- CSP: added `https://router.project-osrm.org` to connect-src
+
+*Driver Tracking ETA Cleanup*
+- Removed duplicate ETA from driver bottom action bar (was showing in both top ETABadge overlay and bottom bar)
+- ETA now shown exclusively in the top overlay badge (time + distance + speed + absolute arrival)
+
+## v2.13.0
+
+**Pickup/Dropoff Autocomplete, OsmAnd Background GPS, Fleet Map UX, Admin Bookings**
 
 *Pickup/Dropoff Autocomplete + Map Selection*
 - `RouteStopCombobox`: autocomplete dropdown with fuzzy matching for route stops and city landmarks (Meskel Square, Bole Airport, etc.)

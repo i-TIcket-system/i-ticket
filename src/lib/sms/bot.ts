@@ -665,8 +665,8 @@ async function handleConfirmBookingState(
       return {
         nextState: 'IDLE',
         response: lang === 'AM' ?
-          `ቦታ ተይዟል!\nመታወቂያ: ${booking.id}\nወንበር: ${seats.join(', ')}\n\nክፍያ ስህተት። እባክዎን ድጋፍ ያግኙ: 0911234567` :
-          `Booking created!\nID: ${booking.id}\nSeats: ${seats.join(', ')}\n\nPayment error. Contact support: 0911234567`
+          `ቦታ ተይዟል!\nመታወቂያ: ${booking.id}\nወንበር: ${seats.join(', ')}\n\nክፍያ ስህተት። እባክዎን ድጋፍ ያግኙ: 0911550001` :
+          `Booking created!\nID: ${booking.id}\nSeats: ${seats.join(', ')}\n\nPayment error. Contact support: 0911550001`
       };
     }
   } catch (error) {
