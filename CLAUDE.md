@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.13.1 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.14.0 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -11,6 +11,7 @@
 |-----------|---------|
 | **Server** | AWS EC2 (t2.micro) - 54.147.33.168 |
 | **Stack** | Ubuntu 22.04, Node.js 20.20.0, PM2, Nginx, PostgreSQL 16.11 |
+| **Disk** | 7.6GB EBS (81% used) — run `rm -rf /var/www/i-ticket/.next/cache` after each build |
 | **SSL** | Cloudflare (Full strict) |
 
 ```bash
@@ -44,6 +45,7 @@ git pull
 npm ci
 npx prisma db push   # Only if schema changed
 npm run build
+rm -rf .next/cache            # Free ~550MB (disk is tight on 7.6GB)
 pm2 restart i-ticket
 pm2 logs i-ticket --lines 20  # Verify no errors
 ```
@@ -72,6 +74,13 @@ ONLY shared resource: City database.
 ### 4. VIEW-ONLY TRIPS
 DEPARTED, COMPLETED, CANCELLED, and **SOLD-OUT** trips are READ-ONLY. No edits allowed.
 - Sold-out = `availableSlots === 0` (protects existing bookings)
+- Exception: DEPARTED trips allow no-show marking + replacement ticket sales (does NOT modify `availableSlots`)
+
+### 5. NO-SHOW MANAGEMENT
+- No-show marking only after DEPARTED (intermediate stops mean passengers may board later)
+- Replacement tickets: same full price, staff/cashier only, CASH payment, commission = 0
+- `availableSlots` is NEVER changed by no-show/replacement — prevents online booking confusion
+- `releasedSeats = noShowCount - replacementsSold` (enforced in transaction)
 
 ---
 
@@ -86,12 +95,13 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | Feature | Details |
 |---------|---------|
 | **Auth** | Multi-role (Customer, Company Admin, Super Admin, Staff, Sales), NextAuth.js |
-| **Booking** | Real-time slots, seat selection, multi-passenger, TeleBirr (5% + 15% VAT) |
+| **Booking** | Real-time slots, seat selection, multi-passenger, TeleBirr (5% + 15% VAT), 10-min payment window |
 | **Trips** | CRUD, intermediate stops, mandatory staff/vehicle, status lifecycle |
 | **Fleet** | AI risk scoring, fleet analytics dashboard, predictive maintenance, work orders, inspections, TCO/downtime reporting |
 | **GPS Tracking** | Real-time bus tracking via driver phone GPS + OsmAnd background tracking, OSRM road route overlay, passenger live map, company fleet map, Telegram /whereismybus |
 | **Booking UX** | Pickup/dropoff autocomplete with fuzzy matching, interactive map stop selection, Nominatim reverse geocoding |
-| **Manifests** | Auto-generate on DEPARTED + full capacity |
+| **No-Show Mgmt** | Boarding checklist, no-show marking (DEPARTED only), replacement ticket sales for vacant seats (staff/cashier), manifest boarding status |
+| **Manifests** | Auto-generate on DEPARTED + full capacity, boarding status column (BOARDED/NO-SHOW/REPLACEMENT) |
 | **Portals** | Super Admin, Company Admin, Staff, Cashier, Mechanic, Finance, Sales |
 | **Telegram Bot** | Bilingual booking via @i_ticket_busBot (see Telegram Bot section below) |
 
@@ -116,6 +126,7 @@ Next.js 14 (App Router) + React 18 + TypeScript + PostgreSQL + Prisma + NextAuth
 | **Public** | `/api/trips`, `/api/track/[code]` |
 | **GPS Tracking** | `/api/tracking/update` (driver GPS), `/api/tracking/osmand` (OsmAnd background GPS), `/api/tracking/generate-token` (OsmAnd token), `/api/tracking/[tripId]` (public position), `/api/tracking/fleet` (company), `/api/tracking/active-trip` (driver) |
 | **Company** | `/api/company/trips`, `/api/company/trip-templates`, `/api/company/staff`, `/api/company/vehicles` |
+| **No-Show** | `/api/company/trips/[tripId]/boarding-status` (GET), `/api/company/trips/[tripId]/no-show` (POST), `/api/company/trips/[tripId]/replacement-ticket` (POST) |
 | **Fleet Analytics** | `/api/company/analytics/fleet-health`, `risk-trends`, `cost-forecast`, `failure-timeline`, `vehicle-comparison`, `maintenance-windows`, `route-wear`, `compliance-calendar` |
 | **Fleet Reports** | `/api/company/reports/maintenance`, `maintenance/export`, `vehicle-tco`, `downtime`, `fleet-analytics/export` |
 | **Public** | `/api/cities/coordinates` (city lat/lon for map) |
@@ -257,12 +268,79 @@ model TelegramSession {
 - [x] ~~OsmAnd background GPS tracking~~ DONE (v2.13.0)
 - [x] ~~Fleet map UX overhaul (search, filters, fit-all)~~ DONE (v2.13.0)
 - [x] ~~Admin bookings with filters/pagination~~ DONE (v2.13.0)
+- [x] ~~No-show management + seat re-sale~~ DONE (v2.14.0)
 
 ---
 
-## RECENT UPDATES (v2.13.1)
+## RECENT UPDATES (v2.14.0)
 
-**Latest**: OSRM Road Route on Tracking Maps, Driver ETA Cleanup
+**Latest**: No-Show Management + Seat Re-sale for Departed Trips
+
+*No-Show Management*
+- Boarding checklist on trip detail page for BOARDING/DEPARTED trips
+- `BoardingChecklist` component: passenger table with status badges (PENDING/BOARDED/NO_SHOW), bulk select, "Mark No-Show" button
+- No-show marking only allowed on DEPARTED trips (intermediate pickup stops mean passengers can't be prematurely flagged)
+- Idempotent: re-marking NO_SHOW on already-flagged passenger is a no-op; BOARDED/used-ticket passengers are skipped
+- `Passenger.boardingStatus` field: `PENDING` (default), `BOARDED`, `NO_SHOW`
+- `Trip.noShowCount`, `Trip.releasedSeats`, `Trip.replacementsSold` counters
+
+*Replacement Ticket Sales*
+- `ReplacementTicketCard` component: counter-based sales with seat assignment, QR code generation, short code display
+- Staff/cashier only (not online booking), same full price, CASH payment
+- Replacement passengers auto-assigned no-show seat numbers, `boardingStatus = "BOARDED"` immediately
+- `Booking.isReplacement` flag + `Booking.replacedPassengerId` for audit trail
+- `availableSlots` unchanged — seats were already counted as sold, prevents online booking confusion
+- Commission = 0 for replacement sales (matches cashier pattern)
+
+*Ticket Verification Integration*
+- PATCH `/api/tickets/verify` now auto-sets `boardingStatus = "BOARDED"` on ticket scan
+- Warns if passenger was previously marked NO_SHOW (late arrival edge case)
+
+*Manifest Updates*
+- Status column shows BOARDED/NO-SHOW/REPLACEMENT with color coding (green/red/blue)
+- Boarding summary row: boarded count, no-show count, replacement count
+
+*Trip Detail Page*
+- Boarding stats sidebar card (no-shows, released seats, replacements sold)
+- Passenger names in bookings table show boarding status icons (green check / red X / strikethrough)
+- `ViewOnlyBanner` DEPARTED message updated: "Editing is locked, but you can manage boarding and sell replacement tickets for no-shows"
+
+*New API Routes*
+- `GET /api/company/trips/[tripId]/boarding-status` — passengers with boarding status + summary counts
+- `POST /api/company/trips/[tripId]/no-show` — mark passengers as NO_SHOW (DEPARTED guard, company segregation, audit log)
+- `POST /api/company/trips/[tripId]/replacement-ticket` — sell replacement tickets (transaction-safe, QR generation, CASH payment)
+
+*Safeguards*
+- Trip status guard: no-show only on DEPARTED; replacement only on DEPARTED
+- Company segregation on all routes (RULE-001)
+- Ticket used check: can't mark NO_SHOW if ticket already scanned
+- Released seat cap: can't sell more replacements than `releasedSeats`
+- All writes in `transactionWithTimeout()` (10s)
+- AdminLog entries: `PASSENGER_NO_SHOW`, `REPLACEMENT_TICKET_SALE`
+
+## v2.13.2
+
+**TeleBirr Proposal Updates, Payment Timeout, Contact Info, Disk Cleanup**
+
+*TeleBirr Integration Prep*
+- TeleBirr transaction fee set to 0.5% of total amount (absorbed by i-Ticket, invisible to customers)
+- `TELEBIRR_FEE_RATE` constant + `calculateNetPlatformRevenue()` in `src/lib/commission.ts`
+- `calculateTelebirrFee()` updated in `src/lib/payments/telebirr.ts`
+
+*Payment & Business Updates*
+- Payment window reduced from 15min to 10min (payments API, tickets page, cron cleanup, privacy, terms, FAQ)
+- Contact phone updated to +251 911 550 001 (footer, contact, FAQ, SMS messages, Telegram bot)
+- Partners updated: removed Sky Bus, added Awash Bus (homepage + footer)
+
+*Production Disk Cleanup (7.6GB EBS: 93% → 77%)*
+- Removed `.next/cache` (~1.4GB across two builds), added `rm -rf .next/cache` to deploy workflow
+- Removed unused LXD snap (313MB) + disabled snap revisions (220MB) + seed snaps (308MB)
+- Cleaned APT cache/lists (460MB), rotated logs, old kernel modules/headers, journal logs
+- **Warning**: disk fills to ~93% after each build; always clean `.next/cache` post-build
+
+## v2.13.1
+
+**OSRM Road Route on Tracking Maps, Driver ETA Cleanup**
 
 *OSRM Road Route on Tracking Maps*
 - `RouteOverlay` fetches actual road geometry from OSRM public routing API (`router.project-osrm.org`)
@@ -416,7 +494,8 @@ model TelegramSession {
 | Telegram timezone (v2.8.2) | Use `Intl.DateTimeFormat` with `timeZone: "Africa/Addis_Ababa"` in formatters.ts |
 | Staff API role filter | Use `role: "COMPANY_ADMIN"` + `staffRole` filter |
 | Auto-halt re-trigger | `adminResumedFromAutoHalt` flag |
-| Commission VAT | 106 ETB = 100 ticket + 5 commission + 1 VAT |
+| Commission VAT | 106 ETB = 100 ticket + 5 commission + 1 VAT (TeleBirr deducts 0.5% fee internally — NOT shown to customers) |
+| Payment timeout | 10 minutes — payment API, tickets page, cron cleanup, privacy/terms all use 10min |
 | Race conditions | DB-level locking with `SELECT FOR UPDATE NOWAIT` |
 
 ---
