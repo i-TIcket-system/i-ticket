@@ -123,6 +123,8 @@ model TripTemplate {
   hasWater          Boolean @default(false)
   hasFood           Boolean @default(false)
   intermediateStops String? // JSON array
+  defaultPickup    String? // e.g., "AYER TENA JIMMA BER terminal"
+  defaultDropoff   String? // e.g., "Jimma Bus Station"
 
   // Usage tracking
   timesUsed  Int       @default(0)
@@ -156,6 +158,8 @@ model Trip {
   destination              String
   route                    String?
   intermediateStops        String?
+  defaultPickup            String?  // Inherited from template or set manually
+  defaultDropoff           String?  // Shown to passengers during booking
   departureTime            DateTime
   estimatedDuration        Int // Duration in hours
   actualDepartureTime      DateTime? // Actual departure time (recorded when status → DEPARTED)
@@ -177,6 +181,11 @@ model Trip {
   autoResumeEnabled        Boolean            @default(false) // Admin preference to prevent future auto-halts
   reportGenerated          Boolean            @default(false)
   version                  Int                @default(0) // P3: Optimistic locking version
+
+  // No-show management
+  noShowCount       Int     @default(0)  // Total passengers marked NO_SHOW
+  releasedSeats     Int     @default(0)  // Seats available for resale (= noShowCount - replacementsSold)
+  replacementsSold  Int     @default(0)  // Replacement tickets sold
 
   // Phase 3: GPS Tracking
   trackingActive    Boolean   @default(false)
@@ -388,6 +397,8 @@ model Booking {
   commissionVAT Float       @default(0) // VAT on commission (15% of commission)
   status        String      @default("PENDING") // PENDING, PAID, CANCELLED, COMPLETED
   isQuickTicket Boolean     @default(false)
+  isReplacement       Boolean  @default(false)  // True for replacement bookings (no-show resale)
+  replacedPassengerId String?  // Links to original no-show passenger (audit trail)
   payment       Payment?
   tickets       Ticket[]
 
@@ -415,8 +426,10 @@ model Passenger {
   specialNeeds    String?
   pickupLocation  String?
   dropoffLocation String?
+  boardingStatus  String  @default("PENDING") // PENDING, BOARDED, NO_SHOW
 
   @@index([bookingId])
+  @@index([bookingId, boardingStatus])
 }
 
 model Ticket {

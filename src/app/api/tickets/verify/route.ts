@@ -246,6 +246,9 @@ export async function PATCH(request: NextRequest) {
         usedAt: new Date(),
       },
       include: {
+        booking: {
+          select: { id: true },
+        },
         trip: {
           select: {
             origin: true,
@@ -254,6 +257,25 @@ export async function PATCH(request: NextRequest) {
         }
       }
     })
+
+    // Auto-set boardingStatus to BOARDED for the matching passenger
+    const matchingPassenger = await prisma.passenger.findFirst({
+      where: {
+        bookingId: updatedTicket.booking.id,
+        seatNumber: updatedTicket.seatNumber,
+      },
+    })
+
+    let boardingWarning: string | undefined
+    if (matchingPassenger) {
+      if (matchingPassenger.boardingStatus === "NO_SHOW") {
+        boardingWarning = "This passenger was previously marked as NO_SHOW (late arrival after being flagged)"
+      }
+      await prisma.passenger.update({
+        where: { id: matchingPassenger.id },
+        data: { boardingStatus: "BOARDED" },
+      })
+    }
 
     // Log ticket usage for dispute management (critical for double-use fraud detection)
     await prisma.adminLog.create({
@@ -271,6 +293,7 @@ export async function PATCH(request: NextRequest) {
       success: true,
       message: "Ticket marked as used successfully",
       ticket: updatedTicket,
+      ...(boardingWarning && { boardingWarning }),
     })
   } catch (error: any) {
     console.error("Mark ticket as used error:", error)

@@ -99,6 +99,14 @@ export function getDelayReasonLabel(delayReason: string | null): string {
 }
 
 /**
+ * Check if replacement tickets can be sold for this trip
+ * Only DEPARTED trips allow replacement ticket sales for no-show seats
+ */
+export function canSellReplacementTickets(status: string): boolean {
+  return status === "DEPARTED"
+}
+
+/**
  * Get allowed status transitions for a trip
  *
  * @param currentStatus - Current trip status

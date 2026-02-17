@@ -7,6 +7,7 @@ import { validateTripUpdate } from "@/lib/trip-update-validator"
 import { createNotification } from "@/lib/notifications"
 import { isTripViewOnly, getViewOnlyMessage, FINAL_TRIP_STATUSES } from "@/lib/trip-status"
 import { hasDepartedEthiopia } from "@/lib/utils"
+import { checkStaffConflicts } from "@/lib/trip-conflict-check"
 
 export async function GET(
   request: NextRequest,
@@ -89,6 +90,7 @@ export async function GET(
                 nationalId: true,
                 phone: true,
                 seatNumber: true,
+                boardingStatus: true,
               },
             },
             tickets: {
@@ -217,6 +219,9 @@ export async function PUT(
       conductorId,
       manualTicketerId,
       vehicleId,
+      defaultPickup,
+      defaultDropoff,
+      overrideStaffConflict,
     } = body
 
     // SECURITY: Validate update based on business rules
@@ -319,6 +324,38 @@ export async function PUT(
       }
     }
 
+    // Check for 24-hour staff conflicts when staff is being reassigned
+    const effectiveDeparture = departureTime ? new Date(departureTime) : existingTrip.departureTime
+    const staffChanged = (driverId !== undefined && driverId !== existingTrip.driverId) ||
+      (conductorId !== undefined && conductorId !== existingTrip.conductorId) ||
+      (manualTicketerId !== undefined && manualTicketerId !== existingTrip.manualTicketerId)
+
+    if (staffChanged && !overrideStaffConflict) {
+      const newDriverId = driverId !== undefined ? driverId : existingTrip.driverId
+      const newConductorId = conductorId !== undefined ? conductorId : existingTrip.conductorId
+      const newTicketerId = manualTicketerId !== undefined ? manualTicketerId : existingTrip.manualTicketerId
+
+      // Only check conflicts for staff that actually changed
+      const { conflicts, hasConflicts } = await checkStaffConflicts(
+        effectiveDeparture,
+        driverId !== undefined && driverId !== existingTrip.driverId ? newDriverId : null,
+        conductorId !== undefined && conductorId !== existingTrip.conductorId ? newConductorId : null,
+        manualTicketerId !== undefined && manualTicketerId !== existingTrip.manualTicketerId ? newTicketerId : null,
+        tripId // Exclude current trip
+      )
+
+      if (hasConflicts) {
+        return NextResponse.json(
+          {
+            error: "Staff scheduling conflict detected",
+            conflicts,
+            canOverride: true,
+          },
+          { status: 409 }
+        )
+      }
+    }
+
     // P3: OPTIMISTIC LOCKING - Update with version check to prevent concurrent modifications
     let updatedTrip;
     try {
@@ -349,6 +386,8 @@ export async function PUT(
         ...(conductorId !== undefined && { conductorId: conductorId || null }),
         ...(manualTicketerId !== undefined && { manualTicketerId: manualTicketerId || null }),
         ...(vehicleId !== undefined && { vehicleId: vehicleId || null }),
+        ...(defaultPickup !== undefined && { defaultPickup: defaultPickup || null }),
+        ...(defaultDropoff !== undefined && { defaultDropoff: defaultDropoff || null }),
       },
       include: {
         company: {
@@ -452,10 +491,10 @@ export async function PUT(
           type: "TRIP_ASSIGNED",
           data: { tripId, tripRoute, departureTime: departureStr, role: "Driver" },
         })
-        // Auto-update staff status to ON_TRIP (only for active trips)
-        if (!['COMPLETED', 'CANCELLED'].includes(updatedTrip.status)) {
+        // Only set ON_TRIP if trip has actually departed (not for SCHEDULED/BOARDING)
+        if (updatedTrip.status === 'DEPARTED') {
           await prisma.user.update({
-            where: { id: driverId },
+            where: { id: driverId, staffStatus: { not: 'ON_LEAVE' } },
             data: { staffStatus: 'ON_TRIP' }
           }).catch(err => console.error(`Failed to update driver status: ${err}`))
         }
@@ -468,17 +507,17 @@ export async function PUT(
           type: "TRIP_UNASSIGNED",
           data: { tripId, tripRoute, departureTime: departureStr, role: "Driver" },
         })
-        // Check if old driver has any other active trips before resetting status
-        const otherActiveTrips = await prisma.trip.count({
+        // Only keep ON_TRIP if driver has another DEPARTED trip
+        const otherDepartedTrips = await prisma.trip.count({
           where: {
             driverId: existingTrip.driverId,
             id: { not: tripId },
-            status: { notIn: ['COMPLETED', 'CANCELLED'] }
+            status: 'DEPARTED'
           }
         })
-        if (otherActiveTrips === 0) {
+        if (otherDepartedTrips === 0) {
           await prisma.user.update({
-            where: { id: existingTrip.driverId },
+            where: { id: existingTrip.driverId, staffStatus: { not: 'ON_LEAVE' } },
             data: { staffStatus: 'AVAILABLE' }
           }).catch(err => console.error(`Failed to reset driver status: ${err}`))
         }
@@ -494,10 +533,10 @@ export async function PUT(
           type: "TRIP_ASSIGNED",
           data: { tripId, tripRoute, departureTime: departureStr, role: "Conductor" },
         })
-        // Auto-update staff status to ON_TRIP
-        if (!['COMPLETED', 'CANCELLED'].includes(updatedTrip.status)) {
+        // Only set ON_TRIP if trip has actually departed
+        if (updatedTrip.status === 'DEPARTED') {
           await prisma.user.update({
-            where: { id: conductorId },
+            where: { id: conductorId, staffStatus: { not: 'ON_LEAVE' } },
             data: { staffStatus: 'ON_TRIP' }
           }).catch(err => console.error(`Failed to update conductor status: ${err}`))
         }
@@ -509,17 +548,17 @@ export async function PUT(
           type: "TRIP_UNASSIGNED",
           data: { tripId, tripRoute, departureTime: departureStr, role: "Conductor" },
         })
-        // Check if old conductor has any other active trips
-        const otherActiveTrips = await prisma.trip.count({
+        // Only keep ON_TRIP if conductor has another DEPARTED trip
+        const otherDepartedTrips = await prisma.trip.count({
           where: {
             conductorId: existingTrip.conductorId,
             id: { not: tripId },
-            status: { notIn: ['COMPLETED', 'CANCELLED'] }
+            status: 'DEPARTED'
           }
         })
-        if (otherActiveTrips === 0) {
+        if (otherDepartedTrips === 0) {
           await prisma.user.update({
-            where: { id: existingTrip.conductorId },
+            where: { id: existingTrip.conductorId, staffStatus: { not: 'ON_LEAVE' } },
             data: { staffStatus: 'AVAILABLE' }
           }).catch(err => console.error(`Failed to reset conductor status: ${err}`))
         }

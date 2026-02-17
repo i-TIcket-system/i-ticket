@@ -64,6 +64,8 @@ import { BookingControlCard } from "@/components/company/BookingControlCard"
 import { TripChat } from "@/components/trip/TripChat"
 import { TripLogCard } from "@/components/trip/TripLogCard"
 import { ViewOnlyBanner } from "@/components/company/ViewOnlyBanner"
+import { BoardingChecklist } from "@/components/company/BoardingChecklist"
+import { ReplacementTicketCard } from "@/components/company/ReplacementTicketCard"
 import { isTripViewOnly } from "@/lib/trip-status"
 
 interface Passenger {
@@ -72,6 +74,7 @@ interface Passenger {
   nationalId: string
   phone: string
   seatNumber: number | null
+  boardingStatus?: string
 }
 
 interface Booking {
@@ -110,11 +113,16 @@ interface Trip {
   availableSlots: number
   hasWater: boolean
   hasFood: boolean
+  defaultPickup: string | null
+  defaultDropoff: string | null
   bookingHalted: boolean
   autoResumeEnabled: boolean
   status: string
   delayReason: string | null
   delayedAt: string | null
+  noShowCount: number
+  releasedSeats: number
+  replacementsSold: number
   company: {
     name: string
   }
@@ -544,6 +552,32 @@ export default function TripDetailPage() {
                   </>
                 )}
 
+                {(trip.defaultPickup || trip.defaultDropoff) && (
+                  <>
+                    <Separator />
+                    <div className="space-y-2 p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                      <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                        <MapPin className="h-4 w-4" />
+                        <span className="text-sm font-semibold">Standard Terminals</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        {trip.defaultPickup && (
+                          <div>
+                            <span className="text-muted-foreground">Pickup: </span>
+                            <span className="font-medium">{trip.defaultPickup}</span>
+                          </div>
+                        )}
+                        {trip.defaultDropoff && (
+                          <div>
+                            <span className="text-muted-foreground">Dropoff: </span>
+                            <span className="font-medium">{trip.defaultDropoff}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
                 {(trip.hasWater || trip.hasFood) && (
                   <>
                     <Separator />
@@ -662,8 +696,19 @@ export default function TripDetailPage() {
                             <div className="space-y-1">
                               {booking.passengers.map((p) => (
                                 <div key={p.id} className="flex items-center gap-1 text-sm">
-                                  <User className="h-3 w-3" />
-                                  {p.name}
+                                  {p.boardingStatus === "BOARDED" ? (
+                                    <CheckCircle className="h-3 w-3 text-green-500" />
+                                  ) : p.boardingStatus === "NO_SHOW" ? (
+                                    <XCircle className="h-3 w-3 text-red-500" />
+                                  ) : (
+                                    <User className="h-3 w-3" />
+                                  )}
+                                  <span className={p.boardingStatus === "NO_SHOW" ? "line-through text-muted-foreground" : ""}>
+                                    {p.name}
+                                  </span>
+                                  {p.seatNumber && (
+                                    <span className="text-xs text-muted-foreground">(S{p.seatNumber})</span>
+                                  )}
                                 </div>
                               ))}
                             </div>
@@ -696,6 +741,15 @@ export default function TripDetailPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Boarding Checklist - shown for BOARDING and DEPARTED trips */}
+            {["BOARDING", "DEPARTED"].includes(trip.status) && (
+              <BoardingChecklist
+                tripId={trip.id}
+                tripStatus={trip.status}
+                onUpdate={fetchTrip}
+              />
+            )}
           </div>
 
           {/* Stats Sidebar */}
@@ -749,6 +803,48 @@ export default function TripDetailPage() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Boarding Stats (BOARDING/DEPARTED only) */}
+            {["BOARDING", "DEPARTED"].includes(trip.status) && (trip.noShowCount > 0 || totalPassengers > 0) && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Boarding
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {trip.noShowCount > 0 && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">No-Shows</span>
+                        <span className="font-bold text-red-500">{trip.noShowCount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Released Seats</span>
+                        <span className="font-bold text-blue-600">{trip.releasedSeats}</span>
+                      </div>
+                      {trip.replacementsSold > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Replacements Sold</span>
+                          <span className="font-bold text-green-600">{trip.replacementsSold}</span>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Replacement Ticket Card (DEPARTED + released seats) */}
+            {trip.status === "DEPARTED" && trip.releasedSeats > 0 && (
+              <ReplacementTicketCard
+                tripId={trip.id}
+                releasedSeats={trip.releasedSeats}
+                price={Number(trip.price)}
+                onUpdate={fetchTrip}
+              />
+            )}
 
             {/* Trip Status Control */}
             <Card>

@@ -327,6 +327,7 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
         bookedByPhone: booking.user.phone,
         bookingTime: booking.createdAt,
         isQuickTicket: booking.isQuickTicket,
+        isReplacement: booking.isReplacement,
         ticketCode: booking.tickets.find((t) => t.shortCode)?.shortCode || "N/A"
       })
     }
@@ -347,18 +348,29 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
 
     const isManualSale = p.isQuickTicket
 
+    const isReplacement = p.isReplacement
+    // Determine display status: boarding status takes priority for departed/completed trips
+    let displayStatus = isManualSale ? "MANUAL" : "PAID"
+    if (isReplacement) {
+      displayStatus = "REPLACEMENT"
+    } else if (p.boardingStatus === "BOARDED") {
+      displayStatus = "BOARDED"
+    } else if (p.boardingStatus === "NO_SHOW") {
+      displayStatus = "NO-SHOW"
+    }
+
     // For manual tickets, show empty cells (only seat number and "Manual Sale" status)
     const row = sheet.addRow([
       p.seatNumber || "N/A",
-      isManualSale ? "" : p.name,
-      isManualSale ? "" : p.phone,
+      isManualSale && !isReplacement ? "" : p.name,
+      isManualSale && !isReplacement ? "" : p.phone,
       isManualSale ? "" : (p.pickupLocation || "Standard"),
       isManualSale ? "" : (p.dropoffLocation || "Standard"),
-      isManualSale ? "Office Sale" : `${p.bookedBy} (Online)`,
+      isReplacement ? "Replacement Sale" : isManualSale ? "Office Sale" : `${p.bookedBy} (Online)`,
       isManualSale ? "" : bookingTime,
-      isManualSale ? "" : p.bookingId.slice(0, 8).toUpperCase(),
-      isManualSale ? "" : p.ticketCode,
-      isManualSale ? "MANUAL" : "PAID"
+      isManualSale && !isReplacement ? "" : p.bookingId.slice(0, 8).toUpperCase(),
+      isManualSale && !isReplacement ? "" : p.ticketCode,
+      displayStatus
     ])
 
     row.height = 20
@@ -381,9 +393,12 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
         cell.font = { bold: true, size: 11, color: { argb: colors.primary } }
       }
 
-      // Status column - green for PAID, yellow for MANUAL (now column 10 after removing National ID)
+      // Status column - color based on status (column 10)
       if (colNumber === 10) {
-        const statusColor = isManualSale ? colors.warning : colors.success
+        let statusColor = colors.success // default green for PAID/BOARDED
+        if (displayStatus === "MANUAL") statusColor = colors.warning
+        else if (displayStatus === "NO-SHOW") statusColor = "FFEF4444" // red
+        else if (displayStatus === "REPLACEMENT") statusColor = "FF3B82F6" // blue
         cell.font = { bold: true, color: { argb: statusColor } }
       }
     })
@@ -393,10 +408,17 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
 
   // Count online vs manual passengers (now both are in allPassengers array)
   const onlinePassengers = allPassengers.filter(p => !p.isQuickTicket)
-  const manualPassengers = allPassengers.filter(p => p.isQuickTicket)
+  const manualPassengers = allPassengers.filter(p => p.isQuickTicket && !p.isReplacement)
+  const replacementPassengers = allPassengers.filter(p => p.isReplacement)
   const onlineCount = onlinePassengers.length
   const manualCount = manualPassengers.length
-  const totalBooked = onlineCount + manualCount
+  const replacementCount = replacementPassengers.length
+  const totalBooked = onlineCount + manualCount + replacementCount
+
+  // Boarding stats
+  const boardedCount = allPassengers.filter(p => p.boardingStatus === "BOARDED").length
+  const noShowCount = allPassengers.filter(p => p.boardingStatus === "NO_SHOW").length
+  const pendingCount = allPassengers.filter(p => p.boardingStatus === "PENDING").length
 
   // ============================================
   // SUMMARY NOTES SECTION
@@ -421,6 +443,27 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   sheet.getCell(`E${currentRow}`).value = `${manualCount} tickets`
   sheet.getCell(`E${currentRow}`).font = { size: 11, color: { argb: colors.warning } }
   currentRow++
+
+  // Boarding status summary (only if there are boarding events)
+  if (boardedCount > 0 || noShowCount > 0) {
+    sheet.getCell(`A${currentRow}`).value = "Boarded:"
+    sheet.getCell(`A${currentRow}`).font = { bold: true }
+    sheet.getCell(`B${currentRow}`).value = `${boardedCount} passengers`
+    sheet.getCell(`B${currentRow}`).font = { size: 11, color: { argb: colors.success } }
+
+    sheet.getCell(`D${currentRow}`).value = "No-Show:"
+    sheet.getCell(`D${currentRow}`).font = { bold: true }
+    sheet.getCell(`E${currentRow}`).value = `${noShowCount} passengers`
+    sheet.getCell(`E${currentRow}`).font = { size: 11, color: { argb: "FFEF4444" } }
+
+    if (replacementCount > 0) {
+      sheet.getCell(`G${currentRow}`).value = "Replacement Sales:"
+      sheet.getCell(`G${currentRow}`).font = { bold: true }
+      sheet.getCell(`H${currentRow}`).value = `${replacementCount} tickets`
+      sheet.getCell(`H${currentRow}`).font = { size: 11, color: { argb: "FF3B82F6" } }
+    }
+    currentRow++
+  }
 
   sheet.mergeCells(`A${currentRow}:J${currentRow}`)
   sheet.getCell(`A${currentRow}`).value = "Note: Manual ticket passengers are shown with seat numbers only. Details can be collected at boarding."

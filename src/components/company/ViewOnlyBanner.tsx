@@ -11,7 +11,7 @@ export function ViewOnlyBanner({ tripStatus }: ViewOnlyBannerProps) {
   const getMessage = () => {
     switch (tripStatus) {
       case "DEPARTED":
-        return "Trip has departed. Only status updates to COMPLETED are allowed. All other details are locked.";
+        return "Trip has departed. Editing is locked, but you can manage boarding and sell replacement tickets for no-shows.";
       case "COMPLETED":
         return "Trip is completed. All details are read-only for record keeping and audit compliance.";
       case "CANCELLED":
