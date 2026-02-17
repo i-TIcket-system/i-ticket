@@ -101,8 +101,9 @@ export function BoardingChecklist({ tripId, tripStatus, onUpdate }: BoardingChec
 
   const clearSelection = () => setSelectedIds(new Set())
 
-  const markNoShow = async () => {
-    if (selectedIds.size === 0) {
+  const markNoShow = async (directIds?: string[]) => {
+    const ids = directIds || Array.from(selectedIds)
+    if (ids.length === 0) {
       toast.error("Select at least one passenger")
       return
     }
@@ -112,7 +113,7 @@ export function BoardingChecklist({ tripId, tripStatus, onUpdate }: BoardingChec
       const res = await fetch(`/api/company/trips/${tripId}/no-show`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passengerIds: Array.from(selectedIds) }),
+        body: JSON.stringify({ passengerIds: ids }),
       })
       const data = await res.json()
 
@@ -205,7 +206,7 @@ export function BoardingChecklist({ tripId, tripStatus, onUpdate }: BoardingChec
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={markNoShow}
+                  onClick={() => markNoShow()}
                   disabled={isMarking}
                 >
                   {isMarking ? (
@@ -275,10 +276,7 @@ export function BoardingChecklist({ tripId, tripStatus, onUpdate }: BoardingChec
                             variant="ghost"
                             size="sm"
                             className="text-red-600 hover:text-red-700 hover:bg-red-50 h-7 px-2 text-xs"
-                            onClick={() => {
-                              setSelectedIds(new Set([p.id]))
-                              markNoShow()
-                            }}
+                            onClick={() => markNoShow([p.id])}
                             disabled={isMarking}
                           >
                             <UserX className="h-3 w-3 mr-1" />
