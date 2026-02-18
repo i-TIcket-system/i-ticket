@@ -333,6 +333,8 @@ export function formatTripCard(
     busType?: string;
     hasWater?: boolean;
     hasFood?: boolean;
+    defaultPickup?: string | null;
+    defaultDropoff?: string | null;
   },
   lang: Language = "EN"
 ): string {
@@ -351,13 +353,25 @@ export function formatTripCard(
   // Build amenities string only if any amenities exist
   const amenitiesStr = (hasWater || hasFood) ? `\n${formatAmenities(hasWater, hasFood, lang)}` : "";
 
+  // Build terminal info
+  let terminalStr = "";
+  if (trip.defaultPickup || trip.defaultDropoff) {
+    if (lang === "AM") {
+      if (trip.defaultPickup) terminalStr += `\n📌 *መነሻ:* ${trip.defaultPickup}`;
+      if (trip.defaultDropoff) terminalStr += `\n📌 *መድረሻ:* ${trip.defaultDropoff}`;
+    } else {
+      if (trip.defaultPickup) terminalStr += `\n📌 *Pickup:* ${trip.defaultPickup}`;
+      if (trip.defaultDropoff) terminalStr += `\n📌 *Dropoff:* ${trip.defaultDropoff}`;
+    }
+  }
+
   if (lang === "AM") {
     return `🚌 *${companyName}*
 
 📍 ${formatRoute(trip.origin, trip.destination)}
 🕐 ${formatTime(trip.departureTime, lang)}${durationStr}
 💺 ${trip.availableSlots} ነጻ መቀመጫዎች አሉ!
-🚌 ${formatBusType(busType, lang)}${amenitiesStr}
+🚌 ${formatBusType(busType, lang)}${amenitiesStr}${terminalStr}
 
 💰 *ዋጋ:* ${formatCurrency(trip.price)} በአንድ ሰው`;
   }
@@ -367,7 +381,7 @@ export function formatTripCard(
 📍 ${formatRoute(trip.origin, trip.destination)}
 🕐 ${formatTime(trip.departureTime, lang)}${durationStr}
 💺 ${trip.availableSlots} seats available
-🚌 ${formatBusType(busType, lang)}${amenitiesStr}
+🚌 ${formatBusType(busType, lang)}${amenitiesStr}${terminalStr}
 
 💰 *Price:* ${formatCurrency(trip.price)} per person`;
 }

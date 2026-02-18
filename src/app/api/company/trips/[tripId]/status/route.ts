@@ -286,10 +286,10 @@ export async function PATCH(
           },
         })
 
-        // Only reset to AVAILABLE if no other active trips
+        // Only reset to AVAILABLE if no other active trips (respect ON_LEAVE)
         if (activeTrips === 0) {
           await prisma.user.update({
-            where: { id: staffId },
+            where: { id: staffId, staffStatus: { not: "ON_LEAVE" } },
             data: { staffStatus: "AVAILABLE" },
           })
         }

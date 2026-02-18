@@ -69,7 +69,10 @@ export default function OsmAndSetup({ tripId }: OsmAndSetupProps) {
       >
         <div className="flex items-center gap-2">
           <Smartphone className="h-4 w-4 text-teal-600" />
-          <span className="text-sm font-medium">Background Tracking (OsmAnd)</span>
+          <div>
+            <span className="text-sm font-medium">Background Tracking (OsmAnd)</span>
+            <span className="text-[10px] text-gray-400 ml-2">Works with screen off</span>
+          </div>
         </div>
         {expanded ? (
           <ChevronUp className="h-4 w-4 text-gray-400" />
@@ -80,10 +83,17 @@ export default function OsmAndSetup({ tripId }: OsmAndSetupProps) {
 
       {expanded && (
         <div className="px-3 pb-3 space-y-3 border-t border-gray-100 dark:border-gray-800 pt-3">
-          <p className="text-xs text-gray-500">
-            OsmAnd tracks GPS in the background even with screen off or browser closed.
-            Both web and OsmAnd tracking can run simultaneously.
-          </p>
+          <div className="bg-teal-50 dark:bg-teal-900/20 rounded-lg p-2.5">
+            <p className="text-xs font-medium text-teal-800 dark:text-teal-300 mb-1">
+              What is OsmAnd?
+            </p>
+            <p className="text-[11px] text-teal-700 dark:text-teal-400 leading-relaxed">
+              OsmAnd is a free GPS navigation app. When configured with your tracking URL, it sends
+              your location in the background — even when your screen is off, the browser is closed,
+              or you have no internet (it queues and sends later). This is the most reliable way to
+              track your bus location throughout the trip.
+            </p>
+          </div>
 
           {!trackingUrl ? (
             <Button
@@ -128,29 +138,43 @@ export default function OsmAndSetup({ tripId }: OsmAndSetupProps) {
           )}
 
           <div className="space-y-2 text-xs text-gray-600 dark:text-gray-400">
-            <p className="font-medium text-gray-700 dark:text-gray-300">Setup (one time):</p>
-            <ol className="list-decimal list-inside space-y-1.5 pl-1">
-              <li>
-                Install{" "}
-                <a
-                  href="https://play.google.com/store/apps/details?id=net.osmand"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-teal-600 inline-flex items-center gap-0.5"
-                >
-                  OsmAnd <ExternalLink className="h-2.5 w-2.5" />
-                </a>
-                {" "}from Play Store or F-Droid
-              </li>
-              <li>
-                In OsmAnd: Menu &rarr; Plugins &rarr; Trip recording &rarr; Online tracking
-              </li>
-              <li>
-                Paste the URL above, set interval to <strong>10 seconds</strong>, and enable
-              </li>
-            </ol>
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-              Download Ethiopia offline map (~150MB) for navigation without internet.
+            <p className="font-medium text-gray-700 dark:text-gray-300">Setup Instructions:</p>
+            <div className="space-y-2.5 pl-1">
+              <div className="flex gap-2">
+                <span className="flex items-center justify-center h-5 w-5 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-[10px] font-bold shrink-0">1</span>
+                <p>
+                  Install{" "}
+                  <a
+                    href="https://play.google.com/store/apps/details?id=net.osmand"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-teal-600 inline-flex items-center gap-0.5 font-medium"
+                  >
+                    OsmAnd <ExternalLink className="h-2.5 w-2.5" />
+                  </a>
+                  {" "}from Google Play Store (free version works)
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <span className="flex items-center justify-center h-5 w-5 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-[10px] font-bold shrink-0">2</span>
+                <p>Click <strong>Generate Tracking URL</strong> above and copy it</p>
+              </div>
+              <div className="flex gap-2">
+                <span className="flex items-center justify-center h-5 w-5 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-[10px] font-bold shrink-0">3</span>
+                <p>In OsmAnd: <strong>Menu → Plugins → Trip recording → Online tracking</strong></p>
+              </div>
+              <div className="flex gap-2">
+                <span className="flex items-center justify-center h-5 w-5 rounded-full bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 text-[10px] font-bold shrink-0">4</span>
+                <p>Paste the URL, set interval to <strong>10 seconds</strong> (recommended), and enable tracking</p>
+              </div>
+              <div className="flex gap-2">
+                <span className="flex items-center justify-center h-5 w-5 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-[10px] font-bold shrink-0">5</span>
+                <p><strong>Test:</strong> After setup, check the fleet tracking page to verify your position appears on the map</p>
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-2 border-t border-gray-100 dark:border-gray-800 pt-2">
+              Tip: Download the Ethiopia offline map (~150MB) in OsmAnd for navigation without internet.
+              Both web GPS and OsmAnd can run at the same time.
             </p>
           </div>
         </div>

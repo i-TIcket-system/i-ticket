@@ -75,6 +75,8 @@ interface Trip {
   availableSlots: number
   hasWater: boolean
   hasFood: boolean
+  defaultPickup: string | null
+  defaultDropoff: string | null
   company: {
     id: string
     name: string
@@ -269,9 +271,25 @@ export default function BookingPage() {
 
   const addPassenger = () => {
     if (passengers.length < 5 && trip && passengers.length < trip.availableSlots) {
-      setPassengers([...passengers, { ...emptyPassenger }])
+      setPassengers([...passengers, {
+        ...emptyPassenger,
+        pickupLocation: trip.defaultPickup || "",
+        dropoffLocation: trip.defaultDropoff || "",
+      }])
     }
   }
+
+  // Pre-fill first passenger pickup/dropoff when trip loads with defaults
+  useEffect(() => {
+    if (trip?.defaultPickup || trip?.defaultDropoff) {
+      setPassengers(prev => prev.map(p => ({
+        ...p,
+        pickupLocation: p.pickupLocation || trip.defaultPickup || "",
+        dropoffLocation: p.dropoffLocation || trip.defaultDropoff || "",
+      })))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trip?.defaultPickup, trip?.defaultDropoff])
 
   const confirmRemovePassenger = () => {
     if (passengerToRemove !== null && passengers.length > 1) {
@@ -510,6 +528,29 @@ export default function BookingPage() {
                   </div>
                 )}
 
+                {(trip.defaultPickup || trip.defaultDropoff) && (
+                  <div className="mt-4 pt-4 border-t p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                    <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 mb-2">
+                      <MapPin className="h-4 w-4" />
+                      <span className="text-sm font-semibold">Standard Terminals</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                      {trip.defaultPickup && (
+                        <div>
+                          <span className="text-muted-foreground">Boarding: </span>
+                          <span className="font-medium">{trip.defaultPickup}</span>
+                        </div>
+                      )}
+                      {trip.defaultDropoff && (
+                        <div>
+                          <span className="text-muted-foreground">Alighting: </span>
+                          <span className="font-medium">{trip.defaultDropoff}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {(trip.hasWater || trip.hasFood) && (
                   <div className={`flex items-center gap-4 mt-4 pt-4 ${!trip.route ? 'border-t' : ''}`}>
                     <span className="text-sm text-muted-foreground">Amenities:</span>
@@ -710,12 +751,17 @@ export default function BookingPage() {
                       )}
 
                       <div className="space-y-2">
-                        <Label>Pickup Location (Optional)</Label>
+                        <Label>
+                          Pickup Location{" "}
+                          {trip.defaultPickup
+                            ? <span className="text-emerald-600 font-normal">(Standard: {trip.defaultPickup})</span>
+                            : <span className="text-muted-foreground font-normal">(Optional)</span>}
+                        </Label>
                         <RouteStopCombobox
                           value={passenger.pickupLocation || ""}
                           onChange={(v) => updatePassenger(index, "pickupLocation", v)}
                           routeStops={routeStops}
-                          placeholder="e.g., Meskel Square, Bole Airport"
+                          placeholder={trip.defaultPickup || "e.g., Meskel Square, Bole Airport"}
                           onOpenMap={() => setMapModal({ open: true, passengerIndex: index, field: "pickupLocation" })}
                         />
                         <p className="text-xs text-muted-foreground">
@@ -724,12 +770,17 @@ export default function BookingPage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label>Dropoff Location (Optional)</Label>
+                        <Label>
+                          Dropoff Location{" "}
+                          {trip.defaultDropoff
+                            ? <span className="text-emerald-600 font-normal">(Standard: {trip.defaultDropoff})</span>
+                            : <span className="text-muted-foreground font-normal">(Optional)</span>}
+                        </Label>
                         <RouteStopCombobox
                           value={passenger.dropoffLocation || ""}
                           onChange={(v) => updatePassenger(index, "dropoffLocation", v)}
                           routeStops={routeStops}
-                          placeholder="e.g., City Center, Bus Station"
+                          placeholder={trip.defaultDropoff || "e.g., City Center, Bus Station"}
                           onOpenMap={() => setMapModal({ open: true, passengerIndex: index, field: "dropoffLocation" })}
                         />
                         <p className="text-xs text-muted-foreground">

@@ -140,6 +140,36 @@ function getNotificationUrl(
     return null
   }
 
+  // Manifest auto-generation notifications
+  if (type === "MANIFEST_AUTO_GENERATED" && tripId) {
+    if (userRole === "COMPANY_ADMIN" && (!staffRole || staffRole === "ADMIN")) {
+      return `/company/trips/${tripId}`
+    }
+    if (userRole === "SUPER_ADMIN") return "/admin/trips"
+  }
+
+  // System alerts
+  if (type === "SYSTEM_ALERT") {
+    if (userRole === "SUPER_ADMIN") return "/admin/dashboard"
+    if (userRole === "COMPANY_ADMIN") return "/company/dashboard"
+  }
+
+  // Fallback: any notification with tripId routes to trip page
+  if (tripId) {
+    if (userRole === "COMPANY_ADMIN" && (!staffRole || staffRole === "ADMIN")) {
+      return `/company/trips/${tripId}`
+    }
+    if (userRole === "SUPER_ADMIN") {
+      return "/admin/trips"
+    }
+  }
+
+  // Fallback: any notification with bookingId
+  if (bookingId) {
+    if (userRole === "CUSTOMER") return `/tickets/${bookingId}`
+    if (userRole === "COMPANY_ADMIN") return "/company/trips"
+  }
+
   return null
 }
 

@@ -23,7 +23,7 @@ import {
   CalendarDays,
   FileText,
   Save,
-  Search
+  Search,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -66,6 +66,8 @@ export default function NewTripPage() {
     manualTicketerId: null as string | null,
     vehicleId: null as string | null,
     overrideStaffConflict: false,
+    defaultPickup: "",
+    defaultDropoff: "",
   })
   const [customOrigin, setCustomOrigin] = useState("")
   const [customDestination, setCustomDestination] = useState("")
@@ -107,6 +109,8 @@ export default function NewTripPage() {
     hasWater: boolean;
     hasFood: boolean;
     intermediateStops: string | null;
+    defaultPickup: string | null;
+    defaultDropoff: string | null;
     timesUsed: number;
   }>>([])
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>("")
@@ -260,6 +264,8 @@ export default function NewTripPage() {
       busType: template.busType,
       hasWater: template.hasWater,
       hasFood: template.hasFood,
+      defaultPickup: template.defaultPickup || "",
+      defaultDropoff: template.defaultDropoff || "",
     }))
 
     // Handle intermediate stops
@@ -308,6 +314,8 @@ export default function NewTripPage() {
           hasWater: formData.hasWater,
           hasFood: formData.hasFood,
           intermediateStops: intermediateStops.length > 0 ? JSON.stringify(intermediateStops) : null,
+          defaultPickup: formData.defaultPickup || null,
+          defaultDropoff: formData.defaultDropoff || null,
         }),
       })
 
@@ -443,6 +451,8 @@ export default function NewTripPage() {
             conductorId: formData.conductorId,
             manualTicketerId: formData.manualTicketerId,
             vehicleId: formData.vehicleId,
+            defaultPickup: formData.defaultPickup || null,
+            defaultDropoff: formData.defaultDropoff || null,
             createReturnTrips,
             returnDepartureTime: sameTimeForAll && createReturnTrips ? returnDepartureTime : undefined,
           }),
@@ -537,6 +547,8 @@ export default function NewTripPage() {
           conductorId: formData.conductorId,
           manualTicketerId: formData.manualTicketerId,
           vehicleId: formData.vehicleId,
+          defaultPickup: formData.defaultPickup || null,
+          defaultDropoff: formData.defaultDropoff || null,
           overrideStaffConflict: formData.overrideStaffConflict,
           overrideVehicleConflict: overrideVehicleConflict,
           vehicleOverrideReason: vehicleOverrideReason,
@@ -783,6 +795,39 @@ export default function NewTripPage() {
                     → {formData.destination === "__custom__" ? customDestination : formData.destination}
                   </p>
                 )}
+              </div>
+
+              {/* Default Pickup & Dropoff Terminals */}
+              <div className="space-y-3 p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+                  <MapPin className="h-4 w-4" />
+                  <Label className="text-sm font-semibold">Default Pickup & Dropoff Terminals</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Set standard boarding/alighting locations. These will be shown to passengers during booking and pre-fill their pickup/dropoff fields.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Pickup Terminal</Label>
+                    <Input
+                      name="defaultPickup"
+                      value={formData.defaultPickup}
+                      onChange={handleChange}
+                      placeholder='e.g., "Ayer Tena Jimma Ber Terminal"'
+                      maxLength={200}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Dropoff Terminal</Label>
+                    <Input
+                      name="defaultDropoff"
+                      value={formData.defaultDropoff}
+                      onChange={handleChange}
+                      placeholder='e.g., "Jimma Bus Station"'
+                      maxLength={200}
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* ═══════════════════════════════════════════════════════════

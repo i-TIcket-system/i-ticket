@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import TrackingStatus from "./TrackingStatus"
+import VehicleDetailPanel from "./VehicleDetailPanel"
 import type L from "leaflet"
 
 // Dynamic imports (no SSR)
@@ -73,6 +74,7 @@ export default function FleetMap() {
     typeof window !== "undefined" ? window.innerWidth >= 1024 : true
   )
   const [showFilters, setShowFilters] = useState(false)
+  const [selectedVehicle, setSelectedVehicle] = useState<FleetVehicle | null>(null)
 
   const fetchFleet = async (manual = false) => {
     if (manual) setRefreshing(true)
@@ -81,6 +83,12 @@ export default function FleetMap() {
       if (res.ok) {
         const result = await res.json()
         setData(result)
+        // Update selected vehicle with fresh data from poll
+        setSelectedVehicle(prev => {
+          if (!prev) return null
+          const updated = (result as FleetData).fleet.find((f: FleetVehicle) => f.tripId === prev.tripId)
+          return updated || null
+        })
         setError("")
       } else {
         setError("Failed to load fleet data")
@@ -152,6 +160,7 @@ export default function FleetMap() {
   const focusVehicle = useCallback((item: FleetVehicle) => {
     if (!item.position) return
     setFocusedTripId(item.tripId)
+    setSelectedVehicle(item)
     setFlyTo({
       position: [item.position.latitude, item.position.longitude],
       zoom: 14,
@@ -165,6 +174,7 @@ export default function FleetMap() {
   const fitAll = useCallback(() => {
     if (!mapRef.current || tracked.length === 0) return
     setFocusedTripId(null)
+    setSelectedVehicle(null)
 
     // Dynamic import to avoid SSR issues with L
     import("leaflet").then((L) => {
@@ -351,10 +361,10 @@ export default function FleetMap() {
       {/* Mobile: map fills remaining space with floating vehicle list overlay */}
       {/* Desktop: side-by-side layout */}
       <div className="flex-1 min-h-0 flex flex-col lg:flex-row lg:gap-4 lg:flex-none relative">
-        {/* Vehicle list panel — desktop sidebar */}
+        {/* Vehicle list panel — desktop sidebar (hidden when detail panel is shown) */}
         <div
           className={`hidden ${
-            showList ? "lg:block" : "lg:hidden"
+            showList && !selectedVehicle ? "lg:block" : "lg:hidden"
           } w-full lg:w-[320px] lg:shrink-0 max-h-[300px] lg:max-h-[600px] overflow-y-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900`}
         >
           <div className="p-3 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-[1]">
@@ -420,6 +430,19 @@ export default function FleetMap() {
           )}
         </div>
 
+        {/* Desktop vehicle detail panel */}
+        {selectedVehicle && (
+          <div className="hidden lg:block w-full lg:w-[320px] lg:shrink-0">
+            <VehicleDetailPanel
+              vehicle={selectedVehicle}
+              onClose={() => {
+                setSelectedVehicle(null)
+                setFocusedTripId(null)
+              }}
+            />
+          </div>
+        )}
+
         {/* Map container */}
         <div className="flex-1 min-h-0 lg:h-[600px] relative rounded-none lg:rounded-xl overflow-hidden border-0 lg:border border-gray-200 dark:border-gray-700 lg:shadow-sm">
           <TrackingMap
@@ -475,6 +498,19 @@ export default function FleetMap() {
               ) : null
             )}
           </TrackingMap>
+
+          {/* Mobile floating vehicle detail panel */}
+          {selectedVehicle && !showList && (
+            <div className="lg:hidden absolute bottom-0 left-0 right-0 z-[1001]">
+              <VehicleDetailPanel
+                vehicle={selectedVehicle}
+                onClose={() => {
+                  setSelectedVehicle(null)
+                  setFocusedTripId(null)
+                }}
+              />
+            </div>
+          )}
 
           {/* Mobile floating vehicle list overlay */}
           {showList && (

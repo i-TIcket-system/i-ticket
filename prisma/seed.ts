@@ -466,6 +466,7 @@ async function main() {
   const departureTimes = ["05:00", "06:30", "14:00", "21:00"]
 
   const trips = []
+  const usedStaffPerDay: Record<string, Set<string>> = {} // Track staff assignments per day
 
   for (let day = 0; day < 7; day++) {
     const date = new Date()
@@ -495,12 +496,15 @@ async function main() {
             v.busType === busTypeUpper
         )
 
-        // OPTIONAL: Find staff for this company
+        // OPTIONAL: Find staff for this company (avoid same-day conflicts)
+        const dateKey = date.toISOString().split("T")[0]
+        if (!usedStaffPerDay[dateKey]) usedStaffPerDay[dateKey] = new Set()
+
         const companyDrivers = staff.filter(
-          (s) => s.companyId === company.id && s.staffRole === "DRIVER"
+          (s) => s.companyId === company.id && s.staffRole === "DRIVER" && !usedStaffPerDay[dateKey].has(s.id)
         )
         const companyConductors = staff.filter(
-          (s) => s.companyId === company.id && s.staffRole === "CONDUCTOR"
+          (s) => s.companyId === company.id && s.staffRole === "CONDUCTOR" && !usedStaffPerDay[dateKey].has(s.id)
         )
 
         const totalSlots = busType === "luxury" ? 30 : 50
@@ -530,12 +534,12 @@ async function main() {
           vehicleId: suitableVehicle?.id || null, // OPTIONAL assignment
           driverId:
             companyDrivers.length > 0
-              ? companyDrivers[Math.floor(Math.random() * companyDrivers.length)].id
-              : null, // OPTIONAL assignment
+              ? (() => { const d = companyDrivers[0]; usedStaffPerDay[dateKey].add(d.id); return d.id; })()
+              : null, // OPTIONAL assignment (deduped per day)
           conductorId:
             companyConductors.length > 0
-              ? companyConductors[Math.floor(Math.random() * companyConductors.length)].id
-              : null, // OPTIONAL assignment
+              ? (() => { const c = companyConductors[0]; usedStaffPerDay[dateKey].add(c.id); return c.id; })()
+              : null, // OPTIONAL assignment (deduped per day)
           origin: route.origin,
           destination: route.destination,
           departureTime: departure,

@@ -16,6 +16,8 @@ const templateSchema = z.object({
   hasWater: z.boolean().default(false),
   hasFood: z.boolean().default(false),
   intermediateStops: z.string().optional().nullable(), // JSON array as string
+  defaultPickup: z.string().max(200).optional().nullable(),
+  defaultDropoff: z.string().max(200).optional().nullable(),
 })
 
 // GET /api/company/trip-templates - List all templates
@@ -111,6 +113,8 @@ export async function POST(request: NextRequest) {
         hasWater: validated.hasWater,
         hasFood: validated.hasFood,
         intermediateStops: validated.intermediateStops,
+        defaultPickup: validated.defaultPickup,
+        defaultDropoff: validated.defaultDropoff,
       },
     })
 

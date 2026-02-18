@@ -59,6 +59,8 @@ interface Trip {
   availableSlots: number
   hasWater: boolean
   hasFood: boolean
+  defaultPickup: string | null
+  defaultDropoff: string | null
   status: string // SCHEDULED, BOARDING, DEPARTED, COMPLETED, CANCELLED
   company: {
     id: string
@@ -605,6 +607,12 @@ function SearchContent() {
                           <Users className="h-3 w-3 text-green-500" />
                           <span className="text-green-600">{trip.availableSlots} seats left</span>
                         </div>
+                        {trip.defaultPickup && (
+                          <p className="mt-1.5 text-[11px] text-gray-500 flex items-center gap-1">
+                            <MapPin className="h-2.5 w-2.5 text-emerald-500 shrink-0" />
+                            Boarding: {trip.defaultPickup}
+                          </p>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
@@ -811,7 +819,7 @@ function SearchContent() {
                           </div>
 
                           {/* Amenities */}
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 flex-wrap">
                             {trip.hasWater && (
                               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Droplets className="h-3 w-3" /> Water
@@ -820,6 +828,11 @@ function SearchContent() {
                             {trip.hasFood && (
                               <span className="flex items-center gap-1 text-xs text-muted-foreground">
                                 <Coffee className="h-3 w-3" /> Snacks
+                              </span>
+                            )}
+                            {trip.defaultPickup && (
+                              <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400">
+                                <MapPin className="h-3 w-3" /> Boards at: {trip.defaultPickup}
                               </span>
                             )}
                           </div>
@@ -837,6 +850,13 @@ function SearchContent() {
                               <div className="text-xs text-gray-600 dark:text-gray-300 font-medium">per person</div>
                             </div>
                           </div>
+
+                          {trip.defaultPickup && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
+                              <MapPin className="h-3 w-3 text-emerald-500 shrink-0" />
+                              Boarding: {trip.defaultPickup}
+                            </p>
+                          )}
 
                           <div className="flex flex-col items-end gap-3">
                             <div className={`glass-subtle rounded-lg px-3 py-2 flex items-center gap-2 border border-white/20 ${getSlotsColor(trip.availableSlots, trip.totalSlots)}`}>

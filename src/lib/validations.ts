@@ -56,6 +56,8 @@ export const createTripSchema = z.object({
   conductorId: z.string().min(1, "Conductor is required"),
   manualTicketerId: z.string().optional().nullable(),
   vehicleId: z.string().min(1, "Vehicle is required"),
+  defaultPickup: z.string().max(200).optional().nullable(),
+  defaultDropoff: z.string().max(200).optional().nullable(),
   overrideStaffConflict: z.boolean().optional().default(false),
   overrideVehicleConflict: z.boolean().optional().default(false),
   vehicleOverrideReason: z.string().optional(),

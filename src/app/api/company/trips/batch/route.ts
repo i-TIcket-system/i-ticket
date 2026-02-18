@@ -34,6 +34,8 @@ const baseBatchTripSchema = z.object({
   hasWater: z.boolean().default(false),
   hasFood: z.boolean().default(false),
   intermediateStops: z.string().optional().nullable(),
+  defaultPickup: z.string().max(200).optional().nullable(),
+  defaultDropoff: z.string().max(200).optional().nullable(),
   driverId: z.string(),
   conductorId: z.string(),
   manualTicketerId: z.string().optional().nullable(),
@@ -257,6 +259,8 @@ export async function POST(request: NextRequest) {
             conductorId: validated.conductorId,
             manualTicketerId: validated.manualTicketerId,
             vehicleId: validated.vehicleId,
+            defaultPickup: validated.defaultPickup,
+            defaultDropoff: validated.defaultDropoff,
           },
         })
         createdTrips.push(trip)
@@ -291,6 +295,8 @@ export async function POST(request: NextRequest) {
               conductorId: validated.conductorId,
               manualTicketerId: validated.manualTicketerId,
               vehicleId: validated.vehicleId,
+              defaultPickup: validated.defaultDropoff,  // Swap for return trip
+              defaultDropoff: validated.defaultPickup,  // Swap for return trip
             },
           })
           createdTrips.push(trip)

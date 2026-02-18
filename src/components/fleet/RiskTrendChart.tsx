@@ -77,7 +77,7 @@ export function RiskTrendChart({ trends }: RiskTrendChartProps) {
             borderRadius: "8px",
             padding: "8px 12px",
           }}
-          labelFormatter={formatDate}
+          labelFormatter={(label) => formatDate(String(label))}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           formatter={(value: any) => [`${value}/100`, ""]}
         />

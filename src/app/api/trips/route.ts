@@ -100,6 +100,8 @@ export async function GET(request: NextRequest) {
         availableSlots: true,
         hasWater: true,
         hasFood: true,
+        defaultPickup: true,
+        defaultDropoff: true,
         status: true, // Add status for sorting
         company: {
           select: {
@@ -168,85 +170,16 @@ export async function POST(request: NextRequest) {
 
     // Check for staff conflicts (24-hour gap) unless overridden
     const departureTime = new Date(data.departureTime)
-    const staffConflicts = []
-
-    // Check driver conflicts
-    if (data.driverId) {
-      const driverConflict = await prisma.trip.findFirst({
-        where: {
-          driverId: data.driverId,
-          isActive: true,
-          departureTime: {
-            gte: new Date(departureTime.getTime() - 24 * 60 * 60 * 1000),
-            lte: new Date(departureTime.getTime() + 24 * 60 * 60 * 1000)
-          }
-        },
-        select: {
-          id: true,
-          origin: true,
-          destination: true,
-          departureTime: true,
-          driver: { select: { name: true } }
-        }
-      })
-
-      if (driverConflict) {
-        staffConflicts.push(`Driver ${driverConflict.driver?.name} has a trip within 24 hours: ${driverConflict.origin} → ${driverConflict.destination} on ${driverConflict.departureTime.toLocaleString()}`)
-      }
-    }
-
-    // Check conductor conflicts
-    if (data.conductorId) {
-      const conductorConflict = await prisma.trip.findFirst({
-        where: {
-          conductorId: data.conductorId,
-          isActive: true,
-          departureTime: {
-            gte: new Date(departureTime.getTime() - 24 * 60 * 60 * 1000),
-            lte: new Date(departureTime.getTime() + 24 * 60 * 60 * 1000)
-          }
-        },
-        select: {
-          id: true,
-          origin: true,
-          destination: true,
-          departureTime: true,
-          conductor: { select: { name: true } }
-        }
-      })
-
-      if (conductorConflict) {
-        staffConflicts.push(`Conductor ${conductorConflict.conductor?.name} has a trip within 24 hours: ${conductorConflict.origin} → ${conductorConflict.destination} on ${conductorConflict.departureTime.toLocaleString()}`)
-      }
-    }
-
-    // Check manual ticketer conflicts
-    if (data.manualTicketerId) {
-      const ticketerConflict = await prisma.trip.findFirst({
-        where: {
-          manualTicketerId: data.manualTicketerId,
-          isActive: true,
-          departureTime: {
-            gte: new Date(departureTime.getTime() - 24 * 60 * 60 * 1000),
-            lte: new Date(departureTime.getTime() + 24 * 60 * 60 * 1000)
-          }
-        },
-        select: {
-          id: true,
-          origin: true,
-          destination: true,
-          departureTime: true,
-          manualTicketer: { select: { name: true } }
-        }
-      })
-
-      if (ticketerConflict) {
-        staffConflicts.push(`Manual Ticketer ${ticketerConflict.manualTicketer?.name} has a trip within 24 hours: ${ticketerConflict.origin} → ${ticketerConflict.destination} on ${ticketerConflict.departureTime.toLocaleString()}`)
-      }
-    }
+    const { checkStaffConflicts } = await import("@/lib/trip-conflict-check")
+    const { conflicts: staffConflicts, hasConflicts } = await checkStaffConflicts(
+      departureTime,
+      data.driverId,
+      data.conductorId,
+      data.manualTicketerId
+    )
 
     // If conflicts exist and not overridden, return warning
-    if (staffConflicts.length > 0 && !data.overrideStaffConflict) {
+    if (hasConflicts && !data.overrideStaffConflict) {
       return NextResponse.json(
         {
           error: "Staff scheduling conflict detected",
@@ -373,6 +306,8 @@ export async function POST(request: NextRequest) {
         conductorId: data.conductorId || null,
         manualTicketerId: data.manualTicketerId || null,
         vehicleId: data.vehicleId || null,
+        defaultPickup: data.defaultPickup || null,
+        defaultDropoff: data.defaultDropoff || null,
       },
       include: {
         company: true,

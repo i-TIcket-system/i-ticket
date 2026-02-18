@@ -206,7 +206,7 @@ export default function AdminLayout({
             </div>
 
             {/* Navigation */}
-            <nav className={cn("flex-1 p-4 space-y-1.5", collapsed && "p-2")}>
+            <nav className={cn("flex-1 overflow-y-auto p-4 space-y-1.5", collapsed && "p-2")}>
               {sidebarItems.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
                 // FEATURE 4: Show unread badge for company support
