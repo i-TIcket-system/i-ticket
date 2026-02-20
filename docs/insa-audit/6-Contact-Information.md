@@ -13,10 +13,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Organization Name** | _(TO BE FILLED)_ |
+| **Organization Name** | i-Ticket IT Solution PLC |
 | **Business Type** | Online Bus Ticketing Platform |
 | **Website** | https://i-ticket.et |
-| **Office Address** | _(TO BE FILLED)_ |
+| **Office Address** | Lideta, Addis Ababa |
 | **City** | Addis Ababa |
 | **Country** | Ethiopia |
 
@@ -26,10 +26,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Full Name** | _(TO BE FILLED)_ |
-| **Title/Position** | _(TO BE FILLED)_ |
-| **Phone** | _(TO BE FILLED)_ |
-| **Email** | _(TO BE FILLED)_ |
+| **Full Name** | Abel Assefa |
+| **Title/Position** | General Manager |
+| **Phone** | +251 911 550 001 |
+| **Email** | abelanbesaw@gmail.com |
 
 ---
 
@@ -37,10 +37,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Full Name** | _(TO BE FILLED)_ |
-| **Title/Position** | _(TO BE FILLED)_ |
-| **Phone** | _(TO BE FILLED)_ |
-| **Email** | _(TO BE FILLED)_ |
+| **Full Name** | Solomon Gemechu |
+| **Title/Position** | CFO |
+| **Phone** | +251 911 178 577 |
+| **Email** | soleballer@gmail.com |
 
 ---
 
@@ -48,10 +48,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Full Name** | _(TO BE FILLED)_ |
-| **Title/Position** | _(TO BE FILLED)_ |
-| **Phone** | _(TO BE FILLED)_ |
-| **Email** | _(TO BE FILLED)_ |
+| **Full Name** | Abel Assefa |
+| **Title/Position** | General Manager |
+| **Phone** | +251 911 550 001 |
+| **Email** | abelanbesaw@gmail.com |
 
 ---
 
@@ -59,10 +59,10 @@
 
 | Field | Value |
 |-------|-------|
-| **Full Name** | _(TO BE FILLED)_ |
-| **Title/Position** | _(TO BE FILLED)_ |
-| **Phone** | _(TO BE FILLED)_ |
-| **Email** | _(TO BE FILLED)_ |
+| **Full Name** | Solomon Gemechu |
+| **Title/Position** | CFO |
+| **Phone** | +251 911 178 577 |
+| **Email** | soleballer@gmail.com |
 
 ---
 
@@ -70,13 +70,13 @@
 
 | Field | Value |
 |-------|-------|
-| **Support Phone** | +251 911 550 001 |
-| **Support Email** | _(TO BE FILLED)_ |
+| **Support Phone** | +251 911 550 001 / +251 911 178 577 |
+| **Support Email** | info@i-ticket.et |
 | **Website** | https://i-ticket.et/contact |
 
 ---
 
-**Note**: Please fill in all fields marked _(TO BE FILLED)_ before submitting to INSA.
+**Note**: All contact information has been verified and is current as of February 2026.
 
 ---
 
