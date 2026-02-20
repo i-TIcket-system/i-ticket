@@ -269,6 +269,25 @@ model TelegramSession {
 - [x] ~~Fleet map UX overhaul (search, filters, fit-all)~~ DONE (v2.13.0)
 - [x] ~~Admin bookings with filters/pagination~~ DONE (v2.13.0)
 - [x] ~~No-show management + seat re-sale~~ DONE (v2.14.0)
+- [x] ~~INSA audit documentation (17 docs + branded PDF)~~ DONE
+
+---
+
+## DOCUMENTS & LETTERS
+
+### INSA Security Audit Documentation
+- **17 markdown documents** in `docs/insa-audit/` (sections 4.2.1a through 6)
+- **Combined PDF**: `docs/insa-audit/pdf/i-Ticket-INSA-Audit-Documentation.pdf` (183 pages, 3.1 MB)
+  - Cover page + 17 section divider pages + 17 document sections
+  - i-Ticket branded: teal theme, logo header/footer, watermark, page numbers
+- **Scripts**: `scripts/convert-insa-docs.js` (md→pdf), `scripts/add-dividers.js` (cover + dividers + assembly)
+- **Cover page**: `docs/insa-audit/pdf/cover-page.html` (editable HTML)
+
+### Business Letters
+- **Letterhead template**: `docs/design-assets/letterhead.html`
+- **ODAA Collaboration**: `docs/letters/odaa-collaboration-letter.html` → `docs/letters/ODAA-Collaboration-Proposal.pdf`
+  - Ref: 002/2018, to ODAA Integrated Transport S.C.
+  - Signed by Abel Assefa, General Manager
 
 ---
 

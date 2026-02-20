@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>i-Ticket — Letterhead</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap');
+
+  :root {
+    --teal-dark: #0d4f5c;
+    --teal-brand: #1A9A8C;
+    --teal-mid: #0e9494;
+    --teal-light: #20c4c4;
+    --teal-pale: #e8f7f6;
+    --ink: #1a2a2d;
+    --ink-light: #4a6a6e;
+    --ink-muted: #7a9a9e;
+    --paper: #ffffff;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 12mm 14mm;
+  }
+
+  *, *::before, *::after {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
+
+  html, body {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    background: #dfe1e3;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--ink);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ===== PAGE ===== */
+  .page {
+    position: relative;
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto;
+    background: var(--paper);
+    box-shadow: 0 4px 48px rgba(0,0,0,0.14);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== LEFT ACCENT STRIPES — dark only ===== */
+  .left-stripes {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 42%;
+    z-index: 5;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .left-stripes .stripe {
+    width: 7px;
+    height: 100%;
+    background: var(--teal-dark);
+  }
+
+  /* ===== TOP-LEFT ANGULAR DARK HEADER BLOCK ===== */
+  .header-block {
+    position: relative;
+    width: 100%;
+    height: 100px;
+    z-index: 10;
+  }
+
+  /* Dark angular shape — diagonal on the RIGHT side */
+  .header-block-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 380px;
+    height: 100%;
+    background: var(--teal-dark);
+    clip-path: polygon(0% 0%, 100% 0%, 82% 100%, 0% 100%);
+  }
+
+  .header-block-content {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 0 0 20mm;
+    gap: 14px;
+  }
+
+  .header-logo svg {
+    display: block;
+  }
+
+  .header-brand-text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header-brand-name {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 32px;
+    font-weight: 400;
+    color: #ffffff;
+    letter-spacing: -0.3px;
+    line-height: 1;
+  }
+
+  .header-brand-name span {
+    color: var(--teal-light);
+  }
+
+  .header-brand-tagline {
+    font-size: 7.5px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 2.8px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  /* ===== WATERMARK — i-Ticket logo ===== */
+  .watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 280px;
+    height: 280px;
+    opacity: 0.035;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .watermark svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ===== MAIN CONTENT AREA ===== */
+  .content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 14mm 20mm 10mm 20mm;
+  }
+
+  /* ===== TO / DATE ROW ===== */
+  .to-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10mm;
+  }
+
+  .to-section {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .to-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--teal-brand);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .to-name {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--ink);
+    line-height: 1.6;
+    margin-bottom: 2px;
+  }
+
+  .to-detail {
+    font-size: 10.5px;
+    color: var(--ink-light);
+    line-height: 1.7;
+  }
+
+  .date-ref-section {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 2px;
+  }
+
+  .date-value {
+    font-size: 10.5px;
+    color: var(--ink-light);
+    font-weight: 400;
+  }
+
+  .ref-number {
+    font-size: 10.5px;
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+
+  .ref-label {
+    color: var(--ink-muted);
+    font-weight: 400;
+  }
+
+  /* ===== SALUTATION ===== */
+  .salutation {
+    font-size: 11px;
+    color: var(--ink);
+    margin-bottom: 6mm;
+  }
+
+  /* ===== LETTER BODY ===== */
+  .letter-body {
+    flex: 1;
+    font-size: 11px;
+    line-height: 1.85;
+    color: var(--ink);
+  }
+
+  .letter-body p {
+    margin-bottom: 14px;
+    text-align: justify;
+    hyphens: auto;
+  }
+
+  .letter-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* ===== SIGNATURE — right-aligned ===== */
+  .signature-block {
+    margin-top: 14mm;
+    margin-bottom: 10mm;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    padding-right: 6mm;
+  }
+
+  .sig-handwriting {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-style: italic;
+    font-size: 28px;
+    color: var(--teal-dark);
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+
+  .sig-name {
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--ink);
+    margin-bottom: 1px;
+  }
+
+  .sig-title {
+    font-size: 9.5px;
+    color: var(--ink-light);
+  }
+
+  /* ===== FOOTER ===== */
+  .footer-wrapper {
+    margin-top: auto;
+  }
+
+  /* Thin teal accent stripe above footer */
+  .footer-accent {
+    height: 3px;
+    background: var(--teal-brand);
+    margin: 0 14mm;
+  }
+
+  /* Dark footer bar — inset from page edges for print safety */
+  .footer-bar {
+    background: var(--teal-dark);
+    margin: 0 14mm 12mm 14mm;
+    padding: 11px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0 0 4px 4px;
+  }
+
+  .footer-col {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .footer-col:nth-child(2) {
+    justify-content: center;
+  }
+
+  .footer-col:nth-child(3) {
+    justify-content: flex-end;
+  }
+
+  .footer-col svg {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+  }
+
+  .footer-col-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .footer-col-text span {
+    font-size: 7.5px;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.2px;
+    line-height: 1.5;
+  }
+
+  /* ── Placeholder styling ── */
+  .placeholder {
+    color: var(--ink-muted);
+    border-bottom: 1px dotted var(--ink-muted);
+    font-style: italic;
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    html, body { width: auto; min-height: auto; background: white; }
+    .page { box-shadow: none; width: auto; min-height: auto; }
+    .header-block { margin-top: 0; }
+  }
+
+  @media screen {
+    body { padding: 24px 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Left accent stripes — dark only -->
+  <div class="left-stripes">
+    <div class="stripe"></div>
+    <div class="stripe"></div>
+  </div>
+
+  <!-- Top-left angular dark header block -->
+  <div class="header-block">
+    <div class="header-block-bg"></div>
+    <div class="header-block-content">
+      <div class="header-logo">
+        <svg width="50" height="50" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="96" y="48" width="320" height="416" rx="64" ry="64" stroke="#1A9A8C" stroke-width="48" fill="none"/>
+          <rect x="192" y="336" width="128" height="64" rx="32" ry="32" fill="#1A9A8C"/>
+        </svg>
+      </div>
+      <div class="header-brand-text">
+        <div class="header-brand-name"><span>i</span>-Ticket</div>
+        <div class="header-brand-tagline">Your Journey, Simplified</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Center watermark — i-Ticket logo -->
+  <div class="watermark">
+    <svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="96" y="48" width="320" height="416" rx="64" ry="64" stroke="#1A9A8C" stroke-width="48" fill="none"/>
+      <rect x="192" y="336" width="128" height="64" rx="32" ry="32" fill="#1A9A8C"/>
+    </svg>
+  </div>
+
+  <!-- Main content -->
+  <div class="content">
+
+    <!-- TO / Date + Ref row -->
+    <div class="to-row">
+      <div class="to-section">
+        <div class="to-label">To</div>
+        <div class="to-name"><span class="placeholder">[Recipient Name]</span></div>
+        <div class="to-detail"><span class="placeholder">[Title / Position]</span></div>
+        <div class="to-detail"><span class="placeholder">[Organization]</span></div>
+        <div class="to-detail"><span class="placeholder">[City, Country]</span></div>
+      </div>
+      <div class="date-ref-section">
+        <div class="date-value"><span class="placeholder">February 17, 2026</span></div>
+        <div class="ref-number"><span class="ref-label">Ref: </span><span class="placeholder">xxx/2018</span></div>
+      </div>
+    </div>
+
+    <!-- Salutation -->
+    <div class="salutation">
+      Dear <span class="placeholder">[Name]</span>,
+    </div>
+
+    <!-- Letter body -->
+    <div class="letter-body">
+      <p><span class="placeholder">[Opening paragraph — state the purpose of the letter. Introduce the subject matter and provide context for the correspondence. This area accommodates your formal business communication.]</span></p>
+      <p><span class="placeholder">[Body paragraph — elaborate on the details, terms, or proposal. Include relevant facts, figures, and supporting information that strengthen your message.]</span></p>
+      <p><span class="placeholder">[Additional paragraph — continue with further details, supporting evidence, or explanations as needed for your correspondence.]</span></p>
+      <p><span class="placeholder">[Closing paragraph — summarize key points, state the desired action or next steps, and express appreciation for the recipient's time and consideration.]</span></p>
+    </div>
+
+    <!-- Signature — right-aligned -->
+    <div class="signature-block">
+      <div class="sig-handwriting"><span class="placeholder">Signature</span></div>
+      <div class="sig-name"><span class="placeholder">[Full Name]</span></div>
+      <div class="sig-title"><span class="placeholder">[Managing Director]</span></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer-wrapper">
+    <div class="footer-accent"></div>
+    <div class="footer-bar">
+
+      <!-- Phone + Email column -->
+      <div class="footer-col">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+        </svg>
+        <div class="footer-col-text">
+          <span>+251 911 550 001</span>
+          <span>info@i-ticket.et</span>
+        </div>
+      </div>
+
+      <!-- Website column -->
+      <div class="footer-col">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+        </svg>
+        <div class="footer-col-text">
+          <span>www.i-ticket.et</span>
+        </div>
+      </div>
+
+      <!-- Address column -->
+      <div class="footer-col">
+        <svg viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+          <circle cx="12" cy="10" r="3"/>
+        </svg>
+        <div class="footer-col-text">
+          <span>Addis Ababa, Ethiopia</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
