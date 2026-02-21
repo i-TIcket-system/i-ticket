@@ -4,6 +4,22 @@
 
 ---
 
+## v2.14.5 - Feb 21, 2026
+
+### Feature — QR Code Scanner on Conductor Verify Page
+
+**Camera QR scanning added to `/staff/verify`**
+- Added live camera QR scanner as the default mode on the conductor ticket verify page
+- Conductor can now point their phone camera at a passenger's QR code to scan instantly (no manual typing)
+- Scan mode uses `jsqr` via `requestAnimationFrame` to process video frames — auto-detects QR codes containing `https://i-ticket.et/verify/{shortCode}` URLs
+- Falls back gracefully: error message + "Try Again" button if camera permission denied or no camera found
+- Invalid ticket: shows red error screen for 3 seconds, then automatically resumes scanning
+- Two-tab UI: **Scan QR Code** (default, camera) / **Enter Code** (manual 6-char input)
+- Full boarding confirmation flow unchanged: valid scan → "Valid Ticket" screen → "Confirm Boarding" → PATCH API → "Boarding Confirmed" → "Next Passenger" resumes camera
+- Installed `jsqr@1.4.0` (pure JS QR decoder, no DOM dependencies, dynamically imported to keep main bundle small)
+
+---
+
 ## v2.14.4 - Feb 21, 2026
 
 ### Bug Fixes — Staff Status ON_TRIP on Driver Departure + Conductor Boarding Confirmation

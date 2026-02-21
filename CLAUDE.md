@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.14.4 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.14.5 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -291,9 +291,9 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.14.4)
+## RECENT UPDATES (v2.14.5)
 
-**Latest**: Staff status ON_TRIP on driver departure + conductor boarding confirmation
+**Latest**: QR code scanner on conductor verify page — live camera scanning via jsqr
 
 ## v2.14.4
 
