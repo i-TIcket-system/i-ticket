@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>i-Ticket — Letterhead Editor</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js" defer></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&family=Instrument+Serif:ital@0;1&display=swap');
+
+  :root {
+    --teal-dark: #0d4f5c;
+    --teal-brand: #1A9A8C;
+    --teal-mid: #0e9494;
+    --teal-light: #20c4c4;
+    --teal-pale: #e8f7f6;
+    --ink: #1a2a2d;
+    --ink-light: #4a6a6e;
+    --ink-muted: #7a9a9e;
+    --paper: #ffffff;
+    --sidebar-w: 380px;
+    --toolbar-h: 52px;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--ink);
+    background: #eef1f3;
+    overflow: hidden;
+  }
+
+  /* ═══════════════════════════════════════════
+     TOOLBAR
+     ═══════════════════════════════════════════ */
+  .toolbar {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: var(--toolbar-h);
+    background: var(--teal-dark);
+    display: flex; align-items: center;
+    padding: 0 20px; gap: 12px;
+    z-index: 1000;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+
+  .toolbar-brand {
+    display: flex; align-items: center; gap: 10px;
+    margin-right: auto;
+  }
+
+  .toolbar-brand svg { width: 30px; height: 30px; }
+
+  .toolbar-brand-name {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 22px; color: #fff; font-weight: 400;
+  }
+  .toolbar-brand-name span { color: var(--teal-light); }
+
+  .toolbar-divider {
+    width: 1px; height: 28px;
+    background: rgba(255,255,255,0.15);
+    margin: 0 4px;
+  }
+
+  .toolbar-title {
+    font-size: 13px; color: rgba(255,255,255,0.6);
+    font-weight: 400; letter-spacing: 0.3px;
+  }
+
+  .toolbar-spacer { flex: 1; }
+
+  .tb-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 7px 14px; border-radius: 6px;
+    font-size: 12px; font-weight: 500;
+    cursor: pointer; border: none;
+    transition: all 0.15s;
+    font-family: inherit;
+  }
+
+  .tb-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+  .tb-btn-ghost {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.85);
+  }
+  .tb-btn-ghost:hover { background: rgba(255,255,255,0.15); }
+
+  .tb-btn-primary {
+    background: var(--teal-brand);
+    color: #fff;
+  }
+  .tb-btn-primary:hover { background: #17b3a3; }
+
+  .tb-btn-outline {
+    background: transparent;
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .tb-btn-outline:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+  }
+
+  .tb-shortcut {
+    font-size: 10px; opacity: 0.5;
+    margin-left: 2px;
+  }
+
+  /* ═══════════════════════════════════════════
+     LAYOUT
+     ═══════════════════════════════════════════ */
+  .app {
+    display: flex;
+    height: calc(100vh - var(--toolbar-h));
+    margin-top: var(--toolbar-h);
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-width: var(--sidebar-w);
+    background: #fff;
+    border-right: 1px solid #e2e8f0;
+    overflow-y: auto;
+    padding: 20px;
+    transition: margin-left 0.3s;
+  }
+
+  [data-mode="preview"] .sidebar {
+    margin-left: calc(-1 * var(--sidebar-w));
+  }
+
+  .sidebar h3 {
+    font-size: 11px; font-weight: 600;
+    color: var(--teal-dark);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 18px 0 10px 0;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--teal-pale);
+  }
+
+  .sidebar h3:first-child { margin-top: 0; }
+
+  .form-row {
+    margin-bottom: 10px;
+  }
+
+  .form-row label {
+    display: block;
+    font-size: 11px; font-weight: 500;
+    color: var(--ink-light);
+    margin-bottom: 4px;
+  }
+
+  .form-row input[type="text"],
+  .form-row input[type="date"],
+  .form-row textarea,
+  .form-row select {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1px solid #d1d9e0;
+    border-radius: 5px;
+    font-size: 12.5px;
+    font-family: inherit;
+    color: var(--ink);
+    transition: border-color 0.15s, box-shadow 0.15s;
+    background: #fff;
+  }
+
+  .form-row input:focus,
+  .form-row textarea:focus,
+  .form-row select:focus {
+    outline: none;
+    border-color: var(--teal-brand);
+    box-shadow: 0 0 0 3px rgba(26,154,140,0.12);
+  }
+
+  .form-row textarea { resize: vertical; min-height: 60px; }
+
+  .form-row-inline {
+    display: flex; gap: 8px;
+  }
+
+  .form-row-inline .form-row { flex: 1; }
+
+  /* Recipient dropdown row */
+  .recipient-row {
+    display: flex; gap: 6px; align-items: flex-end;
+    margin-bottom: 10px;
+  }
+
+  .recipient-row select { flex: 1; }
+
+  .btn-sm {
+    display: inline-flex; align-items: center; justify-content: center;
+    padding: 6px 10px; border-radius: 5px;
+    font-size: 11px; font-weight: 500;
+    cursor: pointer; border: none;
+    font-family: inherit;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-teal { background: var(--teal-pale); color: var(--teal-dark); }
+  .btn-teal:hover { background: #d0efed; }
+
+  .btn-red { background: #fef2f2; color: #b91c1c; }
+  .btn-red:hover { background: #fde8e8; }
+
+  .btn-ghost-sm {
+    background: none; color: var(--ink-muted);
+    border: 1px solid #e2e8f0;
+  }
+  .btn-ghost-sm:hover { background: #f7f9fb; color: var(--ink); }
+
+  /* Signature preview */
+  .sig-preview {
+    margin-top: 6px;
+    position: relative;
+    display: inline-block;
+  }
+
+  .sig-preview img {
+    max-width: 180px; max-height: 60px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 4px;
+    background: #fafbfc;
+  }
+
+  .sig-preview .sig-remove {
+    position: absolute; top: -6px; right: -6px;
+    width: 18px; height: 18px;
+    background: #ef4444; color: #fff;
+    border: none; border-radius: 50%;
+    font-size: 11px; line-height: 1;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── Rich Text Editor ── */
+  .rte-toolbar {
+    display: flex; gap: 2px; flex-wrap: wrap;
+    padding: 5px 6px;
+    background: var(--teal-pale);
+    border: 1px solid #d1d9e0;
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+  }
+
+  .rte-btn {
+    width: 28px; height: 28px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: none; border-radius: 4px;
+    background: transparent;
+    color: var(--ink-light);
+    cursor: pointer;
+    font-size: 13px; font-weight: 600;
+    font-family: inherit;
+    transition: all 0.1s;
+  }
+
+  .rte-btn:hover { background: rgba(26,154,140,0.15); color: var(--teal-dark); }
+  .rte-btn.active { background: var(--teal-brand); color: #fff; }
+
+  .rte-sep {
+    width: 1px; height: 20px;
+    background: rgba(13,79,92,0.15);
+    margin: 4px 3px;
+  }
+
+  .rte-editor {
+    min-height: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px 12px;
+    border: 1px solid #d1d9e0;
+    border-radius: 0 0 5px 5px;
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: var(--ink);
+    outline: none;
+  }
+
+  .rte-editor:focus {
+    border-color: var(--teal-brand);
+    box-shadow: 0 0 0 3px rgba(26,154,140,0.12);
+  }
+
+  .rte-editor p { margin-bottom: 6px; }
+  .rte-editor ul, .rte-editor ol { margin: 4px 0 6px 18px; }
+  .rte-editor .highlight { color: var(--teal-brand); font-weight: 600; }
+
+  /* ── Preview Panel ── */
+  .preview-panel {
+    flex: 1;
+    overflow: auto;
+    background: #dfe1e3;
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .preview-scaler {
+    transform-origin: top center;
+  }
+
+  /* ═══════════════════════════════════════════
+     LETTER PREVIEW (from ODAA letter)
+     ═══════════════════════════════════════════ */
+  @page { size: A4 portrait; margin: 12mm 14mm; }
+
+  .page {
+    position: relative;
+    width: 210mm; min-height: 297mm;
+    background: var(--paper);
+    box-shadow: 0 4px 48px rgba(0,0,0,0.14);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .left-stripes {
+    position: absolute; bottom: 0; left: 0;
+    height: 42%; z-index: 5;
+    display: flex; gap: 4px;
+  }
+  .left-stripes .stripe {
+    width: 7px; height: 100%;
+    background: var(--teal-dark);
+  }
+
+  .header-block {
+    position: relative;
+    width: 100%; height: 82px;
+    z-index: 10;
+  }
+  .header-block-bg {
+    position: absolute; top: 0; left: 0;
+    width: 360px; height: 100%;
+    background: var(--teal-dark);
+    clip-path: polygon(0% 0%, 100% 0%, 82% 100%, 0% 100%);
+  }
+  .header-block-content {
+    position: relative; z-index: 2;
+    height: 100%;
+    display: flex; align-items: center;
+    padding: 0 0 0 20mm; gap: 14px;
+  }
+  .header-logo svg { display: block; }
+  .header-brand-text {
+    display: flex; flex-direction: column;
+  }
+  .lp-brand-name {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 28px; font-weight: 400;
+    color: #fff; letter-spacing: -0.3px; line-height: 1;
+  }
+  .lp-brand-name span { color: var(--teal-light); }
+  .lp-brand-tagline {
+    font-size: 7.5px; font-weight: 400;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 2.8px;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
+
+  .watermark {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 280px; height: 280px;
+    opacity: 0.035; z-index: 1;
+    pointer-events: none;
+  }
+  .watermark svg { width: 100%; height: 100%; }
+
+  .lp-content {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column;
+    flex: 1;
+    padding: 7mm 20mm 4mm 20mm;
+  }
+
+  .to-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 4mm;
+  }
+  .to-section { display: flex; flex-direction: column; }
+  .to-label {
+    font-size: 12px; font-weight: 700;
+    color: var(--teal-brand);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .to-name {
+    font-weight: 600; font-size: 12px;
+    color: var(--ink); line-height: 1.6;
+    margin-bottom: 2px;
+  }
+  .to-detail {
+    font-size: 10.5px;
+    color: var(--ink-light);
+    line-height: 1.7;
+  }
+  .date-ref-section {
+    text-align: right;
+    display: flex; flex-direction: column; gap: 6px;
+    padding-top: 2px;
+  }
+  .date-value {
+    font-size: 10.5px;
+    color: var(--ink-light);
+  }
+  .ref-number {
+    font-size: 10.5px;
+    color: var(--ink); font-weight: 500;
+    letter-spacing: 0.3px;
+  }
+  .ref-label { color: var(--ink-muted); font-weight: 400; }
+
+  .subject-line {
+    font-size: 11px; font-weight: 600;
+    color: var(--teal-dark);
+    margin-bottom: 4mm;
+    padding: 4px 0;
+    border-bottom: 1.5px solid var(--teal-pale);
+  }
+  .subject-line .label {
+    color: var(--ink-muted); font-weight: 400;
+    margin-right: 4px;
+  }
+
+  .lp-salutation {
+    font-size: 11px; color: var(--ink);
+    margin-bottom: 3mm;
+  }
+
+  .letter-body {
+    flex: 1;
+    font-size: 9.5px; line-height: 1.65;
+    color: var(--ink);
+  }
+  .letter-body p {
+    margin-bottom: 7px;
+    text-align: justify; hyphens: auto;
+  }
+  .letter-body p:last-child { margin-bottom: 0; }
+  .letter-body strong { color: var(--teal-dark); font-weight: 600; }
+  .letter-body .highlight { color: var(--teal-brand); font-weight: 600; }
+  .letter-body ul { margin: 4px 0 7px 18px; padding: 0; }
+  .letter-body ol { margin: 4px 0 7px 18px; padding: 0; }
+  .letter-body ul li, .letter-body ol li {
+    margin-bottom: 1px; line-height: 1.55; font-size: 9.5px;
+  }
+  .letter-body ul li::marker { color: var(--teal-brand); }
+
+  .signature-block {
+    margin-top: 5mm; margin-bottom: 3mm;
+    display: flex; flex-direction: column;
+    align-items: flex-end;
+    padding-right: 6mm;
+  }
+  .sig-image { max-width: 160px; max-height: 50px; margin-bottom: 4px; }
+  .sig-handwriting {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-style: italic; font-size: 28px;
+    color: var(--teal-dark); line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .sig-name {
+    font-weight: 600; font-size: 11px;
+    color: var(--ink); margin-bottom: 1px;
+  }
+  .sig-title {
+    font-size: 9.5px; color: var(--ink-light);
+  }
+  .sig-org {
+    font-size: 9px; color: var(--ink-muted);
+    margin-top: 2px;
+  }
+
+  .cc-block, .enc-block {
+    font-size: 9px; color: var(--ink-light);
+    margin-top: 3mm;
+    padding-top: 3mm;
+    border-top: 1px solid #eef2f4;
+  }
+  .cc-block strong, .enc-block strong {
+    color: var(--ink); font-weight: 600;
+    font-size: 9px;
+  }
+
+  .footer-wrapper { margin-top: auto; }
+  .footer-accent {
+    height: 3px; background: var(--teal-brand);
+    margin: 0 14mm;
+  }
+  .footer-bar {
+    background: var(--teal-dark);
+    margin: 0 14mm 10mm 14mm;
+    padding: 9px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 0 0 4px 4px;
+  }
+  .footer-col {
+    display: flex; align-items: center;
+    gap: 8px; flex: 1;
+  }
+  .footer-col:nth-child(2) { justify-content: center; }
+  .footer-col:nth-child(3) { justify-content: flex-end; }
+  .footer-col svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .footer-col-text {
+    display: flex; flex-direction: column; gap: 1px;
+  }
+  .footer-col-text span {
+    font-size: 7.5px;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.2px; line-height: 1.5;
+  }
+
+  /* ═══════════════════════════════════════════
+     TOAST
+     ═══════════════════════════════════════════ */
+  .toast-container {
+    position: fixed; bottom: 24px; right: 24px;
+    z-index: 9999;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 12.5px; font-weight: 500;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    animation: toast-in 0.3s ease-out;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast-success { background: var(--teal-dark); }
+  .toast-error { background: #b91c1c; }
+  .toast-info { background: #1e40af; }
+
+  @keyframes toast-in {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  /* ═══════════════════════════════════════════
+     MODAL
+     ═══════════════════════════════════════════ */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 2000;
+    display: none;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: #fff; border-radius: 12px;
+    width: 480px; max-width: 90vw;
+    max-height: 80vh;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    display: flex; flex-direction: column;
+  }
+
+  .modal-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex; justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-header h2 {
+    font-size: 15px; font-weight: 600;
+    color: var(--teal-dark);
+  }
+
+  .modal-close {
+    width: 28px; height: 28px;
+    border: none; background: none;
+    cursor: pointer; font-size: 18px;
+    color: var(--ink-muted);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .modal-close:hover { background: #f1f5f9; color: var(--ink); }
+
+  .modal-body {
+    padding: 16px 20px;
+    overflow-y: auto; flex: 1;
+  }
+
+  .draft-item {
+    display: flex; align-items: center;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+  .draft-item:hover { border-color: var(--teal-brand); background: var(--teal-pale); }
+
+  .draft-item-info { flex: 1; }
+  .draft-item-ref {
+    font-size: 13px; font-weight: 600;
+    color: var(--teal-dark);
+  }
+  .draft-item-to {
+    font-size: 11px; color: var(--ink-light);
+    margin-top: 2px;
+  }
+  .draft-item-date {
+    font-size: 10px; color: var(--ink-muted);
+  }
+
+  .draft-item-actions {
+    display: flex; gap: 4px;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ink-muted);
+    font-size: 13px;
+  }
+
+  /* ═══════════════════════════════════════════
+     PRINT
+     ═══════════════════════════════════════════ */
+  @media print {
+    .toolbar, .sidebar, .toast-container, .modal-overlay { display: none !important; }
+    .app { margin-top: 0; height: auto; }
+    .preview-panel { padding: 0; background: white; overflow: visible; }
+    .preview-scaler { transform: none !important; }
+    .page { box-shadow: none; width: auto; min-height: auto; }
+  }
+</style>
+</head>
+<body data-mode="edit">
+
+<!-- ═══════════════════ TOOLBAR ═══════════════════ -->
+<div class="toolbar">
+  <div class="toolbar-brand">
+    <svg width="30" height="30" viewBox="0 0 512 512" fill="none">
+      <rect x="96" y="48" width="320" height="416" rx="64" ry="64" stroke="#1A9A8C" stroke-width="48" fill="none"/>
+      <rect x="192" y="336" width="128" height="64" rx="32" ry="32" fill="#1A9A8C"/>
+    </svg>
+    <div class="toolbar-brand-name"><span>i</span>-Ticket</div>
+  </div>
+  <div class="toolbar-divider"></div>
+  <div class="toolbar-title">Letterhead Editor</div>
+  <div class="toolbar-spacer"></div>
+
+  <button class="tb-btn tb-btn-outline" onclick="newLetter()" title="New Letter">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    New
+  </button>
+
+  <button class="tb-btn tb-btn-ghost" onclick="saveDraft()" title="Save Draft (Ctrl+S)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17,21 17,13 7,13 7,21"/><polyline points="7,3 7,8 15,8"/></svg>
+    Save <span class="tb-shortcut">Ctrl+S</span>
+  </button>
+
+  <button class="tb-btn tb-btn-ghost" onclick="showDraftsModal()" title="Load Draft">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+    Drafts
+  </button>
+
+  <div class="toolbar-divider"></div>
+
+  <button class="tb-btn tb-btn-ghost" id="btn-preview" onclick="toggleMode()" title="Preview Mode">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    Preview
+  </button>
+
+  <button class="tb-btn tb-btn-primary" onclick="downloadPDF()" title="Download PDF (Ctrl+P)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+    PDF <span class="tb-shortcut">Ctrl+P</span>
+  </button>
+</div>
+
+<!-- ═══════════════════ APP LAYOUT ═══════════════════ -->
+<div class="app">
+
+  <!-- ── Sidebar ── -->
+  <div class="sidebar" id="sidebar">
+
+    <!-- Recipient dropdown -->
+    <h3>Saved Recipients</h3>
+    <div class="recipient-row">
+      <select id="recipient-select" onchange="loadRecipient(this.value)" style="flex:1; padding:7px 10px; border:1px solid #d1d9e0; border-radius:5px; font-size:12px; font-family:inherit;">
+        <option value="">Select saved recipient...</option>
+      </select>
+      <button class="btn-sm btn-teal" onclick="saveRecipient()" title="Save current recipient">Save</button>
+      <button class="btn-sm btn-red" onclick="deleteRecipient()" title="Delete selected recipient">Del</button>
+    </div>
+
+    <!-- To Section -->
+    <h3>Recipient</h3>
+    <div class="form-row">
+      <label>To Label</label>
+      <select id="f-to-label" onchange="sync()">
+        <option value="To">To</option>
+        <option value="Submitted to">Submitted to</option>
+        <option value="Attention">Attention</option>
+        <option value="_custom">Custom...</option>
+      </select>
+    </div>
+    <div class="form-row" id="custom-to-label-row" style="display:none;">
+      <label>Custom Label</label>
+      <input type="text" id="f-to-label-custom" placeholder="e.g. Delivered to" oninput="sync()">
+    </div>
+    <div class="form-row">
+      <label>Recipient Name</label>
+      <input type="text" id="f-to-name" placeholder="e.g. The General Manager" oninput="sync()">
+    </div>
+    <div class="form-row">
+      <label>Organization</label>
+      <input type="text" id="f-to-org" placeholder="e.g. ODAA Integrated Transport S.C." oninput="sync()">
+    </div>
+    <div class="form-row">
+      <label>Sub-unit (optional)</label>
+      <input type="text" id="f-to-subunit" placeholder="e.g. Cybersecurity Directorate" oninput="sync()">
+    </div>
+    <div class="form-row">
+      <label>Address</label>
+      <input type="text" id="f-to-address" placeholder="e.g. Addis Ababa, Ethiopia" oninput="sync()">
+    </div>
+
+    <!-- Ref & Date -->
+    <h3>Reference &amp; Date</h3>
+    <div class="form-row-inline">
+      <div class="form-row">
+        <label>Ref Number</label>
+        <input type="text" id="f-ref" placeholder="004/2018" oninput="sync()">
+      </div>
+      <div class="form-row">
+        <label>Date</label>
+        <input type="date" id="f-date" oninput="sync()" onchange="sync()">
+      </div>
+    </div>
+
+    <!-- Subject -->
+    <h3>Subject</h3>
+    <div class="form-row">
+      <label>Subject Line (leave empty to hide)</label>
+      <input type="text" id="f-subject" placeholder="e.g. Proposal for Strategic Partnership" oninput="sync()">
+    </div>
+
+    <!-- Salutation -->
+    <h3>Salutation</h3>
+    <div class="form-row">
+      <label>Greeting</label>
+      <input type="text" id="f-salutation" placeholder="Dear Sir/Madam," value="Dear Sir/Madam," oninput="sync()">
+    </div>
+
+    <!-- Body (RTE) -->
+    <h3>Letter Body</h3>
+    <div class="rte-toolbar" id="rte-toolbar">
+      <button class="rte-btn" data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+      <button class="rte-btn" data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+      <button class="rte-btn" data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+      <div class="rte-sep"></div>
+      <button class="rte-btn" data-cmd="insertUnorderedList" title="Bullet List">&#8226;</button>
+      <button class="rte-btn" data-cmd="insertOrderedList" title="Numbered List">1.</button>
+      <div class="rte-sep"></div>
+      <button class="rte-btn" data-cmd="highlight" title="Teal Highlight" style="color:var(--teal-brand);font-weight:700;">H</button>
+      <button class="rte-btn" data-cmd="removeFormat" title="Clear Formatting">&times;</button>
+    </div>
+    <div class="rte-editor" id="rte-body" contenteditable="true"></div>
+
+    <!-- Signature -->
+    <h3>Signature</h3>
+    <div class="form-row">
+      <label>Signature Image (optional)</label>
+      <input type="file" id="f-sig-file" accept="image/png,image/jpeg" onchange="uploadSignature(event)" style="font-size:11px;">
+      <div class="sig-preview" id="sig-preview-box" style="display:none;">
+        <img id="sig-preview-img" src="" alt="Signature">
+        <button class="sig-remove" onclick="removeSignature()" title="Remove">&times;</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Signer Name</label>
+      <input type="text" id="f-sig-name" placeholder="e.g. Abel Assefa" oninput="sync()">
+    </div>
+    <div class="form-row">
+      <label>Signer Title</label>
+      <input type="text" id="f-sig-title" placeholder="e.g. General Manager" oninput="sync()">
+    </div>
+    <div class="form-row">
+      <label>Organization</label>
+      <input type="text" id="f-sig-org" placeholder="e.g. i-Ticket Platform" oninput="sync()">
+    </div>
+
+    <!-- Extras -->
+    <h3>Extras</h3>
+    <div class="form-row">
+      <label>CC (optional)</label>
+      <textarea id="f-cc" placeholder="One per line" rows="2" oninput="sync()"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Enclosures (optional)</label>
+      <textarea id="f-enc" placeholder="One per line" rows="2" oninput="sync()"></textarea>
+    </div>
+
+    <div style="height:40px;"></div>
+  </div>
+
+  <!-- ── Preview Panel ── -->
+  <div class="preview-panel">
+    <div class="preview-scaler" id="preview-scaler">
+      <div class="page" id="letter-preview">
+
+        <div class="left-stripes"><div class="stripe"></div><div class="stripe"></div></div>
+
+        <div class="header-block">
+          <div class="header-block-bg"></div>
+          <div class="header-block-content">
+            <div class="header-logo">
+              <svg width="50" height="50" viewBox="0 0 512 512" fill="none">
+                <rect x="96" y="48" width="320" height="416" rx="64" ry="64" stroke="#1A9A8C" stroke-width="48" fill="none"/>
+                <rect x="192" y="336" width="128" height="64" rx="32" ry="32" fill="#1A9A8C"/>
+              </svg>
+            </div>
+            <div class="header-brand-text">
+              <div class="lp-brand-name"><span>i</span>-Ticket</div>
+              <div class="lp-brand-tagline">Your Journey, Simplified</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="watermark">
+          <svg width="280" height="280" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="96" y="48" width="320" height="416" rx="64" ry="64" stroke="#1A9A8C" stroke-width="48" fill="none"/>
+            <rect x="192" y="336" width="128" height="64" rx="32" ry="32" fill="#1A9A8C"/>
+          </svg>
+        </div>
+
+        <div class="lp-content">
+          <div class="to-row">
+            <div class="to-section">
+              <div class="to-label" id="lp-to-label">TO</div>
+              <div class="to-name" id="lp-to-name"></div>
+              <div class="to-detail" id="lp-to-org"></div>
+              <div class="to-detail" id="lp-to-subunit"></div>
+              <div class="to-detail" id="lp-to-address"></div>
+            </div>
+            <div class="date-ref-section">
+              <div class="date-value" id="lp-date"></div>
+              <div class="ref-number"><span class="ref-label">Ref: </span><span id="lp-ref"></span></div>
+            </div>
+          </div>
+
+          <div class="subject-line" id="lp-subject-wrap" style="display:none;">
+            <span class="label">Subject:</span> <span id="lp-subject"></span>
+          </div>
+
+          <div class="lp-salutation" id="lp-salutation"></div>
+
+          <div class="letter-body" id="lp-body"></div>
+
+          <div class="signature-block">
+            <img class="sig-image" id="lp-sig-img" style="display:none;" src="" alt="">
+            <div class="sig-name" id="lp-sig-name"></div>
+            <div class="sig-title" id="lp-sig-title"></div>
+            <div class="sig-org" id="lp-sig-org"></div>
+          </div>
+
+          <div class="cc-block" id="lp-cc-wrap" style="display:none;">
+            <strong>CC:</strong> <span id="lp-cc"></span>
+          </div>
+          <div class="enc-block" id="lp-enc-wrap" style="display:none;">
+            <strong>Enclosures:</strong> <span id="lp-enc"></span>
+          </div>
+        </div>
+
+        <div class="footer-wrapper">
+          <div class="footer-accent"></div>
+          <div class="footer-bar">
+            <div class="footer-col">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z"/>
+              </svg>
+              <div class="footer-col-text">
+                <span>+251 911 550 001 / +251 911 178 577</span>
+                <span>info@i-ticket.et</span>
+              </div>
+            </div>
+            <div class="footer-col">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="2" y1="12" x2="22" y2="12"/>
+                <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
+              </svg>
+              <div class="footer-col-text"><span>www.i-ticket.et</span></div>
+            </div>
+            <div class="footer-col">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <div class="footer-col-text"><span>Addis Ababa, Ethiopia</span></div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.page -->
+    </div><!-- /.preview-scaler -->
+  </div><!-- /.preview-panel -->
+
+</div><!-- /.app -->
+
+<!-- ═══════════════════ DRAFTS MODAL ═══════════════════ -->
+<div class="modal-overlay" id="drafts-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Saved Drafts</h2>
+      <button class="modal-close" onclick="closeDraftsModal()">&times;</button>
+    </div>
+    <div class="modal-body" id="drafts-list"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TOAST CONTAINER ═══════════════════ -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   STATE
+   ═══════════════════════════════════════════════════════ */
+const state = {
+  toLabel: 'To',
+  toLabelCustom: '',
+  toName: '',
+  toOrg: '',
+  toSubunit: '',
+  toAddress: '',
+  ref: '',
+  date: '',
+  subject: '',
+  salutation: 'Dear Sir/Madam,',
+  body: '',
+  sigName: '',
+  sigTitle: '',
+  sigOrg: '',
+  sigImage: '', // base64
+  cc: '',
+  enc: '',
+};
+
+let dirty = false;
+
+/* ═══════════════════════════════════════════════════════
+   ETHIOPIAN CALENDAR
+   ═══════════════════════════════════════════════════════ */
+function getEthiopianYear() {
+  const now = new Date();
+  const gYear = now.getFullYear();
+  const month = now.getMonth() + 1; // 1-12
+  const day = now.getDate();
+  // Ethiopian new year is Sept 11 (or 12 in leap years)
+  return (month > 9 || (month === 9 && day >= 11)) ? gYear - 7 : gYear - 8;
+}
+
+/* ═══════════════════════════════════════════════════════
+   REF COUNTER (localStorage)
+   ═══════════════════════════════════════════════════════ */
+const REF_KEY = 'iticket-letterhead-ref-counter';
+
+function getRefCounter() {
+  return parseInt(localStorage.getItem(REF_KEY) || '0', 10);
+}
+
+function setRefCounter(n) {
+  localStorage.setItem(REF_KEY, String(n));
+}
+
+function incrementRef() {
+  const n = getRefCounter() + 1;
+  setRefCounter(n);
+  return n;
+}
+
+function formatRef(n) {
+  const ethYear = getEthiopianYear();
+  return String(n).padStart(3, '0') + '/' + ethYear;
+}
+
+/* ═══════════════════════════════════════════════════════
+   FORMAT DATE
+   ═══════════════════════════════════════════════════════ */
+function formatDateStr(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+/* ═══════════════════════════════════════════════════════
+   SYNC: Form -> State -> Preview
+   ═══════════════════════════════════════════════════════ */
+function sync() {
+  dirty = true;
+
+  // Read form
+  const toSelect = document.getElementById('f-to-label');
+  state.toLabel = toSelect.value === '_custom' ? '' : toSelect.value;
+  state.toLabelCustom = document.getElementById('f-to-label-custom').value;
+  state.toName = document.getElementById('f-to-name').value;
+  state.toOrg = document.getElementById('f-to-org').value;
+  state.toSubunit = document.getElementById('f-to-subunit').value;
+  state.toAddress = document.getElementById('f-to-address').value;
+  state.ref = document.getElementById('f-ref').value;
+  state.date = document.getElementById('f-date').value;
+  state.subject = document.getElementById('f-subject').value;
+  state.salutation = document.getElementById('f-salutation').value;
+  state.body = document.getElementById('rte-body').innerHTML;
+  state.sigName = document.getElementById('f-sig-name').value;
+  state.sigTitle = document.getElementById('f-sig-title').value;
+  state.sigOrg = document.getElementById('f-sig-org').value;
+  state.cc = document.getElementById('f-cc').value;
+  state.enc = document.getElementById('f-enc').value;
+
+  // Show/hide custom label
+  document.getElementById('custom-to-label-row').style.display =
+    toSelect.value === '_custom' ? 'block' : 'none';
+
+  renderPreview();
+}
+
+function renderPreview() {
+  // To label
+  const label = state.toLabel || state.toLabelCustom || 'To';
+  document.getElementById('lp-to-label').textContent = label.toUpperCase();
+  document.getElementById('lp-to-name').textContent = state.toName || '';
+  document.getElementById('lp-to-org').textContent = state.toOrg || '';
+
+  const subEl = document.getElementById('lp-to-subunit');
+  subEl.textContent = state.toSubunit || '';
+  subEl.style.display = state.toSubunit ? 'block' : 'none';
+
+  document.getElementById('lp-to-address').textContent = state.toAddress || '';
+
+  // Date & ref
+  document.getElementById('lp-date').textContent = formatDateStr(state.date);
+  document.getElementById('lp-ref').textContent = state.ref || '';
+
+  // Subject
+  const subWrap = document.getElementById('lp-subject-wrap');
+  if (state.subject.trim()) {
+    subWrap.style.display = 'block';
+    document.getElementById('lp-subject').textContent = state.subject;
+  } else {
+    subWrap.style.display = 'none';
+  }
+
+  // Salutation
+  document.getElementById('lp-salutation').textContent = state.salutation || '';
+
+  // Body
+  document.getElementById('lp-body').innerHTML = state.body || '';
+
+  // Signature image
+  const sigImg = document.getElementById('lp-sig-img');
+  if (state.sigImage) {
+    sigImg.src = state.sigImage;
+    sigImg.style.display = 'block';
+  } else {
+    sigImg.style.display = 'none';
+  }
+
+  document.getElementById('lp-sig-name').textContent = state.sigName || '';
+  document.getElementById('lp-sig-title').textContent = state.sigTitle || '';
+  document.getElementById('lp-sig-org').textContent = state.sigOrg || '';
+
+  // CC
+  const ccWrap = document.getElementById('lp-cc-wrap');
+  if (state.cc.trim()) {
+    ccWrap.style.display = 'block';
+    document.getElementById('lp-cc').textContent = state.cc.split('\n').filter(Boolean).join('; ');
+  } else {
+    ccWrap.style.display = 'none';
+  }
+
+  // Enclosures
+  const encWrap = document.getElementById('lp-enc-wrap');
+  if (state.enc.trim()) {
+    encWrap.style.display = 'block';
+    document.getElementById('lp-enc').textContent = state.enc.split('\n').filter(Boolean).join('; ');
+  } else {
+    encWrap.style.display = 'none';
+  }
+}
+
+function restoreFieldsFromState() {
+  // To label
+  const sel = document.getElementById('f-to-label');
+  const found = [...sel.options].some(o => o.value === state.toLabel);
+  if (state.toLabel && found) {
+    sel.value = state.toLabel;
+    document.getElementById('custom-to-label-row').style.display = 'none';
+  } else if (!state.toLabel && state.toLabelCustom) {
+    sel.value = '_custom';
+    document.getElementById('custom-to-label-row').style.display = 'block';
+  }
+  document.getElementById('f-to-label-custom').value = state.toLabelCustom || '';
+  document.getElementById('f-to-name').value = state.toName || '';
+  document.getElementById('f-to-org').value = state.toOrg || '';
+  document.getElementById('f-to-subunit').value = state.toSubunit || '';
+  document.getElementById('f-to-address').value = state.toAddress || '';
+  document.getElementById('f-ref').value = state.ref || '';
+  document.getElementById('f-date').value = state.date || '';
+  document.getElementById('f-subject').value = state.subject || '';
+  document.getElementById('f-salutation').value = state.salutation || '';
+  document.getElementById('rte-body').innerHTML = state.body || '';
+  document.getElementById('f-sig-name').value = state.sigName || '';
+  document.getElementById('f-sig-title').value = state.sigTitle || '';
+  document.getElementById('f-sig-org').value = state.sigOrg || '';
+  document.getElementById('f-cc').value = state.cc || '';
+  document.getElementById('f-enc').value = state.enc || '';
+
+  // Signature preview
+  restoreSignatureUI();
+  renderPreview();
+}
+
+/* ═══════════════════════════════════════════════════════
+   SIGNATURE IMAGE (localStorage)
+   ═══════════════════════════════════════════════════════ */
+const SIG_KEY = 'iticket-letterhead-signature';
+
+function uploadSignature(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 500 * 1024) {
+    toast('Image must be under 500KB', 'error');
+    event.target.value = '';
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const b64 = e.target.result;
+    localStorage.setItem(SIG_KEY, b64);
+    state.sigImage = b64;
+    restoreSignatureUI();
+    renderPreview();
+    toast('Signature uploaded');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeSignature() {
+  localStorage.removeItem(SIG_KEY);
+  state.sigImage = '';
+  document.getElementById('f-sig-file').value = '';
+  restoreSignatureUI();
+  renderPreview();
+  toast('Signature removed');
+}
+
+function restoreSignatureUI() {
+  const box = document.getElementById('sig-preview-box');
+  const img = document.getElementById('sig-preview-img');
+  if (state.sigImage) {
+    img.src = state.sigImage;
+    box.style.display = 'inline-block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SAVED RECIPIENTS (localStorage)
+   ═══════════════════════════════════════════════════════ */
+const RECIP_KEY = 'iticket-letterhead-recipients';
+
+function getRecipients() {
+  try { return JSON.parse(localStorage.getItem(RECIP_KEY) || '[]'); }
+  catch { return []; }
+}
+
+function setRecipients(arr) {
+  localStorage.setItem(RECIP_KEY, JSON.stringify(arr));
+}
+
+function renderRecipientDropdown() {
+  const sel = document.getElementById('recipient-select');
+  const val = sel.value;
+  sel.innerHTML = '<option value="">Select saved recipient...</option>';
+  getRecipients().forEach((r, i) => {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = r.name + (r.org ? ' — ' + r.org : '');
+    sel.appendChild(opt);
+  });
+  sel.value = val;
+}
+
+function saveRecipient() {
+  if (!state.toName.trim()) {
+    toast('Enter a recipient name first', 'error');
+    return;
+  }
+  const recips = getRecipients();
+  recips.push({
+    label: state.toLabel,
+    labelCustom: state.toLabelCustom,
+    name: state.toName,
+    org: state.toOrg,
+    subunit: state.toSubunit,
+    address: state.toAddress,
+  });
+  setRecipients(recips);
+  renderRecipientDropdown();
+  toast('Recipient saved');
+}
+
+function loadRecipient(idx) {
+  if (idx === '') return;
+  const r = getRecipients()[parseInt(idx, 10)];
+  if (!r) return;
+  state.toLabel = r.label || 'To';
+  state.toLabelCustom = r.labelCustom || '';
+  state.toName = r.name || '';
+  state.toOrg = r.org || '';
+  state.toSubunit = r.subunit || '';
+  state.toAddress = r.address || '';
+  restoreFieldsFromState();
+  toast('Recipient loaded');
+}
+
+function deleteRecipient() {
+  const sel = document.getElementById('recipient-select');
+  if (sel.value === '') {
+    toast('Select a recipient to delete', 'error');
+    return;
+  }
+  const idx = parseInt(sel.value, 10);
+  const recips = getRecipients();
+  recips.splice(idx, 1);
+  setRecipients(recips);
+  sel.value = '';
+  renderRecipientDropdown();
+  toast('Recipient deleted');
+}
+
+/* ═══════════════════════════════════════════════════════
+   DRAFTS (localStorage)
+   ═══════════════════════════════════════════════════════ */
+const DRAFTS_KEY = 'iticket-letterhead-drafts';
+
+function getDrafts() {
+  try { return JSON.parse(localStorage.getItem(DRAFTS_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function setDrafts(obj) {
+  localStorage.setItem(DRAFTS_KEY, JSON.stringify(obj));
+}
+
+function saveDraft() {
+  sync();
+  const key = state.ref || 'unsaved-' + Date.now();
+  const drafts = getDrafts();
+  drafts[key] = {
+    ...state,
+    savedAt: new Date().toISOString(),
+  };
+  setDrafts(drafts);
+  dirty = false;
+  toast('Draft saved: ' + key);
+}
+
+function loadDraft(key) {
+  const drafts = getDrafts();
+  const d = drafts[key];
+  if (!d) return;
+  Object.assign(state, d);
+  restoreFieldsFromState();
+  dirty = false;
+  closeDraftsModal();
+  toast('Draft loaded: ' + key);
+}
+
+function showDraftsModal() {
+  const list = document.getElementById('drafts-list');
+  const drafts = getDrafts();
+  const keys = Object.keys(drafts).sort().reverse();
+
+  list.innerHTML = '';
+
+  if (keys.length === 0) {
+    list.innerHTML = '<div class="empty-state">No saved drafts yet.<br>Click "Save" in the toolbar to save your first draft.</div>';
+  } else {
+    keys.forEach(key => {
+      const d = drafts[key];
+      const dateStr = d.savedAt ? new Date(d.savedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+
+      const item = document.createElement('div');
+      item.className = 'draft-item';
+      item.addEventListener('click', () => loadDraft(key));
+
+      const info = document.createElement('div');
+      info.className = 'draft-item-info';
+
+      const refEl = document.createElement('div');
+      refEl.className = 'draft-item-ref';
+      refEl.textContent = 'Ref: ' + key;
+
+      const toEl = document.createElement('div');
+      toEl.className = 'draft-item-to';
+      toEl.textContent = (d.toName || 'No recipient') + (d.toOrg ? ' \u2014 ' + d.toOrg : '');
+
+      const dateEl = document.createElement('div');
+      dateEl.className = 'draft-item-date';
+      dateEl.textContent = dateStr;
+
+      info.appendChild(refEl);
+      info.appendChild(toEl);
+      info.appendChild(dateEl);
+
+      const actions = document.createElement('div');
+      actions.className = 'draft-item-actions';
+      const delBtn = document.createElement('button');
+      delBtn.className = 'btn-sm btn-red';
+      delBtn.title = 'Delete draft';
+      delBtn.innerHTML = '&times;';
+      delBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const dr = getDrafts();
+        delete dr[key];
+        setDrafts(dr);
+        showDraftsModal();
+        toast('Draft deleted');
+      });
+      actions.appendChild(delBtn);
+
+      item.appendChild(info);
+      item.appendChild(actions);
+      list.appendChild(item);
+    });
+  }
+
+  document.getElementById('drafts-modal').classList.add('active');
+}
+
+function closeDraftsModal() {
+  document.getElementById('drafts-modal').classList.remove('active');
+}
+
+/* ═══════════════════════════════════════════════════════
+   NEW LETTER
+   ═══════════════════════════════════════════════════════ */
+function newLetter() {
+  if (dirty) {
+    if (!confirm('You have unsaved changes. Start a new letter anyway?')) return;
+  }
+
+  // Clear state
+  state.toLabel = 'To';
+  state.toLabelCustom = '';
+  state.toName = '';
+  state.toOrg = '';
+  state.toSubunit = '';
+  state.toAddress = '';
+  state.subject = '';
+  state.salutation = 'Dear Sir/Madam,';
+  state.body = '';
+  state.sigName = '';
+  state.sigTitle = '';
+  state.sigOrg = '';
+  state.cc = '';
+  state.enc = '';
+
+  // Increment ref
+  const n = incrementRef();
+  state.ref = formatRef(n);
+
+  // Today
+  state.date = new Date().toISOString().split('T')[0];
+
+  // Keep signature image (persists)
+  state.sigImage = localStorage.getItem(SIG_KEY) || '';
+
+  dirty = false;
+  restoreFieldsFromState();
+  toast('New letter created: Ref ' + state.ref);
+}
+
+/* ═══════════════════════════════════════════════════════
+   MODE SWITCHING
+   ═══════════════════════════════════════════════════════ */
+function toggleMode() {
+  const body = document.body;
+  const isEdit = body.getAttribute('data-mode') === 'edit';
+  body.setAttribute('data-mode', isEdit ? 'preview' : 'edit');
+  document.getElementById('btn-preview').innerHTML = isEdit
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Preview';
+  updateScale();
+}
+
+/* ═══════════════════════════════════════════════════════
+   PDF EXPORT
+   ═══════════════════════════════════════════════════════ */
+// TODO: Fix PDF export — html2canvas captures with blank space at top due to
+// element positioning within the editor layout. Current workaround: use Ctrl+P
+// (browser print dialog) → Save as PDF, which renders perfectly.
+// Approaches to try: (1) open letter in a new window and capture there,
+// (2) use Puppeteer/headless Chrome server-side, (3) debug html2canvas offset.
+function downloadPDF() {
+  if (typeof html2pdf === 'undefined') {
+    toast('PDF library not loaded. Use Ctrl+P to print as PDF.', 'error');
+    return;
+  }
+
+  var el = document.getElementById('letter-preview');
+  var ref = state.ref || 'draft';
+  var dateStr = state.date || new Date().toISOString().split('T')[0];
+  var filename = 'i-Ticket-Letter-' + ref.replace('/', '-') + '-' + dateStr + '.pdf';
+
+  toast('Generating PDF...', 'info');
+
+  // html2pdf.js bundles html2canvas — access it from the global scope
+  var h2c = window.html2canvas || html2pdf.html2canvas;
+  var jsPDF = (window.jspdf && window.jspdf.jsPDF) || (window.jsPDF);
+
+  // Create an isolated fixed-position wrapper so html2canvas captures
+  // from (0,0) — free from the editor's scroll offset and CSS transforms.
+  var wrapper = document.createElement('div');
+  wrapper.style.cssText = 'position:fixed;top:0;left:0;width:210mm;height:297mm;z-index:99999;overflow:hidden;pointer-events:none;background:#fff;';
+  var clone = el.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.style.cssText = 'position:relative;top:0;left:0;width:210mm;height:297mm;min-height:297mm;max-height:297mm;margin:0;padding:0;transform:none;box-shadow:none;overflow:hidden;';
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+
+  // Wait for layout to settle
+  setTimeout(function() {
+    h2c(wrapper, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      width: wrapper.offsetWidth,
+      height: wrapper.offsetHeight,
+      x: 0,
+      y: 0,
+      scrollX: 0,
+      scrollY: 0,
+    }).then(function(canvas) {
+      wrapper.remove();
+
+      if (jsPDF) {
+        // Direct jsPDF: place canvas image at exactly A4 bounds
+        var pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+        var imgData = canvas.toDataURL('image/jpeg', 0.95);
+        pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+        pdf.save(filename);
+      } else {
+        // Fallback: convert canvas to blob and download
+        canvas.toBlob(function(blob) {
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = filename.replace('.pdf', '.png');
+          a.click();
+          URL.revokeObjectURL(url);
+        }, 'image/png');
+      }
+
+      toast('PDF downloaded: ' + filename);
+    }).catch(function(err) {
+      wrapper.remove();
+      console.error('PDF generation error:', err);
+      toast('PDF failed. Try Ctrl+P instead.', 'error');
+    });
+  }, 150);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RICH TEXT EDITOR
+   ═══════════════════════════════════════════════════════ */
+function initRTE() {
+  // Toolbar buttons
+  document.querySelectorAll('#rte-toolbar .rte-btn').forEach(btn => {
+    btn.addEventListener('mousedown', function(e) {
+      e.preventDefault(); // Keep selection in editor
+      const cmd = this.getAttribute('data-cmd');
+      if (cmd === 'highlight') {
+        applyHighlight();
+      } else {
+        document.execCommand(cmd, false, null);
+      }
+      sync();
+    });
+  });
+
+  // RTE input
+  document.getElementById('rte-body').addEventListener('input', sync);
+
+  // Paste sanitization
+  document.getElementById('rte-body').addEventListener('paste', function(e) {
+    e.preventDefault();
+    const html = e.clipboardData.getData('text/html');
+    const text = e.clipboardData.getData('text/plain');
+
+    if (html) {
+      // Sanitize: only allow basic formatting
+      const temp = document.createElement('div');
+      temp.innerHTML = html;
+      sanitizeNode(temp);
+      document.execCommand('insertHTML', false, temp.innerHTML);
+    } else {
+      document.execCommand('insertText', false, text);
+    }
+    sync();
+  });
+}
+
+function sanitizeNode(node) {
+  const allowed = ['P', 'BR', 'B', 'STRONG', 'I', 'EM', 'U', 'UL', 'OL', 'LI', 'SPAN', '#text'];
+  [...node.childNodes].forEach(child => {
+    if (child.nodeType === 1) { // Element
+      if (!allowed.includes(child.tagName)) {
+        // Replace with its children
+        while (child.firstChild) {
+          node.insertBefore(child.firstChild, child);
+        }
+        node.removeChild(child);
+      } else {
+        // Remove all attributes except class="highlight"
+        [...child.attributes].forEach(attr => {
+          if (!(attr.name === 'class' && attr.value === 'highlight')) {
+            child.removeAttribute(attr.name);
+          }
+        });
+        sanitizeNode(child);
+      }
+    }
+  });
+}
+
+function applyHighlight() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount || sel.isCollapsed) return;
+
+  const range = sel.getRangeAt(0);
+
+  // Check if already highlighted
+  const parent = sel.anchorNode.parentElement;
+  if (parent && parent.classList && parent.classList.contains('highlight')) {
+    // Remove highlight
+    const text = document.createTextNode(parent.textContent);
+    parent.parentNode.replaceChild(text, parent);
+    return;
+  }
+
+  const span = document.createElement('span');
+  span.className = 'highlight';
+  range.surroundContents(span);
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVE SCALING
+   ═══════════════════════════════════════════════════════ */
+function updateScale() {
+  const panel = document.querySelector('.preview-panel');
+  const scaler = document.getElementById('preview-scaler');
+  if (!panel || !scaler) return;
+
+  const pageWidthMM = 210;
+  const pageWidthPX = pageWidthMM * 3.7795; // 1mm ~= 3.7795px
+  const availW = panel.clientWidth - 48; // padding
+  const availH = panel.clientHeight - 48;
+
+  const scaleW = Math.min(1, availW / pageWidthPX);
+  scaler.style.transform = 'scale(' + scaleW + ')';
+}
+
+/* ═══════════════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════════════ */
+function toast(msg, type) {
+  type = type || 'success';
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = 'toast toast-' + type;
+
+  const icons = {
+    success: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20,6 9,17 4,12"/></svg>',
+    error: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+    info: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  };
+
+  el.innerHTML = (icons[type] || '') + ' ' + msg;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.opacity = '0';
+    el.style.transition = 'opacity 0.3s';
+    setTimeout(() => el.remove(), 300);
+  }, 3000);
+}
+
+/* ═══════════════════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+   ═══════════════════════════════════════════════════════ */
+document.addEventListener('keydown', function(e) {
+  // Ctrl+S — Save Draft
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveDraft();
+  }
+  // Ctrl+P — Download PDF
+  if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+    e.preventDefault();
+    downloadPDF();
+  }
+  // Escape — Exit preview
+  if (e.key === 'Escape') {
+    if (document.getElementById('drafts-modal').classList.contains('active')) {
+      closeDraftsModal();
+    } else if (document.body.getAttribute('data-mode') === 'preview') {
+      toggleMode();
+    }
+  }
+});
+
+/* ═══════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded', function() {
+  // Set today's date
+  state.date = new Date().toISOString().split('T')[0];
+
+  // Init ref from counter
+  const counter = getRefCounter();
+  if (counter === 0) {
+    // First use — start at 1
+    setRefCounter(1);
+    state.ref = formatRef(1);
+  } else {
+    state.ref = formatRef(counter);
+  }
+
+  // Restore signature from localStorage
+  state.sigImage = localStorage.getItem(SIG_KEY) || '';
+
+  // Default signature fields
+  state.sigName = 'Abel Assefa';
+  state.sigTitle = 'General Manager';
+  state.sigOrg = 'i-Ticket Platform';
+
+  // Restore
+  restoreFieldsFromState();
+  renderRecipientDropdown();
+  initRTE();
+
+  // Scale
+  updateScale();
+  window.addEventListener('resize', updateScale);
+
+  dirty = false;
+});
+
+// Close modal on overlay click
+document.getElementById('drafts-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeDraftsModal();
+});
+</script>
+</body>
+</html>
