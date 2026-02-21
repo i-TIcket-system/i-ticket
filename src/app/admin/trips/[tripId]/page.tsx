@@ -34,7 +34,7 @@ interface TripDetail {
   origin: string
   destination: string
   departureTime: string
-  arrivalTime: string
+  estimatedDuration: number
   price: number
   totalSlots: number
   availableSlots: number
@@ -194,6 +194,13 @@ export default function SuperAdminTripDetailPage() {
   const occupancyRate = ((trip.totalSlots - trip.availableSlots) / trip.totalSlots) * 100
   const paidBookings = trip.bookings.filter(b => b.status === 'PAID')
   const totalRevenue = paidBookings.reduce((sum, b) => sum + Number(b.totalAmount), 0)
+  const estimatedArrival = new Date(new Date(trip.departureTime).getTime() + trip.estimatedDuration * 60 * 1000)
+  const companyPhone = (() => {
+    try {
+      const p = typeof trip.company.phones === 'string' ? JSON.parse(trip.company.phones as unknown as string) : trip.company.phones
+      return Array.isArray(p) ? p[0] : null
+    } catch { return null }
+  })()
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -268,10 +275,10 @@ export default function SuperAdminTripDetailPage() {
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Arrival</p>
-                    <p className="font-medium">{formatDate(trip.arrivalTime)}</p>
+                    <p className="text-sm text-muted-foreground">Est. Arrival</p>
+                    <p className="font-medium">{formatDate(estimatedArrival)}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(trip.arrivalTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                      {estimatedArrival.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
                 </div>
@@ -511,7 +518,7 @@ export default function SuperAdminTripDetailPage() {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <span>{trip.company.phones?.[0] || "—"}</span>
+                  <span>{companyPhone || "—"}</span>
                 </div>
                 {trip.company.email && (
                   <div className="flex items-center gap-2">
