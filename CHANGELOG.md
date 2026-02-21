@@ -4,6 +4,20 @@
 
 ---
 
+## v2.14.2 - Feb 21, 2026
+
+### Bug Fixes — Admin Trip Detail Rendering, Company Booking Null Guard
+
+**Admin Trip Detail Page (`/admin/trips/[tripId]`)**
+- Fixed `company.phone` rendering as `undefined`: the Company model uses `phones: String[]` (array), not a single `phone` field. Interface updated to `phones: string[]`, render updated to `phones?.[0]`
+- Fixed Prisma Decimal serialization: `totalAmount` is a `Decimal` field that JSON-serializes to a string (e.g. `"2643.75"`). Added `Number()` conversion in the revenue `reduce()` and table cell so displayed totals are numerically correct
+
+**Company Trip Detail Page (`/company/trips/[tripId]`)**
+- Made `booking.user` nullable in the `Booking` interface (`| null`) — defensive fix for guest/manual bookings where the user record could be null
+- Added null guard on `booking.user?.phone` render (was `booking.user.phone` without guard)
+
+---
+
 ## v2.14.1 - Feb 21, 2026
 
 ### Bug Fixes — Telegram Labels, Revenue Calc, UX Improvements, Conductor Boarding
