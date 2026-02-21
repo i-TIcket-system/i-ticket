@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.14.2 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.14.4 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -291,9 +291,28 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.14.2)
+## RECENT UPDATES (v2.14.4)
 
-**Latest**: Bug fixes — admin trip detail rendering + company booking null guard
+**Latest**: Staff status ON_TRIP on driver departure + conductor boarding confirmation
+
+## v2.14.4
+
+*Staff Status Bug (Driver-Triggered Departure)*
+- Fixed: driver marking trip DEPARTED from `/driver/track` left driver + conductor `staffStatus = AVAILABLE`
+- Root cause: `/api/staff/trip/[tripId]/status/route.ts` was missing the staff status update logic (only the company admin route had it)
+- Fix: added `conductorId` to trip select; on `DEPARTED` → set driver + conductor to `ON_TRIP`; on `COMPLETED` → reset to `AVAILABLE` (both skip `ON_LEAVE`)
+
+*Conductor Ticket Verify — Boarding Integration*
+- Fixed: conductor scanning a ticket on `/staff/verify` showed "Valid Ticket" but never updated `ticket.isUsed` or `passenger.boardingStatus`
+- Root cause: page called only the public read-only endpoint (`POST /api/tickets/verify/public`)
+- Fix: added **Confirm Boarding** button → calls `PATCH /api/tickets/verify` (auth) → sets `isUsed=true` + `boardingStatus=BOARDED`; teal "Boarding Confirmed" screen shown; conductor can immediately scan next passenger
+
+## v2.14.3
+
+*Admin Trip Detail Page Crash (RangeError)*
+- Removed nonexistent `arrivalTime: string` from interface (model uses `estimatedDuration` + `departureTime`)
+- Added `estimatedDuration: number`; computed estimated arrival as valid `Date` → no more `formatDate(undefined)` crash
+- Fixed `phones` safe parser: company `phones` serialized as JSON string, not native array
 
 ## v2.14.2
 
