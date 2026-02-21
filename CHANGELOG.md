@@ -4,6 +4,21 @@
 
 ---
 
+## v2.14.3 - Feb 21, 2026
+
+### Bug Fix — Admin Trip Detail Page Crash (RangeError)
+
+**Root cause**: `trip.arrivalTime` does not exist in the Trip model (the model uses `estimatedDuration` + `departureTime`, not a separate `arrivalTime` field). The admin page interface incorrectly declared `arrivalTime: string`, causing `formatDate(undefined)` → `new Intl.DateTimeFormat().format(new Date(undefined))` → `RangeError: Invalid time value` → React root error boundary → "Something went wrong!"
+
+**Admin Trip Detail Page (`/admin/trips/[tripId]`)**
+- Removed nonexistent `arrivalTime: string` from `TripDetail` interface
+- Added `estimatedDuration: number` to interface
+- Computed estimated arrival as `departureTime + estimatedDuration * 60s` — always a valid `Date`
+- Replaced "Arrival" section with **"Est. Arrival"** using the computed value
+- Fixed `phones` display: Company `phones` is stored as a JSON string `"[\"0511...\"]"` (not a native JS array after serialization). Added a safe parser that handles both string and array forms, correctly rendering the phone number
+
+---
+
 ## v2.14.2 - Feb 21, 2026
 
 ### Bug Fixes — Admin Trip Detail Rendering, Company Booking Null Guard
