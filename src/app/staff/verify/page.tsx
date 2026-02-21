@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { QrCode, Keyboard, Check, X, AlertCircle, Loader2, ArrowLeft, RotateCcw } from "lucide-react"
+import { QrCode, Keyboard, Check, X, AlertCircle, Loader2, ArrowLeft, RotateCcw, UserCheck } from "lucide-react"
 import { toast } from "sonner"
 
 type VerificationResult = {
   success: boolean
   data?: {
+    ticketId: string
     ticket: {
       id: string
       code: string
@@ -41,10 +42,11 @@ type VerificationResult = {
 
 export default function VerifyTicketPage() {
   const router = useRouter()
-  const [mode, setMode] = useState<'manual'>('manual') // Start with manual mode (QR scanner requires additional library)
   const [code, setCode] = useState('')
   const [loading, setLoading] = useState(false)
+  const [boardingLoading, setBoardingLoading] = useState(false)
   const [result, setResult] = useState<VerificationResult | null>(null)
+  const [boardingConfirmed, setBoardingConfirmed] = useState(false)
 
   const verifyTicket = async (ticketCode: string) => {
     if (!ticketCode || ticketCode.trim().length === 0) {
@@ -54,6 +56,7 @@ export default function VerifyTicketPage() {
 
     setLoading(true)
     setResult(null)
+    setBoardingConfirmed(false)
 
     try {
       const response = await fetch('/api/tickets/verify/public', {
@@ -64,10 +67,9 @@ export default function VerifyTicketPage() {
 
       const data = await response.json()
 
-      // BUG FIX v2.10.5: Transform API response to match UI expected structure
-      // API returns { valid, ticket: {...} } but UI expects { success, data: { ticket, passenger, trip, booking } }
       if (response.ok && data.valid) {
         const transformedData = {
+          ticketId: data.ticket.id,
           ticket: {
             id: data.ticket.id,
             code: data.ticket.shortCode,
@@ -97,7 +99,7 @@ export default function VerifyTicketPage() {
         }
         setResult({ success: true, data: transformedData })
         toast.success("Ticket verified successfully!")
-      } else if (!response.ok || !data.valid) {
+      } else {
         setResult({ success: false, error: data.error || "Ticket verification failed" })
         toast.error(data.error || "Ticket verification failed")
       }
@@ -109,6 +111,36 @@ export default function VerifyTicketPage() {
     }
   }
 
+  const confirmBoarding = async () => {
+    if (!result?.data?.ticketId) return
+
+    setBoardingLoading(true)
+    try {
+      const response = await fetch('/api/tickets/verify', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ticketId: result.data.ticketId })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        setBoardingConfirmed(true)
+        if (data.boardingWarning) {
+          toast.warning(data.boardingWarning)
+        } else {
+          toast.success("Boarding confirmed — passenger marked as BOARDED")
+        }
+      } else {
+        toast.error(data.error || "Failed to confirm boarding")
+      }
+    } catch (error) {
+      toast.error("Network error. Please try again.")
+    } finally {
+      setBoardingLoading(false)
+    }
+  }
+
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     verifyTicket(code)
@@ -117,6 +149,7 @@ export default function VerifyTicketPage() {
   const handleReset = () => {
     setCode('')
     setResult(null)
+    setBoardingConfirmed(false)
   }
 
   return (
@@ -133,7 +166,7 @@ export default function VerifyTicketPage() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Verify Ticket</h1>
-            <p className="text-sm text-gray-600">Scan or enter ticket code to verify</p>
+            <p className="text-sm text-gray-600">Enter ticket code to verify and confirm boarding</p>
           </div>
         </div>
 
@@ -189,8 +222,39 @@ export default function VerifyTicketPage() {
           </Card>
         )}
 
-        {/* Success Result */}
-        {result?.success && result.data && (
+        {/* Boarding Confirmed */}
+        {result?.success && boardingConfirmed && result.data && (
+          <Card className="border-2 border-teal-500 bg-teal-50">
+            <CardHeader className="text-center pb-4">
+              <div className="flex justify-center mb-4">
+                <div className="rounded-full p-6" style={{ background: "#0e9494" }}>
+                  <UserCheck className="h-16 w-16 text-white" />
+                </div>
+              </div>
+              <CardTitle className="text-2xl" style={{ color: "#0a6b6b" }}>
+                Boarding Confirmed
+              </CardTitle>
+              <CardDescription style={{ color: "#0e9494" }}>
+                {result.data.passenger.name} — Seat {result.data.ticket.seatNumber} — marked as BOARDED
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <Button variant="outline" onClick={() => router.back()} className="w-full">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+                <Button onClick={handleReset} className="w-full text-white" style={{ background: "#0e9494" }}>
+                  <RotateCcw className="mr-2 h-4 w-4" />
+                  Next Passenger
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Success Result - awaiting boarding confirmation */}
+        {result?.success && !boardingConfirmed && result.data && (
           <Card className="border-2 border-green-500 bg-green-50">
             <CardHeader className="text-center pb-4">
               <div className="flex justify-center mb-4">
@@ -202,7 +266,7 @@ export default function VerifyTicketPage() {
                 Valid Ticket
               </CardTitle>
               <CardDescription className="text-green-600">
-                Passenger can board
+                Passenger can board — click Confirm Boarding to record
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -238,14 +302,10 @@ export default function VerifyTicketPage() {
                     <span className="text-sm text-gray-600">Name</span>
                     <span className="text-sm font-medium">{result.data.passenger.name}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Phone</span>
-                    <span className="text-sm font-medium">{result.data.passenger.phone}</span>
-                  </div>
-                  {result.data.passenger.nationalId && (
+                  {result.data.passenger.phone && (
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">National ID</span>
-                      <span className="text-sm font-medium">{result.data.passenger.nationalId}</span>
+                      <span className="text-sm text-gray-600">Phone</span>
+                      <span className="text-sm font-medium">{result.data.passenger.phone}</span>
                     </div>
                   )}
                 </div>
@@ -278,10 +338,6 @@ export default function VerifyTicketPage() {
                     <span className="text-sm text-gray-600">Departure Time</span>
                     <span className="text-sm font-medium">{result.data.trip.departureTime}</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Booking Reference</span>
-                    <span className="text-sm font-medium font-mono">{result.data.booking.bookingReference}</span>
-                  </div>
                 </div>
               </div>
 
@@ -289,18 +345,30 @@ export default function VerifyTicketPage() {
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <Button
                   variant="outline"
-                  onClick={() => router.back()}
-                  className="w-full"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-                <Button
                   onClick={handleReset}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  className="w-full"
+                  disabled={boardingLoading}
                 >
                   <RotateCcw className="mr-2 h-4 w-4" />
                   Scan Another
+                </Button>
+                <Button
+                  onClick={confirmBoarding}
+                  className="w-full text-white"
+                  style={{ background: "#0e9494" }}
+                  disabled={boardingLoading}
+                >
+                  {boardingLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Confirming...
+                    </>
+                  ) : (
+                    <>
+                      <UserCheck className="mr-2 h-4 w-4" />
+                      Confirm Boarding
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>
@@ -370,9 +438,9 @@ export default function VerifyTicketPage() {
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-blue-900">How to verify tickets</p>
                   <ul className="text-sm text-blue-700 space-y-1">
-                    <li>• Ask passenger for their ticket code (6 characters)</li>
+                    <li>• Ask passenger for their 6-character ticket code</li>
                     <li>• Enter the code above and click Verify</li>
-                    <li>• Green screen = Valid ticket, passenger can board</li>
+                    <li>• Green screen = Valid ticket — click <strong>Confirm Boarding</strong> to record</li>
                     <li>• Red screen = Invalid ticket, passenger cannot board</li>
                   </ul>
                 </div>

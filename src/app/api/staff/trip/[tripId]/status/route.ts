@@ -72,6 +72,7 @@ export async function PATCH(
         id: true,
         status: true,
         driverId: true,
+        conductorId: true,
         companyId: true,
         origin: true,
         destination: true,
@@ -152,6 +153,24 @@ export async function PATCH(
         }),
       },
     })
+
+    // Update staff status based on new trip status
+    const staffIds = [trip.driverId, trip.conductorId].filter(Boolean) as string[]
+    if (staffIds.length > 0) {
+      if (validatedData.status === "DEPARTED") {
+        // Mark assigned staff as ON_TRIP (skip ON_LEAVE staff)
+        await prisma.user.updateMany({
+          where: { id: { in: staffIds }, staffStatus: { not: "ON_LEAVE" } },
+          data: { staffStatus: "ON_TRIP" },
+        })
+      } else if (validatedData.status === "COMPLETED") {
+        // Return staff to AVAILABLE (skip ON_LEAVE staff)
+        await prisma.user.updateMany({
+          where: { id: { in: staffIds }, staffStatus: { not: "ON_LEAVE" } },
+          data: { staffStatus: "AVAILABLE" },
+        })
+      }
+    }
 
     // Auto-generate manifest when trip departs (regardless of capacity)
     // Reason: Buses may depart without being fully booked - travelers can join on the way
