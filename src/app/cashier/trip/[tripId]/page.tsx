@@ -80,6 +80,16 @@ export default function CashierTripPage() {
 
   useEffect(() => {
     fetchTripDetails()
+
+    // Poll trip data every 5 seconds so available slot count stays in sync
+    // with the SeatMap (which also polls at 5s) and other cashier/admin sales
+    const interval = setInterval(() => {
+      if (!document.hidden) {
+        fetchTripDetails()
+      }
+    }, 5000)
+
+    return () => clearInterval(interval)
   }, [tripId])
 
   const fetchTripDetails = async () => {

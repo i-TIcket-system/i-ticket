@@ -16,6 +16,7 @@ import {
   QrCode,
   Wrench,
   Navigation,
+  ClipboardList,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { signOut } from "next-auth/react"
@@ -50,12 +51,17 @@ const getSidebarItems = (staffRole?: string) => {
     })
   }
 
-  // Conductors can verify tickets
+  // Conductors can verify tickets and manage boarding
   if (staffRole === "CONDUCTOR") {
     items.push({
       title: "Verify Tickets",
       href: "/staff/verify",
       icon: QrCode,
+    })
+    items.push({
+      title: "Boarding",
+      href: "/staff/boarding",
+      icon: ClipboardList,
     })
   }
 

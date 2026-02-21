@@ -604,14 +604,15 @@ export default function CompanyTripsPage() {
               placeholder="Filter by date"
             />
           </div>
-          {/* Hide Past Trips Toggle with Date Navigation */}
+          {/* Show Past Trips Toggle with Date Navigation */}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Checkbox
               id="hidePastTrips"
-              checked={hidePastTrips}
+              checked={!hidePastTrips}
               onCheckedChange={(checked) => {
-                setHidePastTrips(checked === true)
-                if (checked) {
+                const showingPast = checked === true
+                setHidePastTrips(!showingPast)
+                if (!showingPast) {
                   // Returning to future view - clear past date
                   setPastViewDate(null)
                 } else {
@@ -627,7 +628,7 @@ export default function CompanyTripsPage() {
               htmlFor="hidePastTrips"
               className="text-sm font-medium cursor-pointer select-none"
             >
-              Hide past trips
+              Show past trips
             </label>
 
             {/* Date navigation - only shown in past view */}

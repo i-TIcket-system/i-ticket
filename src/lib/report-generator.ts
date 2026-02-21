@@ -490,12 +490,20 @@ export async function generatePassengerManifest(tripId: string): Promise<Buffer>
   const onlineRevenue = trip.bookings
     .filter((b) => !b.isQuickTicket)
     .reduce((sum, b) => sum + Number(b.totalAmount), 0)
-  const totalCommission = trip.bookings.reduce((sum, b) => sum + Number(b.commission), 0)
-  const totalCommissionVAT = trip.bookings.reduce((sum, b) => sum + Number(b.commissionVAT || 0), 0)
+  const manualRevenue = trip.bookings
+    .filter((b) => b.isQuickTicket)
+    .reduce((sum, b) => sum + Number(b.totalAmount), 0)
+  // Commission is already 0 for manual tickets in DB, but filter to be explicit
+  const totalCommission = trip.bookings
+    .filter((b) => !b.isQuickTicket)
+    .reduce((sum, b) => sum + Number(b.commission), 0)
+  const totalCommissionVAT = trip.bookings
+    .filter((b) => !b.isQuickTicket)
+    .reduce((sum, b) => sum + Number(b.commissionVAT || 0), 0)
 
-  // Company Net = Online Revenue - Service Charge - VAT on Service Charge
-  // Example: 105.75 - 5.00 - 0.75 = 100.00 ETB (company receives full ticket price)
-  const companyNetRevenue = onlineRevenue - totalCommission - totalCommissionVAT
+  // Company Net = (Online Revenue - Service Charge - VAT) + Manual Sales Revenue
+  // i-Ticket keeps the service charge; company receives ticket price from online + all manual sales
+  const companyNetRevenue = onlineRevenue - totalCommission - totalCommissionVAT + manualRevenue
 
   // Summary table with professional layout
   const summaryData = [

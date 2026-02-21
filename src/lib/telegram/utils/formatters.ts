@@ -103,7 +103,7 @@ export function formatDuration(minutes: number, lang: Language = "EN"): string {
     return m > 0 ? `${h} ሰዓት ${m} ደቂቃ` : `${h} ሰዓት`;
   }
 
-  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+  return m > 0 ? `${h}hrs ${m}min` : `${h}hrs`;
 }
 
 /**
@@ -202,7 +202,7 @@ export function formatAmenities(hasWater: boolean, hasFood: boolean, lang: Langu
   }
 
   if (hasFood) {
-    amenities.push(lang === "EN" ? "🍽️ Food" : "🍽️ ምግብ");
+    amenities.push(lang === "EN" ? "🍽️ Snack" : "🍽️ መክሰስ");
   }
 
   if (amenities.length === 0) {
