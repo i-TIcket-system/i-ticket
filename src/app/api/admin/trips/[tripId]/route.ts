@@ -75,7 +75,13 @@ export async function GET(
           },
         },
         bookings: {
-          include: {
+          select: {
+            id: true,
+            status: true,
+            totalAmount: true,
+            createdAt: true,
+            isQuickTicket: true,
+            isReplacement: true,
             user: {
               select: {
                 name: true,

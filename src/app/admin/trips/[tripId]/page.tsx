@@ -80,10 +80,12 @@ interface TripDetail {
     status: string
     totalAmount: number
     createdAt: string
+    isQuickTicket: boolean
+    isReplacement: boolean
     user: {
-      name: string
+      name: string | null
       phone: string
-    }
+    } | null
     passengers: Array<{
       name: string
       phone: string
@@ -156,7 +158,7 @@ export default function SuperAdminTripDetailPage() {
   const getBookingStatusBadge = (status: string) => {
     const variants: Record<string, any> = {
       PENDING: "secondary",
-      CONFIRMED: "default",
+      PAID: "default",
       CANCELLED: "destructive",
     }
     return <Badge variant={variants[status] || "secondary"}>{status}</Badge>
@@ -190,8 +192,8 @@ export default function SuperAdminTripDetailPage() {
   }
 
   const occupancyRate = ((trip.totalSlots - trip.availableSlots) / trip.totalSlots) * 100
-  const confirmedBookings = trip.bookings.filter(b => b.status === 'CONFIRMED')
-  const totalRevenue = confirmedBookings.reduce((sum, b) => sum + b.totalAmount, 0)
+  const paidBookings = trip.bookings.filter(b => b.status === 'PAID')
+  const totalRevenue = paidBookings.reduce((sum, b) => sum + b.totalAmount, 0)
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -456,8 +458,10 @@ export default function SuperAdminTripDetailPage() {
                         <TableRow key={booking.id}>
                           <TableCell>
                             <div>
-                              <p className="font-medium">{booking.user.name}</p>
-                              <p className="text-xs text-muted-foreground">{booking.user.phone}</p>
+                              <p className="font-medium">
+                                {booking.user?.name || (booking.isQuickTicket ? "Office Sale" : booking.isReplacement ? "Replacement" : "Guest")}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{booking.user?.phone || "—"}</p>
                             </div>
                           </TableCell>
                           <TableCell>{booking.passengers.length}</TableCell>
@@ -531,8 +535,8 @@ export default function SuperAdminTripDetailPage() {
               </div>
               <Separator />
               <div>
-                <p className="text-sm text-muted-foreground">Confirmed Bookings</p>
-                <p className="text-2xl font-bold">{confirmedBookings.length}</p>
+                <p className="text-sm text-muted-foreground">Paid Bookings</p>
+                <p className="text-2xl font-bold">{paidBookings.length}</p>
               </div>
               <Separator />
               <div>
