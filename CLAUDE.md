@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.14.1 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.14.2 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
@@ -291,7 +291,40 @@ model TelegramSession {
 
 ---
 
-## RECENT UPDATES (v2.14.0)
+## RECENT UPDATES (v2.14.2)
+
+**Latest**: Bug fixes — admin trip detail rendering + company booking null guard
+
+## v2.14.2
+
+*Admin Trip Detail Page (`/admin/trips/[tripId]`)*
+- Fixed `company.phone` rendering `undefined` — Company model uses `phones: String[]` array; interface updated to `phones: string[]`, render uses `phones?.[0]`
+- Fixed Prisma Decimal serialization: `totalAmount` JSON-serializes to string; added `Number()` in revenue `reduce()` and table cell so totals display correctly
+
+*Company Trip Detail Page (`/company/trips/[tripId]`)*
+- Made `booking.user` nullable in `Booking` interface — defensive fix for guest/manual bookings
+- Added null guard: `booking.user?.phone` (was `booking.user.phone`)
+
+## v2.14.1
+
+*Telegram Bot Fixes*
+- `formatDuration()`: `"9h"` → `"9hrs"` / `"9hrs 30min"`
+- `formatAmenities()`: `"🍽️ Food"` → `"🍽️ Snack"` (EN), `"🍽️ ምግብ"` → `"🍽️ መክሰስ"` (AM)
+
+*Revenue & Capacity Summary Fix*
+- Excel manifest `companyNetRevenue` now includes manual/office ticket sales revenue (`+manualRevenue` was missing)
+
+*Trips Page UX — "Show Past Trips"*
+- Renamed "Hide past trips" → "Show past trips"; inverted default (unchecked = today+future, checked = past dates)
+
+*Cashier Live Seat Count*
+- Cashier trip page polls `/api/cashier/trip/[tripId]` every 5 seconds — available slot count in header refreshes automatically
+
+*Conductor Boarding Tab*
+- New Boarding nav item in Staff portal sidebar (CONDUCTOR only)
+- New page `/staff/boarding` — shows conductor's DEPARTED trip with full `BoardingChecklist`
+
+## v2.14.0
 
 **Latest**: No-Show Management + Seat Re-sale for Departed Trips
 
