@@ -4,6 +4,24 @@
 
 ---
 
+## v2.14.4 - Feb 21, 2026
+
+### Bug Fixes — Staff Status ON_TRIP on Driver Departure + Conductor Boarding Confirmation
+
+**Staff Status Bug (Driver-Triggered Departure)**
+- Fixed: when the driver marks a trip as DEPARTED from `/driver/track`, staff (driver + conductor) remained `AVAILABLE` — only the vehicle was correctly updated to `ON_TRIP`
+- Root cause: the driver-specific route `/api/staff/trip/[tripId]/status/route.ts` did not update `User.staffStatus`, unlike the company admin route which had this logic
+- Fix: added `conductorId` to the trip select query, then after a `DEPARTED` transition, update driver + conductor `staffStatus → ON_TRIP` (skipping `ON_LEAVE`); on `COMPLETED`, reset to `AVAILABLE`
+
+**Conductor Ticket Verify — Boarding Integration**
+- Fixed: conductor scanning a ticket on `/staff/verify` showed "Valid Ticket" but never recorded boarding in the database (`ticket.isUsed` stayed false, `passenger.boardingStatus` stayed `PENDING`)
+- Root cause: the verify page called only the public read-only endpoint (`POST /api/tickets/verify/public`)
+- Fix: after a valid scan, a **Confirm Boarding** button now calls `PATCH /api/tickets/verify` (authenticated), which sets `ticket.isUsed = true` and `passenger.boardingStatus = "BOARDED"` — integrating conductor scans with the boarding checklist
+- Added a "Boarding Confirmed" success screen with passenger name + seat after confirmation
+- Conductor can scan the next passenger immediately via "Next Passenger" button
+
+---
+
 ## v2.14.3 - Feb 21, 2026
 
 ### Bug Fix — Admin Trip Detail Page Crash (RangeError)
