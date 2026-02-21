@@ -4,6 +4,42 @@
 
 ---
 
+## v2.14.1 - Feb 21, 2026
+
+### Bug Fixes — Telegram Labels, Revenue Calc, UX Improvements, Conductor Boarding
+
+Patch release addressing multiple UX and calculation issues across the platform.
+
+**Telegram Bot Fixes**
+- `formatDuration()`: output changed from `"9h"` / `"9h 30m"` to `"9hrs"` / `"9hrs 30min"`
+- `formatAmenities()`: food amenity label changed from `"🍽️ Food"` → `"🍽️ Snack"` (EN) and `"🍽️ ምግብ"` → `"🍽️ መክሰስ"` (AM)
+
+**Revenue & Capacity Summary Fix**
+- Excel manifest `companyNetRevenue` now correctly includes manual/office ticket sales revenue
+- Formula: `(onlineRevenue − serviceCharge − VAT) + manualRevenue` (was missing `+ manualRevenue`)
+- Commission and VAT calculations now explicitly filter to online-only bookings (was already 0 for manual in DB, now explicit)
+
+**Trips Page UX — "Show Past Trips"**
+- Renamed "Hide past trips" checkbox to **"Show past trips"** — more intuitive label
+- Inverted checkbox state: unchecked (default) = today + future trips; checked = browse past dates
+- No functional change to the underlying filter logic
+
+**Cashier Live Seat Count**
+- Cashier trip page now polls `/api/cashier/trip/[tripId]` every 5 seconds (matches SeatMap polling interval)
+- Available slot count in the header updates automatically when admin or another cashier sells seats
+
+**Conductor Boarding Tab**
+- New **Boarding** nav item added to the Staff portal sidebar for CONDUCTOR role (after "Verify Tickets")
+- New page `/staff/boarding` — shows conductor's current DEPARTED trip with the full `BoardingChecklist` component
+- Allows conductors to mark no-shows directly from their portal without needing company admin access
+
+### New Files (1)
+```
+src/app/staff/boarding/page.tsx  — Conductor boarding checklist page
+```
+
+---
+
 ## v2.13.0 - Feb 8, 2026
 
 ### Pickup/Dropoff Autocomplete, OsmAnd Background GPS, Fleet Map UX, Admin Bookings

@@ -1,6 +1,6 @@
 # i-Ticket Platform
 
-> **Version**: v2.14.0 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
+> **Version**: v2.14.1 | **Production**: https://i-ticket.et | **Changelog**: `CHANGELOG.md`
 > **Rules**: `RULES.md` | **Full Backup**: `CLAUDE-FULL-BACKUP.md` | **Deploy**: `DEPLOYMENT.md`
 
 ---
