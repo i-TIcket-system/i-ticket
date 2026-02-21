@@ -43,7 +43,7 @@ interface TripDetail {
   company: {
     id: string
     name: string
-    phone: string
+    phones: string[]
     email: string | null
   }
   vehicle: {
@@ -193,7 +193,7 @@ export default function SuperAdminTripDetailPage() {
 
   const occupancyRate = ((trip.totalSlots - trip.availableSlots) / trip.totalSlots) * 100
   const paidBookings = trip.bookings.filter(b => b.status === 'PAID')
-  const totalRevenue = paidBookings.reduce((sum, b) => sum + b.totalAmount, 0)
+  const totalRevenue = paidBookings.reduce((sum, b) => sum + Number(b.totalAmount), 0)
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -477,7 +477,7 @@ export default function SuperAdminTripDetailPage() {
                             </div>
                           </TableCell>
                           <TableCell className="font-medium">
-                            {booking.totalAmount.toLocaleString()} ETB
+                            {Number(booking.totalAmount).toLocaleString()} ETB
                           </TableCell>
                           <TableCell>{getBookingStatusBadge(booking.status)}</TableCell>
                           <TableCell className="text-sm text-muted-foreground">
@@ -511,7 +511,7 @@ export default function SuperAdminTripDetailPage() {
               <div className="space-y-2 text-sm">
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                  <span>{trip.company.phone}</span>
+                  <span>{trip.company.phones?.[0] || "—"}</span>
                 </div>
                 {trip.company.email && (
                   <div className="flex items-center gap-2">

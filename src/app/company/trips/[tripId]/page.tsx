@@ -88,7 +88,7 @@ interface Booking {
   user: {
     name: string
     phone: string
-  }
+  } | null
   tickets: {
     id: string
     shortCode: string
@@ -716,7 +716,7 @@ export default function TripDetailPage() {
                           <TableCell>
                             <div className="flex items-center gap-1 text-sm">
                               <Phone className="h-3 w-3" />
-                              {booking.user.phone}
+                              {booking.user?.phone || "—"}
                             </div>
                           </TableCell>
                           <TableCell>{formatCurrency(Number(booking.totalAmount))}</TableCell>
