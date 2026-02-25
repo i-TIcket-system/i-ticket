@@ -1,0 +1,1861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>i-Ticket INSA Audit — ICAER-2026-E391DA</title>
+  <style>
+:root {
+  --teal-dark:  #0d4f5c;
+  --teal-brand: #1A9A8C;
+  --teal-mid:   #0e9494;
+  --teal-light: #20c4c4;
+  --teal-pale:  #e8f7f6;
+  --ink:        #1a2a2d;
+  --ink-light:  #4a6a6e;
+  --ink-muted:  #7a9a9e;
+  --paper:      #ffffff;
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 10pt;
+  line-height: 1.6;
+  color: var(--ink);
+  background: white;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* ─── COVER PAGE ─────────────────────────────────────────────────── */
+.cover-page {
+  position: relative;
+  width: 100%;
+  height: 268mm;          /* A4 minus header+footer (~12mm each) */
+  overflow: hidden;
+  page-break-after: always;
+  background: white;
+}
+
+/* Dark angled top block */
+.cv-top {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 46%;
+  background: var(--teal-dark);
+  clip-path: polygon(0% 0%, 100% 0%, 100% 82%, 0% 100%);
+}
+/* Thin teal accent at the angle line */
+.cv-angle {
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 47.6%;
+  clip-path: polygon(0% 97%, 100% 79.5%, 100% 82%, 0% 100%);
+  background: var(--teal-brand);
+}
+
+/* Left accent stripes */
+.cv-stripes {
+  position: absolute; top: 0; left: 0;
+  height: 100%; display: flex; flex-direction: row; gap: 3px; z-index: 10;
+}
+.cv-stripes .s { width: 6px; height: 100%; }
+.cv-stripes .s:nth-child(1) { background: var(--teal-dark); }
+.cv-stripes .s:nth-child(2) { background: var(--teal-brand); }
+
+/* Large watermark (dark area) */
+.cv-wm-lg {
+  position: absolute; top: 1%; right: -4%;
+  width: 320px; height: 320px;
+  opacity: 0.07; z-index: 4; pointer-events: none;
+}
+/* Small watermark (white area) */
+.cv-wm-sm {
+  position: absolute; top: 62%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 180px; height: 180px;
+  opacity: 0.035; z-index: 1; pointer-events: none;
+}
+.cv-wm-lg svg, .cv-wm-sm svg { width: 100%; height: 100%; }
+
+/* Brand / logo */
+.cv-brand {
+  position: absolute; top: 26px; left: 44px;
+  display: flex; align-items: center; gap: 12px; z-index: 5;
+}
+.cv-brand-name {
+  font-size: 30px; font-weight: 700;
+  color: white; letter-spacing: -0.5px; line-height: 1;
+}
+.cv-brand-name span { color: var(--teal-light); }
+.cv-brand-tagline {
+  font-size: 7px; color: rgba(255,255,255,0.42);
+  letter-spacing: 3px; text-transform: uppercase; margin-top: 5px;
+}
+
+/* Document title */
+.cv-title-block {
+  position: absolute; top: 100px; left: 58px; right: 58px; z-index: 5;
+}
+.cv-badge {
+  display: inline-block;
+  background: rgba(26,154,140,0.22);
+  color: var(--teal-light);
+  font-size: 7.5px; font-weight: 600;
+  letter-spacing: 2.8px; text-transform: uppercase;
+  padding: 5px 13px; border-radius: 4px;
+  border: 1px solid rgba(26,154,140,0.28);
+  margin-bottom: 16px;
+}
+.cv-title {
+  font-size: 28px; font-weight: 700;
+  color: white; line-height: 1.2; letter-spacing: -0.4px; margin-bottom: 12px;
+}
+.cv-subtitle {
+  font-size: 12.5px; color: rgba(255,255,255,0.52); line-height: 1.55;
+}
+
+/* Divider */
+.cv-divider {
+  position: absolute; top: 63.5%; left: 58px; right: 58px;
+  height: 1px;
+  background: linear-gradient(to right, var(--teal-brand), var(--teal-pale), transparent);
+  z-index: 5;
+}
+
+/* Prepared for */
+.cv-prepared {
+  position: absolute; top: 52%; left: 58px; right: 58px; z-index: 5;
+}
+.cv-prepared-label {
+  font-size: 7.5px; font-weight: 600; color: var(--teal-brand);
+  letter-spacing: 3px; text-transform: uppercase; margin-bottom: 9px;
+}
+.cv-prepared-org {
+  font-size: 20px; font-weight: 700; color: var(--ink); line-height: 1.3; margin-bottom: 4px;
+}
+.cv-prepared-dept { font-size: 13px; color: var(--ink-light); }
+
+/* Details grid */
+.cv-details {
+  position: absolute; top: 68%; left: 58px; right: 58px; z-index: 5;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 18px 40px;
+}
+.cv-d-label {
+  font-size: 7px; font-weight: 600; color: var(--teal-brand);
+  letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px;
+}
+.cv-d-value { font-size: 11.5px; font-weight: 500; color: var(--ink); line-height: 1.4; }
+.cv-d-value.url { color: var(--teal-mid); }
+
+/* Confidential notice */
+.cv-confidential {
+  position: absolute; top: 86%; left: 58px; right: 58px; z-index: 5;
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px;
+  background: var(--teal-pale); border-radius: 6px;
+  border-left: 4px solid var(--teal-brand);
+}
+.cv-conf-text { font-size: 7.5px; color: var(--ink-light); line-height: 1.55; }
+.cv-conf-text strong { color: var(--teal-dark); font-weight: 600; }
+
+/* Decorative dots */
+.cv-dots {
+  position: absolute; bottom: 24px; right: 48px; z-index: 4;
+  display: grid; grid-template-columns: repeat(5, 6px); gap: 7px;
+}
+.cv-dots .dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--teal-pale);
+}
+.cv-dots .dot:nth-child(3n) { background: var(--teal-brand); opacity: 0.3; }
+
+/* ─── CONTENT PAGES ──────────────────────────────────────────────── */
+.content {
+  padding-top: 4mm;
+}
+
+/* Headings */
+h1 {
+  font-size: 17pt; font-weight: 700; color: var(--teal-dark);
+  border-bottom: 2.5px solid var(--teal-brand);
+  padding-bottom: 7px; margin-top: 28px; margin-bottom: 14px;
+  page-break-after: avoid;
+}
+h1:first-child { margin-top: 0; }
+
+h2 {
+  font-size: 13pt; font-weight: 600; color: var(--teal-dark);
+  border-bottom: 1.5px solid var(--teal-pale);
+  padding-bottom: 5px; padding-left: 12px;
+  margin-top: 26px; margin-bottom: 11px;
+  position: relative;
+  page-break-after: avoid;
+}
+h2::before {
+  content: '';
+  position: absolute; left: 0; top: 3px;
+  width: 4px; height: 16px; background: var(--teal-brand); border-radius: 2px;
+}
+
+h3 {
+  font-size: 11pt; font-weight: 600; color: var(--teal-mid);
+  margin-top: 20px; margin-bottom: 9px;
+  page-break-after: avoid;
+}
+
+h4 {
+  font-size: 10pt; font-weight: 600; color: var(--ink);
+  margin-top: 15px; margin-bottom: 7px;
+  page-break-after: avoid;
+}
+
+/* Tables */
+table {
+  width: 100%; border-collapse: collapse;
+  margin: 13px 0; font-size: 8.5pt; page-break-inside: auto;
+}
+th {
+  background: var(--teal-dark); color: white;
+  padding: 7px 10px; text-align: left;
+  font-weight: 600; font-size: 8pt; letter-spacing: 0.2px;
+}
+td {
+  padding: 5.5px 10px;
+  border-bottom: 1px solid #dde8ea;
+  border-right: 1px solid #f2f7f7;
+  vertical-align: top; font-size: 8.5pt;
+}
+tr { page-break-inside: avoid; }
+tr:nth-child(even) td { background: var(--teal-pale); }
+tr:nth-child(odd) td  { background: white; }
+/* Bold first cell in label-value tables */
+td:first-child { font-weight: 500; color: var(--ink); }
+
+/* Code */
+code {
+  font-family: 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+  font-size: 8pt;
+  background: var(--teal-pale); color: var(--teal-dark);
+  padding: 1px 5px; border-radius: 3px;
+}
+pre {
+  background: #0d1117; color: #c9d1d9;
+  padding: 12px 14px; border-radius: 6px;
+  font-size: 7pt; line-height: 1.45;
+  overflow-wrap: break-word; white-space: pre-wrap;
+  page-break-inside: avoid;
+  border-left: 3px solid var(--teal-brand);
+  margin: 11px 0;
+}
+pre code { background: none; padding: 0; color: #c9d1d9; font-size: 7pt; }
+
+/* Other */
+p { margin-bottom: 9px; }
+ul, ol { padding-left: 20px; margin-bottom: 9px; }
+li { margin-bottom: 3px; }
+strong { color: var(--ink); }
+hr { border: none; border-top: 2px solid var(--teal-pale); margin: 18px 0; }
+a { color: var(--teal-mid); text-decoration: none; }
+blockquote {
+  border-left: 4px solid var(--teal-brand);
+  margin: 11px 0; padding: 8px 14px;
+  background: var(--teal-pale); color: var(--ink-light);
+  border-radius: 0 4px 4px 0;
+}
+
+/* Table of contents (generated by toc extension) */
+.toc { background: var(--teal-pale); padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; }
+.toc ul { margin: 0; padding-left: 16px; }
+.toc li { margin-bottom: 2px; font-size: 9pt; }
+.toc a { color: var(--teal-dark); }
+
+/* Print */
+@media print {
+  html, body { background: white; }
+  @page { size: A4; margin: 14mm 20mm 16mm 20mm; }
+  h1, h2, h3, h4 { page-break-after: avoid; }
+  pre, table, blockquote { page-break-inside: avoid; }
+  p { orphans: 3; widows: 3; }
+}
+</style>
+</head>
+<body>
+
+<div class="cover-page">
+  <div class="cv-stripes"><div class="s"></div><div class="s"></div></div>
+  <div class="cv-top"></div>
+  <div class="cv-angle"></div>
+
+  <div class="cv-wm-lg"><svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="96" y="48" width="320" height="416" rx="64" ry="64" stroke="white" stroke-width="48" fill="none"/>
+  <rect x="192" y="336" width="128" height="64" rx="32" ry="32" fill="white"/>
+</svg></div>
+  <div class="cv-wm-sm"><svg viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="96" y="48" width="320" height="416" rx="64" ry="64" stroke="#1A9A8C" stroke-width="48" fill="none"/>
+  <rect x="192" y="336" width="128" height="64" rx="32" ry="32" fill="#1A9A8C"/>
+</svg></div>
+
+  <!-- Brand header -->
+  <div class="cv-brand">
+    <svg width="42" height="42" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="96" y="48" width="320" height="416" rx="64" ry="64" stroke="#1A9A8C" stroke-width="48" fill="none"/>
+      <rect x="192" y="336" width="128" height="64" rx="32" ry="32" fill="#1A9A8C"/>
+    </svg>
+    <div>
+      <div class="cv-brand-name"><span>i</span>-Ticket</div>
+      <div class="cv-brand-tagline">Your Journey, Simplified</div>
+    </div>
+  </div>
+
+  <!-- Document title -->
+  <div class="cv-title-block">
+    <div class="cv-badge">Security Audit &mdash; Technical Resubmission</div>
+    <div class="cv-title">Web Application<br>Security Assessment</div>
+    <div class="cv-subtitle">
+      Consolidated technical resubmission for INSA cybersecurity compliance audit<br>
+      Request ID: ICAER-2026-E391DA &nbsp;&bull;&nbsp; February 2026
+    </div>
+  </div>
+
+  <div class="cv-divider"></div>
+
+  <!-- Prepared for -->
+  <div class="cv-prepared">
+    <div class="cv-prepared-label">Prepared For</div>
+    <div class="cv-prepared-org">Information Network Security<br>Administration (INSA)</div>
+    <div class="cv-prepared-dept">Cyber Security Audit Division</div>
+  </div>
+
+  <!-- Details grid -->
+  <div class="cv-details">
+    <div>
+      <div class="cv-d-label">Application</div>
+      <div class="cv-d-value">i-Ticket Online Bus Ticketing Platform</div>
+    </div>
+    <div>
+      <div class="cv-d-label">Version</div>
+      <div class="cv-d-value">v2.14.5</div>
+    </div>
+    <div>
+      <div class="cv-d-label">Production URL</div>
+      <div class="cv-d-value url">https://i-ticket.et</div>
+    </div>
+    <div>
+      <div class="cv-d-label">Submission Date</div>
+      <div class="cv-d-value">February 2026</div>
+    </div>
+    <div>
+      <div class="cv-d-label">Request ID</div>
+      <div class="cv-d-value">ICAER-2026-E391DA</div>
+    </div>
+    <div>
+      <div class="cv-d-label">Classification</div>
+      <div class="cv-d-value">Confidential</div>
+    </div>
+  </div>
+
+  <!-- Confidential badge -->
+  <div class="cv-confidential">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1A9A8C"
+  stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+  <path d="M7 11V7a5 5 0 0110 0v4"/>
+</svg>
+    <div class="cv-conf-text">
+      <strong>Confidential &mdash; INSA Audit Use Only.</strong> This document contains proprietary
+      security architecture details, API endpoint maps, authentication mechanisms, and system configuration
+      for the i-Ticket platform. Distribution is restricted to authorized INSA audit personnel only.
+    </div>
+  </div>
+
+  <!-- Decorative dots -->
+  <div class="cv-dots">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+  </div>
+</div>
+
+<div class="content">
+<h1 id="i-ticket-online-bus-ticketing-platform">i-Ticket Online Bus Ticketing Platform</h1>
+<h2 id="insa-cyber-security-audit-technical-resubmission">INSA Cyber Security Audit — Technical Resubmission</h2>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Request ID</strong></td>
+<td>ICAER-2026-E391DA</td>
+</tr>
+<tr>
+<td><strong>Submitted to</strong></td>
+<td>INSA Cyber Security Audit Division</td>
+</tr>
+<tr>
+<td><strong>Organization</strong></td>
+<td>i-Ticket Online Bus Ticketing Platform</td>
+</tr>
+<tr>
+<td><strong>Production URL</strong></td>
+<td>https://i-ticket.et</td>
+</tr>
+<tr>
+<td><strong>Platform Version</strong></td>
+<td>v2.14.5</td>
+</tr>
+<tr>
+<td><strong>Submission Date</strong></td>
+<td>February 2026</td>
+</tr>
+<tr>
+<td><strong>Contact</strong></td>
+<td>Abel Assefa, General Manager</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#1-application-overview">Application Overview</a></li>
+<li><a href="#2-software-requirements-specification-srs">Software Requirements Specification (SRS)</a></li>
+<li><a href="#3-system-architecture">System Architecture</a></li>
+<li><a href="#4-data-flow-diagrams">Data Flow Diagrams</a></li>
+<li><a href="#5-business-logic-interactions">Business Logic Interactions</a></li>
+<li><a href="#6-threat-modeling">Threat Modeling</a></li>
+<li><a href="#7-testing-scope--credentials">Testing Scope &amp; Credentials</a></li>
+<li><a href="#8-contact-information">Contact Information</a></li>
+</ol>
+<hr />
+<h2 id="1-application-overview">1. Application Overview</h2>
+<h3 id="11-purpose-and-scope">1.1 Purpose and Scope</h3>
+<p>i-Ticket is an <strong>online bus ticket booking platform</strong> for Ethiopian inter-city bus travel. It enables passengers to search trips, book seats, pay via TeleBirr mobile money, and receive QR-coded tickets. Bus companies use the platform to manage trips, staff, fleet, and manifests. The platform also includes real-time GPS bus tracking, a Telegram bot for bilingual booking, predictive fleet maintenance, and a no-show management system.</p>
+<h3 id="12-technology-stack">1.2 Technology Stack</h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Technology</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Runtime</strong></td>
+<td>Node.js 20.20.0</td>
+</tr>
+<tr>
+<td><strong>Framework</strong></td>
+<td>Next.js 14 (App Router, TypeScript)</td>
+</tr>
+<tr>
+<td><strong>Frontend</strong></td>
+<td>React 18, Tailwind CSS, shadcn/ui, Leaflet maps</td>
+</tr>
+<tr>
+<td><strong>Database</strong></td>
+<td>PostgreSQL 16.11</td>
+</tr>
+<tr>
+<td><strong>ORM</strong></td>
+<td>Prisma 5.10 (parameterized queries)</td>
+</tr>
+<tr>
+<td><strong>Authentication</strong></td>
+<td>NextAuth.js 4.24 (JWT, bcrypt)</td>
+</tr>
+<tr>
+<td><strong>Validation</strong></td>
+<td>Zod 3.25</td>
+</tr>
+<tr>
+<td><strong>Hosting</strong></td>
+<td>AWS EC2 t2.micro, Ubuntu 22.04, Nginx, PM2</td>
+</tr>
+<tr>
+<td><strong>CDN / WAF</strong></td>
+<td>Cloudflare (Full Strict TLS, HSTS, DDoS)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="13-user-roles-actors">1.3 User Roles (Actors)</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Actor</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E1</td>
+<td>Registered Customer</td>
+<td>Human</td>
+<td>Books tickets with phone + password account</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>Guest Customer</td>
+<td>Human</td>
+<td>Books without registration; phone = identity</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>Company Admin</td>
+<td>Human</td>
+<td>Manages trips, staff, vehicles, fleet for one company</td>
+</tr>
+<tr>
+<td>E4</td>
+<td>Super Admin</td>
+<td>Human</td>
+<td>i-Ticket platform administrator with full access</td>
+</tr>
+<tr>
+<td>E5</td>
+<td>Driver</td>
+<td>Human</td>
+<td>GPS tracking, trip departure management</td>
+</tr>
+<tr>
+<td>E6</td>
+<td>Conductor</td>
+<td>Human</td>
+<td>Ticket QR scanning, boarding verification</td>
+</tr>
+<tr>
+<td>E7</td>
+<td>Cashier</td>
+<td>Human</td>
+<td>Manual/cash ticket sales, replacement tickets</td>
+</tr>
+<tr>
+<td>E8</td>
+<td>Mechanic</td>
+<td>Human</td>
+<td>Vehicle inspections, work orders</td>
+</tr>
+<tr>
+<td>E9</td>
+<td>Finance Staff</td>
+<td>Human</td>
+<td>Financial reports, cost tracking</td>
+</tr>
+<tr>
+<td>E10</td>
+<td>Sales Person</td>
+<td>Human</td>
+<td>Referral marketing, commission tracking</td>
+</tr>
+<tr>
+<td>E11</td>
+<td>Platform Staff</td>
+<td>Human</td>
+<td>i-Ticket support/operations (fine-grained permissions)</td>
+</tr>
+<tr>
+<td>S1</td>
+<td>TeleBirr</td>
+<td>External System</td>
+<td>Mobile money payment gateway (Ethio Telecom)</td>
+</tr>
+<tr>
+<td>S2</td>
+<td>SMS Gateway</td>
+<td>External System</td>
+<td>Ticket delivery via Negarit/GeezSMS</td>
+</tr>
+<tr>
+<td>S3</td>
+<td>Telegram Bot API</td>
+<td>External System</td>
+<td>Bilingual booking via @i_ticket_busBot</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="2-software-requirements-specification-srs">2. Software Requirements Specification (SRS)</h2>
+<h3 id="21-functional-requirements">2.1 Functional Requirements</h3>
+<h4 id="fr-01-authentication-authorization">FR-01: Authentication &amp; Authorization</h4>
+<ul>
+<li>Multi-role authentication: Customer, Company Admin, Super Admin, and 6 staff sub-roles (Driver, Conductor, Cashier, Mechanic, Finance, Sales)</li>
+<li>Credentials provider (NextAuth.js): phone + bcrypt password (12 salt rounds)</li>
+<li>JWT sessions: httpOnly cookie, 30-day expiry, SameSite=lax</li>
+<li>Login rate limiting: 5 attempts per phone per 30 min; 10 per IP per 15 min</li>
+<li>Registration: 3 per hour per IP; phone format validated (<code>/^09\d{8}$/</code>)</li>
+<li>Force-password-change flag for staff created with temporary passwords</li>
+<li>Password reset via SMS token (bcrypt-hashed, 1-hour expiry, single-use)</li>
+</ul>
+<h4 id="fr-02-trip-management">FR-02: Trip Management</h4>
+<ul>
+<li>Company admins create, update, and cancel trips with origin/destination cities, departure time, total seats, price, and vehicle/staff assignments</li>
+<li>Trips follow a lifecycle: <code>DRAFT → SCHEDULED → BOARDING → DEPARTED → COMPLETED / CANCELLED</code></li>
+<li>Intermediate stops: each trip can have named pickup/dropoff waypoints with lat/lon</li>
+<li>Trip templates: reusable configurations for recurring routes</li>
+<li>Auto-halt: online booking halts when available seats ≤10 (configurable bypass per company or trip)</li>
+<li>View-only enforcement: DEPARTED/COMPLETED/CANCELLED/SOLD-OUT trips are read-only</li>
+</ul>
+<h4 id="fr-03-booking-ticketing">FR-03: Booking &amp; Ticketing</h4>
+<ul>
+<li>Real-time seat selection with 10-minute payment window (row-level locking on seat reservation)</li>
+<li>Multi-passenger bookings: up to 5 passengers per booking</li>
+<li>Guest booking: no registration required; phone number collected at checkout</li>
+<li>QR-coded tickets and alphanumeric shortcodes for each passenger</li>
+<li>Auto-generate manifests on trip departure or full capacity</li>
+</ul>
+<h4 id="fr-04-payment-processing">FR-04: Payment Processing</h4>
+<ul>
+<li>TeleBirr mobile money integration (HMAC-SHA256 signed API requests)</li>
+<li>Payment breakdown shown before confirmation: ticket price + 5% commission + 15% VAT</li>
+<li>TeleBirr fee (0.5%) absorbed by i-Ticket, invisible to customers</li>
+<li>10-minute payment timeout enforced server-side with automatic seat release</li>
+<li>5-gate callback verification (see Section 5.2)</li>
+<li>Demo mode for testing (blocked in NODE_ENV=production)</li>
+</ul>
+<h4 id="fr-05-fleet-management">FR-05: Fleet Management</h4>
+<ul>
+<li>Vehicle registry with make, model, plate, insurance/registration expiry tracking</li>
+<li>Pre-trip, daily, weekly, annual, and safety vehicle inspections</li>
+<li>Work orders for repairs with parts and labor tracking</li>
+<li>AI risk scoring (0–100) per vehicle, updated daily by cron job</li>
+<li>Pre-departure safety check: vehicles with risk score ≥ 85 require recent inspection before trip departure</li>
+<li>Fleet analytics dashboard: health gauges, risk trends, cost forecasts, failure timelines, TCO</li>
+</ul>
+<h4 id="fr-06-gps-tracking">FR-06: GPS Tracking</h4>
+<ul>
+<li>Driver browser-based GPS: position sent every 10 seconds via authenticated API</li>
+<li>OsmAnd background GPS: tokenized GET endpoint for persistent background tracking (no session needed)</li>
+<li>Passenger live map: polls bus position every 12 seconds for DEPARTED trips</li>
+<li>Company fleet map: all active buses on one map, 15-second polling</li>
+<li>OSRM road route overlay replaces straight-line path</li>
+<li>ETA calculation: Haversine distance ÷ avg speed × 1.3 road-winding factor</li>
+<li>GPS data auto-purged after 7 days for completed/cancelled trips</li>
+<li>Telegram <code>/whereismybus</code>: shows live GPS location and ETA</li>
+</ul>
+<h4 id="fr-07-no-show-management">FR-07: No-Show Management</h4>
+<ul>
+<li>Boarding checklist per trip: all passengers with status PENDING / BOARDED / NO_SHOW</li>
+<li>No-show marking: only allowed after trip DEPARTED; idempotent re-marking</li>
+<li>Replacement ticket sales: same seat price, cash only, staff/cashier roles, commission = 0</li>
+<li><code>availableSlots</code> unchanged by no-show/replacement (prevents online booking confusion)</li>
+<li>Replacement cap: cannot sell more replacements than <code>releasedSeats</code> counter</li>
+</ul>
+<h4 id="fr-08-telegram-bot-i_ticket_busbot">FR-08: Telegram Bot (@i_ticket_busBot)</h4>
+<ul>
+<li>Bilingual (English + Amharic) booking flow via Telegram inline keyboards</li>
+<li>11-step booking wizard: language → phone verification → origin → destination → date → trip → passengers → seats → passenger details → payment → confirmation</li>
+<li>Fuzzy city search (Levenshtein distance) for typo tolerance</li>
+<li>Tickets sent as Telegram messages + SMS; QR codes included</li>
+<li><code>/whereismybus</code>: live GPS tracking link for departed trips</li>
+</ul>
+<h4 id="fr-09-reports-analytics">FR-09: Reports &amp; Analytics</h4>
+<ul>
+<li>Excel exports: maintenance costs, vehicle TCO, downtime, fleet analytics</li>
+<li>Revenue reports, tax reports (VAT), manifest downloads</li>
+<li>Admin: platform-wide booking analytics, top routes, monthly trends</li>
+</ul>
+<h3 id="22-non-functional-requirements">2.2 Non-Functional Requirements</h3>
+<h4 id="nfr-01-security">NFR-01: Security</h4>
+<ul>
+<li>OWASP Top 10 (2021) addressed (see Section 6)</li>
+<li>TLS 1.2+ enforced at Cloudflare edge (Full Strict mode)</li>
+<li>HSTS: <code>max-age=31536000; includeSubDomains; preload</code></li>
+<li>CSP via Next.js middleware; violations reported to <code>/api/csp-report</code></li>
+<li>Rate limiting at three layers: Cloudflare → Nginx (30 req/s per IP) → Application (per-endpoint)</li>
+<li>Passwords: bcrypt (12 rounds); never stored in plaintext</li>
+<li>Company data segregation: every company API filters by <code>companyId</code> from JWT</li>
+</ul>
+<h4 id="nfr-02-performance">NFR-02: Performance</h4>
+<ul>
+<li>API response target: &lt; 2 seconds under normal load</li>
+<li>Nginx rate limiting: 30 req/s per IP for API routes</li>
+<li>Cloudflare CDN caches static assets at edge</li>
+<li>PM2 cluster mode with auto-restart on crash or memory threshold (800 MB)</li>
+<li>PostgreSQL on localhost (Unix socket, no network latency)</li>
+</ul>
+<h4 id="nfr-03-availability">NFR-03: Availability</h4>
+<ul>
+<li>PM2 auto-restart on crash (max 10 restarts, 10s min uptime)</li>
+<li>Daily PM2 restart at 03:00 UTC for memory management</li>
+<li>Cloudflare proxies traffic; origin downtime partially shielded by edge cache</li>
+<li>Cron cleanup every 15 minutes prevents data accumulation issues</li>
+</ul>
+<h4 id="nfr-04-scalability">NFR-04: Scalability</h4>
+<ul>
+<li>Stateless Next.js application (horizontal scaling ready)</li>
+<li>Prisma connection pooling</li>
+<li>Cloudflare CDN offloads static assets globally</li>
+</ul>
+<h4 id="nfr-05-compliance">NFR-05: Compliance</h4>
+<ul>
+<li>Ethiopian VAT (15%) applied to platform commission</li>
+<li>Passenger manifests generated per transport authority requirements</li>
+<li>Vehicle safety inspections tracked; compliance calendar for upcoming due dates</li>
+<li>Payment processed by TeleBirr (licensed NBE payment service provider)</li>
+</ul>
+<h4 id="nfr-06-data-integrity">NFR-06: Data Integrity</h4>
+<ul>
+<li>Row-level locking: <code>SELECT FOR UPDATE NOWAIT</code> on booking/seat operations</li>
+<li>Transaction timeouts: 10-second dual timeout (Promise.race + Prisma native)</li>
+<li>Zod validation on all API inputs (server-side; client validation is UX only)</li>
+<li>Server-side payment amount recalculation (client amounts never trusted)</li>
+<li>Idempotency: <code>ProcessedCallback</code> table prevents payment replay</li>
+</ul>
+<hr />
+<h2 id="3-system-architecture">3. System Architecture</h2>
+<h3 id="31-deployment-architecture">3.1 Deployment Architecture</h3>
+<pre><code>+-----------------------------------------------------------------+
+|                         INTERNET                                |
+|  Customers, Drivers, Staff, TeleBirr, Telegram, OsmAnd        |
++----------------------------+------------------------------------+
+                             | DNS: i-ticket.et
+                             |
++----------------------------+------------------------------------+
+|              CLOUDFLARE CDN / WAF                               |
+|  SSL: Full Strict, TLS 1.2+, HSTS preload                      |
+|  DDoS Protection (automatic), Web Analytics                    |
+|  Email Obfuscation: DISABLED (breaks React hydration)          |
++----------------------------+------------------------------------+
+                             | HTTPS to origin (Cloudflare cert)
+                             |
++----------------------------+------------------------------------+
+|           AWS EC2 t2.micro (54.147.33.168)                     |
+|           Ubuntu 22.04 LTS, us-east-1                          |
+|                                                                 |
+|  +----------------------------------------------------------+  |
+|  |  NGINX (Port 80)                                         |  |
+|  |  Rate limit: 100 req/min general, 30 req/s API           |  |
+|  |  server_tokens off, headers stripped, max_body 5MB       |  |
+|  +---------------------------+------------------------------+  |
+|                              |                                  |
+|  +---------------------------+------------------------------+  |
+|  |  PM2 PROCESS MANAGER                                     |  |
+|  |  App: i-ticket, Cluster mode, Max memory: 800MB          |  |
+|  |  Auto-restart, cron restart 03:00 UTC                    |  |
+|  +---------------------------+------------------------------+  |
+|                              |                                  |
+|  +---------------------------+------------------------------+  |
+|  |  NODE.JS 20 / NEXT.JS 14 (Port 3000)                    |  |
+|  |  Middleware: CSP headers, Cache-Control: no-store         |  |
+|  |  API Routes: Zod validation, rate limiting, RBAC          |  |
+|  |  NextAuth: JWT sessions, bcrypt, rate-limited login       |  |
+|  +---------------------------+------------------------------+  |
+|                              |                                  |
+|                       Prisma ORM (parameterized)                |
+|                              |                                  |
+|  +---------------------------+------------------------------+  |
+|  |  POSTGRESQL 16.11 (localhost:5432, Unix socket)          |  |
+|  |  39 tables, row-level locking, 10s transaction timeouts  |  |
+|  +----------------------------------------------------------+  |
+|                                                                 |
++-----------------------------------------------------------------+
+</code></pre>
+<h3 id="32-component-architecture">3.2 Component Architecture</h3>
+<pre><code>+============================+============================+
+|    FRONTEND (React 18)     |    BACKEND (API Routes)    |
+|                            |                            |
+|  App Router Pages:         |  /api/auth/*               |
+|   /(auth)   Login/Register |  /api/trips                |
+|   /(customer) Booking/Track|  /api/bookings             |
+|   /(company) Dashboard     |  /api/payments/*           |
+|   /(admin)  Platform       |  /api/tickets/verify       |
+|   /(driver) GPS Tracking   |  /api/tracking/*           |
+|   /(staff)  Operations     |  /api/company/*            |
+|   /(cashier) Sales         |  /api/admin/*              |
+|   /(mechanic) Fleet        |  /api/telegram/webhook     |
+|   /(finance) Reports       |  /api/cron/*               |
+|                            |  /api/csp-report           |
+|  Libraries:                |                            |
+|   Leaflet (maps)           |  Shared lib/:              |
+|   Recharts (analytics)     |   auth.ts  (NextAuth)      |
+|   shadcn/ui (components)   |   db.ts    (Prisma)        |
+|   date-fns                 |   rate-limit.ts            |
++============================+   payments/telebirr.ts     |
+                             |   telegram/bot.ts          |
+                             |   tracking/update-pos.ts   |
+                             |   ai/predictive-maint.ts   |
+                             +============================+
+                                         |
+                              Prisma ORM (parameterized)
+                                         |
+                              PostgreSQL 16.11 (39 tables)
+</code></pre>
+<h3 id="33-external-service-integrations">3.3 External Service Integrations</h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Protocol</th>
+<th>Auth</th>
+<th>Direction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TeleBirr API</td>
+<td>HTTPS REST</td>
+<td>HMAC-SHA256 (APP_KEY)</td>
+<td>Outbound + Inbound callback</td>
+</tr>
+<tr>
+<td>SMS Gateway (Negarit)</td>
+<td>HTTPS REST</td>
+<td>Bearer token</td>
+<td>Outbound; inbound HMAC webhook</td>
+</tr>
+<tr>
+<td>Telegram Bot API</td>
+<td>HTTPS webhook</td>
+<td>Bot token / Telegram-signed</td>
+<td>Bidirectional</td>
+</tr>
+<tr>
+<td>OSRM Routing</td>
+<td>HTTPS REST</td>
+<td>None (public)</td>
+<td>Outbound</td>
+</tr>
+<tr>
+<td>Nominatim Geocoding</td>
+<td>HTTPS REST</td>
+<td>None (public)</td>
+<td>Outbound</td>
+</tr>
+<tr>
+<td>OpenStreetMap Tiles</td>
+<td>HTTPS CDN</td>
+<td>None (public)</td>
+<td>Client-side</td>
+</tr>
+<tr>
+<td>ClickUp</td>
+<td>HTTPS REST</td>
+<td>API token</td>
+<td>Outbound (support tickets)</td>
+</tr>
+<tr>
+<td>Cron Scheduler</td>
+<td>HTTPS GET</td>
+<td>Bearer (CRON_SECRET)</td>
+<td>Inbound</td>
+</tr>
+<tr>
+<td>OsmAnd GPS App</td>
+<td>HTTPS GET</td>
+<td>Trip tracking token</td>
+<td>Inbound</td>
+</tr>
+</tbody>
+</table>
+<h3 id="34-security-layers-defense-in-depth">3.4 Security Layers (Defense in Depth)</h3>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Component</th>
+<th>Controls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>L1: Edge</strong></td>
+<td>Cloudflare</td>
+<td>TLS 1.2+, HSTS preload, DDoS protection, origin cert</td>
+</tr>
+<tr>
+<td><strong>L2: Network</strong></td>
+<td>Nginx</td>
+<td>Rate limiting (30r/s API), server_tokens off, max body 5MB</td>
+</tr>
+<tr>
+<td><strong>L3: Middleware</strong></td>
+<td>Next.js middleware.ts</td>
+<td>CSP headers, Cache-Control: no-store, violation reporting</td>
+</tr>
+<tr>
+<td><strong>L4: App Headers</strong></td>
+<td>next.config.js</td>
+<td>HSTS, X-Frame-Options: DENY, X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy</td>
+</tr>
+<tr>
+<td><strong>L5: Auth</strong></td>
+<td>NextAuth.js</td>
+<td>JWT (30d), bcrypt(12), rate-limited login, company segregation</td>
+</tr>
+<tr>
+<td><strong>L6: Validation</strong></td>
+<td>Zod schemas</td>
+<td>All API inputs; server-side amount recalculation</td>
+</tr>
+<tr>
+<td><strong>L7: Payment</strong></td>
+<td>TeleBirr module</td>
+<td>HMAC-SHA256, timing-safe compare, 5-gate callback, replay table</td>
+</tr>
+<tr>
+<td><strong>L8: Database</strong></td>
+<td>Prisma + PostgreSQL</td>
+<td>Parameterized queries, row-level locking, transaction timeouts</td>
+</tr>
+<tr>
+<td><strong>L9: Audit</strong></td>
+<td>AdminLog table</td>
+<td>All sensitive operations logged with actor, action, timestamp</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-data-flow-diagrams">4. Data Flow Diagrams</h2>
+<h3 id="41-level-0-context-dfd">4.1 Level 0 — Context DFD</h3>
+<pre><code>                            +-----------+
+                            | Cloudflare|
+                            |  CDN/WAF  |
+                            +-----+-----+
+                                  | HTTPS/TLS 1.2+
+                                  |
++-----------+  Search/Book  +-----+------+  Payment Req   +---------+
+| Customer  |--------------&gt;|            |---------------&gt;| TeleBirr|
+| (E1/E2)   |&lt;--------------| i-Ticket   |&lt;---------------| (S1)    |
++-----------+  Tickets/QR   | Platform   |  Callback      +---------+
+                            |            |
++-----------+ Manage Trips  |            |  SMS           +---------+
+| Company   |--------------&gt;|            |---------------&gt;| SMS Gwy |
+| Admin (E3)|&lt;--------------| (P0)       |&lt;---------------| (S2)    |
++-----------+ Reports/Data  |            |  Inbound SMS   +---------+
+                            |            |
++-----------+ Full Access   |            |  Bot Msg       +---------+
+| Super     |--------------&gt;|            |---------------&gt;| Telegram|
+| Admin (E4)|&lt;--------------            |&lt;---------------| (S3)    |
++-----------+ Dashboard     |            |  Webhook       +---------+
+                            |            |
++-----------+ GPS Location  |            |  Tracking      +---------+
+| Driver    |--------------&gt;|            |&lt;---------------| OsmAnd  |
+| (E5)      |&lt;--------------            |                | (S12)   |
++-----------+ Trip Status   |            |                +---------+
+                            |            |
++-----------+ Scan/Board    |            |  Cron Trigger  +---------+
+| Conductor |--------------&gt;|            |&lt;---------------| Cron    |
+| (E6)      |&lt;--------------            |                | (S14)   |
++-----------+ Verify Result |            |                +---------+
+                            |            |
++-----------+ Sell Tickets  |            |
+| Cashier   |--------------&gt;|            |
+| (E7)      |&lt;--------------            |
++-----------+ Ticket/QR    |            |
+                            |            |
++-----------+ Inspections   |            |
+| Mechanic  |--------------&gt;|            |
+| (E8)      |&lt;--------------            |
++-----------+ Work Orders   +-----+------+
+                                  |
+                             Prisma ORM
+                                  |
+                         +--------+--------+
+                         | PostgreSQL 16   |
+                         | 39 tables       |
+                         +-----------------+
+</code></pre>
+<h3 id="42-level-1-core-business-processes">4.2 Level 1 — Core Business Processes</h3>
+<pre><code>+----------------------------------------------------------------------+
+|                       i-Ticket Platform                              |
+|                                                                      |
+|  +-----------------+   +-----------------+   +--------------------+ |
+|  | P1: Auth &amp;       |   | P2: Trip Search |   | P3: Payment        | |
+|  | Session Mgmt     |   | &amp; Booking       |   | Processing         | |
+|  | - bcrypt login   |   | - Seat locking  |   | - TeleBirr initiate| |
+|  | - JWT cookies    |   | - Guest booking |   | - 5-gate callback  | |
+|  | - Rate limiting  |   | - Auto-halt     |   | - Ticket issuance  | |
+|  +-----------------+   +-----------------+   +--------------------+ |
+|                                                                      |
+|  +-----------------+   +-----------------+   +--------------------+ |
+|  | P4: GPS          |   | P5: No-Show &amp;   |   | P6: Fleet Mgmt     | |
+|  | Tracking         |   | Replacement     |   | &amp; Maintenance      | |
+|  | - Driver GPS     |   | - Boarding list |   | - Risk scoring     | |
+|  | - OsmAnd token   |   | - Mark NO_SHOW  |   | - Inspections      | |
+|  | - Passenger map  |   | - Sell replace  |   | - Work orders      | |
+|  +-----------------+   +-----------------+   +--------------------+ |
+|                                                                      |
+|  +-----------------+   +-----------------+   +--------------------+ |
+|  | P7: Telegram Bot |   | P8: Cron Jobs   |   | P9: Admin Platform | |
+|  | - Booking wizard |   | - Pay timeout   |   | - All companies    | |
+|  | - GPS tracking   |   | - Trip status   |   | - Tax reports      | |
+|  | - Ticket view    |   | - AI risk score |   | - Audit logs       | |
+|  +-----------------+   +-----------------+   +--------------------+ |
++----------------------------------------------------------------------+
+</code></pre>
+<h3 id="43-level-2-telebirr-callback-payment-security-detail">4.3 Level 2 — TeleBirr Callback (Payment Security Detail)</h3>
+<pre><code>S1 (TeleBirr) --&gt; POST /api/payments/telebirr/callback
+                  Body: { transactionId, totalAmount, tradeStatus,
+                          signature, timestamp, nonce }
+                            |
+                  +---------+---------+
+                  | GATE 1: Compute   |
+                  | SHA-256(payload)  |
+                  | (callbackHash)    |
+                  +---------+---------+
+                            |
+                  +---------+---------+
+                  | GATE 2: Replay    |
+                  | Check ProcessedCallback|
+                  | by transactionId  |
+                  | Found -&gt; 200 (idempotent)|
+                  +---------+---------+
+                            |
+                  +---------+---------+
+                  | GATE 3: HMAC Sig  |
+                  | HMAC-SHA256(payload, APP_KEY)|
+                  | timingSafeEqual() |
+                  | Fail -&gt; 403       |
+                  +---------+---------+
+                            |
+                  +---------+---------+
+                  | GATE 4: Timestamp |
+                  | |now - ts| &lt; 5min |
+                  | (log warning, continue)|
+                  +---------+---------+
+                            |
+                  +---------+---------+
+                  | GATE 5: IP Check  |
+                  | (if TELEBIRR_IPS  |
+                  |  env is set)      |
+                  +---------+---------+
+                            |
+                  +---------+---------+
+                  | TRANSACTION (10s) |
+                  | SELECT Booking    |
+                  |   FOR UPDATE NOWAIT|
+                  | IF SUCCESS:       |
+                  |   status=PAID     |
+                  |   Create Tickets  |
+                  |   ProcessedCallback|
+                  |   Commission      |
+                  | IF FAIL:          |
+                  |   status=CANCELLED|
+                  |   Release seats   |
+                  +---------+---------+
+                            |
+                  Send ticket SMS + AdminLog
+</code></pre>
+<h3 id="44-data-stores">4.4 Data Stores</h3>
+<table>
+<thead>
+<tr>
+<th>Store</th>
+<th>Name</th>
+<th>Sensitivity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>User</td>
+<td>HIGH (bcrypt password)</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Company</td>
+<td>HIGH (bankAccount, tinNumber)</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>Trip</td>
+<td>MEDIUM</td>
+</tr>
+<tr>
+<td>D4</td>
+<td>Booking</td>
+<td>HIGH (financial amounts)</td>
+</tr>
+<tr>
+<td>D5</td>
+<td>Passenger</td>
+<td>HIGH (nationalId, phone)</td>
+</tr>
+<tr>
+<td>D6</td>
+<td>Ticket</td>
+<td>HIGH (QR + shortCode)</td>
+</tr>
+<tr>
+<td>D7</td>
+<td>Payment</td>
+<td>HIGH (transactionId, amounts)</td>
+</tr>
+<tr>
+<td>D9</td>
+<td>Vehicle</td>
+<td>MEDIUM</td>
+</tr>
+<tr>
+<td>D17</td>
+<td>VehicleRiskHistory</td>
+<td>LOW</td>
+</tr>
+<tr>
+<td>D19</td>
+<td>TripPosition</td>
+<td>MEDIUM (location) — purged 7 days</td>
+</tr>
+<tr>
+<td>D28</td>
+<td>TelegramSession</td>
+<td>MEDIUM — 30-min expiry</td>
+</tr>
+<tr>
+<td>D35</td>
+<td>AdminLog</td>
+<td>HIGH (audit trail)</td>
+</tr>
+<tr>
+<td>D36</td>
+<td>ProcessedCallback</td>
+<td>HIGH (payment replay guard)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="45-trust-boundaries">4.5 Trust Boundaries</h3>
+<pre><code>+================================================================+
+|  UNTRUSTED INTERNET                                             |
+|  Customers, Guests, TeleBirr callbacks, Telegram webhooks,     |
+|  OsmAnd GPS, SMS webhooks, Cron triggers                       |
++====================+==========================================+
+                     | HTTPS/TLS 1.2+ — Cloudflare HSTS
++====================+==========================================+
+|  CLOUDFLARE EDGE — SSL termination, DDoS, WAF                  |
++====================+==========================================+
+                     | HTTPS to origin cert
++====================+==========================================+
+|  NGINX — Rate limiting, header stripping                        |
++====================+==========================================+
+                     | localhost:3000
++====================+==========================================+
+|  APPLICATION (Node.js) — Auth checks, Zod validation, RBAC     |
+|  Company segregation, rate limits, CSP headers                  |
+|  Authenticated users: E3-E11 (all staff roles)                 |
++====================+==========================================+
+                     | Prisma ORM (parameterized queries only)
++====================+==========================================+
+|  DATABASE — PostgreSQL 16, localhost only, row-level locking    |
++================================================================+
+</code></pre>
+<hr />
+<h2 id="5-business-logic-interactions">5. Business Logic Interactions</h2>
+<h3 id="51-trip-lifecycle-state-machine">5.1 Trip Lifecycle State Machine</h3>
+<pre><code>[DRAFT] -----(admin activates)-----&gt; [SCHEDULED]
+                                          |
+               (30 min late, no depart)   |   (boarding begins)
+                       |                  v
+              [DELAYED] &lt;---------- [BOARDING]
+                                          |
+               (past departure time, auto)|
+                                          v
+                                    [DEPARTED]  &lt;--- (driver GPS active)
+                                          |
+                       +------------------+------------------+
+                       |                                     |
+            (past ETA + 2hr, auto)               (admin/cron cancels)
+                       |                                     |
+                       v                                     v
+                  [COMPLETED]                          [CANCELLED]
+
+Guards:
+  DRAFT -&gt; SCHEDULED: vehicle + driver + conductor assigned
+  BOARDING: booking stays open, manual sales allowed
+  DEPARTED: bookingHalted=true, no online booking; staff ON_TRIP
+  COMPLETED: trackingActive=false; staff AVAILABLE; manifest auto-generated
+  CANCELLED: availableSlots restored; pending payments refunded
+</code></pre>
+<h3 id="52-booking-payment-flow">5.2 Booking &amp; Payment Flow</h3>
+<pre><code>1. Seat Reservation
+   Customer -&gt; POST /api/bookings
+   -&gt; SELECT Trip FOR UPDATE NOWAIT (row lock)
+   -&gt; Decrement availableSlots
+   -&gt; Create Booking (status=PENDING, 10-min window)
+   -&gt; Release lock
+
+2. Auto-Halt Check
+   IF availableSlots &lt;= 10 AND !disableAutoHaltGlobally AND !autoResumeEnabled:
+     Trip.bookingHalted = true (blocks new online bookings)
+     Notify company admin
+
+3. Payment Initiation
+   Customer -&gt; POST /api/payments { bookingId, method: TELEBIRR }
+   -&gt; Verify: booking belongs to user, within 10-min window
+   -&gt; Recalculate amount server-side (price + 5% commission + 15% VAT)
+   -&gt; HMAC-SHA256 sign request -&gt; TeleBirr API
+   -&gt; Return MMI popup URL to customer
+
+4. Payment Confirmation
+   TeleBirr -&gt; POST /api/payments/telebirr/callback
+   -&gt; 5-gate verification (Section 4.3)
+   -&gt; Transaction: Booking=PAID, Tickets created, Commission logged
+   -&gt; SMS + Telegram ticket delivery
+
+5. Timeout Cleanup (Cron, every 15 min)
+   PENDING bookings older than 10 min -&gt; CANCELLED
+   availableSlots restored
+   Timeout SMS sent to customer
+</code></pre>
+<h3 id="53-auto-halt-rule">5.3 Auto-Halt Rule</h3>
+<pre><code>CONDITION: availableSlots &lt;= 10 after any booking creation
+
+IF Company.disableAutoHaltGlobally = true  -&gt; no halt (all trips)
+IF Trip.autoResumeEnabled = true           -&gt; no halt (this trip)
+ELSE                                       -&gt; Trip.bookingHalted = true
+
+MANUAL SALES EXCEPTION:
+  Cashier/Staff manual ticket sales -&gt; NEVER blocked by auto-halt
+  Manual sales can proceed to 0 available slots
+  (Manual sales track: manualTicketsSold counter, separate from online)
+</code></pre>
+<h3 id="54-no-show-management-seat-re-sale">5.4 No-Show Management &amp; Seat Re-Sale</h3>
+<pre><code>PRECONDITION: Trip.status == DEPARTED
+
+Step 1: Mark No-Shows
+  POST /api/company/trips/[id]/no-show
+  { passengerIds: [...] }
+  -&gt; Guard: ticket not already scanned (isUsed=false)
+  -&gt; Guard: passenger not already BOARDED
+  -&gt; Passenger.boardingStatus = NO_SHOW
+  -&gt; Trip.noShowCount++, Trip.releasedSeats++
+  -&gt; AdminLog: PASSENGER_NO_SHOW
+
+Step 2: Sell Replacement Tickets
+  POST /api/company/trips/[id]/replacement-ticket
+  { name, phone, [seatNumber] }
+  -&gt; Guard: Trip.releasedSeats &gt; 0
+  -&gt; Assign no-show seat number
+  -&gt; Create Booking (isReplacement=true), Passenger (BOARDED), Ticket+QR, Payment (CASH)
+  -&gt; Trip.replacementsSold++, Trip.releasedSeats--
+  -&gt; AdminLog: REPLACEMENT_TICKET_SALE
+
+NOTE: availableSlots is NEVER modified during no-show/replacement flow.
+      Seats were already counted as sold. Online booking counts are unaffected.
+</code></pre>
+<h3 id="55-company-data-segregation-rule-rule-001">5.5 Company Data Segregation (Rule RULE-001)</h3>
+<p>Every company-scoped API route enforces this pattern without exception:</p>
+<pre><code class="language-typescript">// Pseudocode — pattern in every /api/company/* route handler
+const session = await getServerSession(authOptions)
+if (!session || session.user.role !== &quot;COMPANY_ADMIN&quot;) return 401/403
+
+const companyId = session.user.companyId   // From verified JWT
+
+const trips = await prisma.trip.findMany({
+  where: { companyId }   // Enforced DB filter — cannot see other companies
+})
+</code></pre>
+<p><strong>Only exception</strong>: The <code>City</code> table is shared read-only reference data across all companies.</p>
+<h3 id="56-commission-vat-calculation">5.6 Commission &amp; VAT Calculation</h3>
+<pre><code>For each online TeleBirr booking:
+
+  ticketPrice   = base fare (set by company)
+  commission    = ticketPrice × 0.05        (5% platform fee)
+  vat           = commission × 0.15         (15% VAT on commission)
+  telebirrFee   = totalAmount × 0.005       (0.5%, absorbed by i-Ticket)
+  customerPays  = ticketPrice + commission + vat
+  companyReceives = ticketPrice             (after platform deduction)
+
+For manual (cashier) sales:
+  commission = 0  (no platform fee for cash transactions)
+  companyReceives = full ticket price
+
+For replacement ticket sales:
+  commission = 0  (same as cashier pattern)
+</code></pre>
+<hr />
+<h2 id="6-threat-modeling">6. Threat Modeling</h2>
+<h3 id="61-attack-surface">6.1 Attack Surface</h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Exposure</th>
+<th>Auth</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Trip search API</td>
+<td>Public</td>
+<td>None</td>
+<td>Read-only; Nginx rate-limited</td>
+</tr>
+<tr>
+<td>Booking creation</td>
+<td>Public (guest)</td>
+<td>Optional</td>
+<td>Rate-limited 10/min/IP</td>
+</tr>
+<tr>
+<td>Payment initiation</td>
+<td>Authenticated</td>
+<td>JWT session</td>
+<td>Rate-limited 3/hr/booking</td>
+</tr>
+<tr>
+<td>TeleBirr callback</td>
+<td>Internet</td>
+<td>HMAC signature</td>
+<td>5-gate verification</td>
+</tr>
+<tr>
+<td>Telegram webhook</td>
+<td>Internet</td>
+<td>Telegram-signed</td>
+<td>Bot token verified</td>
+</tr>
+<tr>
+<td>GPS tracking (driver)</td>
+<td>Authenticated</td>
+<td>JWT session</td>
+<td>Rate-limited 12/min/user</td>
+</tr>
+<tr>
+<td>GPS tracking (OsmAnd)</td>
+<td>Internet</td>
+<td>Trip tracking token</td>
+<td>Rate-limited 12/min/token</td>
+</tr>
+<tr>
+<td>Ticket verification</td>
+<td>Authenticated</td>
+<td>JWT (staff roles)</td>
+<td>Audit logged</td>
+</tr>
+<tr>
+<td>Admin portals</td>
+<td>Authenticated</td>
+<td>JWT (SUPER_ADMIN)</td>
+<td>All operations logged</td>
+</tr>
+<tr>
+<td>Company portals</td>
+<td>Authenticated</td>
+<td>JWT (COMPANY_ADMIN)</td>
+<td>companyId enforced</td>
+</tr>
+<tr>
+<td>Cron endpoints</td>
+<td>Internet</td>
+<td>Bearer CRON_SECRET</td>
+<td>Read-only DB operations</td>
+</tr>
+</tbody>
+</table>
+<h3 id="62-stride-threat-analysis">6.2 STRIDE Threat Analysis</h3>
+<table>
+<thead>
+<tr>
+<th>Threat</th>
+<th>Component</th>
+<th>Example Attack</th>
+<th>Mitigation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Spoofing</strong></td>
+<td>Login endpoint</td>
+<td>Credential stuffing, brute force</td>
+<td>bcrypt(12), rate limit 5/30min/phone, 10/15min/IP</td>
+</tr>
+<tr>
+<td><strong>Spoofing</strong></td>
+<td>TeleBirr callback</td>
+<td>Fake payment callbacks</td>
+<td>HMAC-SHA256 signature verification (Gate 3), IP whitelist (Gate 5)</td>
+</tr>
+<tr>
+<td><strong>Spoofing</strong></td>
+<td>JWT session</td>
+<td>Session token theft</td>
+<td>httpOnly cookie (no JS access), secure flag, SameSite=lax</td>
+</tr>
+<tr>
+<td><strong>Tampering</strong></td>
+<td>Payment amount</td>
+<td>Client sends lower price</td>
+<td>Server recalculates amount independently; client amount ignored</td>
+</tr>
+<tr>
+<td><strong>Tampering</strong></td>
+<td>Booking data</td>
+<td>Modify another user's booking</td>
+<td>Ownership check: booking.userId must match session.userId</td>
+</tr>
+<tr>
+<td><strong>Tampering</strong></td>
+<td>Trip data</td>
+<td>Company edits another company's trip</td>
+<td>companyId filter on all writes; RBAC enforcement</td>
+</tr>
+<tr>
+<td><strong>Repudiation</strong></td>
+<td>Disputed payments</td>
+<td>"I never received a ticket"</td>
+<td>AdminLog, ProcessedCallback table, SMS delivery record</td>
+</tr>
+<tr>
+<td><strong>Repudiation</strong></td>
+<td>Boarding disputes</td>
+<td>"I was marked no-show unfairly"</td>
+<td>AdminLog: PASSENGER_NO_SHOW with userId + timestamp</td>
+</tr>
+<tr>
+<td><strong>Information Disclosure</strong></td>
+<td>Cross-company data</td>
+<td>Company A reads Company B's trips</td>
+<td>companyId filter enforced in every company API route</td>
+</tr>
+<tr>
+<td><strong>Information Disclosure</strong></td>
+<td>Passenger PII</td>
+<td>Expose nationalId or phone</td>
+<td>API responses filtered; ticket verify hides bookedByPhone</td>
+</tr>
+<tr>
+<td><strong>Denial of Service</strong></td>
+<td>API flooding</td>
+<td>Brute-force or bot traffic</td>
+<td>Cloudflare DDoS, Nginx 30r/s limit, application rate limits</td>
+</tr>
+<tr>
+<td><strong>Denial of Service</strong></td>
+<td>Payment timeout</td>
+<td>Hold booking then abandon</td>
+<td>10-min payment window + cron release of timed-out bookings</td>
+</tr>
+<tr>
+<td><strong>Elevation of Privilege</strong></td>
+<td>Role escalation</td>
+<td>Customer calls company admin API</td>
+<td>Role check in every protected API route; <code>companyId</code> from JWT</td>
+</tr>
+<tr>
+<td><strong>Elevation of Privilege</strong></td>
+<td>Company cross-access</td>
+<td>Company admin accesses rival data</td>
+<td>companyId hard-set from JWT; cannot be user-supplied</td>
+</tr>
+<tr>
+<td><strong>Elevation of Privilege</strong></td>
+<td>Staff role abuse</td>
+<td>Driver accesses company admin features</td>
+<td><code>staffRole</code> checked separately from main <code>role</code>; scope-limited APIs</td>
+</tr>
+</tbody>
+</table>
+<h3 id="63-key-security-controls">6.3 Key Security Controls</h3>
+<table>
+<thead>
+<tr>
+<th>Vulnerability</th>
+<th>Control</th>
+<th>Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SQL Injection</strong></td>
+<td>Prisma ORM exclusively</td>
+<td>Zero raw SQL in codebase; all queries parameterized</td>
+</tr>
+<tr>
+<td><strong>XSS</strong></td>
+<td>React auto-escaping + CSP</td>
+<td>No <code>dangerouslySetInnerHTML</code>; CSP blocks inline scripts from external origins</td>
+</tr>
+<tr>
+<td><strong>CSRF</strong></td>
+<td>SameSite=lax cookie + CSP form-action</td>
+<td>Cross-origin POST requests don't carry the session cookie</td>
+</tr>
+<tr>
+<td><strong>Clickjacking</strong></td>
+<td>X-Frame-Options: DENY</td>
+<td><code>frame-ancestors 'none'</code> in CSP; X-Frame-Options header</td>
+</tr>
+<tr>
+<td><strong>IDOR</strong></td>
+<td>companyId + ownership checks</td>
+<td>Every resource access verifies ownership from JWT, not URL params</td>
+</tr>
+<tr>
+<td><strong>Replay Attack</strong></td>
+<td>ProcessedCallback table</td>
+<td>Unique index on transactionId; idempotent callback processing</td>
+</tr>
+<tr>
+<td><strong>Brute Force</strong></td>
+<td>Multi-layer rate limiting</td>
+<td>5/30min per phone, 10/15min per IP; 429 with Retry-After</td>
+</tr>
+<tr>
+<td><strong>Timing Attack</strong></td>
+<td>crypto.timingSafeEqual()</td>
+<td>HMAC comparison uses constant-time function</td>
+</tr>
+<tr>
+<td><strong>Stale Secrets</strong></td>
+<td>Startup validation</td>
+<td>NEXTAUTH_SECRET &gt;= 32 chars; placeholder values rejected at boot</td>
+</tr>
+<tr>
+<td><strong>Race Condition</strong></td>
+<td>SELECT FOR UPDATE NOWAIT</td>
+<td>DB-level row lock prevents double-seat-selling</td>
+</tr>
+<tr>
+<td><strong>Path Traversal</strong></td>
+<td>Generated filenames</td>
+<td>Upload filenames are system-generated IDs, not user-supplied</td>
+</tr>
+<tr>
+<td><strong>MIME Sniffing</strong></td>
+<td>X-Content-Type-Options: nosniff</td>
+<td>Prevents browser from guessing content types</td>
+</tr>
+</tbody>
+</table>
+<h3 id="64-known-gaps-and-remediation-plan">6.4 Known Gaps and Remediation Plan</h3>
+<table>
+<thead>
+<tr>
+<th>Gap</th>
+<th>Risk Level</th>
+<th>Remediation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No field-level encryption for nationalId, bankAccount at rest</td>
+<td>Medium</td>
+<td>AES-256 encryption for sensitive DB fields</td>
+</tr>
+<tr>
+<td>No database encryption at rest (AWS EBS)</td>
+<td>Medium</td>
+<td>Enable EBS encryption on storage volume</td>
+</tr>
+<tr>
+<td>No MFA for admin accounts</td>
+<td>Medium</td>
+<td>TOTP-based MFA for SUPER_ADMIN and COMPANY_ADMIN</td>
+</tr>
+<tr>
+<td><code>unsafe-inline</code> in CSP script-src</td>
+<td>Low</td>
+<td>Upgrade to Next.js 15+ for nonce-based CSP</td>
+</tr>
+<tr>
+<td>No JWT revocation mechanism</td>
+<td>Low</td>
+<td>Implement token version counter in User table</td>
+</tr>
+<tr>
+<td>No centralized SIEM integration</td>
+<td>Low</td>
+<td>Forward AdminLog to centralized security monitoring</td>
+</tr>
+<tr>
+<td>No automated security alerts</td>
+<td>Low</td>
+<td>Alert rules for login spikes, unusual API volume</td>
+</tr>
+</tbody>
+</table>
+<h3 id="65-owasp-top-10-compliance-summary">6.5 OWASP Top 10 Compliance Summary</h3>
+<table>
+<thead>
+<tr>
+<th>OWASP Category</th>
+<th>Status</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A01 Broken Access Control</td>
+<td>Mitigated</td>
+<td>RBAC, companyId segregation, ownership checks</td>
+</tr>
+<tr>
+<td>A02 Cryptographic Failures</td>
+<td>Partially Mitigated</td>
+<td>TLS 1.2+, bcrypt, HMAC-SHA256; gap: no DB encryption at rest</td>
+</tr>
+<tr>
+<td>A03 Injection</td>
+<td>Mitigated</td>
+<td>Prisma ORM (zero raw SQL), Zod validation, React escaping</td>
+</tr>
+<tr>
+<td>A04 Insecure Design</td>
+<td>Mitigated</td>
+<td>Rate limits, server-side amounts, row locking, threat model</td>
+</tr>
+<tr>
+<td>A05 Security Misconfiguration</td>
+<td>Mitigated</td>
+<td>Security headers, error handling, no default creds</td>
+</tr>
+<tr>
+<td>A06 Vulnerable Components</td>
+<td>Mitigated</td>
+<td>Node 20 LTS, PG 16, Ubuntu 22.04; Dependabot scanning</td>
+</tr>
+<tr>
+<td>A07 Auth Failures</td>
+<td>Partially Mitigated</td>
+<td>bcrypt, rate limiting, httpOnly JWT; gap: no MFA</td>
+</tr>
+<tr>
+<td>A08 Data Integrity Failures</td>
+<td>Mitigated</td>
+<td>HMAC callbacks, lockfile, server-side recalculation</td>
+</tr>
+<tr>
+<td>A09 Logging &amp; Monitoring</td>
+<td>Partially Mitigated</td>
+<td>AdminLog, PM2 logs, CSP reports; gap: no SIEM</td>
+</tr>
+<tr>
+<td>A10 SSRF</td>
+<td>Mitigated</td>
+<td>No user-controlled URLs; all external APIs hardcoded</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-testing-scope-credentials">7. Testing Scope &amp; Credentials</h2>
+<h3 id="71-web-portals-in-scope">7.1 Web Portals in Scope</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Portal</th>
+<th>URL</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Public Web Portal</td>
+<td>https://i-ticket.et</td>
+<td>Search, book, pay, track</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Admin Dashboard</td>
+<td>https://i-ticket.et/admin/*</td>
+<td>Platform management</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Company Portal</td>
+<td>https://i-ticket.et/company/*</td>
+<td>Trip, staff, fleet management</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Driver Portal</td>
+<td>https://i-ticket.et/driver/*</td>
+<td>GPS tracking</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Cashier Portal</td>
+<td>https://i-ticket.et/cashier/*</td>
+<td>Manual ticket sales</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Mechanic Portal</td>
+<td>https://i-ticket.et/mechanic/*</td>
+<td>Vehicle inspections, work orders</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Finance Portal</td>
+<td>https://i-ticket.et/finance/*</td>
+<td>Financial reports</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Sales Portal</td>
+<td>https://i-ticket.et/sales/*</td>
+<td>Referral dashboard</td>
+</tr>
+<tr>
+<td>9</td>
+<td>REST API</td>
+<td>https://i-ticket.et/api/*</td>
+<td>All backend endpoints (~84 routes)</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Telegram Bot</td>
+<td>https://t.me/i_ticket_busBot</td>
+<td>@i_ticket_busBot</td>
+</tr>
+<tr>
+<td>11</td>
+<td>TeleBirr Callback</td>
+<td>https://i-ticket.et/api/payments/telebirr/callback</td>
+<td>Payment webhook</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Origin Server</td>
+<td>54.147.33.168</td>
+<td>Direct (bypasses Cloudflare)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="72-test-account-credentials">7.2 Test Account Credentials</h3>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Phone</th>
+<th>Password</th>
+<th>Portal</th>
+<th>Scope</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Super Admin</td>
+<td>0911223344</td>
+<td>demo123</td>
+<td>/admin/*</td>
+<td>Full platform: all companies, analytics, audit logs, tax reports</td>
+</tr>
+<tr>
+<td>Company Admin (Selam Bus)</td>
+<td>0922345678</td>
+<td>demo123</td>
+<td>/company/*</td>
+<td>Full company: trips, staff, vehicles, fleet analytics, boarding</td>
+</tr>
+<tr>
+<td>Customer</td>
+<td>0912345678</td>
+<td>demo123</td>
+<td>/</td>
+<td>Search, book, tickets, tracking</td>
+</tr>
+<tr>
+<td>Guest Customer</td>
+<td>Any 09XXXXXXXX</td>
+<td>N/A</td>
+<td>/</td>
+<td>Book without registration</td>
+</tr>
+</tbody>
+</table>
+<p>Staff sub-role accounts (Driver, Conductor, Cashier, Mechanic, Finance) can be created via the Company Admin portal under Staff Management.</p>
+<h3 id="73-out-of-scope">7.3 Out of Scope</h3>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AWS EC2 OS/kernel internals</td>
+<td>Infrastructure-level audit (separate scope)</td>
+</tr>
+<tr>
+<td>Cloudflare configuration internals</td>
+<td>Managed CDN service</td>
+</tr>
+<tr>
+<td>PostgreSQL server engine</td>
+<td>Database-level audit (separate scope)</td>
+</tr>
+<tr>
+<td>TeleBirr, SMS Gateway, Telegram API internals</td>
+<td>Third-party services</td>
+</tr>
+<tr>
+<td>DDoS testing</td>
+<td>Risk to production availability</td>
+</tr>
+<tr>
+<td>Social engineering</td>
+<td>Not in scope for web application audit</td>
+</tr>
+<tr>
+<td>Production payment processing</td>
+<td>Use DEMO_MODE test flow only</td>
+</tr>
+</tbody>
+</table>
+<h3 id="74-testing-environment-note">7.4 Testing Environment Note</h3>
+<p>There is no separate staging environment. All testing is performed on the production instance (https://i-ticket.et) using the test accounts above. Test accounts are isolated from real customer data. DEMO_MODE=true simulates TeleBirr payments without real money movement.</p>
+<hr />
+<h2 id="8-contact-information">8. Contact Information</h2>
+<h3 id="81-i-ticket-team">8.1 i-Ticket Team</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Role</th>
+<th>Contact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Abel Assefa</td>
+<td>General Manager / Platform Owner</td>
+<td>+251 911 550 001</td>
+</tr>
+<tr>
+<td>Solomon Gemechu</td>
+<td>CFO / Finance Lead</td>
+<td>Available upon request</td>
+</tr>
+</tbody>
+</table>
+<h3 id="82-insa-audit-division">8.2 INSA Audit Division</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Role</th>
+<th>Contact</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dr. Tilahun Ejigu</td>
+<td>INSA Cyber Security Audit</td>
+<td>tilahune@insa.gov.et</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+<td>+251 937 456 374</td>
+</tr>
+</tbody>
+</table>
+<h3 id="83-submission-reference">8.3 Submission Reference</h3>
+<ul>
+<li><strong>Request ID</strong>: ICAER-2026-E391DA</li>
+<li><strong>Previous Submission</strong>: 17-document, 183-page package (February 2026)</li>
+<li><strong>This Resubmission</strong>: Single consolidated document per INSA Requirements Notice</li>
+<li><strong>Covers</strong>: SRS, Data Flow, System Architecture, Business Logic, Threat Modeling, Functional and Non-Functional Requirements</li>
+</ul>
+<hr />
+<p><em>End of Document — ICAER-2026-E391DA Resubmission</em>
+<em>i-Ticket Platform v2.14.5 | February 2026</em></p>
+</div>
+</body>
+</html>
