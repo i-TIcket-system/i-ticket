@@ -30,6 +30,10 @@ print("Reading markdown...")
 with open(MD_FILE, "r", encoding="utf-8") as f:
     md_text = f.read()
 
+# Skip cover metadata (H1, H2, metadata table, TOC) — already shown on cover page
+if '## 1. Application Overview' in md_text:
+    md_text = '## 1. Application Overview' + md_text.split('## 1. Application Overview', 1)[1]
+
 html_body = markdown.markdown(
     md_text,
     extensions=["tables", "fenced_code", "toc"],
@@ -68,7 +72,7 @@ html, body {
 .cover-page {
   position: relative;
   width: 100%;
-  height: 268mm;          /* A4 minus header+footer (~12mm each) */
+  height: 276mm;          /* A4 minus header+footer: 297mm − ~10.5mm each */
   overflow: hidden;
   page-break-after: always;
   background: white;
